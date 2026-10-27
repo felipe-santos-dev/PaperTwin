@@ -1,5 +1,6 @@
 import type { AssetKind, AssetTag, MachineSide, SectionId } from '../asset';
 import type { IsoClass } from '../iso20816';
+import type { Source } from './provenance';
 
 /** Posição no referencial da cena, em metros. */
 export type Point3 = readonly [x: number, y: number, z: number];
@@ -32,6 +33,14 @@ export interface MachineAsset {
   readonly driveGroup: string | null;
   /** Classe da ISO 20816-3; só os ativos com medição de vibração têm. */
   readonly iso: IsoClass | null;
+  /**
+   * Se a **existência** deste ativo está confirmada: ele existe com esta tag,
+   * neste ponto do processo.
+   *
+   * Não diz nada sobre a posição — um ativo pode existir de verdade e estar
+   * desenhado num X suposto. A origem das medidas fica em `MEASUREMENTS`.
+   */
+  readonly source: Source;
 }
 
 /** Uma seção do processo, com os ativos que moram nela. */

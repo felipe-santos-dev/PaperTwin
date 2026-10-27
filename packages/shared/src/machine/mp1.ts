@@ -28,6 +28,7 @@ import {
   SIZER_X_M,
   WEB_WIDTH_M,
 } from './geometry';
+import type { Source } from './provenance';
 import type { MachineAsset, MachineModel, MachineSection, Point3 } from './types';
 
 /**
@@ -88,6 +89,8 @@ function bearingsOf(parent: MachineAsset): MachineAsset[] {
     parentTag: parent.tag,
     driveGroup: parent.driveGroup,
     iso: BEARING_ISO,
+    // Um mancal não existe mais nem menos que o corpo que ele sustenta.
+    source: parent.source,
   }));
 }
 
@@ -104,6 +107,7 @@ interface BodySpec {
   readonly position: Point3;
   readonly radius: number;
   readonly driveGroup?: string;
+  readonly source: Source;
 }
 
 function body(spec: BodySpec): MachineAsset {
@@ -119,11 +123,18 @@ function body(spec: BodySpec): MachineAsset {
     parentTag: null,
     driveGroup: spec.driveGroup ?? null,
     iso: null,
+    source: spec.source,
   };
 }
 
 /** Um nip não gira: é o ponto de contato entre dois corpos, onde o papel é prensado. */
-function nip(tag: string, label: string, section: SectionId, position: Point3): MachineAsset {
+function nip(
+  tag: string,
+  label: string,
+  section: SectionId,
+  position: Point3,
+  source: Source,
+): MachineAsset {
   return {
     tag,
     kind: 'nip',
@@ -136,6 +147,7 @@ function nip(tag: string, label: string, section: SectionId, position: Point3): 
     parentTag: null,
     driveGroup: null,
     iso: null,
+    source,
   };
 }
 
@@ -152,6 +164,8 @@ function scanner(tag: string, label: string, section: SectionId, x: number, y: n
     parentTag: null,
     driveGroup: null,
     iso: null,
+    // Os dois scanners e a sua posição na ordem do processo foram confirmados.
+    source: 'validated' as const,
   };
 }
 
@@ -182,6 +196,8 @@ function dryerCylinders(
           position: [cx, cy, 0],
           radius: DRYER_RADIUS_M,
           driveGroup: group,
+          // Existe porque supusemos 13 e 5 pares; o número real falta.
+          source: 'assumed',
         }),
       );
     }
@@ -202,6 +218,7 @@ const pressSection: MachineSection = {
       section: 'press',
       position: [PRESS_X_M, PRESS_BOTTOM_Y_M, 0],
       radius: PRESS_ROLL_RADIUS_M,
+      source: 'assumed',
     }),
     body({
       tag: 'MP1-PRE-R2',
@@ -210,13 +227,16 @@ const pressSection: MachineSection = {
       section: 'press',
       position: [PRESS_X_M, PRESS_TOP_Y_M, 0],
       radius: PRESS_ROLL_RADIUS_M,
+      source: 'assumed',
     }),
   ]).concat(
-    nip('MP1-PRE-NIP', 'Nip de prensa', 'press', [
-      PRESS_X_M,
-      (PRESS_BOTTOM_Y_M + PRESS_TOP_Y_M) / 2,
-      0,
-    ]),
+    nip(
+      'MP1-PRE-NIP',
+      'Nip de prensa',
+      'press',
+      [PRESS_X_M, (PRESS_BOTTOM_Y_M + PRESS_TOP_Y_M) / 2, 0],
+      'assumed',
+    ),
   ),
 };
 
@@ -232,6 +252,7 @@ const sizerSection: MachineSection = {
       section: 'speed-sizer',
       position: [SIZER_X_M, DRY_SECTION_WEB_Y_M + SIZER_ROLL_RADIUS_M, 0],
       radius: SIZER_ROLL_RADIUS_M,
+      source: 'validated',
     }),
     body({
       tag: 'MP1-SZR-RI',
@@ -240,9 +261,16 @@ const sizerSection: MachineSection = {
       section: 'speed-sizer',
       position: [SIZER_X_M, DRY_SECTION_WEB_Y_M - SIZER_ROLL_RADIUS_M, 0],
       radius: SIZER_ROLL_RADIUS_M,
+      source: 'validated',
     }),
   ]).concat(
-    nip('MP1-SZR-NIP', 'Nip do Speed Sizer', 'speed-sizer', [SIZER_X_M, DRY_SECTION_WEB_Y_M, 0]),
+    nip(
+      'MP1-SZR-NIP',
+      'Nip do Speed Sizer',
+      'speed-sizer',
+      [SIZER_X_M, DRY_SECTION_WEB_Y_M, 0],
+      'validated',
+    ),
   ),
 };
 
@@ -258,6 +286,8 @@ const calenderSection: MachineSection = {
       section: 'calender',
       position: [CALENDER_X_M, CALENDER_NIP_Y_M + CALENDER_ROLL_RADIUS_M, 0],
       radius: CALENDER_ROLL_RADIUS_M,
+      // Nº de nips e qual rolo fica em cima ainda não foram confirmados.
+      source: 'assumed',
     }),
     body({
       tag: 'MP1-CAL-RR',
@@ -266,8 +296,17 @@ const calenderSection: MachineSection = {
       section: 'calender',
       position: [CALENDER_X_M, CALENDER_NIP_Y_M - CALENDER_ROLL_RADIUS_M, 0],
       radius: CALENDER_ROLL_RADIUS_M,
+      source: 'assumed',
     }),
-  ]).concat(nip('MP1-CAL-NIP', 'Nip da calandra', 'calender', [CALENDER_X_M, CALENDER_NIP_Y_M, 0])),
+  ]).concat(
+    nip(
+      'MP1-CAL-NIP',
+      'Nip da calandra',
+      'calender',
+      [CALENDER_X_M, CALENDER_NIP_Y_M, 0],
+      'assumed',
+    ),
+  ),
 };
 
 /**
@@ -334,6 +373,7 @@ export const MP1: MachineModel = {
           section: 'pope-reel',
           position: [POPE_X_M, POPE_DRUM_Y_M, 0],
           radius: POPE_DRUM_RADIUS_M,
+          source: 'validated',
         }),
       ]),
     },

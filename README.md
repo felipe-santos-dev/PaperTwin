@@ -77,25 +77,75 @@ npm run db:up
 ## Referências de projeto
 
 `reference/prototypes/` guarda os protótipos que definem o alvo visual e a ordem do
-processo (pré-secagem → scanner 1 → Speed Sizer → pós-secagem → calandra → scanner
-final → Pope).
+processo.
 
-Material interno da planta (fotos, mapa de rolos) **não é versionado** — use
-`reference/private/`, que está no `.gitignore`.
+## As tags são fictícias
 
-## Pendências de fidelidade
+**Nenhuma tag deste repositório corresponde a um ativo real de uma planta.** O
+padrão `MP1-SEC-G4-CS23-MLA` imita a forma de uma tag de planta, mas os números,
+o agrupamento e a numeração dos cilindros foram inventados para o modelo. O mesmo
+vale para as leituras de vibração: são geradas, não medidas.
 
-Tudo que está marcado como provisório no código aponta para esta lista.
+Material interno de verdade — fotos da planta e o mapa de rolos — **não é
+versionado**. Use `reference/private/`, que está no `.gitignore`.
 
-- Nº de pares de cilindros na pré-secagem (13 no modelo) e na pós-secagem (5).
-- Divisão dos cilindros em grupos de acionamento. O modelo usa G1–G4 na
-  pré-secagem e G5–G6 na pós; o único ponto fixo é o CS23 estar no G4, para a tag
-  `MP1-SEC-G4-CS23-MLA` bater com o conceito de tela.
-- Calandra: nº de nips e posição do rolo térmico.
-- Diâmetros e posições reais, a partir do mapa de rolos.
-- Caixa de entrada e formação ainda não têm ativos: o protótipo da parte úmida usa
-  um referencial próprio, e amarrar os dois depende do mapa de rolos.
-- Potência de acionamento de cada grupo, para enquadrar os mancais na ISO 20816-3.
-  Enquanto não vem, todos usam **grupo 2 com apoio rígido** (1,4 / 2,8 / 4,5 mm/s).
-  Com esses limites, os 7,8 mm/s do CS23 caem na **zona D** — o conceito de tela
-  rotula a mesma leitura como zona C, e é o rótulo do conceito que está errado.
+## Proveniência: o que é medido e o que é chute
+
+Parte da máquina foi conferida contra a real; parte é suposição tirada do
+protótipo. Misturar as duas faz uma suposição virar fato com o tempo, então cada
+medida e cada arranjo carregam a sua origem em
+[`machine/provenance.ts`](packages/shared/src/machine/provenance.ts), e um teste
+garante que nenhuma escapa da marcação.
+
+Duas coisas distintas carregam origem:
+
+- **medidas** (`MEASUREMENTS`): onde o ativo está, qual o raio, qual o passo.
+- **existência** (`MachineAsset.source`): se o ativo existe com aquela tag e
+  naquele ponto do processo.
+
+São separadas porque um ativo pode ter existência confirmada e posição suposta —
+é o caso do scanner 1, que o Felipe confirmou estar na entrada do Speed Sizer,
+mas cuja distância até a pré-secagem ainda vem do protótipo.
+
+### Confirmado (6 de 29 medidas)
+
+| Medida                          | Valor  |
+| ------------------------------- | ------ |
+| Raio dos cilindros secadores    | 1,05 m |
+| Passo entre cilindros           | 2,2 m  |
+| Altura da fileira superior      | 6,1 m  |
+| Altura da fileira inferior      | 3,0 m  |
+| Altura do papel entre pré e pós | 4,8 m  |
+| Raio dos rolos do Speed Sizer   | 1,15 m |
+
+Mais a **ordem das seções**: pré-secagem → scanner 1 → Speed Sizer →
+pós-secagem → calandra → scanner final → Pope.
+
+### Suposto (27 itens)
+
+O que mais pesa, em ordem de impacto:
+
+1. **Nº de pares de cilindros** — 13 na pré-secagem e 5 na pós, como no protótipo.
+2. **Grupos de acionamento G1–G6** — inventados. O único ponto fixo é o CS23 estar
+   no G4, porque a tag `MP1-SEC-G4-CS23-MLA` aparece no conceito de tela.
+3. **Calandra** — um nip só, com o rolo térmico em cima.
+4. **Todas as posições em X** — as distâncias entre seções vêm do protótipo.
+5. **Largura da folha** (8 m), plano dos mancais, raios de prensa, calandra e Pope.
+6. **Dois mancais por corpo girante** — vale para os secadores; para os demais
+   rolos, falta confirmar.
+7. **Classe ISO 20816-3 dos mancais** — todos usam **grupo 2 com apoio rígido**
+   (1,4 / 2,8 / 4,5 mm/s) enquanto a potência de acionamento de cada grupo não vem.
+   Com esses limites, os 7,8 mm/s do CS23 caem na **zona D**.
+
+A lista completa sai do próprio código:
+
+```ts
+import { assumptions } from '@mp1/shared';
+assumptions(); // 27 itens, cada um com rótulo e o que falta para confirmar
+```
+
+### Fora de escopo
+
+Caixa de entrada e formação estão declaradas como seções mas sem ativos. O
+protótipo da parte úmida usa um referencial próprio, e amarrar os dois eixos
+depende do mapa de rolos.

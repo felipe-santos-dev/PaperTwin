@@ -71,8 +71,35 @@ npm run db:up
 - **Fase 0 — fundação** ✅ monorepo, ferramental, `GET /health`, esboço da cena.
 - **Fase 1 — modelo da máquina** ✅ `packages/shared/src/machine/`, o modelo
   declarativo (seções → ativos com tag, tipo, posição e raio) do qual a cena é gerada.
-- **Fase 2 — cena**: port do protótipo da parte seca para componentes R3F.
+- **Fase 2 — cena** ✅ a parte seca em componentes R3F gerados do modelo, com o
+  three.js carregado sob demanda.
 - **Fase 3 — fatia vertical**: clicar num mancal abre o painel com a vibração vinda da API.
+
+## A cena
+
+`apps/web/src/scene/` monta a máquina a partir de `MP1.sections` — nenhuma posição
+é escrita nos componentes. Mudar o nº de pares de cilindros no modelo muda a cena, e
+uma tag que não existe no modelo não pode aparecer na tela.
+
+Os mancais são clicáveis: o clique abre o que o modelo sabe do ativo, incluindo os
+limites da ISO 20816-3 e o aviso quando a posição ainda é suposição. A vibração
+medida entra na Fase 3.
+
+### Carregamento
+
+O three.js é a maior dependência do projeto, e a cena é importada dinamicamente
+para ele não pesar na primeira tela:
+
+| Pedaço                  | Tamanho      | Quando desce    |
+| ----------------------- | ------------ | --------------- |
+| `index` + `react` + css | ~78 kB gzip  | sempre          |
+| `three`                 | ~265 kB gzip | ao abrir a cena |
+| `MachineScene`          | ~8 kB gzip   | ao abrir a cena |
+
+O `manualChunks` em `vite.config.ts` tem duas regras que parecem supérfluas e não
+são: sem elas o Rollup acomoda o `react-dom` e o helper de import dinâmico do Vite
+dentro do pedaço do three, a entrada passa a depender dele estaticamente, e o
+`index.html` ganha um `modulepreload` de 1 MB que anula o carregamento sob demanda.
 
 ## Referências de projeto
 

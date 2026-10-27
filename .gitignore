@@ -1,0 +1,25 @@
+node_modules/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+.env
+.env.*
+!.env.example
+
+# Documento de handoff da sessão anterior — contexto de trabalho, não entra no repo.
+HANDOFF.md
+
+# Material interno da planta: fotos e mapa de rolos nunca são versionados.
+reference/private/
+
+.vite/
+.vitest/
+.DS_Store
+Thumbs.db
+*.log
+npm-debug.log*
+.idea/
+.vscode/*
+!.vscode/extensions.json

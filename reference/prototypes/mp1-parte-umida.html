@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<style>html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:#000}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"./node_modules/three/build/three.module.js","three/addons/":"./node_modules/three/examples/jsm/"}}</script>
+</head><body><canvas id="c"></canvas>
+<script type="module">
+import * as THREE from 'three';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+import {EffectComposer} from 'three/addons/postprocessing/EffectComposer.js';
+import {RenderPass} from 'three/addons/postprocessing/RenderPass.js';
+import {UnrealBloomPass} from 'three/addons/postprocessing/UnrealBloomPass.js';
+import {OutputPass} from 'three/addons/postprocessing/OutputPass.js';
+
+const P=new URLSearchParams(location.search), VIEW=P.get('v')||'hero';
+const W=+(P.get('w')||1920),H=+(P.get('h')||1080);
+document.body.style.width=W+'px';document.body.style.height=H+'px';
+const renderer=new THREE.WebGLRenderer({canvas:document.getElementById('c'),antialias:true});
+renderer.setSize(W,H);renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.05;
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x15171b);scene.fog=new THREE.Fog(0x2a2d33,40,150);
+const pm=new THREE.PMREMGenerator(renderer);scene.environment=pm.fromScene(new RoomEnvironment(),0.04).texture;scene.environmentIntensity=.45;
+
+// ---------- texturas procedurais ----------
+let seed=11;const R=()=>(seed=(seed*16807)%2147483647)/2147483647;
+function canvasTex(w,h,draw,rep=[1,1]){const c=document.createElement('canvas');c.width=w;c.height=h;draw(c.getContext('2d'),w,h);
+ const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(...rep);t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=8;return t}
+const grime=(base)=>canvasTex(256,256,(g,w,h)=>{g.fillStyle=base;g.fillRect(0,0,w,h);
+ for(let i=0;i<900;i++){g.fillStyle=`rgba(${R()<.5?60:255},${R()<.5?60:255},${R()<.5?70:255},${R()*.08})`;g.fillRect(R()*w,R()*h,R()*6,R()*6)}
+ for(let i=0;i<60;i++){const x=R()*w;g.fillStyle=`rgba(70,65,55,${R()*.12})`;g.fillRect(x,R()*h*.5,1+R()*3,h*R())}},[2,2]);
+const concrete=canvasTex(1024,1024,(g,w,h)=>{g.fillStyle='#7d7a72';g.fillRect(0,0,w,h);
+ for(let i=0;i<14000;i++){const v=90+R()*80|0;g.fillStyle=`rgba(${v},${v-3},${v-10},.25)`;g.fillRect(R()*w,R()*h,2,2)}
+ for(let i=0;i<40;i++){const x=R()*w,y=R()*h,r=20+R()*120;const gr=g.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,'rgba(55,52,45,.35)');gr.addColorStop(1,'rgba(55,52,45,0)');g.fillStyle=gr;g.fillRect(x-r,y-r,2*r,2*r)}
+ g.strokeStyle='rgba(40,38,34,.35)';g.lineWidth=2;for(let i=0;i<=w;i+=256){g.beginPath();g.moveTo(i,0);g.lineTo(i,h);g.stroke();g.beginPath();g.moveTo(0,i);g.lineTo(w,i);g.stroke()}},[12,6]);
+const grating=canvasTex(128,128,(g,w,h)=>{g.fillStyle='#3a3d40';g.fillRect(0,0,w,h);g.fillStyle='#b9bcbf';for(let i=0;i<w;i+=8)g.fillRect(i,0,3,h);for(let j=0;j<h;j+=32)g.fillRect(0,j,w,3)},[8,2]);
+const hoodTex=canvasTex(2048,256,(g,w,h)=>{g.fillStyle='#d9dcdd';g.fillRect(0,0,w,h);
+ for(let x=0;x<w;x+=64){g.fillStyle='rgba(0,0,0,.05)';g.fillRect(x,0,2,h)}
+ for(let x=30;x<w;x+=96){g.fillStyle='#4b5560';g.fillRect(x,h*.62,52,h*.1);g.fillStyle='rgba(255,255,255,.25)';g.fillRect(x+3,h*.63,20,h*.03)}
+ for(let i=0;i<120;i++){g.fillStyle=`rgba(90,85,70,${R()*.08})`;g.fillRect(R()*w,R()*h*.4+h*.6,2,h)}},[1,1]);
+const ceilTex=canvasTex(256,256,(g,w,h)=>{g.fillStyle='#50545a';g.fillRect(0,0,w,h);for(let i=0;i<w;i+=16){g.fillStyle='#64686e';g.fillRect(i,0,8,h);g.fillStyle='#3e4146';g.fillRect(i+8,0,2,h)}},[40,10]);
+const signTex=canvasTex(1024,160,(g,w,h)=>{g.fillStyle='#e9edf3';g.fillRect(0,0,w,h);g.fillStyle='#2d4a9a';g.fillRect(10,10,w-20,h-20);
+ g.fillStyle='#fff';g.font='bold 96px Arial';g.textAlign='center';g.textBaseline='middle';g.fillText('MP1  ·  MP1',w/2,h/2+4)});
+
+// ---------- materiais ----------
+const M=(o)=>new THREE.MeshStandardMaterial(o);
+const paint=M({color:0xd2d5d8,map:grime('#e4e6e8'),roughness:.62,metalness:.25});
+const paintDark=M({color:0x9aa0a6,map:grime('#c9ccd0'),roughness:.6,metalness:.3});
+const blue=M({color:0x5fa6d0,roughness:.45,metalness:.3});
+const blueDark=M({color:0x3d7fae,roughness:.5,metalness:.3});
+const steel=M({color:0xb8bec6,roughness:.3,metalness:.9});
+const rubber=M({color:0x2a2e33,roughness:.55,metalness:.1});
+const felt=M({color:0x4a4f4c,roughness:.95,side:THREE.DoubleSide});
+const wireM=M({color:0x2a4652,roughness:.7,metalness:.2,side:THREE.DoubleSide});
+const purple=M({color:0x3b2a6e,roughness:.7,metalness:.1});
+const yellow=M({color:0xe2b419,roughness:.55});
+const black=M({color:0x1a1a1a,roughness:.6});
+const white=M({color:0xeceeef,map:grime('#f2f2f2'),roughness:.5,metalness:.1});
+const grateM=M({map:grating,roughness:.6,metalness:.5,color:0xffffff});
+
+const add=(g,m,x,y,z,sh=true)=>{const o=new THREE.Mesh(g,m);o.position.set(x,y,z);o.castShadow=sh;o.receiveShadow=true;scene.add(o);return o};
+const box=(sx,sy,sz,m,x,y,z,sh=true)=>add(new THREE.BoxGeometry(sx,sy,sz),m,x,y,z,sh);
+const WID=8, OS=WID/2+.7, PL=OS+2.4; // lado operação (+z)
+
+// ---------- prédio ----------
+const fl=add(new THREE.PlaneGeometry(260,120),M({map:concrete,roughness:.28,metalness:.05,color:0xa6a39c}),30,0,10,false);fl.rotation.x=-Math.PI/2;
+const ceil=add(new THREE.PlaneGeometry(260,120),M({map:ceilTex,roughness:.8,side:THREE.DoubleSide}),30,19,10,false);ceil.rotation.x=Math.PI/2;
+for(let x=-40;x<110;x+=9){box(.5,1.2,120,paintDark,x,18.4,10,false)}
+for(let x=-30;x<100;x+=12)for(const z of [-2,12,24]){const l=box(1.6,.12,.5,M({color:0xffffff,emissive:0xfff3e0,emissiveIntensity:4}),x,18.2,z,false)}
+box(1.2,1.4,90,yellow,-6,15.5,10);box(1.2,1.4,90,yellow,-1,15.5,10); // ponte rolante
+// faixa zebrada e demarcação
+for(let x=-40;x<110;x+=1.2){box(.6,.02,.22,yellow,x,.011,PL+3.6,false);box(.6,.02,.22,black,x+.6,.011,PL+3.6,false)}
+for(const [x,z,w,d] of [[0,20,10,.18],[0,26,10,.18],[-5,23,.18,6],[5,23,.18,6]])box(w,.02,d,yellow,x,.012,z,false);
+// parede traseira com painéis
+box(260,19,.4,M({color:0x3a3e45,roughness:.9}),30,9.5,-14,false);
+
+// ---------- estrutura (frames) ----------
+const LV=[3.4,6.8,10.2];
+const postsX=[-15,-11,-7,-3,1,5,9,12];
+for(const z of [-OS,OS])for(const x of postsX){box(.45,12.6,.45,paint,x,6.3,z)}
+for(const z of [-OS,OS])for(const y of [...LV,12.4])box(27.5,.5,.42,paint,-1.5,y,z);
+for(const x of postsX)box(.4,.45,2*OS,paint,x,12.4,0);
+// painéis roxos (fundo, lado acionamento)
+box(26,9,.3,purple,-1.5,7.5,-OS-.4);
+
+// ---------- rolos ----------
+function roll(x,y,r,m=steel,len=WID,hous=true,hm=blue){const o=add(new THREE.CylinderGeometry(r,r,len,48),m,x,y,0);o.rotation.x=Math.PI/2;
+ if(hous){for(const s of [1,-1]){const h=add(new THREE.CylinderGeometry(r*1.18,r*1.18,.4,40),hm,x,y,s*(len/2+.35));h.rotation.x=Math.PI/2;
+  const c=add(new THREE.CylinderGeometry(r*.5,r*.5,.45,24),steel,x,y,s*(len/2+.4));c.rotation.x=Math.PI/2;}}
+ return o}
+function ribbon(points,m,closed=true,width=WID-.2){const cur=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(p[0],p[1],0)),closed,'catmullrom',.05);
+ const cp=cur.getPoints(500);const pos=[],idx=[];cp.forEach((p,i)=>{pos.push(p.x,p.y,-width/2,p.x,p.y,width/2);if(i){const a=(i-1)*2;idx.push(a,a+1,a+2,a+1,a+3,a+2)}});
+ const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setIndex(idx);g.computeVertexNormals();
+ const o=new THREE.Mesh(g,m);o.castShadow=true;o.receiveShadow=true;scene.add(o);return o}
+
+// caixa de entrada
+box(2.6,2.2,WID+.8,paintDark,-13.2,2.2,0);box(1.2,1,WID+.4,steel,-11.8,1.9,0);
+const man=add(new THREE.CylinderGeometry(.6,.4,WID+2,24),blueDark,-14.6,1.4,0);man.rotation.x=Math.PI/2;
+// formador de duas telas (gap former)
+const fR=[[-10.8,2.6,.55],[-6.2,3.4,.45],[-5.2,7.6,.4],[-8.4,9.3,.4],[-11,6.2,.4],
+          [-9.2,3.9,.45],[-3.4,4.2,.45],[-2.4,8.8,.4],[-6.4,11,.4],[-8.8,7.2,.35]];
+fR.forEach(([x,y,r],i)=>roll(x,y,r,i%3?steel:rubber,WID,true,i<5?blue:blueDark));
+ribbon(fR.slice(0,5).map(p=>[p[0],p[1]]),wireM);
+ribbon(fR.slice(5).map(p=>[p[0],p[1]]),M({color:0x2c4a44,roughness:.7,side:THREE.DoubleSide}));
+// prensas (rolos grandes com mancais azuis)
+const pr=[[0,3.3,.85,rubber],[0,5.1,.85,steel],[3.6,3.6,.9,rubber],[3.6,5.5,.9,steel],[7.4,4.4,.95,rubber],[7.4,6.4,.95,steel]];
+pr.forEach(([x,y,r,m])=>roll(x,y,r,m));
+ribbon([[-1.2,6.1],[1.6,6.2],[2.4,9.6],[-1,10.6],[-2,8.4]],felt);
+ribbon([[-.9,2.4],[5,2.6],[6.5,1.5],[1,1.1]],felt);
+ribbon([[2.6,6.6],[5,6.8],[6,10],[3,11.2],[1.8,9]],felt);
+ribbon([[6.2,7.5],[8.8,7.5],[10.6,10.8],[7,11.4]],felt);
+for(const [x,y] of [[2.4,9.6],[-1,10.6],[6,10],[3,11.2],[10.6,10.8],[7,11.4],[6.5,1.5],[1,1.1]])roll(x,y,.32,steel,WID,true,blueDark);
+// folha passando
+ribbon([[-11.6,1.9],[-10.8,3.15],[-6.2,3.9],[-3.4,4.7],[0,4.2],[3.6,4.55],[7.4,5.4],[9.5,5.8],[12,6.5]],M({color:0xe8e4d8,roughness:.9,side:THREE.DoubleSide}),false,WID-.6);
+
+// ---------- plataformas, guarda-corpos e escadas ----------
+function rail(x0,x1,y,z){for(let x=x0;x<=x1+.01;x+=1.4)box(.07,1.1,.07,paint,x,y+.55,z,false);
+ box(x1-x0,.07,.07,paint,(x0+x1)/2,y+1.1,z,false);box(x1-x0,.05,.05,paint,(x0+x1)/2,y+.55,z,false);box(x1-x0,.15,.03,paint,(x0+x1)/2,y+.08,z,false)}
+function railZ(x,y,z0,z1){box(.07,1.1,.07,paint,x,y+.55,z1,false);box(.07,.07,z1-z0,paint,x,y+1.1,(z0+z1)/2,false);box(.05,.05,z1-z0,paint,x,y+.55,(z0+z1)/2,false)}
+function platform(x0,x1,y){const w=x1-x0;const p=box(w,.12,PL-OS+.4,grateM,(x0+x1)/2,y,(OS+PL)/2);p.material=grateM;
+ box(w,.3,.2,paint,(x0+x1)/2,y-.15,PL);rail(x0,x1,y,PL);railZ(x0,y,OS,PL);railZ(x1,y,OS,PL);
+ for(let x=x0+.3;x<x1;x+=4)box(.18,.8,.18,paint,x,y-.5,(OS+PL)/2,false)}
+platform(-15,12,LV[0]);platform(-13,-2,LV[1]);platform(3,12,LV[1]);platform(-11,9,LV[2]);
+function stair(x0,y0,x1,y1,z){const n=Math.round((y1-y0)/.22),dx=(x1-x0)/n,dy=(y1-y0)/n;
+ for(let i=0;i<n;i++)box(Math.abs(dx)+.05,.05,1,grateM,x0+dx*(i+.5),y0+dy*(i+1),z,false);
+ const L=Math.hypot(x1-x0,y1-y0),a=Math.atan2(y1-y0,x1-x0);
+ for(const s of [-.52,.52]){const st=box(L,.25,.08,paint,(x0+x1)/2,(y0+y1)/2,z+s);st.rotation.z=a;
+  const r=box(L,.06,.06,paint,(x0+x1)/2,(y0+y1)/2+1,z+s);r.rotation.z=a}}
+stair(11.6,0,14.8,LV[0],PL-.7);stair(-1.6,LV[0],1.6,LV[1],PL-.7);stair(-10.6,LV[1],-7.4,LV[2],PL-.7);stair(-13.5,LV[0],-16.7,0,PL-.7);
+// escadas tipo marinheiro (ladders) ao nível do piso
+for(const x of [3,6.2]){for(const s of [-.3,.3])box(.06,LV[0],.06,paint,x+s,LV[0]/2,PL+.2,false);for(let y=.3;y<LV[0];y+=.3)box(.6,.04,.04,paint,x,y,PL+.2,false)}
+// armários / caixas de junção / painel com mangueira
+for(const [x,y,w,h] of [[-12,LV[0],1.2,1.6],[-6,LV[0],1,1.3],[5,LV[1],1.4,1.6],[-9,LV[2],1,1.2],[9.5,LV[0],1.1,1.4],[0,LV[2],1.4,1.1]])box(w,h,.7,white,x,y+h/2+.06,OS+.8);
+box(1.4,2,.6,white,-4,1,PL+.4);box(1,1.6,.5,white,10.4,.8,PL+.3);
+const hose=new THREE.CatmullRomCurve3([[-4,1.2,PL+.7],[-4.6,.1,PL+1.4],[-6,.05,PL+.9],[-7.5,.05,PL+1.8],[-6.2,.05,PL+2.6],[-4.4,.05,PL+2],[-3,.05,PL+2.9]].map(p=>new THREE.Vector3(...p)));
+add(new THREE.TubeGeometry(hose,80,.05,8),M({color:0xd8c060,roughness:.5}),0,0,0);
+// tubulações
+for(const [y,z,r] of [[1.2,-OS-1,.35],[2.3,-OS-1.2,.25],[11.5,OS+.3,.18]]){const t=add(new THREE.CylinderGeometry(r,r,30,16),paintDark,-1.5,y,z);t.rotation.z=Math.PI/2}
+// placa no topo
+const sg=box(9,1.2,.15,M({map:signTex,roughness:.5}),-4,13.4,OS+.4);
+
+// ---------- secagem: capota branca contínua ----------
+const hd=box(70,10,2*OS+2.5,M({map:hoodTex,roughness:.6,metalness:.05}),48,5,0);hoodTex.repeat.set(1,1);
+box(70,.3,2*OS+3,paint,48,10.15,0);
+box(1.6,2.4,.1,M({color:0x6c7680,roughness:.4}),18,1.2,OS+1.27);box(1.6,2.4,.1,M({color:0x6c7680,roughness:.4}),34,1.2,OS+1.27);
+box(.8,4,.8,yellow,15,12.2,OS-1);rail(13,22,10.3,OS+1.2);
+// ponte entre úmida e secagem
+box(2,10,2*OS+1.4,paintDark,12.9,5,0);
+
+// ---------- pessoa (escala) ----------
+function person(x,z){const g=new THREE.Group();const lg=M({color:0x2f4f7a,roughness:.8});
+ for(const s of [-.12,.12]){const l=new THREE.Mesh(new THREE.CylinderGeometry(.09,.09,.85,10),lg);l.position.set(0,.43,s);g.add(l)}
+ const t=new THREE.Mesh(new THREE.CylinderGeometry(.2,.17,.65,12),M({color:0xf07a1a,roughness:.8}));t.position.y=1.2;g.add(t);
+ const h=new THREE.Mesh(new THREE.SphereGeometry(.12,16,12),M({color:0xc89474,roughness:.7}));h.position.y=1.66;g.add(h);
+ const c=new THREE.Mesh(new THREE.SphereGeometry(.14,16,8,0,Math.PI*2,0,Math.PI/2),M({color:0xf5f5f5,roughness:.4}));c.position.y=1.7;g.add(c);
+ g.traverse(o=>o.castShadow=true);g.position.set(x,0,z);scene.add(g)}
+person(-15.5,PL+.9);person(5.5,LV[1]+.06+0*1);
+
+// ---------- luz ----------
+scene.add(new THREE.HemisphereLight(0xdfe8ff,0x4a4438,.55));
+const key=new THREE.DirectionalLight(0xfff1dd,1.5);key.position.set(-8,30,22);key.castShadow=true;key.shadow.mapSize.set(4096,4096);key.shadow.bias=-.0004;
+Object.assign(key.shadow.camera,{left:-35,right:45,top:25,bottom:-20,near:1,far:90});scene.add(key);
+for(const x of [-14,-4,6,16])for(const z of [2,14]){const p=new THREE.PointLight(0xfff4e8,90,26,1.6);p.position.set(x,17,z);scene.add(p)}
+const fill=new THREE.DirectionalLight(0x9fb6ff,.35);fill.position.set(20,6,30);scene.add(fill);
+
+// ---------- câmeras ----------
+const cam=new THREE.PerspectiveCamera(48,W/H,.1,400);
+if(VIEW==='hero'){cam.position.set(-20,1.75,25);cam.lookAt(-1,5.4,0);}
+if(VIEW==='photo'){cam.fov=62;cam.updateProjectionMatrix();cam.position.set(-6,1.6,22);cam.lookAt(-2,6.5,0);}
+if(VIEW==='aerial'){ceil.visible=false;scene.children.forEach(o=>{if(o.position&&o.position.y>15)o.visible=false});cam.fov=34;cam.updateProjectionMatrix();cam.position.set(-34,22,38);cam.lookAt(6,4,0);}
+const composer=new EffectComposer(renderer);composer.addPass(new RenderPass(scene,cam));
+composer.addPass(new UnrealBloomPass(new THREE.Vector2(W,H),.25,.4,.95));composer.addPass(new OutputPass());
+composer.render();window.READY=true;
+</script></body></html>

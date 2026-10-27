@@ -1,0 +1,31 @@
+# OPCIONAL. O caminho padrão de desenvolvimento é o PGlite embutido (sem Docker)
+# e, em prod/demo, um Postgres gerenciado via DATABASE_URL.
+#
+# Este compose existe para quem quiser um Postgres local de verdade. A imagem traz
+# o TimescaleDB, mas o schema não depende dele: as migrations usam só Postgres puro
+# (particionamento nativo, índice BRIN em ts e agregação com date_bin()).
+#
+#   npm run db:up
+#   DATABASE_URL=postgres://mp1:mp1@127.0.0.1:5432/mp1_twin npm run dev
+
+services:
+  postgres:
+    image: timescale/timescaledb:2.17.2-pg17
+    container_name: mp1-twin-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mp1
+      POSTGRES_PASSWORD: mp1
+      POSTGRES_DB: mp1_twin
+    ports:
+      - '5432:5432'
+    volumes:
+      - mp1-twin-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U mp1 -d mp1_twin']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  mp1-twin-pgdata:

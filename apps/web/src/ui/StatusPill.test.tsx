@@ -1,0 +1,27 @@
+import { describe, expect, it } from 'vitest';
+import { render, screen } from '@testing-library/react';
+import {
+  classifyIsoZone,
+  DRYER_BEARING_ISO,
+  healthFromZone,
+  isoLimitsOf,
+  type AssetHealth,
+} from '@mp1/shared';
+import { StatusPill } from './StatusPill';
+
+describe('StatusPill', () => {
+  it.each<[AssetHealth, string]>([
+    ['normal', 'Normal'],
+    ['attention', 'Atenção'],
+    ['critical', 'Crítico'],
+  ])('mostra "%s" como "%s"', (health, label) => {
+    render(<StatusPill health={health} />);
+    expect(screen.getByRole('status')).toHaveTextContent(label);
+  });
+
+  it('acompanha a leitura de 7,8 mm/s do mancal CS23 até o selo de crítico', () => {
+    const zone = classifyIsoZone(7.8, isoLimitsOf(DRYER_BEARING_ISO));
+    render(<StatusPill health={healthFromZone(zone)} />);
+    expect(screen.getByRole('status')).toHaveTextContent('Crítico');
+  });
+});

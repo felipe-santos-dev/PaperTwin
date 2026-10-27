@@ -1,0 +1,34 @@
+@import 'tailwindcss';
+
+/* Paleta do conceito de monitoramento: sala de controle escura, acento roxo,
+   semáforo de saúde do ativo alinhado com as zonas da ISO 20816. */
+@theme {
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --color-mill-bg: #0b0d14;
+  --color-mill-panel: #141824;
+  --color-mill-line: #242a3a;
+  --color-mill-fg: #e9edf2;
+  --color-mill-muted: #8c96a8;
+  --color-mill-accent: #7d6cf0;
+
+  --color-mill-normal: #3ecf8e;
+  --color-mill-attention: #e2b419;
+  --color-mill-critical: #ef4a5a;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background-color: var(--color-mill-bg);
+    color: var(--color-mill-fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+}

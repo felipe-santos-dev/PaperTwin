@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls } from '@react-three/drei';
+import { OrbitControls, Stats } from '@react-three/drei';
 import { Bloom, EffectComposer } from '@react-three/postprocessing';
 import { ACESFilmicToneMapping, PMREMGenerator, Vector3 } from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
@@ -21,6 +21,18 @@ import type { SceneView } from './views';
 
 const TONE_MAPPING_EXPOSURE = 0.82;
 const FLIGHT_MS = 1400;
+
+/**
+ * Contador de quadros, ligado com `?perf=1` e só em desenvolvimento.
+ *
+ * Fica atrás de um parâmetro porque medir FPS exige a máquina de quem mede: num
+ * painel embutido o número reflete a taxa de composição do painel, não o custo
+ * da cena.
+ */
+function showStats(): boolean {
+  if (!import.meta.env.DEV) return false;
+  return new URLSearchParams(window.location.search).get('perf') === '1';
+}
 
 /** O que o rig precisa do OrbitControls, sem depender do tipo do three-stdlib. */
 interface ControlsLike {
@@ -180,6 +192,8 @@ export default function MachineScene({ view, state }: MachineSceneProps) {
         {/* limiar alto: só o feixe dos scanners e as luminárias passam */}
         <Bloom intensity={0.3} luminanceThreshold={0.93} luminanceSmoothing={0.4} mipmapBlur />
       </EffectComposer>
+
+      {showStats() && <Stats />}
     </Canvas>
   );
 }

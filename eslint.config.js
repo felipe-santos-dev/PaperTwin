@@ -26,7 +26,7 @@ export default tseslint.config(
     languageOptions: { globals: globals.browser },
   },
   {
-    files: ['**/*.config.{js,ts}', '**/vite.config.ts', '**/vitest.config.ts'],
+    files: ['**/*.config.{js,ts}', '**/vite.config.ts', '**/vitest.config.ts', '**/e2e/**/*.ts'],
     languageOptions: { globals: globals.node },
   },
   prettier,

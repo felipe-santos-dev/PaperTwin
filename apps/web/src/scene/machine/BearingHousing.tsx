@@ -8,7 +8,7 @@ import { useScene } from '../sceneState';
 /**
  * O mancal — o ativo que o monitoramento acompanha, e por isso o único clicável.
  *
- * Nos cilindros secadores do lado comando vem o detalhe que o Felipe validou:
+ * Nos cilindros secadores do lado comando vem o detalhe validado em campo:
  * tampa creme ou azul, proteção amarela retangular, junta rotativa de latão com
  * mangueira preta descendo, e caixa de junção a cada quatro cilindros. É esse
  * detalhe que faz a secagem parecer uma secagem e não uma fileira de tubos.

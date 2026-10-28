@@ -172,8 +172,8 @@ Duas coisas distintas carregam origem:
   naquele ponto do processo.
 
 São separadas porque um ativo pode ter existência confirmada e posição suposta —
-é o caso do scanner 1, que o Felipe confirmou estar na entrada do Speed Sizer,
-mas cuja distância até a pré-secagem ainda vem do protótipo.
+é o caso do scanner 1, confirmado em campo na entrada do Speed Sizer, mas cuja
+distância até a pré-secagem ainda vem do protótipo.
 
 ### Confirmado (6 de 29 medidas)
 
@@ -217,3 +217,17 @@ assumptions(); // 27 itens, cada um com rótulo e o que falta para confirmar
 Caixa de entrada e formação estão declaradas como seções mas sem ativos. O
 protótipo da parte úmida usa um referencial próprio, e amarrar os dois eixos
 depende do mapa de rolos.
+
+## Autor
+
+**Felipe Santos** — eletricista de manutenção industrial em fábrica de papel e
+estudante de Engenharia de Software na FIAP.
+
+O que este projeto tenta mostrar é a interseção das duas coisas: o que separa a
+medição do chute numa máquina de papel, por que o envelope de aceleração acusa um
+defeito de rolamento antes da velocidade RMS, e por que um prazo de vida útil sem
+método declarado é pior do que prazo nenhum. A engenharia veio do curso; saber o
+que perguntar à máquina veio do chão de fábrica.
+
+- GitHub: [felipe-santos-dev](https://github.com/felipe-santos-dev)
+- LinkedIn: <!-- TODO: preencher antes de publicar --> `https://www.linkedin.com/in/SEU-PERFIL`

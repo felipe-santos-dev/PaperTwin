@@ -4,6 +4,8 @@
   "private": true,
   "type": "module",
   "description": "Gêmeo digital da máquina de papel MP1 — cena 3D navegável e monitoramento de ativos.",
+  "author": "Felipe Santos (https://github.com/felipe-santos-dev)",
+  "license": "UNLICENSED",
   "engines": {
     "node": ">=20.19"
   },

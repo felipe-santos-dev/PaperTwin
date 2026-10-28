@@ -89,7 +89,7 @@ describe('o que ainda é suposição', () => {
     }
   });
 
-  it('não marca como suposto o que o Felipe confirmou', () => {
+  it('não marca como suposto o que foi validado em campo', () => {
     for (const tag of ['MP1-QCS-SC1', 'MP1-QCS-SC2', 'MP1-SZR-RS', 'MP1-SZR-NIP', 'MP1-POP-TBR']) {
       expect(assets.find((a) => a.tag === tag)?.source, tag).toBe('validated');
     }

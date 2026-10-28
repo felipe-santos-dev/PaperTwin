@@ -2,7 +2,7 @@
  * Geometria da MP1, em metros.
  *
  * Os valores vêm do protótipo navegável em `reference/prototypes/mp1-parte-seca-3d.html`,
- * validado pelo Felipe. As posições em X são derivadas umas das outras na mesma
+ * validado em campo. As posições em X são derivadas umas das outras na mesma
  * ordem do protótipo, para a cena continuar coerente se um trecho mudar de tamanho.
  *
  * Eixos: X corre no sentido do papel, Y é a altura a partir do piso da sala de

@@ -13,7 +13,7 @@
  *   naquele ponto do processo.
  *
  * Um ativo pode ter existência confirmada e posição suposta — é o caso do
- * scanner 1, que o Felipe confirmou estar na entrada do Speed Sizer, mas cuja
+ * scanner 1, confirmado em campo na entrada do Speed Sizer, mas cuja
  * distância exata até a pré-secagem ainda é chute do protótipo.
  */
 
@@ -37,7 +37,7 @@ const validated = (label: string, note: string): Provenance => ({
 const assumed = (label: string, note: string): Provenance => ({ source: 'assumed', label, note });
 
 const FROM_PROTOTYPE = 'Tirado do protótipo navegável; falta conferir no mapa de rolos.';
-const CONFIRMED = 'Conferido pelo Felipe contra a máquina.';
+const CONFIRMED = 'Conferido em campo contra a máquina.';
 
 /**
  * Proveniência de cada medida exportada por `geometry.ts`.

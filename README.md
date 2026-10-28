@@ -230,4 +230,4 @@ método declarado é pior do que prazo nenhum. A engenharia veio do curso; saber
 que perguntar à máquina veio do chão de fábrica.
 
 - GitHub: [felipe-santos-dev](https://github.com/felipe-santos-dev)
-- LinkedIn: <!-- TODO: preencher antes de publicar --> `https://www.linkedin.com/in/SEU-PERFIL`
+- LinkedIn: [felipe-santos-devv](https://www.linkedin.com/in/felipe-santos-devv/)

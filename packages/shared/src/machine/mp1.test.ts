@@ -27,6 +27,9 @@ const EPS = 1e-9;
 const distance2d = (a: MachineAsset, b: MachineAsset): number =>
   Math.hypot(a.position[0] - b.position[0], a.position[1] - b.position[1]);
 
+/** Nº do cilindro secador, extraído da tag. */
+const cylinderNumber = (tag: string): number => Number(/CS(\d+)/.exec(tag)?.[1]);
+
 describe('tags', () => {
   it('são únicas em toda a máquina', () => {
     const seen = new Map<string, number>();
@@ -52,6 +55,19 @@ describe('tags', () => {
     expect(mancal?.side).toBe('LA');
     expect(mancal?.driveGroup).toBe('G4');
     expect(assetByTag(MP1, 'MP1-SEC-G4-CS23')?.label).toBe('Cilindro secador 23');
+  });
+
+  it('numera o cilindro com dois dígitos, para a ordem alfabética bater com a numérica', () => {
+    expect(assetByTag(MP1, 'MP1-SEC-G1-CS01')).not.toBeNull();
+    expect(assetByTag(MP1, 'MP1-SEC-G1-CS1')).toBeNull();
+
+    // a API ordena por tag; sem o zero à esquerda isto daria CS1, CS10, …, CS2
+    const porTag = [...dryers].sort((a, b) => a.tag.localeCompare(b.tag)).map((d) => d.tag);
+    const porNúmero = [...dryers]
+      .sort((a, b) => cylinderNumber(a.tag) - cylinderNumber(b.tag))
+      .map((d) => d.tag);
+
+    expect(porTag).toEqual(porNúmero);
   });
 });
 

@@ -20,7 +20,45 @@ export interface VibrationReading {
 /** Estado atual de um ativo, derivado da última leitura e dos limites da norma. */
 export interface AssetStatus {
   readonly assetTag: AssetTag;
-  readonly zone: IsoZone;
-  readonly health: AssetHealth;
+  readonly zone: IsoZone | null;
+  readonly health: AssetHealth | null;
   readonly latest: VibrationReading | null;
+}
+
+/**
+ * Leituras agregadas numa janela de tempo, como `date_bin()` devolve.
+ *
+ * A média serve à tendência; o máximo é o que não pode ser perdido, porque um
+ * pico de vibração de poucos segundos some numa média de dez minutos.
+ */
+export interface VibrationBucket {
+  /** Início da janela, em ISO 8601. */
+  readonly bucketStart: string;
+  readonly samples: number;
+  readonly rmsAvgMmS: number;
+  readonly rmsMaxMmS: number;
+  readonly tempAvgC: number;
+  readonly envelopeMaxGe: number;
+}
+
+/** Tamanhos de janela aceitos pela API. */
+export const VIBRATION_BUCKETS = [
+  '1 minute',
+  '5 minutes',
+  '15 minutes',
+  '1 hour',
+  '6 hours',
+  '1 day',
+] as const;
+
+export type VibrationBucketSize = (typeof VIBRATION_BUCKETS)[number];
+
+/** Vida útil restante estimada a partir da tendência da vibração. */
+export interface RemainingLife {
+  /** Inclinação da tendência, em mm/s por dia. */
+  readonly trendMmSPerDay: number;
+  /** Dias até cruzar a fronteira C→D, ou `null` se a tendência não leva lá. */
+  readonly daysToZoneD: number | null;
+  /** Quantas janelas entraram no ajuste. */
+  readonly samples: number;
 }

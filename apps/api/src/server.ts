@@ -1,8 +1,23 @@
 import { buildApp } from './app';
+import { openDatabase } from './db';
+import { seedDatabase } from './db/seed';
 import { loadEnv } from './env';
 
 const env = loadEnv();
-const app = await buildApp(env);
+const db = await openDatabase(env);
+await db.migrate();
+
+const app = await buildApp(env, db);
+
+if (env.SEED_ON_BOOT) {
+  const seeded = await seedDatabase(db);
+  app.log.info(
+    seeded,
+    seeded.skippedReadings
+      ? 'ativos semeados; série de vibração já existia'
+      : 'ativos semeados e série de vibração gerada',
+  );
+}
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.once(signal, () => {

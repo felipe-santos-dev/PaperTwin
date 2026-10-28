@@ -18,6 +18,12 @@ const envSchema = z.object({
     blankAsUndefined,
     z.string().refine(isUrl, 'DATABASE_URL precisa ser uma URL de conexão válida').optional(),
   ),
+  /** Diretório do PGlite. Vazio mantém o banco em memória. */
+  PGLITE_DIR: z.preprocess(blankAsUndefined, z.string().min(1).optional()),
+  /** Semeia os ativos e gera a série simulada ao subir. */
+  SEED_ON_BOOT: z
+    .preprocess((v) => (v === undefined ? undefined : v === 'true' || v === '1'), z.boolean())
+    .default(true),
 });
 
 export type Env = z.infer<typeof envSchema>;

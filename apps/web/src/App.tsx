@@ -1,11 +1,15 @@
 import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
 import { assetByTag, MP1, type AssetTag } from '@mp1/shared';
-import { fetchHealth } from './api/client';
+import { fetchAsset, fetchHealth, fetchVibration } from './api/client';
 import type { SceneState } from './scene/sceneState';
 import { DEFAULT_VIEW, SCENE_VIEWS, type SceneView } from './scene/views';
-import { AssetCard } from './ui/AssetCard';
+import { AssetPanel } from './ui/AssetPanel';
 import { StatusPill } from './ui/StatusPill';
 import { useApiHealth } from './ui/useApiHealth';
+import { useAssetDetail, type AssetFetchers } from './ui/useAssetDetail';
+
+/** Estável entre renders, para o hook não refazer a busca à toa. */
+const FETCHERS: AssetFetchers = { fetchAsset, fetchVibration };
 
 /**
  * O three.js só é baixado quando a cena entra — é cerca de 1 MB que não pesa no
@@ -41,6 +45,7 @@ export function App() {
   );
 
   const selected = selectedTag ? assetByTag(MP1, selectedTag) : null;
+  const assetData = useAssetDetail(selectedTag, FETCHERS);
 
   return (
     <div className="flex h-full flex-col">
@@ -122,8 +127,9 @@ export function App() {
           </Suspense>
 
           {selected ? (
-            <AssetCard
+            <AssetPanel
               asset={selected}
+              data={assetData}
               onClose={() => {
                 select(null);
               }}

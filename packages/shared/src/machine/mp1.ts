@@ -189,7 +189,9 @@ function dryerCylinders(
       const group = driveGroupOfCylinder(number);
       cylinders.push(
         body({
-          tag: `MP1-SEC-${group}-CS${String(number)}`,
+          // dois dígitos para a tag ordenar certo: sem o zero à esquerda,
+          // a ordem alfabética daria CS1, CS10, CS11, …, CS2
+          tag: `MP1-SEC-${group}-CS${String(number).padStart(2, '0')}`,
           kind: 'dryer-cylinder',
           label: `Cilindro secador ${String(number)}`,
           section,

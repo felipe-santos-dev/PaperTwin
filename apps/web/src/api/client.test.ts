@@ -7,6 +7,8 @@ const payload: HealthResponse = {
   service: 'mp1-twin-api',
   version: '0.0.0',
   uptimeS: 12,
+  database: 'pglite',
+  databaseUp: true,
 };
 
 afterEach(() => {

@@ -8,6 +8,8 @@ const ok: HealthResponse = {
   service: 'mp1-twin-api',
   version: '0.0.0',
   uptimeS: 3,
+  database: 'pglite',
+  databaseUp: true,
 };
 
 describe('useApiHealth', () => {

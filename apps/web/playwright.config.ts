@@ -16,10 +16,23 @@ const baseURL = `http://localhost:${String(PORT)}`;
  */
 export default defineConfig({
   testDir: './e2e',
-  fullyParallel: true,
   forbidOnly: Boolean(process.env['CI']),
   retries: process.env['CI'] ? 2 : 0,
   reporter: process.env['CI'] ? [['github'], ['list']] : [['list']],
+
+  /**
+   * Um processo de cada vez.
+   *
+   * Sem GPU o Chromium desenha a cena por software, no mesmo processador que
+   * roda o teste. Em paralelo, as instâncias se estrangulam e o clique num
+   * botão comum chega a estourar trinta segundos — a falha parece do teste,
+   * mas é de capacidade.
+   */
+  workers: 1,
+  fullyParallel: false,
+
+  /** Carregar a cena por software é lento mesmo em série. */
+  timeout: 90_000,
 
   use: {
     baseURL,

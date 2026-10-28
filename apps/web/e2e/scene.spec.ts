@@ -124,6 +124,40 @@ test.describe('cena 3D', () => {
     await expect(painel).toContainText(ativo?.side === 'LA' ? 'lado acionamento' : 'lado comando');
   });
 
+  test('o painel do mancal mostra a vibração vinda da API', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/');
+    const canvas = await waitForScene(page);
+
+    await page.getByRole('button', { name: /Mancais e juntas/ }).click();
+    await page.waitForTimeout(2000);
+
+    const box = await canvas.boundingBox();
+    if (!box) throw new Error('canvas sem área');
+
+    const painel = page.getByRole('complementary');
+    for (const [fx, fy] of [
+      [0.5, 0.5],
+      [0.42, 0.42],
+      [0.58, 0.58],
+      [0.35, 0.6],
+    ] as const) {
+      await page.mouse.click(box.x + box.width * fx, box.y + box.height * fy);
+      if (await painel.isVisible()) break;
+    }
+    await expect(painel).toBeVisible();
+
+    // a zona só aparece depois de a API responder — é a fatia vertical inteira
+    await expect(painel).toContainText(/ISO 20816 · zona [ABCD]/, { timeout: 15_000 });
+    await expect(painel.getByRole('img', { name: /Vibração RMS/ })).toBeVisible();
+    await expect(painel).toContainText(/mm\/s/);
+
+    // e o gráfico tem a sua alternativa em tabela
+    await painel.getByRole('button', { name: 'Ver como tabela' }).click();
+    await expect(painel.getByRole('table')).toBeVisible();
+    expect(await painel.locator('tbody tr').count()).toBeGreaterThan(10);
+  });
+
   test('clicar fora desfaz a seleção', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto('/');

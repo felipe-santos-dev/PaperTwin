@@ -66,6 +66,47 @@ schema não usa nada que seja exclusivo da extensão.
 npm run db:up
 ```
 
+## Vida útil restante (RUL)
+
+O painel do mancal mostra um prazo até a zona D. Ele é uma **estimativa**, e o
+método está exposto na própria tela porque um prazo sem procedência é pior do que
+prazo nenhum — alguém o trata como medição e programa parada em cima dele.
+
+**Como é calculado** ([`rul.ts`](packages/shared/src/rul.ts)):
+
+1. Uma reta por mínimos quadrados sobre a vibração RMS média das janelas da série.
+2. A reta é estendida até a **fronteira C→D da ISO 20816-3** do ativo.
+3. O prazo é a distância, em dias, do valor **ajustado** no instante mais recente
+   até essa fronteira — não da última leitura crua, para um pico isolado não
+   encurtar a previsão sozinho.
+
+**O que ele não é, e por quê:**
+
+- **Não é previsão de falha.** Cruzar para a zona D é cruzar um limite da norma,
+  não quebrar. A norma diz "severidade suficiente para causar dano", não "falha
+  nesta data".
+- **Ele subestima, de propósito.** Degradação de rolamento acelera, e uma reta
+  ajustada a uma curva que sobe cada vez mais rápido projeta tarde demais. A data
+  real chega **antes** da estimada.
+- **Não dá número quando a tendência é plana ou de queda.** Nesses casos a reta
+  nunca cruza a fronteira, e a resposta é `null` em vez de um número enorme que
+  pareceria informação.
+- **O nº de janelas do ajuste vai junto** (`samples`), para quem lê poder
+  descartar uma estimativa feita com três pontos.
+
+Um modelo melhor — exponencial, ou sobre o envelope em vez da velocidade — é
+trabalho de outra fase. O que não pode é um número sem método declarado.
+
+## Links diretos
+
+`?asset=<tag>` abre a cena já enquadrada no ativo e com o painel aberto, e clicar
+num ativo grava a tag na URL. É o que transforma "olha esse mancal" num link em
+vez de um roteiro de cliques.
+
+```
+http://localhost:5173/?asset=MP1-SEC-G4-CS23-MLA
+```
+
 ## Fases
 
 - **Fase 0 — fundação** ✅ monorepo, ferramental, `GET /health`, esboço da cena.

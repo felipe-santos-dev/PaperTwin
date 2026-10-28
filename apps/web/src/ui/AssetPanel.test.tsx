@@ -92,11 +92,16 @@ describe('AssetPanel', () => {
     expect(screen.getByText('agora')).toBeInTheDocument();
   });
 
-  it('expõe a limitação do ajuste junto com o número', () => {
+  it('expõe o método e a limitação junto com o número', () => {
     render(<AssetPanel asset={bearing} data={ready()} onClose={() => undefined} />);
-    // o número sem a ressalva seria pior do que número nenhum
-    expect(screen.getByText(/a data real chega antes/)).toBeInTheDocument();
+
+    // o número sem a procedência seria pior do que número nenhum
+    expect(screen.getByText('estimativa')).toBeInTheDocument();
     expect(screen.getByText(/\+1\.05 mm\/s por dia/)).toBeInTheDocument();
+    expect(screen.getByText(/mínimos quadrados sobre 5 janelas/)).toBeInTheDocument();
+    expect(screen.getByText(/fronteira C→D/)).toBeInTheDocument();
+    expect(screen.getByText(/a data real chega antes/)).toBeInTheDocument();
+    expect(screen.getByText(/não é medição nem previsão de falha/i)).toBeInTheDocument();
   });
 
   it('não promete prazo quando a tendência não leva à zona D', () => {
@@ -118,7 +123,8 @@ describe('AssetPanel', () => {
       />,
     );
 
-    expect(screen.getByText(/não leva à zona D/)).toBeInTheDocument();
+    expect(screen.getByText(/não cruza a fronteira: não há prazo a dar/)).toBeInTheDocument();
+    expect(screen.queryByText(/a data real chega antes/)).not.toBeInTheDocument();
     expect(screen.getByText('—')).toBeInTheDocument();
   });
 

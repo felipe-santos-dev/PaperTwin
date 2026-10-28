@@ -5,6 +5,7 @@ import { Bloom, EffectComposer } from '@react-three/postprocessing';
 import { ACESFilmicToneMapping, PMREMGenerator, Vector3 } from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { Machine } from './machine/Machine';
+import { TestHook } from './TestHook';
 import { SceneProvider, type SceneState } from './sceneState';
 import type { SceneView } from './views';
 
@@ -193,6 +194,7 @@ export default function MachineScene({ view, state }: MachineSceneProps) {
         <Bloom intensity={0.3} luminanceThreshold={0.93} luminanceSmoothing={0.4} mipmapBlur />
       </EffectComposer>
 
+      <TestHook />
       {showStats() && <Stats />}
     </Canvas>
   );

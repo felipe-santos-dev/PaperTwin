@@ -4,11 +4,17 @@ import { assetByTag, MP1 } from '@mp1/shared';
 /**
  * A cena só quebra de verdade no navegador: um material descartado cedo demais,
  * uma geometria sem índice ou um chunk que não carrega não aparecem no `tsc`
- * nem no Vitest. Estes testes rodam contra o build de produção.
+ * nem no Vitest. Estes testes rodam contra o build.
  */
+
+/** Mancal usado nos testes de clique — o mesmo que degrada na simulação. */
+const BEARING = 'MP1-SEC-G4-CS23-MLA';
 
 /** Ruído conhecido do ambiente, que não indica defeito na aplicação. */
 const IGNORED = [/Download the React DevTools/i, /favicon/i];
+
+// `window.__twin` vem declarado em src/scene/TestHook.tsx, no mesmo programa
+// do TypeScript — redeclarar aqui só criaria duas versões do mesmo tipo.
 
 function collectProblems(page: Page): { errors: string[]; failures: string[] } {
   const errors: string[] = [];
@@ -32,37 +38,52 @@ function collectProblems(page: Page): { errors: string[]; failures: string[] } {
   return { errors, failures };
 }
 
-/** Espera a cena sair do estado de carregamento e começar a desenhar. */
+/** Espera a cena sair do carregamento e o gancho de projeção aparecer. */
 async function waitForScene(page: Page) {
   const canvas = page.locator('canvas');
   await expect(canvas).toBeVisible({ timeout: 60_000 });
 
-  // o canvas existe antes de ter conteúdo; espera um quadro de verdade
   await page.waitForFunction(
     () => {
       const element = document.querySelector('canvas');
-      return element !== null && element.width > 0 && element.height > 0;
+      return element !== null && element.width > 0 && element.height > 0 && Boolean(window.__twin);
     },
     undefined,
     { timeout: 60_000 },
   );
 
+  // o voo da câmera leva 1,4 s; projetar antes dele terminar dá a posição errada
+  await page.waitForTimeout(2200);
   return canvas;
 }
 
-test.describe('cena 3D', () => {
-  test('carrega sem erro no console e sem requisição falha', async ({ page }) => {
+/** Clica no ativo onde ele realmente está, em vez de numa coordenada fixa. */
+async function clickAsset(page: Page, tag: string) {
+  const point = await page.evaluate((t) => window.__twin?.screenPointOf(t) ?? null, tag);
+
+  expect(point, `gancho de teste indisponível para ${tag}`).not.toBeNull();
+  if (!point) return;
+  expect(point.onScreen, `${tag} não está enquadrado`).toBe(true);
+
+  await page.mouse.click(point.x, point.y);
+}
+
+test.beforeEach(async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+});
+
+test.describe('carregamento', () => {
+  test('a cena carrega sem erro no console e sem requisição falha', async ({ page }) => {
     const { errors, failures } = collectProblems(page);
 
     await page.goto('/');
     await waitForScene(page);
-    await page.waitForTimeout(2500);
 
     expect(errors, 'console limpo').toEqual([]);
     expect(failures, 'nenhuma requisição falha').toEqual([]);
   });
 
-  test('não baixa o three.js antes da cena entrar', async ({ page }) => {
+  test('o three.js não é baixado antes de a cena entrar', async ({ page }) => {
     const scripts: string[] = [];
     page.on('request', (request) => {
       if (request.resourceType() === 'script') scripts.push(request.url());
@@ -71,117 +92,106 @@ test.describe('cena 3D', () => {
     await page.goto('/');
     await waitForScene(page);
 
-    // o pedaço do three existe, mas não pode estar entre os primeiros scripts:
-    // o index e o react vêm antes dele.
     const three = scripts.findIndex((url) => /\/three-[^/]+\.js$/.test(url));
     const entry = scripts.findIndex((url) => /\/index-[^/]+\.js$/.test(url));
 
     expect(entry, 'chunk de entrada requisitado').toBeGreaterThanOrEqual(0);
     expect(three, 'chunk do three requisitado ao abrir a cena').toBeGreaterThan(entry);
   });
+});
 
-  test('clicar num mancal abre o painel com a tag do ativo', async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto('/');
-    const canvas = await waitForScene(page);
-
-    // vista que enche a tela de mancais, para o clique ter onde cair
-    await page.getByRole('button', { name: /Mancais e juntas/ }).click();
-    await page.waitForTimeout(2000); // o voo da câmera leva 1,4 s
-
-    const box = await canvas.boundingBox();
-    expect(box).not.toBeNull();
-    if (!box) return;
+test.describe('seleção por URL', () => {
+  test('`?asset=` abre o painel do ativo e enquadra a câmera nele', async ({ page }) => {
+    await page.goto(`/?asset=${BEARING}`);
+    await waitForScene(page);
 
     const painel = page.getByRole('complementary');
+    await expect(painel).toBeVisible();
+    await expect(painel.getByText(BEARING)).toBeVisible();
 
-    // alguns pontos do centro da tela; o primeiro que acertar um mancal resolve
-    const alvos = [
-      [0.5, 0.5],
-      [0.42, 0.42],
-      [0.58, 0.58],
-      [0.35, 0.6],
-      [0.65, 0.35],
-    ] as const;
+    // enquadrada quer dizer visível: o gancho confirma que o ativo está na tela
+    const point = await page.evaluate((t) => window.__twin?.screenPointOf(t) ?? null, BEARING);
+    expect(point?.onScreen).toBe(true);
+  });
 
-    for (const [fx, fy] of alvos) {
-      await page.mouse.click(box.x + box.width * fx, box.y + box.height * fy);
-      if (await painel.isVisible()) break;
-    }
+  test('uma tag inventada na URL não trava a cena', async ({ page }) => {
+    const { errors } = collectProblems(page);
+
+    await page.goto('/?asset=MP1-NAO-EXISTE');
+    await waitForScene(page);
+
+    await expect(page.getByRole('complementary')).toBeHidden();
+    expect(errors).toEqual([]);
+  });
+
+  test('clicar num ativo grava a tag na URL', async ({ page }) => {
+    await page.goto(`/?asset=${BEARING}`);
+    await waitForScene(page);
+
+    // dentro do painel: fora dele, "Fechar" também casaria com "Fechar portas"
+    await page.getByRole('complementary').getByRole('button', { name: 'Fechar' }).click();
+    await expect(page).toHaveURL((url) => !url.searchParams.has('asset'));
+
+    await clickAsset(page, BEARING);
+    await expect(page).toHaveURL((url) => url.searchParams.get('asset') === BEARING);
+  });
+});
+
+test.describe('interação com a cena', () => {
+  test('clicar num mancal abre o painel com a tag do ativo', async ({ page }) => {
+    // abre enquadrado no mancal e fecha o painel, para o clique partir do zero
+    await page.goto(`/?asset=${BEARING}`);
+    await waitForScene(page);
+
+    const painel = page.getByRole('complementary');
+    await painel.getByRole('button', { name: 'Fechar' }).click();
+    await expect(painel).toBeHidden();
+
+    await clickAsset(page, BEARING);
 
     await expect(painel, 'painel do ativo aberto').toBeVisible();
+    await expect(painel.getByText(BEARING)).toBeVisible();
 
-    const tag = (await painel.locator('p').first().innerText()).trim();
-
-    // a tag mostrada tem de existir no modelo e ser mesmo de um mancal
-    const ativo = assetByTag(MP1, tag);
-    expect(ativo, `tag ${tag} não existe no modelo`).not.toBeNull();
+    const ativo = assetByTag(MP1, BEARING);
     expect(ativo?.kind).toBe('bearing');
-    expect(tag).toMatch(/-M(LA|LC)$/);
-
-    // e o painel descreve o ativo que a tag nomeia
     await expect(painel.getByRole('heading')).toContainText('Mancal');
-    await expect(painel).toContainText(ativo?.side === 'LA' ? 'lado acionamento' : 'lado comando');
+    await expect(painel).toContainText('lado acionamento');
+  });
+
+  test('clicar fora desfaz a seleção', async ({ page }) => {
+    await page.goto(`/?asset=${BEARING}`);
+    const canvas = await waitForScene(page);
+
+    const painel = page.getByRole('complementary');
+    await expect(painel).toBeVisible();
+
+    // só os mancais respondem ao clique; qualquer outro ponto da cena é "fora"
+    const box = await canvas.boundingBox();
+    if (!box) throw new Error('canvas sem área');
+    await page.mouse.click(box.x + box.width * 0.5, box.y + 8);
+
+    await expect(painel).toBeHidden();
+    await expect(page).toHaveURL((url) => !url.searchParams.has('asset'));
   });
 
   test('o painel do mancal mostra a vibração vinda da API', async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto('/');
-    const canvas = await waitForScene(page);
-
-    await page.getByRole('button', { name: /Mancais e juntas/ }).click();
-    await page.waitForTimeout(2000);
-
-    const box = await canvas.boundingBox();
-    if (!box) throw new Error('canvas sem área');
+    await page.goto(`/?asset=${BEARING}`);
+    await waitForScene(page);
 
     const painel = page.getByRole('complementary');
-    for (const [fx, fy] of [
-      [0.5, 0.5],
-      [0.42, 0.42],
-      [0.58, 0.58],
-      [0.35, 0.6],
-    ] as const) {
-      await page.mouse.click(box.x + box.width * fx, box.y + box.height * fy);
-      if (await painel.isVisible()) break;
-    }
-    await expect(painel).toBeVisible();
 
     // a zona só aparece depois de a API responder — é a fatia vertical inteira
-    await expect(painel).toContainText(/ISO 20816 · zona [ABCD]/, { timeout: 15_000 });
+    await expect(painel).toContainText(/ISO 20816 · zona [ABCD]/, { timeout: 20_000 });
     await expect(painel.getByRole('img', { name: /Vibração RMS/ })).toBeVisible();
-    await expect(painel).toContainText(/mm\/s/);
+    await expect(painel).toContainText('mm/s');
+
+    // o mancal que degrada na simulação termina em zona D
+    await expect(painel).toContainText('zona D');
+    await expect(painel.getByRole('status')).toContainText('Crítico');
 
     // e o gráfico tem a sua alternativa em tabela
     await painel.getByRole('button', { name: 'Ver como tabela' }).click();
     await expect(painel.getByRole('table')).toBeVisible();
     expect(await painel.locator('tbody tr').count()).toBeGreaterThan(10);
-  });
-
-  test('clicar fora desfaz a seleção', async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto('/');
-    const canvas = await waitForScene(page);
-
-    await page.getByRole('button', { name: /Mancais e juntas/ }).click();
-    await page.waitForTimeout(2000);
-
-    const box = await canvas.boundingBox();
-    if (!box) throw new Error('canvas sem área');
-
-    const painel = page.getByRole('complementary');
-    for (const [fx, fy] of [
-      [0.5, 0.5],
-      [0.42, 0.42],
-      [0.58, 0.58],
-    ] as const) {
-      await page.mouse.click(box.x + box.width * fx, box.y + box.height * fy);
-      if (await painel.isVisible()) break;
-    }
-    await expect(painel).toBeVisible();
-
-    // o topo da cena é céu: clique no vazio
-    await page.mouse.click(box.x + box.width * 0.5, box.y + 12);
-    await expect(painel).toBeHidden();
   });
 });

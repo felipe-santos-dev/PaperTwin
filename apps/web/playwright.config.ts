@@ -59,7 +59,15 @@ export default defineConfig({
       timeout: 120_000,
     },
     {
-      command: `npm run preview -- --port ${String(PORT)} --strictPort`,
+      /**
+       * Constrói em modo `test` e serve o resultado.
+       *
+       * Continua sendo um build de produção — minificado, com o mesmo code
+       * splitting — e é isso que os testes de carregamento verificam. O que o
+       * modo muda é só `import.meta.env.MODE`, que libera o gancho de projeção
+       * usado para clicar num ativo pela posição real dele na tela.
+       */
+      command: `npm run build:test && npm run preview -- --port ${String(PORT)} --strictPort`,
       url: baseURL,
       reuseExistingServer: !process.env['CI'],
       timeout: 180_000,

@@ -107,5 +107,29 @@ export const SCENE_VIEWS: readonly SceneView[] = [
 /** Enquadramento usado quando a cena abre. */
 export const DEFAULT_VIEW = SCENE_VIEWS[0] as SceneView;
 
+/**
+ * Um enquadramento montado em volta de um ativo, para abrir um link direto nele.
+ *
+ * A câmera fica do mesmo lado da máquina em que o ativo está: um mancal do lado
+ * acionamento só é visível de Z negativo, e enquadrá-lo do lado errado mostraria
+ * a estrutura na frente dele.
+ */
+export function viewForAsset(asset: {
+  readonly tag: string;
+  readonly label: string;
+  readonly position: readonly [number, number, number];
+}): SceneView {
+  const [x, y, z] = asset.position;
+  const side = z >= 0 ? 1 : -1;
+
+  return {
+    id: `asset:${asset.tag}`,
+    label: asset.label,
+    hint: asset.tag,
+    position: [x - 2.5, y + 2, z + side * 6.5],
+    target: [x, y, z],
+  };
+}
+
 /** Onde termina a máquina, para o alcance da câmera e do nevoeiro. */
 export const MACHINE_END_X = POST_DRYER_HOOD.to;

@@ -155,7 +155,7 @@ function Readings({ detail, series }: { detail: AssetDetail; series: VibrationSe
       <Tile label="Temperatura" value={latest.tempC.toFixed(0)} unit="°C" />
       <Tile label="Envelope" value={latest.envelopeGe.toFixed(1)} unit="gE" />
       <Tile
-        label="Até a zona D"
+        label="Até a zona D · est."
         value={days === null ? '—' : days === 0 ? 'agora' : `~${days.toFixed(0)}`}
         unit={days !== null && days > 0 ? 'dias' : ''}
       />
@@ -186,24 +186,42 @@ function Tile({
 }
 
 /**
- * O número de vida útil vem com a sua limitação ao lado.
+ * O número de vida útil vem com o método e a limitação ao lado.
  *
- * A reta subestima, porque a degradação de rolamento acelera — quem lê precisa
- * saber que a data real chega antes, e não depois.
+ * Um prazo sem procedência é pior do que prazo nenhum: alguém o trata como
+ * medição e programa parada em cima dele. Então a tela diz o que foi feito —
+ * reta por mínimos quadrados sobre as janelas, estendida até a fronteira C→D
+ * da ISO 20816-3 — e diz de que lado ela erra.
  */
 function RemainingLifeNote({ life }: { life: RemainingLife }) {
   return (
-    <p className="mt-3 text-[11px] text-mill-muted">
-      Tendência de{' '}
-      <span className="font-mono text-mill-fg">
-        {life.trendMmSPerDay >= 0 ? '+' : ''}
-        {life.trendMmSPerDay.toFixed(2)} mm/s por dia
-      </span>{' '}
-      sobre {life.samples} janelas.{' '}
-      {life.daysToZoneD === null
-        ? 'A tendência não leva à zona D.'
-        : 'Ajuste linear: como o defeito acelera, a data real chega antes.'}
-    </p>
+    <details className="mt-3 text-[11px] text-mill-muted">
+      <summary className="cursor-pointer list-none">
+        <span className="rounded bg-white/5 px-1.5 py-0.5 tracking-wide uppercase">estimativa</span>{' '}
+        tendência de{' '}
+        <span className="font-mono text-mill-fg">
+          {life.trendMmSPerDay >= 0 ? '+' : ''}
+          {life.trendMmSPerDay.toFixed(2)} mm/s por dia
+        </span>{' '}
+        · como foi calculado
+      </summary>
+
+      <div className="mt-1.5 space-y-1.5 border-l border-mill-line pl-2.5">
+        <p>
+          Reta por mínimos quadrados sobre {life.samples} janelas da vibração RMS, estendida até a
+          fronteira C→D da ISO 20816-3.
+        </p>
+        {life.daysToZoneD === null ? (
+          <p>A tendência é plana ou de queda, então não cruza a fronteira: não há prazo a dar.</p>
+        ) : (
+          <p>
+            A reta <strong className="font-medium text-mill-fg">subestima</strong>: defeito de
+            rolamento acelera, então a data real chega antes da estimada.
+          </p>
+        )}
+        <p>Não é medição nem previsão de falha — é extrapolação da tendência recente.</p>
+      </div>
+    </details>
   );
 }
 

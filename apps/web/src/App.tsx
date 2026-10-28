@@ -2,11 +2,12 @@ import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
 import { assetByTag, MP1, type AssetTag } from '@mp1/shared';
 import { fetchAsset, fetchHealth, fetchVibration } from './api/client';
 import type { SceneState } from './scene/sceneState';
-import { DEFAULT_VIEW, SCENE_VIEWS, type SceneView } from './scene/views';
+import { DEFAULT_VIEW, SCENE_VIEWS, viewForAsset, type SceneView } from './scene/views';
 import { AssetPanel } from './ui/AssetPanel';
 import { StatusPill } from './ui/StatusPill';
 import { useApiHealth } from './ui/useApiHealth';
 import { useAssetDetail, type AssetFetchers } from './ui/useAssetDetail';
+import { useAssetSelection } from './ui/useAssetUrl';
 
 /** Estável entre renders, para o hook não refazer a busca à toa. */
 const FETCHERS: AssetFetchers = { fetchAsset, fetchVibration };
@@ -26,15 +27,18 @@ const API_LABEL = {
 export function App() {
   const api = useApiHealth(fetchHealth);
 
-  const [view, setView] = useState<SceneView>(DEFAULT_VIEW);
-  const [selectedTag, setSelectedTag] = useState<AssetTag | null>(null);
+  const { selectedTag, selected, select, initialTag } = useAssetSelection();
+
+  /** Abrir por `?asset=` já enquadra a câmera no ativo pedido. */
+  const [view, setView] = useState<SceneView>(() => {
+    const asset = initialTag ? assetByTag(MP1, initialTag) : null;
+    return asset ? viewForAsset(asset) : DEFAULT_VIEW;
+  });
+
   const [hoveredTag, setHoveredTag] = useState<AssetTag | null>(null);
   const [playing, setPlaying] = useState(true);
   const [doorsOpen, setDoorsOpen] = useState(true);
 
-  const select = useCallback((tag: AssetTag | null) => {
-    setSelectedTag(tag);
-  }, []);
   const hover = useCallback((tag: AssetTag | null) => {
     setHoveredTag(tag);
   }, []);
@@ -44,7 +48,6 @@ export function App() {
     [selectedTag, select, hoveredTag, hover, playing, doorsOpen],
   );
 
-  const selected = selectedTag ? assetByTag(MP1, selectedTag) : null;
   const assetData = useAssetDetail(selectedTag, FETCHERS);
 
   return (

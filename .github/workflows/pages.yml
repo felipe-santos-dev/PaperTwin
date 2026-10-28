@@ -1,0 +1,68 @@
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Uma publicação por vez, e sem cancelar a que está no ar: interromper um
+# deploy no meio deixa o site num estado que ninguém escolheu.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '24'
+
+jobs:
+  build:
+    name: Build da web
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      # O site vive em /<nome-do-repo>/, não na raiz do domínio.
+      # VITE_API_URL vem de uma variável do repositório (Settings > Variables).
+      # Sem ela o passo a remove, para o app cair no padrão em vez de uma
+      # string vazia, que apontaria o fetch para o próprio github.io.
+      - name: Build
+        run: |
+          if [ -z "${VITE_API_URL}" ]; then unset VITE_API_URL; fi
+          npm run build --workspace @mp1/web
+        env:
+          VITE_BASE: /${{ github.event.repository.name }}/
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: apps/web/dist
+
+  deploy:
+    name: Publicar
+    runs-on: ubuntu-latest
+    needs: build
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

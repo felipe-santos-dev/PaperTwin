@@ -6,8 +6,9 @@
   "description": "Interface do gêmeo digital da MP1: cena 3D navegável e painel de monitoramento.",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "build:test": "vite build --mode test",
+    "demo:data": "npm run demo:data --workspace @mp1/api",
+    "build": "npm run demo:data && vite build",
+    "build:test": "npm run demo:data && vite build --mode test",
     "preview": "vite preview",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",

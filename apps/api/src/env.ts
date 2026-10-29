@@ -20,6 +20,13 @@ const envSchema = z.object({
   ),
   /** Diretório do PGlite. Vazio mantém o banco em memória. */
   PGLITE_DIR: z.preprocess(blankAsUndefined, z.string().min(1).optional()),
+  /**
+   * Origens autorizadas a chamar a API, separadas por vírgula.
+   *
+   * Vazio libera qualquer origem, o que serve em desenvolvimento e **não**
+   * serve em produção: a API de lá precisa aceitar só o endereço do Pages.
+   */
+  CORS_ORIGINS: z.preprocess(blankAsUndefined, z.string().min(1).optional()),
   /** Semeia os ativos e gera a série simulada ao subir. */
   SEED_ON_BOOT: z
     .preprocess((v) => (v === undefined ? undefined : v === 'true' || v === '1'), z.boolean())
@@ -27,6 +34,22 @@ const envSchema = z.object({
 });
 
 export type Env = z.infer<typeof envSchema>;
+
+/**
+ * A lista de origens do CORS, já separada.
+ *
+ * `true` reflete a origem de quem chamou — conveniente em desenvolvimento,
+ * inaceitável em produção, onde a lista vem de `CORS_ORIGINS`.
+ */
+export function corsOrigins(env: Env): string[] | true {
+  if (!env.CORS_ORIGINS) return true;
+
+  const origins = env.CORS_ORIGINS.split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  return origins.length > 0 ? origins : true;
+}
 
 /**
  * Lê e valida a configuração do processo.

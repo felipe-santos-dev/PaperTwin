@@ -29,3 +29,6 @@ test-results/
 playwright-report/
 blob-report/
 playwright/.cache/
+
+# Instantaneo da API gerado no build (apps/web/package.json -> demo:data)
+apps/web/public/demo/

@@ -20,13 +20,24 @@ const STYLES: Record<AssetHealth, Style> = {
   },
 };
 
+/**
+ * Ausência de leitura não é uma quarta severidade: é a falta de base para dizer
+ * qualquer uma das três. Por isso tem o cinza do texto secundário, e não uma cor
+ * do semáforo.
+ */
+const NO_DATA: Style = {
+  label: 'Sem dados',
+  className: 'bg-white/5 text-mill-muted ring-white/10',
+};
+
 export interface StatusPillProps {
-  readonly health: AssetHealth;
+  /** `null` quando não há leitura — mostra "Sem dados", nunca uma severidade. */
+  readonly health: AssetHealth | null;
 }
 
 /** Selo de severidade de um ativo, derivado da zona da ISO 20816. */
 export function StatusPill({ health }: StatusPillProps) {
-  const style = STYLES[health];
+  const style = health === null ? NO_DATA : STYLES[health];
 
   return (
     <span

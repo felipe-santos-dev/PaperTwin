@@ -3,7 +3,7 @@ import cors from '@fastify/cors';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
 import type { Database } from './db';
-import { SERVICE_VERSION, type Env } from './env';
+import { corsOrigins, SERVICE_VERSION, type Env } from './env';
 import { assetRoutes } from './routes/assets';
 import { healthRoutes } from './routes/health';
 import { SHARED_SCHEMAS } from './routes/schemas';
@@ -41,7 +41,7 @@ export async function buildApp(env: Env, db: Database): Promise<FastifyInstance>
     await db.close();
   });
 
-  await app.register(cors, { origin: true });
+  await app.register(cors, { origin: corsOrigins(env) });
 
   for (const schema of SHARED_SCHEMAS) await Promise.resolve(app.addSchema(schema));
 

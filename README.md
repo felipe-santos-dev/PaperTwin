@@ -218,6 +218,84 @@ Caixa de entrada e formação estão declaradas como seções mas sem ativos. O
 protótipo da parte úmida usa um referencial próprio, e amarrar os dois eixos
 depende do mapa de rolos.
 
+## Deploy
+
+A web está no **GitHub Pages**, que serve arquivo estático e nada mais. A API
+precisa de um host Node e de um Postgres — e enquanto ela não existe, o site
+funciona em **modo de demonstração**.
+
+### Modo de demonstração
+
+No build, a própria API sobe contra o PGlite e as respostas dela são gravadas em
+`apps/web/public/demo/`, espelhando as rotas:
+
+```
+GET /assets                 ->  demo/assets.json
+GET /assets/:tag            ->  demo/assets/<tag>.json
+GET /assets/:tag/vibration  ->  demo/assets/<tag>/vibration.json
+```
+
+São 222 arquivos, cerca de 970 kB, carregados sob demanda. O instantâneo **não é
+gerado por um segundo código**: é a API de verdade, com as mesmas migrations, a
+mesma semeadura e o `date_bin()` do Postgres. Uma reimplementação da agregação
+em TypeScript divergiria na primeira mudança de regra.
+
+Ao abrir, a web decide a fonte **uma vez**: tenta a API, cai para o instantâneo,
+e só então desiste. Alternar por requisição daria uma tela com metade dos números
+ao vivo e metade de ontem, sem nada indicando qual é qual.
+
+No modo de demonstração aparece a faixa **"Dados de demonstração · API offline"**.
+A série é sempre a janela padrão de 72 h — arquivo estático não responde a
+`?from=`.
+
+Os arquivos não são versionados: saem do `npm run build` e do `npm run build:test`.
+
+### O que falta criar
+
+| O quê                   | Para quê                                                                     | Sugestão                                                                     |
+| ----------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| **Postgres gerenciado** | A API em produção não pode usar o PGlite em memória: reiniciou, perdeu tudo. | Neon, Supabase ou Railway — o plano gratuito cobre de sobra 25 mil leituras. |
+| **Host Node**           | Rodar o contêiner da API.                                                    | Render, Railway ou Fly.io. Precisa aceitar um `Dockerfile` e expor HTTPS.    |
+
+A imagem está em [`apps/api/Dockerfile`](apps/api/Dockerfile) — dois estágios, a
+final roda sem privilégio e traz só o bundle. O `start` aplica as migrations e
+semeia **antes** de escutar, então o contêiner só aceita tráfego quando tem o que
+responder, e o `HEALTHCHECK` consulta `/health`, que por sua vez consulta o banco.
+
+### Variáveis a configurar
+
+No **host da API**:
+
+| Variável       | Valor                                 | Por quê                                                                           |
+| -------------- | ------------------------------------- | --------------------------------------------------------------------------------- |
+| `DATABASE_URL` | a string do Postgres gerenciado       | Vazio faz cair no PGlite, que num contêiner é memória volátil.                    |
+| `CORS_ORIGINS` | `https://felipe-santos-dev.github.io` | Vazio libera qualquer origem. Em produção, só o Pages.                            |
+| `HOST`         | `0.0.0.0`                             | Já vem no Dockerfile. Em contêiner, `127.0.0.1` só aceita conexão de dentro dele. |
+| `PORT`         | a porta que o host injetar            | A maioria injeta `PORT` automaticamente.                                          |
+| `SEED_ON_BOOT` | `true`                                | A série só é gerada se a tabela estiver vazia, então reiniciar não duplica dados. |
+| `LOG_LEVEL`    | `info`                                |                                                                                   |
+
+No **repositório do GitHub** (Settings → Secrets and variables → Actions →
+Variables), para o workflow do Pages:
+
+| Variável       | Valor                                                          |
+| -------------- | -------------------------------------------------------------- |
+| `VITE_API_URL` | a URL pública da API, ex. `https://papertwin-api.onrender.com` |
+
+Sem ela o build remove a variável e a web cai direto no modo de demonstração —
+que é o estado atual, e é por isso que o site funciona hoje.
+
+### A ordem importa
+
+1. Criar o Postgres e copiar a `DATABASE_URL`.
+2. Subir a API com as variáveis acima e conferir `/health` — tem de responder
+   `"databaseUp": true` e `"database": "postgres"`.
+3. Só então definir `VITE_API_URL` no repositório e republicar o Pages.
+
+Invertendo a ordem, a web aponta para uma API que ainda não existe e **não cai no
+modo de demonstração** — porque a decisão da fonte foi tomada na primeira
+sondagem, e uma URL que erra o DNS demora a falhar.
+
 ## Autor
 
 **Felipe Santos** — eletricista de manutenção industrial em fábrica de papel e

@@ -1,16 +1,23 @@
 import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
 import { assetByTag, MP1, type AssetTag } from '@mp1/shared';
 import { fetchAsset, fetchHealth, fetchVibration } from './api/client';
+import { fetchDemoAsset, fetchDemoHealth, fetchDemoVibration } from './api/demo';
+import { DataSourcePill } from './ui/DataSourcePill';
+import { useDataSource, type DataSourceProbes } from './ui/useDataSource';
 import type { SceneState } from './scene/sceneState';
 import { DEFAULT_VIEW, SCENE_VIEWS, viewForAsset, type SceneView } from './scene/views';
 import { AssetPanel } from './ui/AssetPanel';
-import { StatusPill } from './ui/StatusPill';
-import { useApiHealth } from './ui/useApiHealth';
 import { useAssetDetail, type AssetFetchers } from './ui/useAssetDetail';
 import { useAssetSelection } from './ui/useAssetUrl';
 
-/** Estável entre renders, para o hook não refazer a busca à toa. */
-const FETCHERS: AssetFetchers = { fetchAsset, fetchVibration };
+/** Estáveis entre renders, para os hooks não refazerem a busca à toa. */
+const LIVE_FETCHERS: AssetFetchers = { fetchAsset, fetchVibration };
+const DEMO_FETCHERS: AssetFetchers = {
+  fetchAsset: fetchDemoAsset,
+  fetchVibration: fetchDemoVibration,
+};
+
+const PROBES: DataSourceProbes = { probeApi: fetchHealth, probeDemo: fetchDemoHealth };
 
 /**
  * O three.js só é baixado quando a cena entra — é cerca de 1 MB que não pesa no
@@ -18,14 +25,15 @@ const FETCHERS: AssetFetchers = { fetchAsset, fetchVibration };
  */
 const MachineScene = lazy(() => import('./scene/MachineScene'));
 
-const API_LABEL = {
-  checking: 'consultando a API…',
-  up: 'API no ar',
-  down: 'API fora do ar',
+const SOURCE_LABEL = {
+  checking: 'procurando a API…',
+  live: 'API no ar',
+  demo: 'API fora do ar',
+  offline: 'sem fonte de dados',
 } as const;
 
 export function App() {
-  const api = useApiHealth(fetchHealth);
+  const source = useDataSource(PROBES);
 
   const { selectedTag, selected, select, initialTag } = useAssetSelection();
 
@@ -48,7 +56,14 @@ export function App() {
     [selectedTag, select, hoveredTag, hover, playing, doorsOpen],
   );
 
-  const assetData = useAssetDetail(selectedTag, FETCHERS);
+  /**
+   * A fonte é escolhida uma vez. Enquanto ela não se decide, nenhuma busca sai:
+   * pedir à API e ao instantâneo ao mesmo tempo mostraria o que chegasse antes.
+   */
+  const assetData = useAssetDetail(
+    source === 'checking' ? null : selectedTag,
+    source === 'demo' ? DEMO_FETCHERS : LIVE_FETCHERS,
+  );
 
   return (
     <div className="flex h-full flex-col">
@@ -62,9 +77,22 @@ export function App() {
             {MP1.label} · tags fictícias
           </p>
         </div>
-        <span className="ml-auto font-mono text-xs text-mill-muted">{API_LABEL[api]}</span>
-        <StatusPill health={api === 'up' ? 'normal' : api === 'down' ? 'critical' : 'attention'} />
+        <span className="ml-auto font-mono text-xs text-mill-muted">{SOURCE_LABEL[source]}</span>
+        <DataSourcePill source={source} />
       </header>
+
+      {source === 'demo' && (
+        <p
+          role="status"
+          className="flex items-center justify-center gap-2 border-b border-mill-attention/25 bg-mill-attention/8 px-5 py-1.5 text-xs text-mill-attention"
+        >
+          <span aria-hidden="true">●</span>
+          Dados de demonstração · API offline
+          <span className="text-mill-attention/70">
+            — instantâneo de 72 h gerado no build, não é leitura ao vivo
+          </span>
+        </p>
+      )}
 
       <div className="flex min-h-0 flex-1">
         <nav className="flex w-60 shrink-0 flex-col gap-4 border-r border-mill-line p-4">

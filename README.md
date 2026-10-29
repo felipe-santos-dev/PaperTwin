@@ -240,9 +240,18 @@ gerado por um segundo código**: é a API de verdade, com as mesmas migrations, 
 mesma semeadura e o `date_bin()` do Postgres. Uma reimplementação da agregação
 em TypeScript divergiria na primeira mudança de regra.
 
-Ao abrir, a web decide a fonte **uma vez**: tenta a API, cai para o instantâneo,
-e só então desiste. Alternar por requisição daria uma tela com metade dos números
-ao vivo e metade de ontem, sem nada indicando qual é qual.
+Ao abrir, a web decide a fonte **uma vez**: tenta a API com prazo de **4 s**, cai
+para o instantâneo, e só então desiste. Alternar por requisição daria uma tela com
+metade dos números ao vivo e metade de ontem, sem nada indicando qual é qual.
+
+O prazo curto existe porque host gratuito dorme: um que leva meio minuto para
+acordar deixaria a tela em branco esse tempo todo, com o instantâneo pronto ao
+lado. Desiste-se rápido e segue-se perguntando por trás, **a cada 15 s**.
+
+Quando a API volta, a faixa muda para **"API disponível · carregar dados ao vivo"**
+com um botão — e só o clique troca a fonte, de uma vez para a tela inteira.
+A troca não acontece sozinha de propósito: números mudando debaixo de quem está
+lendo é pior do que números velhos e rotulados.
 
 No modo de demonstração aparece a faixa **"Dados de demonstração · API offline"**.
 A série é sempre a janela padrão de 72 h — arquivo estático não responde a

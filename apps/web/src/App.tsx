@@ -33,7 +33,7 @@ const SOURCE_LABEL = {
 } as const;
 
 export function App() {
-  const source = useDataSource(PROBES);
+  const { source, apiRecovered, useLive } = useDataSource(PROBES);
 
   const { selectedTag, selected, select, initialTag } = useAssetSelection();
 
@@ -81,18 +81,36 @@ export function App() {
         <DataSourcePill source={source} />
       </header>
 
-      {source === 'demo' && (
-        <p
-          role="status"
-          className="flex items-center justify-center gap-2 border-b border-mill-attention/25 bg-mill-attention/8 px-5 py-1.5 text-xs text-mill-attention"
-        >
-          <span aria-hidden="true">●</span>
-          Dados de demonstração · API offline
-          <span className="text-mill-attention/70">
-            — instantâneo de 72 h gerado no build, não é leitura ao vivo
-          </span>
-        </p>
-      )}
+      {source === 'demo' &&
+        (apiRecovered ? (
+          <p
+            role="status"
+            className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b border-mill-normal/25 bg-mill-normal/8 px-5 py-1.5 text-xs text-mill-normal"
+          >
+            <span>
+              <span aria-hidden="true">● </span>
+              API disponível · carregar dados ao vivo
+            </span>
+            <button
+              type="button"
+              onClick={useLive}
+              className="rounded-md bg-mill-normal/15 px-2 py-0.5 font-medium text-mill-normal ring-1 ring-mill-normal/30 ring-inset transition-colors hover:bg-mill-normal/25"
+            >
+              Carregar ao vivo
+            </button>
+          </p>
+        ) : (
+          <p
+            role="status"
+            className="flex items-center justify-center gap-2 border-b border-mill-attention/25 bg-mill-attention/8 px-5 py-1.5 text-xs text-mill-attention"
+          >
+            <span aria-hidden="true">●</span>
+            Dados de demonstração · API offline
+            <span className="text-mill-attention/70">
+              — instantâneo de 72 h gerado no build, não é leitura ao vivo
+            </span>
+          </p>
+        ))}
 
       <div className="flex min-h-0 flex-1">
         <nav className="flex w-60 shrink-0 flex-col gap-4 border-r border-mill-line p-4">

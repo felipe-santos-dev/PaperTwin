@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: papertwin-api
+
+server:
+  port: ${PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # só o essencial: no Render Free cada endpoint a mais é memória a mais
+        include: health

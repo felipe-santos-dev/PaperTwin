@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.5.16</version>
+    <relativePath/>
+  </parent>
+
+  <groupId>dev.felipesantos</groupId>
+  <artifactId>papertwin-api</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <name>PaperTwin API</name>
+  <description>Gêmeo digital da máquina de papel MP1 — back-end</description>
+
+  <properties>
+    <!--
+      Java 21, e não a versão instalada na máquina de quem compila.
+
+      A imagem de produção é uma JRE 21, e compilar com `release` em vez de
+      `source`/`target` é o que garante que a build não use, sem querer, uma
+      API que só existe em versões mais novas: `release` compila contra a
+      biblioteca padrão daquela versão, não só contra o bytecode dela.
+    -->
+    <java.version>21</java.version>
+    <maven.compiler.release>21</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <testcontainers.version>1.20.4</testcontainers.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-web</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.assertj</groupId>
+      <artifactId>assertj-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <!--
+      As fontes da pesquisa entram no jar.
+
+      O CSV é lido do classpath, e não do disco relativo ao processo: a imagem
+      de produção tem só o jar e uma JRE, e um caminho como `../../reference`
+      não existe lá dentro. Declarar o diretório como recurso mantém uma cópia
+      só no repositório — a de `reference/research/`, que é a fonte — e faz a
+      build trazê-la junto.
+    -->
+    <resources>
+      <resource>
+        <directory>${project.basedir}/src/main/resources</directory>
+      </resource>
+      <resource>
+        <directory>${project.basedir}/../../reference/research</directory>
+        <targetPath>reference</targetPath>
+        <includes>
+          <include>*.csv</include>
+        </includes>
+      </resource>
+    </resources>
+
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+</project>

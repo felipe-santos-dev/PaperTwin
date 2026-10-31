@@ -19,7 +19,8 @@ Branch: `dev/fases-4-7`. Nada de push na main, nada de PR, nada de deploy.
 - [x] **5** Motor de simulação e API
 - [x] **6** As 7 telas (6.1 a 6.6)
 - [x] **J0** Gabarito da API TypeScript em `reference/golden/`
-- [ ] **J1–J5** `apps/api-java`: catálogo, núcleo, persistência, retomada, API
+- [x] **J1** `apps/api-java`: catálogo e relações
+- [ ] **J2–J5** núcleo, persistência, retomada, API
 - [ ] **J6** Contrato com o front via `openapi.json`
 - [ ] **J7** Dockerfile e ajuste para 512 MB
 - [ ] **J8** Remover `apps/api`
@@ -382,6 +383,53 @@ restos são iguais, então nenhum número já gerado muda — o instantâneo de
 demonstração e os testes continuam idênticos. Há teste de regressão em
 `entities.test.ts`.
 
+### J1 — catálogo e relações em Java
+
+`apps/api-java`, Java 21 (compilado com `release`, não com a versão da máquina),
+Spring Boot 3.5.16, Maven pelo wrapper. **66 testes verdes.**
+
+Paridade com a implementação TypeScript, e os números estão nos testes em vez de
+numa asserção de "não vazio": **320 variáveis** (68 de tag própria + 7 padrões ×
+36 cilindros), **55 malhas**, **183 pendências**, **24 relações** contando a
+herdada, **13 ensaios** de laboratório. Uma expansão que ganhasse ou perdesse uma
+variável passaria despercebida de outro jeito.
+
+Três decisões:
+
+1. **O CSV entra no jar.** A leitura é do classpath, e não de um caminho
+   relativo ao processo: a imagem de produção tem só o jar e uma JRE, e
+   `../../reference` não existe lá dentro. O `pom.xml` declara
+   `reference/research/` como diretório de recurso, então continua havendo uma
+   cópia só no repositório — a fonte.
+2. **Tudo é verificado na carga da classe.** Um CSV inválido derruba a aplicação
+   ao subir, em vez de virar um catálogo pela metade que só se revela quando
+   alguém abre uma tela. O teste do contexto Spring é o que transforma isso em
+   falha de build: ele sobe o contexto, que toca o catálogo, que lê o CSV.
+3. **Cada forma de errar a edição tem um teste.** Cabeçalho, nº de colunas, tag
+   repetida, min acima de max, alvo fora da faixa, limites fora de ordem, fonte e
+   confiança fora do vocabulário, aspas, `nn` em uma ponta só, ganho zero,
+   unidade divergente, τ não positivo, tempo morto negativo, ponta que não
+   resolve. Em cada grupo há também o caso válido, senão os outros não provariam
+   nada.
+
+A gramática do `nn` foi portada com a armadilha junto: **"scanner" contém
+"nn"**. Um `contains("nn")` classificaria a `AIC-901` como padrão por cilindro e
+um `replace` escreveria "sca7er" no nome dela. Daí a tag ser casada com âncora e
+o nome com ``.
+
+#### O que não pôde ser verificado aqui
+
+**Não há Docker nesta máquina** (nem Docker Desktop, nem WSL, nem Postgres
+local). Testcontainers, que J3 em diante pedem, não roda localmente — os testes
+de persistência só serão exercitados no CI da Fase 7, onde o runner do GitHub
+Actions tem Docker.
+
+Isso muda o que dá para prometer: J1 e J2 são puros e ficam verificados de
+verdade aqui; J3, J4 e J5 serão escritos com os testes, mas verdes só no CI. A
+alternativa seria um Postgres embarcado sem Docker (zonky) só para
+desenvolvimento, o que significaria duas infraestruturas de teste para a mesma
+coisa. Fica anotado como decisão a tomar quando J3 começar.
+
 ## Suposições para o Felipe revisar
 
 1. **`CD_ZONE_COUNT = 140`** (`process/relations.ts`). O catálogo diz
@@ -483,7 +531,14 @@ values`, limites de alarme desenhados e escrita de setpoint.
 Fase 6 fechada. O instantâneo foi regenerado com o modelo novo: **954 arquivos,
 911 kB, 179 ativos**, compressão 203:1.
 
-### O que vem agora: J1 — catálogo e relações em Java
+### O que vem agora: J2 — o núcleo
+
+FOPDT com ZOH exata, kernel CD pelo pico com corte 3σ, rede de processo, PI das
+malhas, ruído determinístico por `hash(seed, passo)`, vibração ISO 20816-3 e
+cenários de turno. Testado contra `reference/golden/` — é tudo função pura, então
+roda inteiro sem banco e sem Docker.
+
+### Como era J1 (feito)
 
 `apps/api-java`, Java 21 + Spring Boot 3.x, Maven com wrapper, pacote base
 `dev.felipesantos.papertwin`, organizado por domínio.

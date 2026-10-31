@@ -25,3 +25,33 @@ export function sectionById(model: MachineModel, id: SectionId): MachineSection 
 export function monitoredAssets(model: MachineModel): MachineAsset[] {
   return allAssets(model).filter((asset) => asset.iso !== null);
 }
+
+/** O nº do cilindro que a tag carrega, ex.: `MP1-SEC-G4-CS23` → 23. */
+const CYLINDER_NUMBER = /-CS(\d{2})$/;
+
+/** Um cilindro secador e o nº com que ele aparece nas tags de processo. */
+export interface DryerCylinder {
+  readonly number: number;
+  readonly asset: MachineAsset;
+}
+
+/**
+ * Os cilindros secadores, em ordem de numeração.
+ *
+ * É daqui que o catálogo de processo tira sobre quantos cilindros expandir os
+ * seus padrões por cilindro (`VI-51nnA` e companhia), em vez de repetir um 36
+ * fixo: mudar o nº de pares no modelo muda o catálogo junto.
+ */
+export function dryerCylinders(model: MachineModel): DryerCylinder[] {
+  return assetsOfKind(model, 'dryer-cylinder')
+    .map((asset) => {
+      const parsed = CYLINDER_NUMBER.exec(asset.tag);
+      if (!parsed?.[1]) {
+        throw new Error(
+          `Cilindro secador com tag fora do padrão: ${asset.tag}. Esperado o sufixo -CSnn.`,
+        );
+      }
+      return { number: Number(parsed[1]), asset };
+    })
+    .sort((a, b) => a.number - b.number);
+}

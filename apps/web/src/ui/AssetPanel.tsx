@@ -92,7 +92,7 @@ export function AssetPanel({ asset, data, onClose }: AssetPanelProps) {
       <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
         <Field label="Tipo" value={KIND_LABEL[asset.kind]} />
         {asset.side && <Field label="Lado" value={`${asset.side} · ${SIDE_LABEL[asset.side]}`} />}
-        {asset.driveGroup && <Field label="Grupo" value={asset.driveGroup} />}
+        {asset.steamGroup && <Field label="Grupo" value={asset.steamGroup} />}
         <Field label="Posição" value={`${asset.position.map((n) => n.toFixed(1)).join(' · ')} m`} />
       </dl>
 

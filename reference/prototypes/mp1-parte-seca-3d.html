@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>MP1 Parte Seca 3D</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
@@ -12,6 +17,9 @@ body{background:var(--bg);color:var(--fg);font-family:var(--sans);overflow:hidde
 .ui{position:fixed;left:max(16px,env(safe-area-inset-left,0px));top:calc(16px + env(safe-area-inset-top,0px));width:250px;background:var(--panel);
  border:1px solid var(--line);border-radius:12px;padding:14px;backdrop-filter:blur(10px);display:flex;flex-direction:column;gap:10px}
 .ui h1{font-size:15px;font-weight:600;margin:0;text-wrap:balance}
+.head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.head button{flex:none;width:30px;height:30px;padding:0;justify-content:center;align-items:center;border-color:var(--line);font-size:15px;line-height:1}
+.ui.min{width:auto;padding:8px 8px 8px 12px}.ui.min>:not(.head){display:none}.ui.min .head{align-items:center}.ui.min h1{font-size:13px}
 .ui p{margin:0;font-size:12px;color:var(--mut);line-height:1.45}
 .lbl{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);font-weight:600}
 .secs{display:flex;flex-direction:column;gap:3px}
@@ -30,14 +38,15 @@ button small{color:var(--mut);font-family:var(--mono);font-size:11px}
 </style>
 <div id="stage"></div>
 <div id="load">Carregando a cena 3D…</div>
-<div class="ui">
- <div><h1>MP1 · parte seca</h1><p>Pré-secagem → scanner → Speed Sizer → pós-secagem → calandra → scanner → Pope. Geometria aproximada.</p></div>
+<div class="ui" id="ui">
+ <div class="head"><h1>MP1 · parte úmida e seca</h1><button id="bMin" type="button" aria-expanded="true" aria-label="Minimizar painel" title="Minimizar painel (H)">–</button></div>
+ <p>Caixa de entrada → formador → prensas → pré-secagem → scanner → Speed Sizer → pós-secagem → calandra → scanner → Pope. Lado acionamento com motor em cada rolo principal. Geometria aproximada.</p>
  <div class="lbl">Ir para</div>
  <div class="secs" id="secs"></div>
  <div class="lbl">Cena</div>
  <div class="row"><button id="bDoors" type="button">Fechar portas</button><button id="bPlay" type="button">Pausar</button></div>
 </div>
-<div class="hint">Arraste para girar · role para zoom · botão direito move</div>
+<div class="hint">Arraste gira · botão direito ou W A S D move · Q / E desce / sobe · Shift acelera · duplo clique foca · H oculta o painel</div>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
 <script type="module">
 import * as THREE from 'three';
@@ -52,7 +61,7 @@ const stage=document.getElementById('stage');let W=stage.clientWidth,H=stage.cli
 const renderer=new THREE.WebGLRenderer({antialias:true});stage.appendChild(renderer.domElement);
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.setSize(W,H);renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.82;
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-const scene=new THREE.Scene();scene.background=new THREE.Color(0x17191d);scene.fog=new THREE.Fog(0x24272d,35,120);
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x17191d);scene.fog=new THREE.Fog(0x24272d,60,220);
 const pm=new THREE.PMREMGenerator(renderer);scene.environment=pm.fromScene(new RoomEnvironment(),0.04).texture;scene.environmentIntensity=.45;
 
 // ---------- texturas ----------
@@ -105,9 +114,9 @@ const spinners=[]; // {obj, r, k}
 
 // ---------- prédio ----------
 const fl=add(new THREE.PlaneGeometry(260,120),M({map:concrete,roughness:.28,metalness:.05,color:0xa6a39c}),40,0,10,false);fl.rotation.x=-Math.PI/2;
-const ceil=add(new THREE.PlaneGeometry(260,120),M({map:ceilTex,roughness:.8}),40,19,10,false);ceil.rotation.x=Math.PI/2;
-for(let x=-10;x<110;x+=12)for(const z of [-2,12,24])box(1.6,.12,.5,M({color:0xffffff,emissive:0xfff3e0,emissiveIntensity:4}),x,18.8,z,false);
-box(260,19,.4,M({color:0x3a3e45,roughness:.9}),40,9.5,-16,false);
+const ceil=add(new THREE.PlaneGeometry(260,120),M({map:ceilTex,roughness:.8}),40,34,10,false);ceil.rotation.x=Math.PI/2;
+for(let x=-10;x<110;x+=12)for(const z of [-2,12,24])box(1.6,.12,.5,M({color:0xffffff,emissive:0xfff3e0,emissiveIntensity:1.6}),x,33.8,z,false);
+
 for(let x=0;x<110;x+=1.2){box(.6,.02,.22,yellow,x,.011,OS+6,false);box(.6,.02,.22,black,x+.6,.011,OS+6,false)}
 
 // ---------- rolo giratório genérico ----------
@@ -144,10 +153,60 @@ function ribbonFrom(pts,mat,width,uScale=4){const pos=[],uv=[],idx=[];let L=0;
  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
  g.setIndex(idx);g.computeVertexNormals();const o=new THREE.Mesh(g,mat);o.castShadow=true;o.receiveShadow=true;scene.add(o);return o}
 
-// ---------- seção de prensas (saída, contexto) ----------
-for(const x of [6,10])for(const z of [-OS,OS])box(.45,12,.45,paint,x,6,z);
-box(5,.5,2*OS,paint,8,12,0);roll(8,4.2,.95,rubber,WID,blue);roll(8,6.1,.95,steel,WID,blue);
-P2(4,5.0);P2(8,5.15);
+// ---------- parte úmida (caixa de entrada, formador, prensas) — encostada na capota da pré-secagem ----------
+{
+const DX=3.6, OW=WID/2+.7, PLW=OW+2.4, LV=[3.4,6.8,10.2];
+const X=x=>x+DX;
+const feltM=M({color:0x4a4f4c,roughness:.95,side:THREE.DoubleSide});
+const wireM=M({color:0x2a4652,roughness:.7,metalness:.2,side:THREE.DoubleSide});
+const wire2M=M({color:0x2c4a44,roughness:.7,side:THREE.DoubleSide});
+// tela/feltro = envoltória convexa dos rolos: abraça cada rolo e corre reta entre eles
+const belt=(rs,mat,off=.04)=>{const p=[];for(const [x,y,r] of rs)for(let i=0;i<64;i++){const a=i/64*Math.PI*2;p.push([X(x)+Math.cos(a)*(r+off),y+Math.sin(a)*(r+off)])}
+  p.sort((u,v)=>u[0]-v[0]||u[1]-v[1]);const cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);const lo=[],hi=[];
+  for(const q of p){while(lo.length>1&&cr(lo[lo.length-2],lo[lo.length-1],q)<=0)lo.pop();lo.push(q)}
+  for(const q of p.slice().reverse()){while(hi.length>1&&cr(hi[hi.length-2],hi[hi.length-1],q)<=0)hi.pop();hi.push(q)}
+  const h=lo.slice(0,-1).concat(hi.slice(0,-1));h.push(h[0]);ribbonFrom(h.map(q=>new THREE.Vector2(q[0],q[1])),mat,WID-.2,3)};
+const guide=[];const g=(x,y,r=.3)=>{guide.push([x,y,r]);return [x,y,r]};
+// caixa de entrada
+box(2.6,2.2,WID+.8,paintDark,X(-13.2),2.2,0);box(1.2,1,WID+.4,steel,X(-11.8),1.9,0);
+const man=add(new THREE.CylinderGeometry(.6,.4,WID+2,24),blueDark,X(-14.6),1.4,0);man.rotation.x=Math.PI/2;
+// estrutura em 3 níveis
+for(const z of [-OW,OW])for(const x of [-15,-11,-7,-3,1,5,9])box(.45,12.6,.45,paint,X(x),6.3,z);
+for(const z of [-OW,OW])for(const y of [...LV,12.4])box(24.5,.5,.42,paint,X(-3),y,z);
+for(const x of [-15,-11,-7,-3,1,5,9])box(.4,.45,2*OW,paint,X(x),12.4,0);
+// formador de duas telas
+const fR=[[-10.8,2.6,.55],[-6.2,3.4,.45],[-5.2,7.6,.4],[-8.4,9.3,.4],[-11,6.2,.4],[-9.2,3.9,.45],[-3.4,4.2,.45],[-4.4,8.6,.4],[-6.4,11,.4],[-8.8,7.2,.35]];
+fR.forEach(([x,y,r],i)=>roll(X(x),y,r,i%3?steel:rubber,WID,i<5?blue:blueDark,i%2?1:-1));
+belt(fR.slice(0,5),wireM,.03);belt(fR.slice(5),wire2M,.03);
+// prensas (3 nips) e feltros
+const PR=[[0,3.3,.85,rubber,1],[0,5.1,.85,steel,-1],[3.6,3.6,.9,rubber,1],[3.6,5.5,.9,steel,-1],[7.4,4.4,.95,rubber,1],[7.4,6.4,.95,steel,-1]];
+PR.forEach(([x,y,r,m,k])=>roll(X(x),y,r,m,WID,blue,k,true));
+belt([PR[1],g(-2.75,4.9),g(-1.6,8.4),g(.4,10.4),g(1.6,8.8)],feltM);      // feltro de pick-up / 1ª prensa
+belt([PR[0],PR[2],g(5,1.2),g(.6,1)],feltM);                               // feltro inferior 1ª e 2ª
+belt([PR[3],g(5.6,9.6),g(3.6,10.8),g(2.8,8.4)],feltM);                     // feltro superior 2ª
+belt([PR[5],g(9.2,9.6),g(7.4,11)],feltM);                                  // feltro superior 3ª
+belt([PR[4],g(9,5,.35),g(9,1.4),g(6.6,.8)],feltM);                         // feltro inferior 3ª leva a folha até a capota
+for(const [x,y,r] of guide)roll(X(x),y,r,steel,WID,blueDark);
+// plataformas, guarda-corpos e escadas (lado operação)
+const rail=(x0,x1,y,z)=>{for(let x=x0;x<=x1+.01;x+=1.4)box(.07,1.1,.07,paint,X(x),y+.55,z,false);
+  box(x1-x0,.07,.07,paint,X((x0+x1)/2),y+1.1,z,false);box(x1-x0,.05,.05,paint,X((x0+x1)/2),y+.55,z,false);box(x1-x0,.15,.03,paint,X((x0+x1)/2),y+.08,z,false)};
+const railZ=(x,y,z0,z1)=>{box(.07,1.1,.07,paint,X(x),y+.55,z1,false);box(.07,.07,z1-z0,paint,X(x),y+1.1,(z0+z1)/2,false);box(.05,.05,z1-z0,paint,X(x),y+.55,(z0+z1)/2,false)};
+const platform=(x0,x1,y)=>{const w=x1-x0;box(w,.12,PLW-OW+.4,grateM,X((x0+x1)/2),y,(OW+PLW)/2);
+  box(w,.3,.2,paint,X((x0+x1)/2),y-.15,PLW);rail(x0,x1,y,PLW);railZ(x0,y,OW,PLW);railZ(x1,y,OW,PLW)};
+platform(-15,9,LV[0]);platform(-13,-2,LV[1]);platform(3,9,LV[1]);platform(-11,8,LV[2]);
+const stair=(x0,y0,x1,y1,z)=>{const n=Math.round((y1-y0)/.22),dx=(x1-x0)/n,dy=(y1-y0)/n;
+  for(let i=0;i<n;i++)box(Math.abs(dx)+.05,.05,1,grateM,X(x0+dx*(i+.5)),y0+dy*(i+1),z,false);
+  const L=Math.hypot(x1-x0,y1-y0),a=Math.atan2(y1-y0,x1-x0);
+  for(const sd of [-.52,.52]){const st=box(L,.25,.08,paint,X((x0+x1)/2),(y0+y1)/2,z+sd);st.rotation.z=a}};
+stair(-1.6,LV[0],1.6,LV[1],PLW-.7);stair(-10.6,LV[1],-7.4,LV[2],PLW-.7);stair(-13.5,LV[0],-16.7,0,PLW-.7);
+for(const x of [3,6.2]){for(const sd of [-.3,.3])box(.06,LV[0],.06,paint,X(x+sd),LV[0]/2,PLW+.2,false);for(let y=.3;y<LV[0];y+=.3)box(.6,.04,.04,paint,X(x),y,PLW+.2,false)}
+for(const [x,y,w,h] of [[-12,LV[0],1.2,1.6],[-6,LV[0],1,1.3],[5,LV[1],1.4,1.6],[-9,LV[2],1,1.2],[0,LV[2],1.4,1.1]])box(w,h,.7,white,X(x),y+h/2+.06,OW+.8);
+box(1.4,2,.6,white,X(-4),1,PLW+.4);
+// folha: jato → entre as telas → pick-up → nips → feltro inferior → 1º secador (sem trecho solto)
+for(const [x,y] of [[-11.6,1.9],[-10.8,3.17],[-6.2,3.87]])P2(X(x),y);
+for(let i=0;i<=10;i++){const a=(270+140*i/10)*Math.PI/180;P2(X(-3.4)+Math.cos(a)*.47,4.2+Math.sin(a)*.47)}
+for(const [x,y] of [[0,4.22],[3.6,4.53],[7.4,5.38],[9,5.39]])P2(X(x),y);
+}
 
 // ---------- pré-secagem (dois níveis) ----------
 const TOP=6.1,BOT=3.0,DR=1.05,PITCH=2.2;
@@ -175,7 +234,6 @@ const H1=[X0-1.8,X0+N1*PITCH+.6];frames(H1[0],H1[1],8.6);
 const doors=[];
 function hood(x0,x1){const L=x1-x0,c=(x0+x1)/2,z=OS+1.1;
  box(L,.4,2*z,M({map:hoodWall,roughness:.6}),c,10.3,0);                       // teto
- box(L,10.5,.3,M({map:hoodWall,roughness:.6}),c,5.25,-z);                    // parede de trás
  box(L,1.8,.3,M({map:hoodWall,roughness:.6}),c,9.4,z);                       // viga acima das portas
  for(const xe of [x0,x1])box(.3,10.5,2*z,M({map:hoodWall,roughness:.6}),xe,5.25,0);
  const dw=L/Math.round(L/3.6);
@@ -254,7 +312,7 @@ P2(SCX+2.2,WEBY+.02);wrap(RX,RY,.82,200,90,14);
 const web=ribbonFrom(path,paperM,WID-.6,4);
 
 // ---------- porão: piso com abertura sob a máquina, refugo acumulado, tubulação vermelha ----------
-const BX0=H1[0]-1,BX1=H2[1]+1,BZ=OS+.6,BY=-6;
+const BX0=H1[0]+.3,BX1=H2[1]+1,BZ=OS+.6,BY=-6;
 scene.remove(fl);
 const flM=fl.material;
 const piece=(x0,x1,z0,z1)=>{const p=add(new THREE.PlaneGeometry(x1-x0,z1-z0),flM,(x0+x1)/2,0,(z0+z1)/2,false);p.rotation.x=-Math.PI/2};
@@ -282,20 +340,87 @@ function person(x,y,z){const g=new THREE.Group();const lg=M({color:0x2f4f7a,roug
  g.traverse(o=>o.castShadow=true);g.position.set(x,y,z);scene.add(g)}
 person(RX+3,0,OS+2.2);person(24,0,OS+3.2);
 
+// ---------- lado acionamento: cardã, redutor e motor de cada rolo principal, sobre estrutura metálica ----------
+{
+const ZW=-(OS+1.1), CEIL=34, TRAY=12.2;
+const P={shaft:[],cross:[],coupG:[],gear:[],motor:[],rib:[],fan:[],feet:[],tbox:[],plate:[],cable:[]};
+const placed=[];
+const list=spinners.filter(s=>s.r>=.38).map(s=>({x:s.g.position.x,y:s.g.position.y,r:s.r})).sort((a,b)=>a.y-b.y);
+let maxL=0;
+for(const d of list){let L=0;while(placed.some(p=>p.L===L&&Math.abs(p.x-d.x)<1))L++;d.L=L;placed.push(d);maxL=Math.max(maxL,L);
+ const s=d.s=Math.min(1.15,.62+d.r*.35), zc=d.zc=ZW-1.7-L*2.4, z0=-(WID/2+.5), z1=zc+1.25, mR=.4*s, bY=d.bY=d.y-.47*s;
+ P.shaft.push([d.x,d.y,(z0+z1)/2,.09*s,.09*s,z0-z1]);
+ for(const zz of [z0-.2,z1+.15])P.cross.push([d.x,d.y,zz,.2*s,.2*s,.16]);
+ P.coupG.push([d.x,d.y,zc+1.02,.62*s,.62*s,.42]);                                // proteção do acoplamento
+ const gt=d.y+.42*s; P.gear.push([d.x,(gt+bY)/2,zc+.5,.9*s,gt-bY,.62]);            // redutor apoiado na base
+ P.motor.push([d.x,d.y,zc-.32,mR,mR,1.1]);
+ for(let i=0;i<7;i++)P.rib.push([d.x,d.y,zc+.14-i*.15,mR*1.09,mR*1.09,.045]);
+ P.fan.push([d.x,d.y,zc-1.0,mR*.94,mR*.94,.26]);
+ P.feet.push([d.x,(bY+d.y-mR*.55)/2,zc-.32,mR*1.5,d.y-mR*.55-bY,.95]);
+ P.tbox.push([d.x,d.y+mR+.12,zc-.18,.32,.24,.36]);
+ P.plate.push([d.x,bY-.05,zc-.1,1.05*s,.1,2.3]);
+ P.cable.push([d.x,(d.y+mR+.24+TRAY)/2,zc-.18,.06,TRAY-(d.y+mR+.24),.06]);}
+const cyl=new THREE.CylinderGeometry(1,1,1,28).rotateX(Math.PI/2), cub=new THREE.BoxGeometry(1,1,1);
+const inst=(geo,mat,arr,sh=true)=>{if(!arr.length)return;const m=new THREE.InstancedMesh(geo,mat,arr.length),o=new THREE.Object3D();
+ arr.forEach(([x,y,z,sx,sy,sz,rx=0],i)=>{o.position.set(x,y,z);o.rotation.set(rx,0,0);o.scale.set(sx,sy,sz);o.updateMatrix();m.setMatrixAt(i,o.matrix)});
+ m.castShadow=sh;m.receiveShadow=true;scene.add(m);return m};
+const motorM=M({color:0x2f5577,roughness:.45,metalness:.4});
+inst(cyl,steel,P.shaft);inst(cyl,M({color:0x5b6168,metalness:.8,roughness:.35}),P.cross);
+inst(cub,M({color:0xe2b419,roughness:.5,metalness:.2}),P.coupG);
+inst(cub,M({color:0x6f7b86,map:grime('#9aa3ab'),roughness:.55,metalness:.45}),P.gear);
+inst(cyl,motorM,P.motor);inst(cyl,motorM,P.rib,false);inst(cyl,M({color:0x23272c,roughness:.6,metalness:.3}),P.fan);
+inst(cub,motorM,P.feet);inst(cub,motorM,P.tbox,false);inst(cub,frameDark,P.plate);inst(cub,black,P.cable,false);
+
+// estrutura: perfis I, longarinas, travessas e contraventamento
+const S={col:[],beam:[],brace:[],found:[]};
+const steelBlue=M({color:0x3c4e60,roughness:.55,metalness:.5}), concM=M({color:0x8d8a83,map:grime('#b3afa6'),roughness:.9});
+const Icol=(x,z,h,y0=0)=>{S.col.push([x,y0+h/2,z,.3,h,.08],[x-.13,y0+h/2,z,.04,h,.3],[x+.13,y0+h/2,z,.04,h,.3]);S.found.push([x,.15,z,.7,.3,.7])};
+const diag=(x,y0,y1,zA,zB)=>{const dy=y1-y0,dz=zB-zA,L=Math.hypot(dy,dz);S.brace.push([x,(y0+y1)/2,(zA+zB)/2,.08,L,.08,Math.atan2(-dz,dy)])};
+for(let L=0;L<=maxL;L++){
+ const row=placed.filter(d=>d.L===L).sort((a,b)=>a.x-b.x);const zc=ZW-1.7-L*2.4-.1, zf=zc+1.05, zr=zc-1.05;
+ const groups=[];for(const d of row){const g=groups[groups.length-1];if(g&&d.x-g[g.length-1].x<3)g.push(d);else groups.push([d])}
+ for(const g of groups){const tiers=[...new Set(g.map(d=>Math.round((d.bY-.1)*10)/10))].sort((a,b)=>a-b);
+  if(g.length>=6&&tiers.length<=2){ // rack contínuo (secadores)
+   const xa=g[0].x-1.1,xb=g[g.length-1].x+1.1,top=tiers[tiers.length-1];
+   const posts=[xa];for(let i=3;i<g.length-1;i+=4)posts.push((g[i].x+g[i+1].x)/2);posts.push(xb);
+   for(const px of posts){for(const z of [zf,zr])Icol(px,z,top);for(const t of tiers)S.beam.push([px,t-.18,zc,.22,.3,2.3]);
+    diag(px,.4,tiers[0]-.4,zf,zr);if(tiers.length>1)diag(px,tiers[0]+.2,tiers[1]-.4,zr,zf)}
+   for(const t of tiers)for(const z of [zf-.2,zr+.2])S.beam.push([(xa+xb)/2,t-.18,z,xb-xa,.32,.16]);
+   for(const z of [zf,zr])S.beam.push([(xa+xb)/2,.9,z,xb-xa,.14,.12]);
+  }else for(const d of g){ // pedestal individual: duas colunas I, travessas e diagonais
+   const h=d.bY-.1;for(const z of [zf-.25,zr+.25])Icol(d.x,z,h);
+   S.beam.push([d.x,h-.15,zc,.32,.3,2.3]);
+   const n=Math.max(1,Math.round(h/2.6));for(let i=1;i<n;i++)S.beam.push([d.x,h*i/n,zc,.16,.16,1.6]);
+   for(let i=0;i<n;i++)diag(d.x,h*i/n+.15,h*(i+1)/n-.25,i%2?zf-.25:zr+.25,i%2?zr+.25:zf-.25)}
+ }
+ // eletrocalha da fileira, pendurada no teto
+ const xa=row[0].x-1.5,xb=row[row.length-1].x+1.5,z=zc-.08;
+ box(xb-xa,.12,.7,M({color:0x8d949b,metalness:.6,roughness:.4}),(xa+xb)/2,TRAY,z,false);
+ for(let x=xa;x<=xb;x+=9)box(.08,CEIL-TRAY,.08,frameDark,x,(CEIL+TRAY)/2,z,false)}
+inst(cub,steelBlue,S.col);inst(cub,steelBlue,S.beam);inst(cub,M({color:0x56687a,roughness:.5,metalness:.5}),S.brace);inst(cub,concM,S.found);
+// faixa de piso do corredor de acionamento
+for(let x=-12;x<RX+4;x+=1.2){box(.6,.02,.18,yellow,x,.011,ZW-.6,false);box(.6,.02,.18,black,x+.6,.011,ZW-.6,false)}
+for(let x=-5;x<=RX;x+=22){const p=new THREE.PointLight(0xfff1dd,70,26,1.5);p.position.set(x,11,ZW-5);scene.add(p)}
+}
+
 // ---------- luz ----------
 scene.add(new THREE.HemisphereLight(0xdfe8ff,0x4a4438,.55));
 const key=new THREE.DirectionalLight(0xfff1dd,1.4);key.position.set(30,32,26);key.target.position.set(45,0,0);scene.add(key.target);key.castShadow=true;key.shadow.mapSize.set(2048,2048);key.shadow.bias=-.0004;
-Object.assign(key.shadow.camera,{left:-45,right:45,top:25,bottom:-25,near:1,far:110});scene.add(key);
-for(const x of [20,50,80])for(const z of [10]){const p=new THREE.PointLight(0xfff4e8,160,40,1.4);p.position.set(x,17,z);scene.add(p)}
+Object.assign(key.shadow.camera,{left:-75,right:60,top:30,bottom:-30,near:1,far:130});scene.add(key);
+for(const x of [-12,20,50,80])for(const z of [10]){const p=new THREE.PointLight(0xfff4e8,300,70,1.3);p.position.set(x,31,z);scene.add(p)}
 
 // ---------- visualização interativa ----------
-const cam=new THREE.PerspectiveCamera(48,W/H,.1,400);
-const controls=new OrbitControls(cam,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.08;controls.maxPolarAngle=Math.PI*.62;controls.minDistance=2;controls.maxDistance=120;
+const cam=new THREE.PerspectiveCamera(48,W/H,.1,600);
+const controls=new OrbitControls(cam,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.08;controls.maxPolarAngle=Math.PI*.92;controls.minDistance=.6;controls.maxDistance=260;controls.screenSpacePanning=true;controls.zoomToCursor=true;
 const composer=new EffectComposer(renderer);composer.addPass(new RenderPass(scene,cam));
 const bloom=new UnrealBloomPass(new THREE.Vector2(W,H),.3,.4,.93);composer.addPass(bloom);composer.addPass(new OutputPass());
 const V=(x,y,z)=>new THREE.Vector3(x,y,z);
 const SECS=[
- ['Visão geral','',V(H1[0]-8,15,32),V(46,2,0)],
+ ['Visão geral','',V(0,26,74),V(32,2,0)],
+ ['Lado acionamento','motores',V(2,9,-21),V(20,4.5,-7)],
+ ['Parte úmida','formador · prensas',V(-19,7,24),V(.6,5,0)],
+ ['Úmida → seca','transição',V(6,8,15),V(13,5,0)],
+ ['Caixa de entrada','',V(-15.4,3.2,13),V(-7.4,2.4,0)],
  ['Pré-secagem','13 pares',V(20,6.5,13),V(30,4.2,-1)],
  ['Mancais e juntas','LA',V(21,5.5,11),V(27,3.8,3)],
  ['Porão','refugo',V(BX0+.5,-3,.5),V(BX0+17,-3.2,-1)],
@@ -318,6 +443,28 @@ let doorsOpen=1,doorK=1,playing=true,simT=0,last=performance.now();
 const bD=document.getElementById('bDoors'),bP=document.getElementById('bPlay');
 bD.onclick=()=>{doorsOpen=1-doorsOpen;bD.textContent=doorsOpen?'Fechar portas':'Abrir portas'};
 bP.onclick=()=>{playing=!playing;bP.textContent=playing?'Pausar':'Animar'};
+const ui=document.getElementById('ui'),bM=document.getElementById('bMin');
+function togglePanel(){const m=ui.classList.toggle('min');bM.textContent=m?'☰':'–';bM.setAttribute('aria-expanded',String(!m));bM.setAttribute('aria-label',m?'Mostrar painel':'Minimizar painel')}
+bM.onclick=togglePanel;
+// câmera livre: WASD/setas andam no plano, Q/E descem/sobem, Shift acelera; duplo clique leva o foco ao ponto clicado
+const keys=new Set(),MOVE=['w','a','s','d','q','e','arrowup','arrowdown','arrowleft','arrowright'];
+addEventListener('keydown',e=>{if(e.target.closest&&e.target.closest('input,textarea,select'))return;const k=e.key.toLowerCase();
+ if(k==='h'&&!e.repeat){togglePanel();return}
+ if(k==='shift')keys.add(k);if(MOVE.includes(k)){keys.add(k);fly=null;e.preventDefault()}});
+addEventListener('keyup',e=>keys.delete(e.key.toLowerCase()));addEventListener('blur',()=>keys.clear());
+const ray=new THREE.Raycaster(),ndc=new THREE.Vector2();
+renderer.domElement.addEventListener('dblclick',e=>{const r=renderer.domElement.getBoundingClientRect();ndc.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);
+ ray.setFromCamera(ndc,cam);const hit=ray.intersectObjects(scene.children,true).find(h=>h.object.visible);if(!hit)return;
+ const off=cam.position.clone().sub(controls.target);off.setLength(Math.min(off.length(),14));
+ const t=hit.point.clone(),p=t.clone().add(off);if(reduce){cam.position.copy(p);controls.target.copy(t);return}
+ fly={p0:cam.position.clone(),t0:controls.target.clone(),p,t,s:performance.now()}});
+const fw=new THREE.Vector3(),rt=new THREE.Vector3(),mv=new THREE.Vector3();
+function walk(dt){if(!keys.size)return;const sp=(keys.has('shift')?28:10)*dt;
+ cam.getWorldDirection(fw);fw.y=0;fw.normalize();rt.crossVectors(fw,cam.up).normalize();mv.set(0,0,0);
+ if(keys.has('w')||keys.has('arrowup'))mv.add(fw);if(keys.has('s')||keys.has('arrowdown'))mv.sub(fw);
+ if(keys.has('d')||keys.has('arrowright'))mv.add(rt);if(keys.has('a')||keys.has('arrowleft'))mv.sub(rt);
+ if(keys.has('e'))mv.y+=1;if(keys.has('q'))mv.y-=1;if(!mv.lengthSq())return;mv.normalize().multiplyScalar(sp);
+ cam.position.add(mv);controls.target.add(mv)}
 function resize(){W=stage.clientWidth;H=stage.clientHeight;renderer.setSize(W,H);composer.setSize(W,H);cam.aspect=W/H;cam.updateProjectionMatrix()}
 addEventListener('resize',resize);
 const WEB_SPEED=3.2;
@@ -329,7 +476,9 @@ function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(playing)s
  const D=1.0+((simT/60)%1)*.4;jumbo.position.set(RX+.82+D,RY,0);jumboMesh.scale.set(D,1,D);jumbo.rotation.z=-simT*WEB_SPEED/D;
  for(const sc of scanners){const zz=Math.sin(simT*1.1+sc.ph)*(WID/2-.6);for(const p of sc.parts)p.position.z=zz}
  if(fly){const k=Math.min(1,(now-fly.s)/1400),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;cam.position.lerpVectors(fly.p0,fly.p,e);controls.target.lerpVectors(fly.t0,fly.t,e);if(k>=1)fly=null}
- controls.update();composer.render();requestAnimationFrame(frame)}
+ walk(dt);controls.update();composer.render();requestAnimationFrame(frame)}
 document.getElementById('load').hidden=true;
 requestAnimationFrame(frame);
 </script>
+
+</html>

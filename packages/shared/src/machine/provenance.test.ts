@@ -76,7 +76,7 @@ describe('o que ainda é suposição', () => {
 
     expect(supostas).toContain('PRE_DRYER_PAIRS');
     expect(supostas).toContain('POST_DRYER_PAIRS');
-    expect(supostas).toContain('DRYER_DRIVE_GROUPS');
+    expect(supostas).toContain('DRYER_STEAM_GROUPS');
     expect(supostas).toContain('CALENDER_NIP_COUNT');
     expect(supostas).toContain('CALENDER_THERMAL_POSITION');
   });

@@ -28,7 +28,7 @@ export const assetSchema = {
     lengthM: { type: ['number', 'null'] },
     side: { type: ['string', 'null'], enum: ['LA', 'LC', null] },
     parentTag: { type: ['string', 'null'] },
-    driveGroup: { type: ['string', 'null'] },
+    steamGroup: { type: ['string', 'null'] },
     iso: {
       type: ['object', 'null'],
       description: 'Classe da ISO 20816-3. Nulo nos ativos sem medição de vibração.',
@@ -55,7 +55,7 @@ export const assetSchema = {
     'lengthM',
     'side',
     'parentTag',
-    'driveGroup',
+    'steamGroup',
     'iso',
     'source',
   ],

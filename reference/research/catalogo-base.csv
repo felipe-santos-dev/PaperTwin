@@ -1,0 +1,76 @@
+tag,nome,area,grupo,unidade,min,max,alvo,LL,L,H,HH,controlada,mv,exc_dev,comp_dev,fonte,confianca,observacao
+SIC-1104,Velocidade da máquina,geral,acionamentos,m/min,1200,1300,1250,,,,,sim,Inversores seccionais (mestre),0.5,1,B,alta,
+XI-0001,Produção instantânea,geral,kpi,t/h,40,56,45,,,,,não,calculada,0.1,0.2,B,alta,largura(m)*velocidade(m/min)*gramatura(g/m²)*60/1e6
+XI-0002,Largura útil na enroladeira,geral,constante,m,8,8,8,,,,,não,,,,B,alta,constante do modelo
+FIC-105,Vazão de massa grossa,preparo,circuito curto,m³/h,650,1250,920,,,,,sim,FV-105 válvula de gramatura,2,5,B,alta,MV da malha MD de gramatura (AIC-902)
+AIC-104,Consistência da massa grossa,preparo,circuito curto,%,3.0,4.2,3.5,,,,,sim,AV-104 água de diluição,0.01,0.02,B,alta,
+FIC-106,Dosagem de PCC,preparo,aditivos,kg/t,150,260,210,,,,,sim,FV-106 em cascata com cinzas (AIC-904),1,3,B,alta,
+FIC-109,Dosagem de polímero de retenção,preparo,aditivos,g/t,150,450,250,,,,,sim,bomba dosadora em cascata com AIC-306,5,10,B,alta,
+JIC-101,Potência específica de refinação,preparo,refinação,kWh/t,35,85,55,,,,,sim,JZ-101 posição dos discos,0.5,1,B,média,efeito lento (tempo morto ~4–6 min)
+AIC-306,Consistência da água branca,formação,retenção,%,0.12,0.35,0.22,,,,,sim,FIC-109,0.005,0.01,B,média,
+PIC-201,Pressão total da caixa de entrada,caixa,hidráulica,kPa,195,255,225,,,,,sim,SIC-114 fan pump,0.2,0.5,B,alta,
+XHIC-202,Relação jato/tela,caixa,hidráulica,adim.,0.96,1.05,1.015,,,,,sim,setpoint de PIC-201,0.001,0.002,B,alta,calculada no SDCD
+ZIC-205,Posição das válvulas de diluição CD (por zona),caixa,perfil CD,%,15,85,50,,,,,sim,atuadores por zona (controle CD de gramatura),1,2,B,alta,vetor de 120–160 zonas
+WIC-401,Carga linear da prensa de sapata,prensas,nip,kN/m,600,1100,900,,,,,sim,WV-401 válvulas proporcionais,2,5,B,alta,
+PIC-403,Pressão da caixa de vapor da prensa,prensas,perfil CD,kPa,5,45,20,,,,,sim,válvula global + zonas CD (AIC-901),0.5,1,B,média,
+AI-407,Sequidade na saída da prensa,prensas,folha,%,48,54,51,,,,,não,via WIC-401 e PIC-403,0.1,0.2,B,média,
+SDIC-406,Draw prensa → 1ª secagem,prensas,acionamentos,%,1.2,3.2,2.1,,,,,sim,referência de velocidade seccional,0.02,0.05,B,média,
+PIC-511,Pressão de vapor G1 (aquecimento),pré-secagem,vapor,kPa rel,-30,60,15,,,,,sim,PV-511 vapor / descarga ao condensador,1,2,B,média,equivale ao PIC-501 da pesquisa B; cilindros 1–6
+PIC-512,Pressão de vapor G2,pré-secagem,vapor,kPa rel,80,250,150,,,,,sim,PV-512,1,2,assumed,baixa,cascata entre G1 e principal; confirmar na MP1
+PIC-513,Pressão de vapor G3,pré-secagem,vapor,kPa rel,120,320,220,,,,,sim,PV-513,1,2,assumed,baixa,confirmar na MP1
+PIC-514,Pressão de vapor G4 (grupo principal),pré-secagem,vapor,kPa rel,120,350,230,,,,,sim,PV-514 em cascata com umidade pré-colagem AIC-901,1,2,B,média,equivale ao PIC-502 da pesquisa B
+PDIC-521,ΔP dos sifões G1,pré-secagem,condensado,kPa,25,55,38,18,,,,sim,PDV-521 blow-through,0.5,1,B,média,LL 18 kPa prioridade alta (alagamento)
+PDIC-522,ΔP dos sifões G2,pré-secagem,condensado,kPa,25,55,38,18,,,,sim,PDV-522,0.5,1,B,média,
+PDIC-523,ΔP dos sifões G3,pré-secagem,condensado,kPa,25,55,38,18,,,,sim,PDV-523,0.5,1,B,média,
+PDIC-524,ΔP dos sifões G4,pré-secagem,condensado,kPa,25,55,38,18,,,,sim,PDV-524,0.5,1,B,média,
+LIC-531,Nível do tanque separador G1,pré-secagem,condensado,%,30,70,50,,,,85,sim,LV-531 bomba de condensado,1,2,B,média,HH 85% prioridade alta
+LIC-532,Nível do tanque separador G2,pré-secagem,condensado,%,30,70,50,,,,85,sim,LV-532,1,2,B,média,
+LIC-533,Nível do tanque separador G3,pré-secagem,condensado,%,30,70,50,,,,85,sim,LV-533,1,2,B,média,
+LIC-534,Nível do tanque separador G4,pré-secagem,condensado,%,30,70,50,,,,85,sim,LV-534,1,2,B,média,
+TIC-505,Temperatura do ar de insuflamento da capota,pré-secagem,capota,°C,90,115,102,,,,,sim,TV-505 bateria de ar,0.5,1,B,média,
+AIC-506,Ponto de orvalho da exaustão da capota,pré-secagem,capota,°C,56,64,60,,,,65,sim,exaustores (VFD),0.2,0.5,B,média,HH 65 °C (condensação/gotejamento)
+PIC-507,Altura da linha de zero da capota,pré-secagem,capota,mm,1200,2000,1600,,,,,sim,ventiladores de insuflamento,10,20,B,baixa,
+TIC-508,Tensão das telas secadoras,pré-secagem,telas,kN/m,2.0,4.0,2.8,,,,,sim,esticador da tela,0.05,0.1,B,média,
+AIC-601,Sólidos da calda de amido,speed sizer,amido,%,7,13,9.5,,,,,sim,AV-601 água de diluição,0.05,0.1,B,alta,
+AI-602,Viscosidade do amido,speed sizer,amido,mPa·s,20,80,40,,,,,não,dosagem de enzima no cozinhador,1,2,B,média,
+TIC-603,Temperatura do amido,speed sizer,amido,°C,58,68,63,52,,,72,sim,TV-603 trocador,0.2,0.5,B,alta,LL retrogradação; HH grumos
+PIC-604A,Pressão da barra dosadora · lado superior,speed sizer,aplicação,bar,0.8,3.0,1.6,,,,,sim,PV-604A,0.02,0.05,B,alta,ajusta pickup do lado superior
+PIC-604B,Pressão da barra dosadora · lado inferior,speed sizer,aplicação,bar,0.8,3.0,1.6,,,,,sim,PV-604B,0.02,0.05,B,alta,
+WIC-605,Carga do nip do Speed Sizer,speed sizer,nip,kN/m,35,75,50,,,,,sim,WV-605,0.5,1,B,alta,
+XI-606A,Amido aplicado · lado superior,speed sizer,aplicação,g/m²,1.5,2.2,1.8,,,,,não,calculado,0.02,0.05,B,média,pickup seco por lado
+XI-606B,Amido aplicado · lado inferior,speed sizer,aplicação,g/m²,1.5,2.2,1.8,,,,,não,calculado,0.02,0.05,B,média,
+PIC-711,Pressão de vapor G5,pós-secagem,vapor,kPa rel,40,250,120,,,230,,sim,PV-711 em cascata com umidade final AIC-903,1,2,B,média,H 230 = pós-secagem no limite
+PIC-712,Pressão de vapor G6,pós-secagem,vapor,kPa rel,40,250,140,,,230,,sim,PV-712,1,2,B,média,
+PDIC-702,Diferencial de vapor superior × inferior (curl),pós-secagem,vapor,kPa,-80,80,15,,,,,sim,bias nas válvulas superior/inferior,1,2,B,média,
+SDIC-703,Draw Speed Sizer → pós-secagem,pós-secagem,acionamentos,%,-0.4,0.8,0.2,-0.6,,,1.0,sim,referência de velocidade seccional,0.02,0.05,B,média,
+PDIC-721,ΔP dos sifões G5,pós-secagem,condensado,kPa,25,55,38,18,,,,sim,PDV-721,0.5,1,B,média,
+PDIC-722,ΔP dos sifões G6,pós-secagem,condensado,kPa,25,55,38,18,,,,sim,PDV-722,0.5,1,B,média,
+WIC-801,Carga do nip da calandra,calandra,nip,kN/m,40,220,110,,,180,,sim,WV-801 em cascata com espessura AIC-905,1,2,B,alta,acima de 180 kN/m cai opacidade
+TIC-802,Temperatura do rolo térmico,calandra,óleo térmico,°C,80,160,120,,,,,sim,TV-802 válvula 3 vias,0.5,1,B,alta,alarme de taxa > 1.5 °C/min
+TIC-803,Atuadores de perfil CD de espessura (média),calandra,perfil CD,%,0,100,45,,,,,sim,aquecimento indutivo / ar por zona (controle CD de espessura),1,2,B,média,vetor por zona; valor = média
+TI-804,Temperatura da capa do rolo macio (máx. na varredura),calandra,rolo macio,°C,40,90,65,,,85,92,não,,0.5,1,B,alta,HH 92 °C = abertura imediata do nip
+AIC-901,Umidade antes da colagem · scanner 1,qcs,scanner 1,%,3.5,7.5,5.2,,,,,sim,MD: PIC-514; CD: PIC-403,0.02,0.05,B,alta,
+AIC-902,Gramatura · scanner final,qcs,scanner final,g/m²,68,92,75,,73.5,76.5,,sim,MD: FV-105; CD: ZIC-205,0.05,0.1,B,alta,L/H = tolerância de laboratório 73.5–76.5
+AIC-903,Umidade final · scanner final,qcs,scanner final,%,3.8,6.0,4.8,,4.3,5.3,,sim,MD: PIC-711/712,0.02,0.05,B,alta,L/H = faixa de laboratório
+AIC-904,Cinzas · scanner final,qcs,scanner final,%,16,26,21,,19,23,,sim,FIC-106,0.05,0.1,B,alta,
+AIC-905,Espessura · scanner final,qcs,scanner final,µm,88,122,102,,98,106,,sim,MD: WIC-801; CD: TIC-803,0.1,0.3,B,alta,
+AIC-906,Alvura ISO · scanner final,qcs,scanner final,% ISO,95,100,98,,,,,sim,dosagem de OBA,0.05,0.1,B,média,
+AI-907,Opacidade · scanner final,qcs,scanner final,%,88,95,91.5,,89,,,não,via PCC e calandra,0.05,0.1,B,média,
+AI-912,Gramatura 2σ CD,qcs,perfil CD,g/m²,0.2,1.0,0.4,,,0.55,0.75,não,,0.01,0.02,B,alta,
+AI-913,Umidade 2σ CD,qcs,perfil CD,%,0.1,0.7,0.25,,,0.35,0.50,não,,0.01,0.02,B,alta,
+AI-915,Espessura 2σ CD,qcs,perfil CD,µm,0.4,2.0,0.8,,,1.0,1.5,não,,0.02,0.05,B,alta,
+WIC-1001,Carga do nip da enroladeira,pope,nip,kN/m,1.5,5.5,3.2,,,,,sim,servo-válvulas por curva de diâmetro,0.05,0.1,B,alta,
+WIC-1002,Tração da folha na entrada da Pope,pope,tração,N/m,220,480,330,160,,,520,sim,velocidade/torque do cilindro Pope,5,10,B,alta,a pesquisa B usa TIC-1002; no ISA-5.1 T é temperatura
+JIC-1003,Torque do acionamento central,pope,acionamento,%,10,90,55,,,,,sim,curva TNT,0.5,1,B,média,
+ZI-1004,Diâmetro da bobina jumbo,pope,bobina,mm,600,3000,,,,,,não,dispara a troca de bobina,5,10,B,alta,
+FIC-1105,Vazão de óleo de lubrificação por mancal,utilidades,lubrificação,L/min,1.5,6.0,3.0,1.0,1.5,,,sim,bombas da central,0.05,0.1,B,alta,LL por > 10 s = crítico
+TIC-1106,Temperatura do óleo térmico,utilidades,óleo térmico,°C,80,180,125,,,,,sim,válvula 3 vias,0.5,1,B,média,
+PI-1107,Pressão do ar de instrumentação,utilidades,ar comprimido,bar,5.8,7.5,6.5,,6.0,,,não,,0.02,0.05,B,média,L assumido
+AIC-1102,Turbidez do filtrado superclaro,utilidades,água branca,mg/L,10,120,35,,,,100,sim,sweetener e rotação do filtro,1,2,B,média,HH 100 = chuveiros para água fresca
+VI-51nnA,Vibração RMS · mancal LA do cilindro nn,mancais,por cilindro,mm/s,0,11,1.0,,,2.8,4.5,não,,0.02,0.05,ISO 20816-3,alta,padrão: 1 tag por cilindro (nn = 01–36); H = fronteira B/C; HH = C/D (grupo 2 base rígida)
+VI-51nnB,Vibração RMS · mancal LC do cilindro nn,mancais,por cilindro,mm/s,0,11,1.0,,,2.8,4.5,não,,0.02,0.05,ISO 20816-3,alta,
+VE-51nnA,Envelope · mancal LA do cilindro nn,mancais,por cilindro,gE,0,10,0.5,,,2.0,4.0,não,,0.02,0.05,assumed,baixa,limites de envelope variam por fabricante
+VE-51nnB,Envelope · mancal LC do cilindro nn,mancais,por cilindro,gE,0,10,0.5,,,2.0,4.0,não,,0.02,0.05,assumed,baixa,
+TI-53nnA,Temperatura do mancal LA do cilindro nn,mancais,por cilindro,°C,40,100,60,,,85,95,não,,0.2,0.5,assumed,média,confirmar faixa com a ronda da MP1
+TI-53nnB,Temperatura do mancal LC do cilindro nn,mancais,por cilindro,°C,40,100,60,,,85,95,não,,0.2,0.5,assumed,média,
+TI-52nn,Temperatura de superfície do cilindro nn,secagem,por cilindro,°C,80,150,125,,,,,não,,0.5,1,assumed,baixa,acompanha a T de saturação do grupo

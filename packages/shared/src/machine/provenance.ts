@@ -110,9 +110,9 @@ export const ARRANGEMENTS = {
     'Ordem das seções do processo',
     'Confirmado: pré-secagem → scanner 1 → Speed Sizer → pós-secagem → calandra → scanner final → Pope.',
   ),
-  DRYER_DRIVE_GROUPS: assumed(
-    'Divisão dos secadores em grupos de acionamento (G1–G6)',
-    'Inventado para o modelo. O único ponto fixo é o CS23 estar no G4, porque a tag MP1-SEC-G4-CS23-MLA aparece no conceito de tela.',
+  DRYER_STEAM_GROUPS: assumed(
+    'Divisão dos secadores em grupos de vapor (G1–G6)',
+    'Inventado para o modelo, junto com o nº de pares de cilindros que fixa as faixas. O único ponto fixo é o CS23 estar no G4, porque a tag MP1-SEC-G4-CS23-MLA aparece no conceito de tela. A divisão real sai do mapa de rolos.',
   ),
   CALENDER_NIP_COUNT: assumed(
     'Calandra com um único nip',

@@ -24,7 +24,7 @@ export interface AssetRow {
   length_m: number | null;
   side: string | null;
   parent_tag: string | null;
-  drive_group: string | null;
+  steam_group: string | null;
   iso_group: string | null;
   iso_support: string | null;
   source: string;
@@ -64,7 +64,7 @@ export function toAsset(row: AssetRow): MachineAsset {
     lengthM: row.length_m === null ? null : num(row.length_m),
     side: row.side as MachineAsset['side'],
     parentTag: row.parent_tag,
-    driveGroup: row.drive_group,
+    steamGroup: row.steam_group,
     iso:
       row.iso_group && row.iso_support
         ? {
@@ -100,7 +100,7 @@ export function toBucket(row: BucketRow): VibrationBucket {
 const ASSET_COLUMNS = `
   tag, kind, label, section,
   position_x, position_y, position_z,
-  radius_m, length_m, side, parent_tag, drive_group,
+  radius_m, length_m, side, parent_tag, steam_group,
   iso_group, iso_support, source
 `;
 
@@ -151,7 +151,7 @@ export const INSERT_ASSET = `
     length_m = excluded.length_m,
     side = excluded.side,
     parent_tag = excluded.parent_tag,
-    drive_group = excluded.drive_group,
+    steam_group = excluded.steam_group,
     iso_group = excluded.iso_group,
     iso_support = excluded.iso_support,
     source = excluded.source
@@ -169,7 +169,7 @@ export const insertAssetParams = (asset: MachineAsset): unknown[] => [
   asset.lengthM,
   asset.side,
   asset.parentTag,
-  asset.driveGroup,
+  asset.steamGroup,
   asset.iso?.group ?? null,
   asset.iso?.support ?? null,
   asset.source,

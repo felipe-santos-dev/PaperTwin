@@ -1,0 +1,24 @@
+id,entrada,saida,degrau_entrada,kp_por_unidade,unidade_kp,tempo_morto_s,tau_s,observacao
+1,FIC-105,AIC-902,+10 m³/h,0.0825,g/m² por m³/h,75,23,mais fibra por unidade de tempo
+1b,FIC-105,AIC-903,+10 m³/h,0.0185,% por m³/h,75,23,folha mais pesada leva mais água
+2,AIC-104,AIC-902,+0.1 %,21.5,g/m² por %,80,25,válvula de gramatura é volumétrica; sem compensação
+3,SIC-1104,AIC-902,+10 m/min,-0.06,g/m² por m/min,10,32,mesma fibra em área maior
+3b,SIC-1104,AIC-903,+10 m/min,0.025,% por m/min,10,32,menos tempo de secagem
+4,PIC-514,AIC-901,+10 kPa,-0.027,% por kPa,20,57,mais calor no grupo principal (pesquisa B usa PIC-502)
+5,PIC-711,AIC-903,+10 kPa,-0.02,% por kPa,14,45,pós-secagem (aplicar também a PIC-712)
+6,WIC-401,AI-407,+50 kN/m,0.0085,% por kN/m,30,12,prensagem tira mais água
+6b,WIC-401,AIC-901,+50 kN/m,-0.015,% por kN/m,30,12,
+6c,WIC-401,AIC-905,+50 kN/m,-0.026,µm por kN/m,30,12,folha mais densa
+7,FIC-106,AIC-904,+10 kg/t,0.0725,% por kg/t,70,52,retenção de primeira passagem ~58 %
+7b,FIC-106,AI-907,+10 kg/t,0.0425,% por kg/t,70,52,
+8,FIC-109,AIC-306,+50 g/t,-0.00065,% por g/t,27,40,mais retenção = água branca mais limpa
+9,JIC-101,LAB-1206,+10 kWh/t,0.0425,kN/m por kWh/t,270,450,tração MD; efeito lento (tanques)
+10,XHIC-202,LAB-1206R,+0.02,11.5,razão MD/CD por unidade,62,7,orientação das fibras
+11,ZIC-205[k],AIC-902[k],+10 %,-0.08,g/m² por % (zona k),62,11,espalhamento lateral gaussiano σ ≈ 45 mm
+12,AIC-601,AIC-903,+1 %,-0.375,% por %,23,27,mais sólidos = menos água na folha
+12b,AIC-601,XI-606A,+1 %,0.2,g/m² por % (por lado),23,27,
+13,PIC-604A,XI-606A,+0.5 bar,-0.4,g/m² por bar,21,7,barra mais apertada = filme mais fino
+13b,PIC-604A,AIC-903,+0.5 bar,-0.55,% por bar,21,7,
+14,WIC-801,AIC-905,+20 kN/m,-0.11,µm por kN/m,6,4.5,calandragem
+14b,WIC-801,AI-907,+20 kN/m,-0.015,% por kN/m,6,4.5,
+15,PDIC-702,LAB-1212,+20 kPa,-0.225,mm de curl por kPa,16,50,secagem assimétrica entre faces

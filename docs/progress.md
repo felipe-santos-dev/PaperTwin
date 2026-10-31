@@ -13,7 +13,7 @@ Branch: `dev/fases-4-7`. Nada de push na main, nada de PR, nada de deploy.
 - [x] **4.1** Catálogo de variáveis de processo em `packages/shared/src/process`
 - [x] **4.1b** `driveGroup` → `steamGroup` (modelo, banco, API, web) + migration 002
 - [x] **4.2** Relações FOPDT + núcleo de simulação de 1ª ordem com tempo morto
-- [ ] **4.3** Grupos de vapor como dado de primeira classe
+- [x] **4.3** Grupos de vapor como dado de primeira classe
 - [ ] **4.4** Entidades de operação + historiador estilo PI
 - [ ] **4.5** `docs/notas-para-readme.md`
 - [ ] **5** Motor de simulação e API
@@ -75,6 +75,38 @@ Postgres do docker-compose.
   normalizado **pelo pico** e não pela soma, porque o `kp` da pesquisa é a
   resposta medida na própria zona.
 
+### 4.3 — grupos de vapor como dado de primeira classe
+
+A divisão saiu de dentro de `mp1.ts` e virou `machine/steam-groups.ts`:
+`DRYER_STEAM_GROUPS` exportado, `DRYER_CYLINDER_COUNT` derivado dos pares
+(não um 36 escrito à mão) e `sectionOfCylinder`. O módulo não importa o modelo,
+e por isso pode ser importado por ele.
+
+Duas invariantes são verificadas **ao carregar**, não só em teste:
+
+1. cobertura contígua de 1 a `DRYER_CYLINDER_COUNT`, sem furo e sem
+   sobreposição — um cilindro sem grupo não teria tag, e duas faixas sobrepostas
+   dariam tag duplicada;
+2. grupo contido numa seção — um grupo é uma válvula de vapor, e a válvula fica
+   na pré (`PIC-51x`) ou na pós (`PIC-71x`); uma faixa que atravessasse a
+   fronteira não teria tag de pressão.
+
+`process/steam-groups.ts` é o grupo resolvido: cilindros, tags dos cilindros e
+dos mancais, e as variáveis de processo buscadas **no catálogo** em tempo de
+carga — se uma linha sair do CSV, a importação falha em vez de a tela mostrar um
+traço. Também confere, ao carregar, que a seção do ativo no modelo bate com a
+seção declarada do grupo.
+
+Proveniência em dois campos, com vocabulários diferentes: `division` (`assumed`,
+vocabulário do modelo) e `tagMap` (`B`, vocabulário do catálogo). Num campo só,
+o mapa de tags — que é medido — herdaria o `assumed` da divisão, que é chute.
+
+G5 e G6 ficam com `condensateLevel: null` e uma nota: a pesquisa B dá tag de
+nível só para os quatro tanques da pré-secagem (`LIC-531`…`534`) e nenhuma para
+a pós, embora dê o ΔP dos sifões dos dois (`PDIC-721/722`). O tanque existe na
+máquina; a medição não está no catálogo. Inventar `LIC-731` daria ao simulador
+um número que ninguém mediu com a cara dos outros quatro.
+
 ## Suposições para o Felipe revisar
 
 1. **`CD_ZONE_COUNT = 140`** (`process/relations.ts`). O catálogo diz
@@ -95,8 +127,10 @@ Postgres do docker-compose.
 
 ## Próximo passo exato
 
-Fase 4.3: grupos de vapor como dado de primeira classe — entidade `SteamGroup`
-em `packages/shared/src/machine`, com tags resolvidas contra o catálogo de
-processo (PIC-51x/71x, PDIC-52x/72x, LIC-53x), tanque de condensado `null`
-explícito em G5/G6 com nota, invariantes de cobertura 1–36 contígua e
-grupo ⊂ seção, e proveniência separada (divisão = `assumed`, mapa de tags = `B`).
+Fase 4.4: as entidades de operação da LISTA-BASE (turno, bobina jumbo, quebra de
+folha, troca de gramatura, ronda, nota de manutenção, alteração de setpoint,
+alarme ISA-18.2) como tipos em `packages/shared/src/operations`, mais as
+migrations SQL e o repositório nas duas implementações (postgres.js e PGlite).
+Junto, as tabelas do historiador estilo PI: valor bruto, valor arquivado depois
+do filtro de exceção + swinging door (com `excDev`/`compDev` do catálogo) e
+retenção dimensionada para caber nos ~0,5 GB do Neon Free.

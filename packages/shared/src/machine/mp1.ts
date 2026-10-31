@@ -29,6 +29,7 @@ import {
   WEB_WIDTH_M,
 } from './geometry';
 import type { Source } from './provenance';
+import { steamGroupOfCylinder } from './steam-groups';
 import type { MachineAsset, MachineModel, MachineSection, Point3 } from './types';
 
 /**
@@ -49,30 +50,6 @@ import type { MachineAsset, MachineModel, MachineSection, Point3 } from './types
  * correto depende da potência de acionamento dos cilindros, que ainda falta.
  */
 const BEARING_ISO: IsoClass = DRYER_BEARING_ISO;
-
-/**
- * Grupos de vapor da secagem, por faixa de cilindro.
- *
- * Um grupo é o conjunto de cilindros alimentado pela mesma válvula de vapor,
- * com o seu próprio ΔP de sifões e tanque separador de condensado.
- *
- * Provisório: a divisão real sai do mapa de rolos. O que está fixo é que o CS23
- * pertence ao G4, como no conceito de tela de monitoramento.
- */
-const DRYER_STEAM_GROUPS = [
-  { id: 'G1', from: 1, to: 6 },
-  { id: 'G2', from: 7, to: 12 },
-  { id: 'G3', from: 13, to: 18 },
-  { id: 'G4', from: 19, to: 26 },
-  { id: 'G5', from: 27, to: 32 },
-  { id: 'G6', from: 33, to: 36 },
-] as const;
-
-function steamGroupOfCylinder(cylinder: number): string {
-  const group = DRYER_STEAM_GROUPS.find((g) => cylinder >= g.from && cylinder <= g.to);
-  if (!group) throw new Error(`Cilindro secador ${String(cylinder)} fora dos grupos conhecidos`);
-  return group.id;
-}
 
 /** Os dois mancais de um corpo girante, um por lado da máquina. */
 function bearingsOf(parent: MachineAsset): MachineAsset[] {

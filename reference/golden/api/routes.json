@@ -1,0 +1,6678 @@
+{
+  "tolerance": 1e-9,
+  "note": "Estado fixo: banco em memória, migrations, semente e retomada de 2 h até `nowMs`. Campos que carregam o instante da geração mudam com o relógio e estão listados em `volatileFields` — o teste Java os ignora.",
+  "nowMs": 1772442000000,
+  "seed": 20260101,
+  "volatileFields": [
+    "uptimeS",
+    "generatedAt"
+  ],
+  "responses": {
+    "/health": {
+      "status": "ok",
+      "service": "mp1-twin-api",
+      "version": "0.0.0",
+      "uptimeS": 14,
+      "database": "pglite",
+      "databaseUp": true,
+      "simulation": {
+        "seed": 20260101,
+        "lastTick": 5216400,
+        "lastRunAt": "2026-03-02T09:00:00.000Z",
+        "behindS": 21024628
+      }
+    },
+    "/assets": {
+      "count": 179,
+      "assets": [
+        {
+          "tag": "MP1-CAL-NIP",
+          "kind": "nip",
+          "label": "Nip da calandra",
+          "section": "calender",
+          "position": [
+            74.5,
+            3.4,
+            0
+          ],
+          "radius": null,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-CAL-RR",
+          "kind": "roll",
+          "label": "Rolo revestido",
+          "section": "calender",
+          "position": [
+            74.5,
+            2.5999999999999996,
+            0
+          ],
+          "radius": 0.8,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-CAL-RR-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Rolo revestido",
+          "section": "calender",
+          "position": [
+            74.5,
+            2.5999999999999996,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-CAL-RR",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-CAL-RR-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Rolo revestido",
+          "section": "calender",
+          "position": [
+            74.5,
+            2.5999999999999996,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-CAL-RR",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-CAL-RT",
+          "kind": "roll",
+          "label": "Rolo térmico",
+          "section": "calender",
+          "position": [
+            74.5,
+            4.2,
+            0
+          ],
+          "radius": 0.8,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-CAL-RT-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Rolo térmico",
+          "section": "calender",
+          "position": [
+            74.5,
+            4.2,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-CAL-RT",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-CAL-RT-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Rolo térmico",
+          "section": "calender",
+          "position": [
+            74.5,
+            4.2,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-CAL-RT",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-CXE-CE",
+          "kind": "headbox",
+          "label": "Caixa de entrada",
+          "section": "headbox",
+          "position": [
+            -9.6,
+            2.2,
+            0
+          ],
+          "radius": null,
+          "lengthM": 8.8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T1-R1",
+          "kind": "roll",
+          "label": "Rolo de peito",
+          "section": "forming",
+          "position": [
+            -7.2,
+            2.6,
+            0
+          ],
+          "radius": 0.55,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T1-R1-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Rolo de peito",
+          "section": "forming",
+          "position": [
+            -7.2,
+            2.6,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-FOR-T1-R1",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T1-R1-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Rolo de peito",
+          "section": "forming",
+          "position": [
+            -7.2,
+            2.6,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-FOR-T1-R1",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T1-R2",
+          "kind": "roll",
+          "label": "Rolo da tela inferior 2",
+          "section": "forming",
+          "position": [
+            -2.6,
+            3.4,
+            0
+          ],
+          "radius": 0.45,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T1-R2-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Rolo da tela inferior 2",
+          "section": "forming",
+          "position": [
+            -2.6,
+            3.4,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-FOR-T1-R2",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T1-R2-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Rolo da tela inferior 2",
+          "section": "forming",
+          "position": [
+            -2.6,
+            3.4,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-FOR-T1-R2",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T1-R3",
+          "kind": "roll",
+          "label": "Rolo da tela inferior 3",
+          "section": "forming",
+          "position": [
+            -1.6,
+            7.6,
+            0
+          ],
+          "radius": 0.4,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T1-R3-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Rolo da tela inferior 3",
+          "section": "forming",
+          "position": [
+            -1.6,
+            7.6,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-FOR-T1-R3",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T1-R3-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Rolo da tela inferior 3",
+          "section": "forming",
+          "position": [
+            -1.6,
+            7.6,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-FOR-T1-R3",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T1-R4",
+          "kind": "roll",
+          "label": "Rolo da tela inferior 4",
+          "section": "forming",
+          "position": [
+            -4.8,
+            9.3,
+            0
+          ],
+          "radius": 0.4,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T1-R4-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Rolo da tela inferior 4",
+          "section": "forming",
+          "position": [
+            -4.8,
+            9.3,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-FOR-T1-R4",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T1-R4-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Rolo da tela inferior 4",
+          "section": "forming",
+          "position": [
+            -4.8,
+            9.3,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-FOR-T1-R4",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T1-R5",
+          "kind": "roll",
+          "label": "Rolo da tela inferior 5",
+          "section": "forming",
+          "position": [
+            -7.4,
+            6.2,
+            0
+          ],
+          "radius": 0.4,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T1-R5-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Rolo da tela inferior 5",
+          "section": "forming",
+          "position": [
+            -7.4,
+            6.2,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-FOR-T1-R5",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T1-R5-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Rolo da tela inferior 5",
+          "section": "forming",
+          "position": [
+            -7.4,
+            6.2,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-FOR-T1-R5",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T2-R1",
+          "kind": "roll",
+          "label": "Rolo da tela superior 1",
+          "section": "forming",
+          "position": [
+            -5.6,
+            3.9,
+            0
+          ],
+          "radius": 0.45,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T2-R1-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Rolo da tela superior 1",
+          "section": "forming",
+          "position": [
+            -5.6,
+            3.9,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-FOR-T2-R1",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T2-R1-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Rolo da tela superior 1",
+          "section": "forming",
+          "position": [
+            -5.6,
+            3.9,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-FOR-T2-R1",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T2-R2",
+          "kind": "roll",
+          "label": "Rolo de transferência",
+          "section": "forming",
+          "position": [
+            0.2,
+            4.2,
+            0
+          ],
+          "radius": 0.45,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T2-R2-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Rolo de transferência",
+          "section": "forming",
+          "position": [
+            0.2,
+            4.2,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-FOR-T2-R2",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T2-R2-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Rolo de transferência",
+          "section": "forming",
+          "position": [
+            0.2,
+            4.2,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-FOR-T2-R2",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T2-R3",
+          "kind": "roll",
+          "label": "Rolo da tela superior 3",
+          "section": "forming",
+          "position": [
+            -0.8,
+            8.6,
+            0
+          ],
+          "radius": 0.4,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T2-R3-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Rolo da tela superior 3",
+          "section": "forming",
+          "position": [
+            -0.8,
+            8.6,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-FOR-T2-R3",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T2-R3-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Rolo da tela superior 3",
+          "section": "forming",
+          "position": [
+            -0.8,
+            8.6,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-FOR-T2-R3",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T2-R4",
+          "kind": "roll",
+          "label": "Rolo da tela superior 4",
+          "section": "forming",
+          "position": [
+            -2.8,
+            11,
+            0
+          ],
+          "radius": 0.4,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T2-R4-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Rolo da tela superior 4",
+          "section": "forming",
+          "position": [
+            -2.8,
+            11,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-FOR-T2-R4",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T2-R4-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Rolo da tela superior 4",
+          "section": "forming",
+          "position": [
+            -2.8,
+            11,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-FOR-T2-R4",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T2-R5",
+          "kind": "roll",
+          "label": "Rolo da tela superior 5",
+          "section": "forming",
+          "position": [
+            -5.2,
+            7.2,
+            0
+          ],
+          "radius": 0.35,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T2-R5-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Rolo da tela superior 5",
+          "section": "forming",
+          "position": [
+            -5.2,
+            7.2,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-FOR-T2-R5",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-FOR-T2-R5-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Rolo da tela superior 5",
+          "section": "forming",
+          "position": [
+            -5.2,
+            7.2,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-FOR-T2-R5",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-POP-TBR",
+          "kind": "reel-drum",
+          "label": "Tambor da enroladeira",
+          "section": "pope-reel",
+          "position": [
+            84.5,
+            3.6,
+            0
+          ],
+          "radius": 0.8,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "validated"
+        },
+        {
+          "tag": "MP1-POP-TBR-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Tambor da enroladeira",
+          "section": "pope-reel",
+          "position": [
+            84.5,
+            3.6,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-POP-TBR",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "validated"
+        },
+        {
+          "tag": "MP1-POP-TBR-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Tambor da enroladeira",
+          "section": "pope-reel",
+          "position": [
+            84.5,
+            3.6,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-POP-TBR",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "validated"
+        },
+        {
+          "tag": "MP1-PRE-P1-NIP",
+          "kind": "nip",
+          "label": "Nip da 1ª prensa",
+          "section": "press",
+          "position": [
+            3.6,
+            4.2,
+            0
+          ],
+          "radius": null,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-PRE-P1-RI",
+          "kind": "roll",
+          "label": "Rolo inferior · 1ª prensa",
+          "section": "press",
+          "position": [
+            3.6,
+            3.35,
+            0
+          ],
+          "radius": 0.85,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-PRE-P1-RI-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Rolo inferior · 1ª prensa",
+          "section": "press",
+          "position": [
+            3.6,
+            3.35,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-PRE-P1-RI",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-PRE-P1-RI-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Rolo inferior · 1ª prensa",
+          "section": "press",
+          "position": [
+            3.6,
+            3.35,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-PRE-P1-RI",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-PRE-P1-RS",
+          "kind": "roll",
+          "label": "Rolo superior · 1ª prensa",
+          "section": "press",
+          "position": [
+            3.6,
+            5.05,
+            0
+          ],
+          "radius": 0.85,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-PRE-P1-RS-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Rolo superior · 1ª prensa",
+          "section": "press",
+          "position": [
+            3.6,
+            5.05,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-PRE-P1-RS",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-PRE-P1-RS-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Rolo superior · 1ª prensa",
+          "section": "press",
+          "position": [
+            3.6,
+            5.05,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-PRE-P1-RS",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-PRE-P2-NIP",
+          "kind": "nip",
+          "label": "Nip da 2ª prensa",
+          "section": "press",
+          "position": [
+            7.2,
+            4.55,
+            0
+          ],
+          "radius": null,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-PRE-P2-RI",
+          "kind": "roll",
+          "label": "Rolo inferior · 2ª prensa",
+          "section": "press",
+          "position": [
+            7.2,
+            3.65,
+            0
+          ],
+          "radius": 0.9,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-PRE-P2-RI-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Rolo inferior · 2ª prensa",
+          "section": "press",
+          "position": [
+            7.2,
+            3.65,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-PRE-P2-RI",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-PRE-P2-RI-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Rolo inferior · 2ª prensa",
+          "section": "press",
+          "position": [
+            7.2,
+            3.65,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-PRE-P2-RI",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-PRE-P2-RS",
+          "kind": "roll",
+          "label": "Rolo superior · 2ª prensa",
+          "section": "press",
+          "position": [
+            7.2,
+            5.45,
+            0
+          ],
+          "radius": 0.9,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-PRE-P2-RS-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Rolo superior · 2ª prensa",
+          "section": "press",
+          "position": [
+            7.2,
+            5.45,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-PRE-P2-RS",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-PRE-P2-RS-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Rolo superior · 2ª prensa",
+          "section": "press",
+          "position": [
+            7.2,
+            5.45,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-PRE-P2-RS",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-PRE-P3-NIP",
+          "kind": "nip",
+          "label": "Nip da 3ª prensa",
+          "section": "press",
+          "position": [
+            11,
+            5.4,
+            0
+          ],
+          "radius": null,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-PRE-P3-RI",
+          "kind": "roll",
+          "label": "Rolo inferior · 3ª prensa",
+          "section": "press",
+          "position": [
+            11,
+            4.45,
+            0
+          ],
+          "radius": 0.95,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-PRE-P3-RI-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Rolo inferior · 3ª prensa",
+          "section": "press",
+          "position": [
+            11,
+            4.45,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-PRE-P3-RI",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-PRE-P3-RI-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Rolo inferior · 3ª prensa",
+          "section": "press",
+          "position": [
+            11,
+            4.45,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-PRE-P3-RI",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-PRE-P3-RS",
+          "kind": "roll",
+          "label": "Rolo superior · 3ª prensa",
+          "section": "press",
+          "position": [
+            11,
+            6.3500000000000005,
+            0
+          ],
+          "radius": 0.95,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-PRE-P3-RS-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Rolo superior · 3ª prensa",
+          "section": "press",
+          "position": [
+            11,
+            6.3500000000000005,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-PRE-P3-RS",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-PRE-P3-RS-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Rolo superior · 3ª prensa",
+          "section": "press",
+          "position": [
+            11,
+            6.3500000000000005,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-PRE-P3-RS",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-QCS-SC1",
+          "kind": "scanner",
+          "label": "Scanner 1 · entrada do Speed Sizer",
+          "section": "scanner-1",
+          "position": [
+            48.2,
+            4.8,
+            0
+          ],
+          "radius": null,
+          "lengthM": 11.6,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "validated"
+        },
+        {
+          "tag": "MP1-QCS-SC2",
+          "kind": "scanner",
+          "label": "Scanner final · QCS",
+          "section": "scanner-2",
+          "position": [
+            79,
+            3.4,
+            0
+          ],
+          "radius": null,
+          "lengthM": 11.6,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "validated"
+        },
+        {
+          "tag": "MP1-SEC-G1-CS01",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 1",
+          "section": "pre-dryer",
+          "position": [
+            15,
+            6.1,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G1",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G1-CS01-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 1",
+          "section": "pre-dryer",
+          "position": [
+            15,
+            6.1,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G1-CS01",
+          "steamGroup": "G1",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G1-CS01-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 1",
+          "section": "pre-dryer",
+          "position": [
+            15,
+            6.1,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G1-CS01",
+          "steamGroup": "G1",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G1-CS02",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 2",
+          "section": "pre-dryer",
+          "position": [
+            16.1,
+            3,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G1",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G1-CS02-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 2",
+          "section": "pre-dryer",
+          "position": [
+            16.1,
+            3,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G1-CS02",
+          "steamGroup": "G1",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G1-CS02-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 2",
+          "section": "pre-dryer",
+          "position": [
+            16.1,
+            3,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G1-CS02",
+          "steamGroup": "G1",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G1-CS03",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 3",
+          "section": "pre-dryer",
+          "position": [
+            17.2,
+            6.1,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G1",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G1-CS03-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 3",
+          "section": "pre-dryer",
+          "position": [
+            17.2,
+            6.1,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G1-CS03",
+          "steamGroup": "G1",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G1-CS03-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 3",
+          "section": "pre-dryer",
+          "position": [
+            17.2,
+            6.1,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G1-CS03",
+          "steamGroup": "G1",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G1-CS04",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 4",
+          "section": "pre-dryer",
+          "position": [
+            18.3,
+            3,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G1",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G1-CS04-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 4",
+          "section": "pre-dryer",
+          "position": [
+            18.3,
+            3,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G1-CS04",
+          "steamGroup": "G1",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G1-CS04-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 4",
+          "section": "pre-dryer",
+          "position": [
+            18.3,
+            3,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G1-CS04",
+          "steamGroup": "G1",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G1-CS05",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 5",
+          "section": "pre-dryer",
+          "position": [
+            19.4,
+            6.1,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G1",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G1-CS05-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 5",
+          "section": "pre-dryer",
+          "position": [
+            19.4,
+            6.1,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G1-CS05",
+          "steamGroup": "G1",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G1-CS05-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 5",
+          "section": "pre-dryer",
+          "position": [
+            19.4,
+            6.1,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G1-CS05",
+          "steamGroup": "G1",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G1-CS06",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 6",
+          "section": "pre-dryer",
+          "position": [
+            20.5,
+            3,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G1",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G1-CS06-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 6",
+          "section": "pre-dryer",
+          "position": [
+            20.5,
+            3,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G1-CS06",
+          "steamGroup": "G1",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G1-CS06-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 6",
+          "section": "pre-dryer",
+          "position": [
+            20.5,
+            3,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G1-CS06",
+          "steamGroup": "G1",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G2-CS07",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 7",
+          "section": "pre-dryer",
+          "position": [
+            21.6,
+            6.1,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G2",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G2-CS07-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 7",
+          "section": "pre-dryer",
+          "position": [
+            21.6,
+            6.1,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G2-CS07",
+          "steamGroup": "G2",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G2-CS07-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 7",
+          "section": "pre-dryer",
+          "position": [
+            21.6,
+            6.1,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G2-CS07",
+          "steamGroup": "G2",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G2-CS08",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 8",
+          "section": "pre-dryer",
+          "position": [
+            22.700000000000003,
+            3,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G2",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G2-CS08-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 8",
+          "section": "pre-dryer",
+          "position": [
+            22.700000000000003,
+            3,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G2-CS08",
+          "steamGroup": "G2",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G2-CS08-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 8",
+          "section": "pre-dryer",
+          "position": [
+            22.700000000000003,
+            3,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G2-CS08",
+          "steamGroup": "G2",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G2-CS09",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 9",
+          "section": "pre-dryer",
+          "position": [
+            23.8,
+            6.1,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G2",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G2-CS09-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 9",
+          "section": "pre-dryer",
+          "position": [
+            23.8,
+            6.1,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G2-CS09",
+          "steamGroup": "G2",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G2-CS09-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 9",
+          "section": "pre-dryer",
+          "position": [
+            23.8,
+            6.1,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G2-CS09",
+          "steamGroup": "G2",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G2-CS10",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 10",
+          "section": "pre-dryer",
+          "position": [
+            24.900000000000002,
+            3,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G2",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G2-CS10-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 10",
+          "section": "pre-dryer",
+          "position": [
+            24.900000000000002,
+            3,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G2-CS10",
+          "steamGroup": "G2",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G2-CS10-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 10",
+          "section": "pre-dryer",
+          "position": [
+            24.900000000000002,
+            3,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G2-CS10",
+          "steamGroup": "G2",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G2-CS11",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 11",
+          "section": "pre-dryer",
+          "position": [
+            26,
+            6.1,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G2",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G2-CS11-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 11",
+          "section": "pre-dryer",
+          "position": [
+            26,
+            6.1,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G2-CS11",
+          "steamGroup": "G2",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G2-CS11-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 11",
+          "section": "pre-dryer",
+          "position": [
+            26,
+            6.1,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G2-CS11",
+          "steamGroup": "G2",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G2-CS12",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 12",
+          "section": "pre-dryer",
+          "position": [
+            27.1,
+            3,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G2",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G2-CS12-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 12",
+          "section": "pre-dryer",
+          "position": [
+            27.1,
+            3,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G2-CS12",
+          "steamGroup": "G2",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G2-CS12-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 12",
+          "section": "pre-dryer",
+          "position": [
+            27.1,
+            3,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G2-CS12",
+          "steamGroup": "G2",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G3-CS13",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 13",
+          "section": "pre-dryer",
+          "position": [
+            28.200000000000003,
+            6.1,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G3",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G3-CS13-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 13",
+          "section": "pre-dryer",
+          "position": [
+            28.200000000000003,
+            6.1,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G3-CS13",
+          "steamGroup": "G3",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G3-CS13-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 13",
+          "section": "pre-dryer",
+          "position": [
+            28.200000000000003,
+            6.1,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G3-CS13",
+          "steamGroup": "G3",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G3-CS14",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 14",
+          "section": "pre-dryer",
+          "position": [
+            29.300000000000004,
+            3,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G3",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G3-CS14-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 14",
+          "section": "pre-dryer",
+          "position": [
+            29.300000000000004,
+            3,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G3-CS14",
+          "steamGroup": "G3",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G3-CS14-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 14",
+          "section": "pre-dryer",
+          "position": [
+            29.300000000000004,
+            3,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G3-CS14",
+          "steamGroup": "G3",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G3-CS15",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 15",
+          "section": "pre-dryer",
+          "position": [
+            30.400000000000002,
+            6.1,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G3",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G3-CS15-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 15",
+          "section": "pre-dryer",
+          "position": [
+            30.400000000000002,
+            6.1,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G3-CS15",
+          "steamGroup": "G3",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G3-CS15-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 15",
+          "section": "pre-dryer",
+          "position": [
+            30.400000000000002,
+            6.1,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G3-CS15",
+          "steamGroup": "G3",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G3-CS16",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 16",
+          "section": "pre-dryer",
+          "position": [
+            31.500000000000004,
+            3,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G3",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G3-CS16-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 16",
+          "section": "pre-dryer",
+          "position": [
+            31.500000000000004,
+            3,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G3-CS16",
+          "steamGroup": "G3",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G3-CS16-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 16",
+          "section": "pre-dryer",
+          "position": [
+            31.500000000000004,
+            3,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G3-CS16",
+          "steamGroup": "G3",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G3-CS17",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 17",
+          "section": "pre-dryer",
+          "position": [
+            32.6,
+            6.1,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G3",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G3-CS17-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 17",
+          "section": "pre-dryer",
+          "position": [
+            32.6,
+            6.1,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G3-CS17",
+          "steamGroup": "G3",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G3-CS17-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 17",
+          "section": "pre-dryer",
+          "position": [
+            32.6,
+            6.1,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G3-CS17",
+          "steamGroup": "G3",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G3-CS18",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 18",
+          "section": "pre-dryer",
+          "position": [
+            33.7,
+            3,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G3",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G3-CS18-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 18",
+          "section": "pre-dryer",
+          "position": [
+            33.7,
+            3,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G3-CS18",
+          "steamGroup": "G3",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G3-CS18-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 18",
+          "section": "pre-dryer",
+          "position": [
+            33.7,
+            3,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G3-CS18",
+          "steamGroup": "G3",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G4-CS19",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 19",
+          "section": "pre-dryer",
+          "position": [
+            34.8,
+            6.1,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G4",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G4-CS19-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 19",
+          "section": "pre-dryer",
+          "position": [
+            34.8,
+            6.1,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G4-CS19",
+          "steamGroup": "G4",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G4-CS19-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 19",
+          "section": "pre-dryer",
+          "position": [
+            34.8,
+            6.1,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G4-CS19",
+          "steamGroup": "G4",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G4-CS20",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 20",
+          "section": "pre-dryer",
+          "position": [
+            35.9,
+            3,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G4",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G4-CS20-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 20",
+          "section": "pre-dryer",
+          "position": [
+            35.9,
+            3,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G4-CS20",
+          "steamGroup": "G4",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G4-CS20-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 20",
+          "section": "pre-dryer",
+          "position": [
+            35.9,
+            3,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G4-CS20",
+          "steamGroup": "G4",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G4-CS21",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 21",
+          "section": "pre-dryer",
+          "position": [
+            37,
+            6.1,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G4",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G4-CS21-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 21",
+          "section": "pre-dryer",
+          "position": [
+            37,
+            6.1,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G4-CS21",
+          "steamGroup": "G4",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G4-CS21-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 21",
+          "section": "pre-dryer",
+          "position": [
+            37,
+            6.1,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G4-CS21",
+          "steamGroup": "G4",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G4-CS22",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 22",
+          "section": "pre-dryer",
+          "position": [
+            38.1,
+            3,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G4",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G4-CS22-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 22",
+          "section": "pre-dryer",
+          "position": [
+            38.1,
+            3,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G4-CS22",
+          "steamGroup": "G4",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G4-CS22-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 22",
+          "section": "pre-dryer",
+          "position": [
+            38.1,
+            3,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G4-CS22",
+          "steamGroup": "G4",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G4-CS23",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 23",
+          "section": "pre-dryer",
+          "position": [
+            39.2,
+            6.1,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G4",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G4-CS23-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 23",
+          "section": "pre-dryer",
+          "position": [
+            39.2,
+            6.1,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G4-CS23",
+          "steamGroup": "G4",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G4-CS23-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 23",
+          "section": "pre-dryer",
+          "position": [
+            39.2,
+            6.1,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G4-CS23",
+          "steamGroup": "G4",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G4-CS24",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 24",
+          "section": "pre-dryer",
+          "position": [
+            40.300000000000004,
+            3,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G4",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G4-CS24-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 24",
+          "section": "pre-dryer",
+          "position": [
+            40.300000000000004,
+            3,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G4-CS24",
+          "steamGroup": "G4",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G4-CS24-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 24",
+          "section": "pre-dryer",
+          "position": [
+            40.300000000000004,
+            3,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G4-CS24",
+          "steamGroup": "G4",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G4-CS25",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 25",
+          "section": "pre-dryer",
+          "position": [
+            41.400000000000006,
+            6.1,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G4",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G4-CS25-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 25",
+          "section": "pre-dryer",
+          "position": [
+            41.400000000000006,
+            6.1,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G4-CS25",
+          "steamGroup": "G4",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G4-CS25-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 25",
+          "section": "pre-dryer",
+          "position": [
+            41.400000000000006,
+            6.1,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G4-CS25",
+          "steamGroup": "G4",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G4-CS26",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 26",
+          "section": "pre-dryer",
+          "position": [
+            42.50000000000001,
+            3,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G4",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G4-CS26-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 26",
+          "section": "pre-dryer",
+          "position": [
+            42.50000000000001,
+            3,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G4-CS26",
+          "steamGroup": "G4",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G4-CS26-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 26",
+          "section": "pre-dryer",
+          "position": [
+            42.50000000000001,
+            3,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G4-CS26",
+          "steamGroup": "G4",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G5-CS27",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 27",
+          "section": "post-dryer",
+          "position": [
+            58.7,
+            6.1,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G5",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G5-CS27-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 27",
+          "section": "post-dryer",
+          "position": [
+            58.7,
+            6.1,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G5-CS27",
+          "steamGroup": "G5",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G5-CS27-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 27",
+          "section": "post-dryer",
+          "position": [
+            58.7,
+            6.1,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G5-CS27",
+          "steamGroup": "G5",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G5-CS28",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 28",
+          "section": "post-dryer",
+          "position": [
+            59.800000000000004,
+            3,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G5",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G5-CS28-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 28",
+          "section": "post-dryer",
+          "position": [
+            59.800000000000004,
+            3,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G5-CS28",
+          "steamGroup": "G5",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G5-CS28-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 28",
+          "section": "post-dryer",
+          "position": [
+            59.800000000000004,
+            3,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G5-CS28",
+          "steamGroup": "G5",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G5-CS29",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 29",
+          "section": "post-dryer",
+          "position": [
+            60.900000000000006,
+            6.1,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G5",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G5-CS29-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 29",
+          "section": "post-dryer",
+          "position": [
+            60.900000000000006,
+            6.1,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G5-CS29",
+          "steamGroup": "G5",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G5-CS29-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 29",
+          "section": "post-dryer",
+          "position": [
+            60.900000000000006,
+            6.1,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G5-CS29",
+          "steamGroup": "G5",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G5-CS30",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 30",
+          "section": "post-dryer",
+          "position": [
+            62.00000000000001,
+            3,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G5",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G5-CS30-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 30",
+          "section": "post-dryer",
+          "position": [
+            62.00000000000001,
+            3,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G5-CS30",
+          "steamGroup": "G5",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G5-CS30-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 30",
+          "section": "post-dryer",
+          "position": [
+            62.00000000000001,
+            3,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G5-CS30",
+          "steamGroup": "G5",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G5-CS31",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 31",
+          "section": "post-dryer",
+          "position": [
+            63.1,
+            6.1,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G5",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G5-CS31-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 31",
+          "section": "post-dryer",
+          "position": [
+            63.1,
+            6.1,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G5-CS31",
+          "steamGroup": "G5",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G5-CS31-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 31",
+          "section": "post-dryer",
+          "position": [
+            63.1,
+            6.1,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G5-CS31",
+          "steamGroup": "G5",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G5-CS32",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 32",
+          "section": "post-dryer",
+          "position": [
+            64.2,
+            3,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G5",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G5-CS32-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 32",
+          "section": "post-dryer",
+          "position": [
+            64.2,
+            3,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G5-CS32",
+          "steamGroup": "G5",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G5-CS32-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 32",
+          "section": "post-dryer",
+          "position": [
+            64.2,
+            3,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G5-CS32",
+          "steamGroup": "G5",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G6-CS33",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 33",
+          "section": "post-dryer",
+          "position": [
+            65.3,
+            6.1,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G6",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G6-CS33-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 33",
+          "section": "post-dryer",
+          "position": [
+            65.3,
+            6.1,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G6-CS33",
+          "steamGroup": "G6",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G6-CS33-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 33",
+          "section": "post-dryer",
+          "position": [
+            65.3,
+            6.1,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G6-CS33",
+          "steamGroup": "G6",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G6-CS34",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 34",
+          "section": "post-dryer",
+          "position": [
+            66.39999999999999,
+            3,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G6",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G6-CS34-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 34",
+          "section": "post-dryer",
+          "position": [
+            66.39999999999999,
+            3,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G6-CS34",
+          "steamGroup": "G6",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G6-CS34-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 34",
+          "section": "post-dryer",
+          "position": [
+            66.39999999999999,
+            3,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G6-CS34",
+          "steamGroup": "G6",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G6-CS35",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 35",
+          "section": "post-dryer",
+          "position": [
+            67.5,
+            6.1,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G6",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G6-CS35-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 35",
+          "section": "post-dryer",
+          "position": [
+            67.5,
+            6.1,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G6-CS35",
+          "steamGroup": "G6",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G6-CS35-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 35",
+          "section": "post-dryer",
+          "position": [
+            67.5,
+            6.1,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G6-CS35",
+          "steamGroup": "G6",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G6-CS36",
+          "kind": "dryer-cylinder",
+          "label": "Cilindro secador 36",
+          "section": "post-dryer",
+          "position": [
+            68.6,
+            3,
+            0
+          ],
+          "radius": 1.05,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": "G6",
+          "iso": null,
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G6-CS36-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Cilindro secador 36",
+          "section": "post-dryer",
+          "position": [
+            68.6,
+            3,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SEC-G6-CS36",
+          "steamGroup": "G6",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SEC-G6-CS36-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Cilindro secador 36",
+          "section": "post-dryer",
+          "position": [
+            68.6,
+            3,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SEC-G6-CS36",
+          "steamGroup": "G6",
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "assumed"
+        },
+        {
+          "tag": "MP1-SZR-NIP",
+          "kind": "nip",
+          "label": "Nip do Speed Sizer",
+          "section": "speed-sizer",
+          "position": [
+            53.2,
+            4.8,
+            0
+          ],
+          "radius": null,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "validated"
+        },
+        {
+          "tag": "MP1-SZR-RI",
+          "kind": "roll",
+          "label": "Rolo aplicador inferior",
+          "section": "speed-sizer",
+          "position": [
+            53.2,
+            3.65,
+            0
+          ],
+          "radius": 1.15,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "validated"
+        },
+        {
+          "tag": "MP1-SZR-RI-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Rolo aplicador inferior",
+          "section": "speed-sizer",
+          "position": [
+            53.2,
+            3.65,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SZR-RI",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "validated"
+        },
+        {
+          "tag": "MP1-SZR-RI-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Rolo aplicador inferior",
+          "section": "speed-sizer",
+          "position": [
+            53.2,
+            3.65,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SZR-RI",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "validated"
+        },
+        {
+          "tag": "MP1-SZR-RS",
+          "kind": "roll",
+          "label": "Rolo aplicador superior",
+          "section": "speed-sizer",
+          "position": [
+            53.2,
+            5.949999999999999,
+            0
+          ],
+          "radius": 1.15,
+          "lengthM": 8,
+          "side": null,
+          "parentTag": null,
+          "steamGroup": null,
+          "iso": null,
+          "source": "validated"
+        },
+        {
+          "tag": "MP1-SZR-RS-MLA",
+          "kind": "bearing",
+          "label": "Mancal LA · Rolo aplicador superior",
+          "section": "speed-sizer",
+          "position": [
+            53.2,
+            5.949999999999999,
+            -4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LA",
+          "parentTag": "MP1-SZR-RS",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "validated"
+        },
+        {
+          "tag": "MP1-SZR-RS-MLC",
+          "kind": "bearing",
+          "label": "Mancal LC · Rolo aplicador superior",
+          "section": "speed-sizer",
+          "position": [
+            53.2,
+            5.949999999999999,
+            4.3
+          ],
+          "radius": null,
+          "lengthM": null,
+          "side": "LC",
+          "parentTag": "MP1-SZR-RS",
+          "steamGroup": null,
+          "iso": {
+            "group": "group2",
+            "support": "rigid"
+          },
+          "source": "validated"
+        }
+      ]
+    },
+    "/process/values": {
+      "ts": "2026-03-02T09:00:00.000Z",
+      "count": 320,
+      "values": [
+        {
+          "tag": "SIC-1104",
+          "value": 1250.291,
+          "unit": "m/min",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "XI-0001",
+          "value": 45.1022,
+          "unit": "t/h",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "XI-0002",
+          "value": 8,
+          "unit": "m",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "FIC-105",
+          "value": 919.9315,
+          "unit": "m³/h",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "AIC-104",
+          "value": 3.4936,
+          "unit": "%",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "FIC-106",
+          "value": 210.5749,
+          "unit": "kg/t",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "FIC-109",
+          "value": 252.1937,
+          "unit": "g/t",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "JIC-101",
+          "value": 55.653,
+          "unit": "kWh/t",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "AIC-306",
+          "value": 0.2215,
+          "unit": "%",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "PIC-201",
+          "value": 225.0081,
+          "unit": "kPa",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "XHIC-202",
+          "value": 1.0149,
+          "unit": "adim.",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "ZIC-205",
+          "value": 50.5381,
+          "unit": "%",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "WIC-401",
+          "value": 899.5086,
+          "unit": "kN/m",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "PIC-403",
+          "value": 20.411,
+          "unit": "kPa",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "AI-407",
+          "value": 51.0602,
+          "unit": "%",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "SDIC-406",
+          "value": 2.1085,
+          "unit": "%",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "PIC-511",
+          "value": 14.9263,
+          "unit": "kPa rel",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "PIC-512",
+          "value": 149.8189,
+          "unit": "kPa rel",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "PIC-513",
+          "value": 220.134,
+          "unit": "kPa rel",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "PIC-514",
+          "value": 230.3705,
+          "unit": "kPa rel",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "PDIC-521",
+          "value": 37.8911,
+          "unit": "kPa",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "PDIC-522",
+          "value": 37.9527,
+          "unit": "kPa",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "PDIC-523",
+          "value": 38.2387,
+          "unit": "kPa",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "PDIC-524",
+          "value": 37.7451,
+          "unit": "kPa",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "LIC-531",
+          "value": 50.5574,
+          "unit": "%",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "LIC-532",
+          "value": 49.7311,
+          "unit": "%",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "LIC-533",
+          "value": 50.0842,
+          "unit": "%",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "LIC-534",
+          "value": 49.68,
+          "unit": "%",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TIC-505",
+          "value": 101.4621,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "AIC-506",
+          "value": 59.9844,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "PIC-507",
+          "value": 1599.3196,
+          "unit": "mm",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TIC-508",
+          "value": 2.805,
+          "unit": "kN/m",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "AIC-601",
+          "value": 9.5138,
+          "unit": "%",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "AI-602",
+          "value": 39.7962,
+          "unit": "mPa·s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TIC-603",
+          "value": 63.1069,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "PIC-604A",
+          "value": 1.604,
+          "unit": "bar",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "PIC-604B",
+          "value": 1.5954,
+          "unit": "bar",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "WIC-605",
+          "value": 50.3489,
+          "unit": "kN/m",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "XI-606A",
+          "value": 1.8145,
+          "unit": "g/m²",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "XI-606B",
+          "value": 1.8005,
+          "unit": "g/m²",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "PIC-711",
+          "value": 118.9342,
+          "unit": "kPa rel",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "PIC-712",
+          "value": 139.946,
+          "unit": "kPa rel",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "PDIC-702",
+          "value": 14.2735,
+          "unit": "kPa",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "SDIC-703",
+          "value": 0.2015,
+          "unit": "%",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "PDIC-721",
+          "value": 38.1396,
+          "unit": "kPa",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "PDIC-722",
+          "value": 38.2129,
+          "unit": "kPa",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "WIC-801",
+          "value": 110.1892,
+          "unit": "kN/m",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TIC-802",
+          "value": 119.6369,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TIC-803",
+          "value": 44.6973,
+          "unit": "%",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-804",
+          "value": 65.5391,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "AIC-901",
+          "value": 5.1839,
+          "unit": "%",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "AIC-902",
+          "value": 75.0266,
+          "unit": "g/m²",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "AIC-903",
+          "value": 4.7771,
+          "unit": "%",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "AIC-904",
+          "value": 20.9943,
+          "unit": "%",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "AIC-905",
+          "value": 101.9261,
+          "unit": "µm",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "AIC-906",
+          "value": 98.0117,
+          "unit": "% ISO",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "AI-907",
+          "value": 91.4661,
+          "unit": "%",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "AI-912",
+          "value": 0.3945,
+          "unit": "g/m²",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "AI-913",
+          "value": 0.2566,
+          "unit": "%",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "AI-915",
+          "value": 0.7959,
+          "unit": "µm",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "WIC-1001",
+          "value": 3.2544,
+          "unit": "kN/m",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "WIC-1002",
+          "value": 329.6179,
+          "unit": "N/m",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "JIC-1003",
+          "value": 55.3011,
+          "unit": "%",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "ZI-1004",
+          "value": 1797.0809,
+          "unit": "mm",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "FIC-1105",
+          "value": 3.0021,
+          "unit": "L/min",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TIC-1106",
+          "value": 125.0022,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "PI-1107",
+          "value": 6.4972,
+          "unit": "bar",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "AIC-1102",
+          "value": 35.771,
+          "unit": "mg/L",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5101A",
+          "value": 1.107,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5102A",
+          "value": 1.129,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5103A",
+          "value": 1.321,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5104A",
+          "value": 1.059,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5105A",
+          "value": 1.586,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5106A",
+          "value": 1.046,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5107A",
+          "value": 1.69,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5108A",
+          "value": 0.991,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5109A",
+          "value": 1.702,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5110A",
+          "value": 1.543,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5111A",
+          "value": 1.419,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5112A",
+          "value": 1.142,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5113A",
+          "value": 1.681,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5114A",
+          "value": 1.93,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5115A",
+          "value": 1.514,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5116A",
+          "value": 1.752,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5117A",
+          "value": 1.572,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5118A",
+          "value": 1.722,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5119A",
+          "value": 1.231,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5120A",
+          "value": 1.541,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5121A",
+          "value": 1.001,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5122A",
+          "value": 1.442,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5123A",
+          "value": 5.827,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5124A",
+          "value": 1.384,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5125A",
+          "value": 1.312,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5126A",
+          "value": 1.744,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5127A",
+          "value": 1.727,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5128A",
+          "value": 1.553,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5129A",
+          "value": 1.795,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5130A",
+          "value": 0.976,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5131A",
+          "value": 1.744,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5132A",
+          "value": 1.001,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5133A",
+          "value": 1.869,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5134A",
+          "value": 1.181,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5135A",
+          "value": 0.955,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5136A",
+          "value": 1.063,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5101B",
+          "value": 0.829,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5102B",
+          "value": 1.39,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5103B",
+          "value": 1.622,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5104B",
+          "value": 1.928,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5105B",
+          "value": 1.269,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5106B",
+          "value": 1.32,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5107B",
+          "value": 2.007,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5108B",
+          "value": 1.908,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5109B",
+          "value": 1.476,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5110B",
+          "value": 1.868,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5111B",
+          "value": 1.716,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5112B",
+          "value": 0.856,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5113B",
+          "value": 2.007,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5114B",
+          "value": 1.656,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5115B",
+          "value": 1.203,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5116B",
+          "value": 0.868,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5117B",
+          "value": 1.848,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5118B",
+          "value": 1.427,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5119B",
+          "value": 0.949,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5120B",
+          "value": 1.261,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5121B",
+          "value": 1.941,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5122B",
+          "value": 1.753,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5123B",
+          "value": 1.481,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5124B",
+          "value": 1.122,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5125B",
+          "value": 1.035,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5126B",
+          "value": 0.811,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5127B",
+          "value": 1.447,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5128B",
+          "value": 1.844,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5129B",
+          "value": 0.889,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5130B",
+          "value": 1.889,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5131B",
+          "value": 1.475,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5132B",
+          "value": 1.33,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5133B",
+          "value": 0.925,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5134B",
+          "value": 0.904,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5135B",
+          "value": 1.888,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VI-5136B",
+          "value": 1.329,
+          "unit": "mm/s",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5101A",
+          "value": 0.285,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5102A",
+          "value": 0.216,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5103A",
+          "value": 0.415,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5104A",
+          "value": 0.497,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5105A",
+          "value": 0.121,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5106A",
+          "value": 0.127,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5107A",
+          "value": 0.05,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5108A",
+          "value": 0.06,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5109A",
+          "value": 0.289,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5110A",
+          "value": 0.119,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5111A",
+          "value": 0.306,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5112A",
+          "value": 0.437,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5113A",
+          "value": 0.482,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5114A",
+          "value": 0.319,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5115A",
+          "value": 0.142,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5116A",
+          "value": 0.247,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5117A",
+          "value": 0.481,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5118A",
+          "value": 0.372,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5119A",
+          "value": 0.472,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5120A",
+          "value": 0.241,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5121A",
+          "value": 0.306,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5122A",
+          "value": 0.221,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5123A",
+          "value": 4.735,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5124A",
+          "value": 0.072,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5125A",
+          "value": 0.16,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5126A",
+          "value": 0.402,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5127A",
+          "value": 0.323,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5128A",
+          "value": 0.436,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5129A",
+          "value": 0.208,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5130A",
+          "value": 0.351,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5131A",
+          "value": 0.34,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5132A",
+          "value": 0.081,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5133A",
+          "value": 0.294,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5134A",
+          "value": 0.264,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5135A",
+          "value": 0.366,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5136A",
+          "value": 0.481,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5101B",
+          "value": 0.138,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5102B",
+          "value": 0.099,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5103B",
+          "value": 0.307,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5104B",
+          "value": 0.331,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5105B",
+          "value": 0.233,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5106B",
+          "value": 0.267,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5107B",
+          "value": 0.214,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5108B",
+          "value": 0.157,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5109B",
+          "value": 0.132,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5110B",
+          "value": 0.253,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5111B",
+          "value": 0.458,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5112B",
+          "value": 0.542,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5113B",
+          "value": 0.359,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5114B",
+          "value": 0.439,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5115B",
+          "value": 0.235,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5116B",
+          "value": 0.155,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5117B",
+          "value": 0.384,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5118B",
+          "value": 0.488,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5119B",
+          "value": 0.329,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5120B",
+          "value": 0.1,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5121B",
+          "value": 0.163,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5122B",
+          "value": 0.113,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5123B",
+          "value": 0.434,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5124B",
+          "value": 0.156,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5125B",
+          "value": 0.264,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5126B",
+          "value": 0.543,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5127B",
+          "value": 0.417,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5128B",
+          "value": 0.314,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5129B",
+          "value": 0.083,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5130B",
+          "value": 0.474,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5131B",
+          "value": 0.452,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5132B",
+          "value": 0.22,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5133B",
+          "value": 0.193,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5134B",
+          "value": 0.114,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5135B",
+          "value": 0.506,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "VE-5136B",
+          "value": 0.348,
+          "unit": "gE",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5301A",
+          "value": 50.26,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5302A",
+          "value": 57.81,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5303A",
+          "value": 61.09,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5304A",
+          "value": 65.93,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5305A",
+          "value": 50.51,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5306A",
+          "value": 48.69,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5307A",
+          "value": 53.19,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5308A",
+          "value": 52.64,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5309A",
+          "value": 52.16,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5310A",
+          "value": 56.24,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5311A",
+          "value": 60.47,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5312A",
+          "value": 65.06,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5313A",
+          "value": 64.69,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5314A",
+          "value": 67.88,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5315A",
+          "value": 52.83,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5316A",
+          "value": 48.25,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5317A",
+          "value": 64.61,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5318A",
+          "value": 60.37,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5319A",
+          "value": 67.02,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5320A",
+          "value": 56.63,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5321A",
+          "value": 55.5,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5322A",
+          "value": 54.19,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5323A",
+          "value": 86.96,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5324A",
+          "value": 49.1,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5325A",
+          "value": 50.56,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5326A",
+          "value": 66.43,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5327A",
+          "value": 63.79,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5328A",
+          "value": 58.16,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5329A",
+          "value": 51.65,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5330A",
+          "value": 64.79,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5331A",
+          "value": 63.75,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5332A",
+          "value": 53.93,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5333A",
+          "value": 49.54,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5334A",
+          "value": 53.52,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5335A",
+          "value": 58.42,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5336A",
+          "value": 68.01,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5301B",
+          "value": 52.96,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5302B",
+          "value": 54.29,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5303B",
+          "value": 67.38,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5304B",
+          "value": 59.17,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5305B",
+          "value": 53.18,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5306B",
+          "value": 55.46,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5307B",
+          "value": 50.45,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5308B",
+          "value": 56.04,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5309B",
+          "value": 55.13,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5310B",
+          "value": 53.44,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5311B",
+          "value": 67.33,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5312B",
+          "value": 58.45,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5313B",
+          "value": 61.63,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5314B",
+          "value": 60.79,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5315B",
+          "value": 55.92,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5316B",
+          "value": 55.11,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5317B",
+          "value": 61.42,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5318B",
+          "value": 63.69,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5319B",
+          "value": 59.66,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5320B",
+          "value": 49.68,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5321B",
+          "value": 48.75,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5322B",
+          "value": 50.82,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5323B",
+          "value": 62.87,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5324B",
+          "value": 52.51,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5325B",
+          "value": 53.79,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5326B",
+          "value": 63.35,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5327B",
+          "value": 66.89,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5328B",
+          "value": 65.04,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5329B",
+          "value": 48.92,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5330B",
+          "value": 67.7,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5331B",
+          "value": 66.49,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5332B",
+          "value": 50.78,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5333B",
+          "value": 56.26,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5334B",
+          "value": 56.51,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5335B",
+          "value": 61.76,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5336B",
+          "value": 64.81,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5201",
+          "value": 95.4689,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5202",
+          "value": 95.3647,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5203",
+          "value": 95.4871,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5204",
+          "value": 95.8473,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5205",
+          "value": 95.5808,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5206",
+          "value": 95.5074,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5207",
+          "value": 117.4163,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5208",
+          "value": 117.3894,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5209",
+          "value": 117.3397,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5210",
+          "value": 117.5507,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5211",
+          "value": 117.2781,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5212",
+          "value": 117.5042,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5213",
+          "value": 125.7736,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5214",
+          "value": 125.611,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5215",
+          "value": 125.42,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5216",
+          "value": 125.3548,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5217",
+          "value": 125.5153,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5218",
+          "value": 125.2933,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5219",
+          "value": 126.4175,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5220",
+          "value": 126.3688,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5221",
+          "value": 126.4247,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5222",
+          "value": 126.6726,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5223",
+          "value": 126.2078,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5224",
+          "value": 126.3461,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5225",
+          "value": 126.4756,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5226",
+          "value": 126.0703,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5227",
+          "value": 112.9861,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5228",
+          "value": 113.1008,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5229",
+          "value": 114.2046,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5230",
+          "value": 113.2481,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5231",
+          "value": 113.6329,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5232",
+          "value": 113.6261,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5233",
+          "value": 116.4215,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5234",
+          "value": 116.4017,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5235",
+          "value": 115.9538,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        },
+        {
+          "tag": "TI-5236",
+          "value": 115.9222,
+          "unit": "°C",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "setpoint": null
+        }
+      ]
+    },
+    "/process/steam-groups": {
+      "ts": "2026-03-02T09:00:00.000Z",
+      "groups": [
+        {
+          "id": "G1",
+          "label": "Grupo de vapor G1 · aquecimento",
+          "section": "pre-dryer",
+          "cylinders": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ],
+          "condensateNote": null,
+          "role": "aquecimento",
+          "pressure": {
+            "tag": "PIC-511",
+            "value": 14.9263,
+            "unit": "kPa rel",
+            "ts": "2026-03-02T09:00:00.000Z",
+            "setpoint": null
+          },
+          "siphonDeltaP": {
+            "tag": "PDIC-521",
+            "value": 37.8911,
+            "unit": "kPa",
+            "ts": "2026-03-02T09:00:00.000Z",
+            "setpoint": null
+          },
+          "condensateLevel": {
+            "tag": "LIC-531",
+            "value": 50.5574,
+            "unit": "%",
+            "ts": "2026-03-02T09:00:00.000Z",
+            "setpoint": null
+          },
+          "division": {
+            "source": "assumed",
+            "note": "A divisão em seis grupos e os seus limites são suposição do protótipo, junto com o nº de pares de cilindros. O único ponto fixo é o CS23 estar no G4. A divisão real sai do mapa de rolos."
+          },
+          "tagMap": {
+            "source": "B",
+            "note": "As tags de pressão, ΔP de sifões e nível de condensado saem do catálogo da lista base, que as lê da pesquisa B. O que a pesquisa não dá é o tanque separador da pós-secagem."
+          }
+        },
+        {
+          "id": "G2",
+          "label": "Grupo de vapor G2",
+          "section": "pre-dryer",
+          "cylinders": [
+            7,
+            8,
+            9,
+            10,
+            11,
+            12
+          ],
+          "condensateNote": null,
+          "role": null,
+          "pressure": {
+            "tag": "PIC-512",
+            "value": 149.8189,
+            "unit": "kPa rel",
+            "ts": "2026-03-02T09:00:00.000Z",
+            "setpoint": null
+          },
+          "siphonDeltaP": {
+            "tag": "PDIC-522",
+            "value": 37.9527,
+            "unit": "kPa",
+            "ts": "2026-03-02T09:00:00.000Z",
+            "setpoint": null
+          },
+          "condensateLevel": {
+            "tag": "LIC-532",
+            "value": 49.7311,
+            "unit": "%",
+            "ts": "2026-03-02T09:00:00.000Z",
+            "setpoint": null
+          },
+          "division": {
+            "source": "assumed",
+            "note": "A divisão em seis grupos e os seus limites são suposição do protótipo, junto com o nº de pares de cilindros. O único ponto fixo é o CS23 estar no G4. A divisão real sai do mapa de rolos."
+          },
+          "tagMap": {
+            "source": "B",
+            "note": "As tags de pressão, ΔP de sifões e nível de condensado saem do catálogo da lista base, que as lê da pesquisa B. O que a pesquisa não dá é o tanque separador da pós-secagem."
+          }
+        },
+        {
+          "id": "G3",
+          "label": "Grupo de vapor G3",
+          "section": "pre-dryer",
+          "cylinders": [
+            13,
+            14,
+            15,
+            16,
+            17,
+            18
+          ],
+          "condensateNote": null,
+          "role": null,
+          "pressure": {
+            "tag": "PIC-513",
+            "value": 220.134,
+            "unit": "kPa rel",
+            "ts": "2026-03-02T09:00:00.000Z",
+            "setpoint": null
+          },
+          "siphonDeltaP": {
+            "tag": "PDIC-523",
+            "value": 38.2387,
+            "unit": "kPa",
+            "ts": "2026-03-02T09:00:00.000Z",
+            "setpoint": null
+          },
+          "condensateLevel": {
+            "tag": "LIC-533",
+            "value": 50.0842,
+            "unit": "%",
+            "ts": "2026-03-02T09:00:00.000Z",
+            "setpoint": null
+          },
+          "division": {
+            "source": "assumed",
+            "note": "A divisão em seis grupos e os seus limites são suposição do protótipo, junto com o nº de pares de cilindros. O único ponto fixo é o CS23 estar no G4. A divisão real sai do mapa de rolos."
+          },
+          "tagMap": {
+            "source": "B",
+            "note": "As tags de pressão, ΔP de sifões e nível de condensado saem do catálogo da lista base, que as lê da pesquisa B. O que a pesquisa não dá é o tanque separador da pós-secagem."
+          }
+        },
+        {
+          "id": "G4",
+          "label": "Grupo de vapor G4 · grupo principal",
+          "section": "pre-dryer",
+          "cylinders": [
+            19,
+            20,
+            21,
+            22,
+            23,
+            24,
+            25,
+            26
+          ],
+          "condensateNote": null,
+          "role": "grupo principal",
+          "pressure": {
+            "tag": "PIC-514",
+            "value": 230.3705,
+            "unit": "kPa rel",
+            "ts": "2026-03-02T09:00:00.000Z",
+            "setpoint": null
+          },
+          "siphonDeltaP": {
+            "tag": "PDIC-524",
+            "value": 37.7451,
+            "unit": "kPa",
+            "ts": "2026-03-02T09:00:00.000Z",
+            "setpoint": null
+          },
+          "condensateLevel": {
+            "tag": "LIC-534",
+            "value": 49.68,
+            "unit": "%",
+            "ts": "2026-03-02T09:00:00.000Z",
+            "setpoint": null
+          },
+          "division": {
+            "source": "assumed",
+            "note": "A divisão em seis grupos e os seus limites são suposição do protótipo, junto com o nº de pares de cilindros. O único ponto fixo é o CS23 estar no G4. A divisão real sai do mapa de rolos."
+          },
+          "tagMap": {
+            "source": "B",
+            "note": "As tags de pressão, ΔP de sifões e nível de condensado saem do catálogo da lista base, que as lê da pesquisa B. O que a pesquisa não dá é o tanque separador da pós-secagem."
+          }
+        },
+        {
+          "id": "G5",
+          "label": "Grupo de vapor G5",
+          "section": "post-dryer",
+          "cylinders": [
+            27,
+            28,
+            29,
+            30,
+            31,
+            32
+          ],
+          "condensateNote": "A pesquisa B não dá tag de nível para o tanque separador da pós-secagem, só o ΔP dos sifões. O tanque existe na máquina; a medição não está no catálogo.",
+          "role": null,
+          "pressure": {
+            "tag": "PIC-711",
+            "value": 118.9342,
+            "unit": "kPa rel",
+            "ts": "2026-03-02T09:00:00.000Z",
+            "setpoint": null
+          },
+          "siphonDeltaP": {
+            "tag": "PDIC-721",
+            "value": 38.1396,
+            "unit": "kPa",
+            "ts": "2026-03-02T09:00:00.000Z",
+            "setpoint": null
+          },
+          "condensateLevel": null,
+          "division": {
+            "source": "assumed",
+            "note": "A divisão em seis grupos e os seus limites são suposição do protótipo, junto com o nº de pares de cilindros. O único ponto fixo é o CS23 estar no G4. A divisão real sai do mapa de rolos."
+          },
+          "tagMap": {
+            "source": "B",
+            "note": "As tags de pressão, ΔP de sifões e nível de condensado saem do catálogo da lista base, que as lê da pesquisa B. O que a pesquisa não dá é o tanque separador da pós-secagem."
+          }
+        },
+        {
+          "id": "G6",
+          "label": "Grupo de vapor G6",
+          "section": "post-dryer",
+          "cylinders": [
+            33,
+            34,
+            35,
+            36
+          ],
+          "condensateNote": "A pesquisa B não dá tag de nível para o tanque separador da pós-secagem, só o ΔP dos sifões. O tanque existe na máquina; a medição não está no catálogo.",
+          "role": null,
+          "pressure": {
+            "tag": "PIC-712",
+            "value": 139.946,
+            "unit": "kPa rel",
+            "ts": "2026-03-02T09:00:00.000Z",
+            "setpoint": null
+          },
+          "siphonDeltaP": {
+            "tag": "PDIC-722",
+            "value": 38.2129,
+            "unit": "kPa",
+            "ts": "2026-03-02T09:00:00.000Z",
+            "setpoint": null
+          },
+          "condensateLevel": null,
+          "division": {
+            "source": "assumed",
+            "note": "A divisão em seis grupos e os seus limites são suposição do protótipo, junto com o nº de pares de cilindros. O único ponto fixo é o CS23 estar no G4. A divisão real sai do mapa de rolos."
+          },
+          "tagMap": {
+            "source": "B",
+            "note": "As tags de pressão, ΔP de sifões e nível de condensado saem do catálogo da lista base, que as lê da pesquisa B. O que a pesquisa não dá é o tanque separador da pós-secagem."
+          }
+        }
+      ]
+    },
+    "/alarms": {
+      "count": 10,
+      "floodWindowS": 600,
+      "floodThreshold": 10,
+      "inFloodWindow": 0,
+      "flooding": false,
+      "alarms": [
+        {
+          "id": "AL-1772430490-TI-5323A-H",
+          "tag": "TI-5323A",
+          "limit": "H",
+          "threshold": 85,
+          "priority": "média",
+          "state": "ativo",
+          "raisedAt": "2026-03-02T05:48:10.000Z",
+          "peakValue": 87.14,
+          "acknowledgedAt": null,
+          "acknowledgedBy": null,
+          "clearedAt": null,
+          "shelvedUntil": null,
+          "shelvedBy": null
+        },
+        {
+          "id": "AL-1772430245-TI-5323A-H",
+          "tag": "TI-5323A",
+          "limit": "H",
+          "threshold": 85,
+          "priority": "média",
+          "state": "normalizado",
+          "raisedAt": "2026-03-02T05:44:05.000Z",
+          "peakValue": 85.24,
+          "acknowledgedAt": null,
+          "acknowledgedBy": null,
+          "clearedAt": "2026-03-02T05:46:15.000Z",
+          "shelvedUntil": null,
+          "shelvedBy": null
+        },
+        {
+          "id": "AL-1772429940-TI-5323A-H",
+          "tag": "TI-5323A",
+          "limit": "H",
+          "threshold": 85,
+          "priority": "média",
+          "state": "normalizado",
+          "raisedAt": "2026-03-02T05:39:00.000Z",
+          "peakValue": 85.05,
+          "acknowledgedAt": null,
+          "acknowledgedBy": null,
+          "clearedAt": "2026-03-02T05:42:55.000Z",
+          "shelvedUntil": null,
+          "shelvedBy": null
+        },
+        {
+          "id": "AL-1772429590-TI-5323A-H",
+          "tag": "TI-5323A",
+          "limit": "H",
+          "threshold": 85,
+          "priority": "média",
+          "state": "normalizado",
+          "raisedAt": "2026-03-02T05:33:10.000Z",
+          "peakValue": 85.12,
+          "acknowledgedAt": null,
+          "acknowledgedBy": null,
+          "clearedAt": "2026-03-02T05:33:25.000Z",
+          "shelvedUntil": null,
+          "shelvedBy": null
+        },
+        {
+          "id": "AL-1772429505-TI-5323A-H",
+          "tag": "TI-5323A",
+          "limit": "H",
+          "threshold": 85,
+          "priority": "média",
+          "state": "normalizado",
+          "raisedAt": "2026-03-02T05:31:45.000Z",
+          "peakValue": 85.1,
+          "acknowledgedAt": null,
+          "acknowledgedBy": null,
+          "clearedAt": "2026-03-02T05:31:50.000Z",
+          "shelvedUntil": null,
+          "shelvedBy": null
+        },
+        {
+          "id": "AL-1772429410-TI-5323A-H",
+          "tag": "TI-5323A",
+          "limit": "H",
+          "threshold": 85,
+          "priority": "média",
+          "state": "normalizado",
+          "raisedAt": "2026-03-02T05:30:10.000Z",
+          "peakValue": 85.02,
+          "acknowledgedAt": null,
+          "acknowledgedBy": null,
+          "clearedAt": "2026-03-02T05:30:20.000Z",
+          "shelvedUntil": null,
+          "shelvedBy": null
+        },
+        {
+          "id": "AL-1772427605-VI-5123A-H",
+          "tag": "VI-5123A",
+          "limit": "H",
+          "threshold": 2.8,
+          "priority": "média",
+          "state": "ativo",
+          "raisedAt": "2026-03-02T05:00:05.000Z",
+          "peakValue": 5.835,
+          "acknowledgedAt": null,
+          "acknowledgedBy": null,
+          "clearedAt": null,
+          "shelvedUntil": null,
+          "shelvedBy": null
+        },
+        {
+          "id": "AL-1772427605-VI-5123A-HH",
+          "tag": "VI-5123A",
+          "limit": "HH",
+          "threshold": 4.5,
+          "priority": "alta",
+          "state": "ativo",
+          "raisedAt": "2026-03-02T05:00:05.000Z",
+          "peakValue": 5.835,
+          "acknowledgedAt": null,
+          "acknowledgedBy": null,
+          "clearedAt": null,
+          "shelvedUntil": null,
+          "shelvedBy": null
+        },
+        {
+          "id": "AL-1772427605-VE-5123A-H",
+          "tag": "VE-5123A",
+          "limit": "H",
+          "threshold": 2,
+          "priority": "média",
+          "state": "ativo",
+          "raisedAt": "2026-03-02T05:00:05.000Z",
+          "peakValue": 4.757,
+          "acknowledgedAt": null,
+          "acknowledgedBy": null,
+          "clearedAt": null,
+          "shelvedUntil": null,
+          "shelvedBy": null
+        },
+        {
+          "id": "AL-1772427605-VE-5123A-HH",
+          "tag": "VE-5123A",
+          "limit": "HH",
+          "threshold": 4,
+          "priority": "alta",
+          "state": "ativo",
+          "raisedAt": "2026-03-02T05:00:05.000Z",
+          "peakValue": 4.757,
+          "acknowledgedAt": null,
+          "acknowledgedBy": null,
+          "clearedAt": null,
+          "shelvedUntil": null,
+          "shelvedBy": null
+        }
+      ]
+    },
+    "/shifts": {
+      "count": 2,
+      "shifts": [
+        {
+          "id": "T-2026-03-02-A",
+          "letter": "A",
+          "operationDate": "2026-03-02",
+          "startedAt": "2026-03-02T09:00:00.000Z",
+          "endedAt": null,
+          "operator": "turno A",
+          "productionT": 0,
+          "efficiencyPct": 0,
+          "handover": []
+        },
+        {
+          "id": "T-2026-03-01-C",
+          "letter": "C",
+          "operationDate": "2026-03-01",
+          "startedAt": "2026-03-02T01:00:00.000Z",
+          "endedAt": "2026-03-02T09:00:00.000Z",
+          "operator": "turno C",
+          "productionT": 360,
+          "efficiencyPct": 100,
+          "handover": []
+        }
+      ]
+    },
+    "/reels": {
+      "count": 10,
+      "reels": [
+        {
+          "number": 1634,
+          "shiftId": "T-2026-03-02-A",
+          "startedAt": "2026-03-02T08:22:49.000Z",
+          "endedAt": null,
+          "weightT": null,
+          "lengthM": null,
+          "finalDiameterMm": null,
+          "basisWeightGsm": null,
+          "moisturePct": null,
+          "caliperUm": null,
+          "cdSpread": null,
+          "splices": 0,
+          "disposition": null,
+          "dispositionReason": null
+        },
+        {
+          "number": 1633,
+          "shiftId": "T-2026-03-01-C",
+          "startedAt": "2026-03-02T07:29:36.000Z",
+          "endedAt": "2026-03-02T08:22:49.000Z",
+          "weightT": 39.9,
+          "lengthM": 66528,
+          "finalDiameterMm": 3000,
+          "basisWeightGsm": 74.97,
+          "moisturePct": 4.8,
+          "caliperUm": 101.99,
+          "cdSpread": {
+            "basisWeightGsm": 0.3991674020339537,
+            "moisturePct": 0.2510517805372228,
+            "caliperUm": 0.8058813490022774
+          },
+          "splices": 0,
+          "disposition": "aprovada",
+          "dispositionReason": null
+        },
+        {
+          "number": 1632,
+          "shiftId": "T-2026-03-01-C",
+          "startedAt": "2026-03-02T06:36:23.000Z",
+          "endedAt": "2026-03-02T07:29:36.000Z",
+          "weightT": 39.91,
+          "lengthM": 66528,
+          "finalDiameterMm": 3000,
+          "basisWeightGsm": 74.98,
+          "moisturePct": 4.81,
+          "caliperUm": 102,
+          "cdSpread": {
+            "basisWeightGsm": 0.39630096140260945,
+            "moisturePct": 0.2496984874050539,
+            "caliperUm": 0.7932616470549212
+          },
+          "splices": 0,
+          "disposition": "aprovada",
+          "dispositionReason": null
+        },
+        {
+          "number": 1631,
+          "shiftId": "T-2026-03-01-C",
+          "startedAt": "2026-03-02T05:43:10.000Z",
+          "endedAt": "2026-03-02T06:36:23.000Z",
+          "weightT": 39.92,
+          "lengthM": 66528,
+          "finalDiameterMm": 3000,
+          "basisWeightGsm": 75.01,
+          "moisturePct": 4.81,
+          "caliperUm": 102.03,
+          "cdSpread": {
+            "basisWeightGsm": 0.4023646398172628,
+            "moisturePct": 0.24935174414338368,
+            "caliperUm": 0.7945273557379142
+          },
+          "splices": 0,
+          "disposition": "aprovada",
+          "dispositionReason": null
+        },
+        {
+          "number": 1630,
+          "shiftId": "T-2026-03-01-C",
+          "startedAt": "2026-03-02T04:49:57.000Z",
+          "endedAt": "2026-03-02T05:43:10.000Z",
+          "weightT": 39.94,
+          "lengthM": 66528,
+          "finalDiameterMm": 3000,
+          "basisWeightGsm": 75.04,
+          "moisturePct": 4.81,
+          "caliperUm": 101.98,
+          "cdSpread": {
+            "basisWeightGsm": 0.40479817656892836,
+            "moisturePct": 0.2545850646182077,
+            "caliperUm": 0.800444811121564
+          },
+          "splices": 0,
+          "disposition": "aprovada",
+          "dispositionReason": null
+        },
+        {
+          "number": 1629,
+          "shiftId": "T-2026-03-01-C",
+          "startedAt": "2026-03-02T03:56:44.000Z",
+          "endedAt": "2026-03-02T04:49:57.000Z",
+          "weightT": 39.94,
+          "lengthM": 66528,
+          "finalDiameterMm": 3000,
+          "basisWeightGsm": 75.04,
+          "moisturePct": 4.81,
+          "caliperUm": 101.95,
+          "cdSpread": {
+            "basisWeightGsm": 0.40535589105820274,
+            "moisturePct": 0.2568505716862736,
+            "caliperUm": 0.8026368408898567
+          },
+          "splices": 0,
+          "disposition": "aprovada",
+          "dispositionReason": null
+        },
+        {
+          "number": 1628,
+          "shiftId": "T-2026-03-01-C",
+          "startedAt": "2026-03-02T03:03:31.000Z",
+          "endedAt": "2026-03-02T03:56:44.000Z",
+          "weightT": 39.94,
+          "lengthM": 66528,
+          "finalDiameterMm": 3000,
+          "basisWeightGsm": 75.04,
+          "moisturePct": 4.81,
+          "caliperUm": 101.95,
+          "cdSpread": {
+            "basisWeightGsm": 0.40535589105820274,
+            "moisturePct": 0.2568505716862736,
+            "caliperUm": 0.8026368408898567
+          },
+          "splices": 0,
+          "disposition": "aprovada",
+          "dispositionReason": null
+        },
+        {
+          "number": 1627,
+          "shiftId": "T-2026-03-01-C",
+          "startedAt": "2026-03-02T02:10:18.000Z",
+          "endedAt": "2026-03-02T03:03:31.000Z",
+          "weightT": 39.94,
+          "lengthM": 66528,
+          "finalDiameterMm": 3000,
+          "basisWeightGsm": 75.04,
+          "moisturePct": 4.81,
+          "caliperUm": 101.95,
+          "cdSpread": {
+            "basisWeightGsm": 0.40535589105820274,
+            "moisturePct": 0.2568505716862736,
+            "caliperUm": 0.8026368408898567
+          },
+          "splices": 0,
+          "disposition": "aprovada",
+          "dispositionReason": null
+        },
+        {
+          "number": 1626,
+          "shiftId": "T-2026-03-01-C",
+          "startedAt": "2026-03-02T01:17:05.000Z",
+          "endedAt": "2026-03-02T02:10:18.000Z",
+          "weightT": 39.94,
+          "lengthM": 66528,
+          "finalDiameterMm": 3000,
+          "basisWeightGsm": 75.04,
+          "moisturePct": 4.81,
+          "caliperUm": 101.95,
+          "cdSpread": {
+            "basisWeightGsm": 0.40535589105820274,
+            "moisturePct": 0.2568505716862736,
+            "caliperUm": 0.8026368408898567
+          },
+          "splices": 0,
+          "disposition": "aprovada",
+          "dispositionReason": null
+        },
+        {
+          "number": 1625,
+          "shiftId": "T-2026-03-01-C",
+          "startedAt": "2026-03-02T00:23:52.000Z",
+          "endedAt": "2026-03-02T01:17:05.000Z",
+          "weightT": 39.94,
+          "lengthM": 66528,
+          "finalDiameterMm": 3000,
+          "basisWeightGsm": 75.04,
+          "moisturePct": 4.81,
+          "caliperUm": 101.95,
+          "cdSpread": {
+            "basisWeightGsm": 0.40535589105820274,
+            "moisturePct": 0.2568505716862736,
+            "caliperUm": 0.8026368408898567
+          },
+          "splices": 0,
+          "disposition": "aprovada",
+          "dispositionReason": null
+        }
+      ]
+    },
+    "/web-breaks": {
+      "count": 0,
+      "webBreaks": []
+    },
+    "/grade-changes": {
+      "count": 0,
+      "gradeChanges": []
+    },
+    "/rounds": {
+      "count": 1,
+      "rounds": [
+        {
+          "id": "RD-5194800",
+          "shiftId": "T-2026-03-01-C",
+          "startedAt": "2026-03-02T03:00:00.000Z",
+          "finishedAt": "2026-03-02T03:40:00.000Z",
+          "inspector": "turno C",
+          "points": [
+            {
+              "assetTag": "MP1-SEC-G4-CS23-MLA",
+              "fieldTempC": 80.4,
+              "noise": "anormal",
+              "leak": "gotejamento",
+              "note": "ruído anormal, zunido constante; vazamento: gotejamento",
+              "onlineTag": "TI-5323A",
+              "onlineValue": 84.2
+            },
+            {
+              "assetTag": "MP1-SEC-G4-CS23-MLC",
+              "fieldTempC": 59.9,
+              "noise": "normal",
+              "leak": "nenhum",
+              "note": null,
+              "onlineTag": "TI-5323B",
+              "onlineValue": 62.8
+            },
+            {
+              "assetTag": "MP1-SEC-G4-CS19-MLA",
+              "fieldTempC": 63.6,
+              "noise": "normal",
+              "leak": "nenhum",
+              "note": null,
+              "onlineTag": "TI-5319A",
+              "onlineValue": 66.6
+            },
+            {
+              "assetTag": "MP1-SEC-G4-CS26-MLC",
+              "fieldTempC": 60.6,
+              "noise": "normal",
+              "leak": "nenhum",
+              "note": null,
+              "onlineTag": "TI-5326B",
+              "onlineValue": 63.4
+            },
+            {
+              "assetTag": "MP1-SEC-G1-CS01-MLA",
+              "fieldTempC": 47.5,
+              "noise": "normal",
+              "leak": "nenhum",
+              "note": null,
+              "onlineTag": "TI-5301A",
+              "onlineValue": 49.8
+            },
+            {
+              "assetTag": "MP1-SEC-G6-CS36-MLC",
+              "fieldTempC": 61.3,
+              "noise": "normal",
+              "leak": "nenhum",
+              "note": null,
+              "onlineTag": "TI-5336B",
+              "onlineValue": 64.9
+            }
+          ]
+        }
+      ]
+    },
+    "/notes": {
+      "count": 1,
+      "notes": [
+        {
+          "number": "NM-867005",
+          "assetTag": "MP1-SEC-G4-CS23-MLA",
+          "symptom": "vibração acima do limite HH (4.5), pior valor 5.83",
+          "priority": 2,
+          "origin": "alarme",
+          "originRef": "AL-1772427605-VI-5123A-HH",
+          "status": "aberta",
+          "requiresShutdown": false,
+          "evidence": [
+            {
+              "kind": "alarme",
+              "ref": "AL-1772427605-VI-5123A-HH",
+              "label": "alarme HH de VI-5123A"
+            },
+            {
+              "kind": "tendência",
+              "ref": "VI-5123A",
+              "label": "tendência das últimas 72 h"
+            },
+            {
+              "kind": "ronda",
+              "ref": "RD-5194800",
+              "label": "ponto da ronda"
+            }
+          ],
+          "createdAt": "2026-03-02T05:00:05.000Z",
+          "closedAt": null
+        }
+      ]
+    },
+    "/setpoint-changes": {
+      "count": 0,
+      "changes": []
+    },
+    "/process/tags/PIC-514": {
+      "variable": {
+        "tag": "PIC-514",
+        "name": "Pressão de vapor G4 (grupo principal)",
+        "area": "pré-secagem",
+        "group": "vapor",
+        "unit": "kPa rel",
+        "min": 120,
+        "max": 350,
+        "target": 230,
+        "limits": {
+          "ll": null,
+          "l": null,
+          "h": null,
+          "hh": null
+        },
+        "controlled": true,
+        "mv": "PV-514 em cascata com umidade pré-colagem AIC-901",
+        "compression": {
+          "excDev": 1,
+          "compDev": 2
+        },
+        "source": "B",
+        "confidence": "média",
+        "note": "equivale ao PIC-502 da pesquisa B",
+        "cylinder": null,
+        "steamGroup": null
+      },
+      "writable": false,
+      "notWritableBecause": "escrava de cascata: o setpoint pertence ao mestre",
+      "archived": true,
+      "value": {
+        "tag": "PIC-514",
+        "value": 230.3705,
+        "unit": "kPa rel",
+        "ts": "2026-03-02T09:00:00.000Z",
+        "setpoint": null
+      }
+    },
+    "/assets/MP1-SEC-G4-CS23-MLA": {
+      "asset": {
+        "tag": "MP1-SEC-G4-CS23-MLA",
+        "kind": "bearing",
+        "label": "Mancal LA · Cilindro secador 23",
+        "section": "pre-dryer",
+        "position": [
+          39.2,
+          6.1,
+          -4.3
+        ],
+        "radius": null,
+        "lengthM": null,
+        "side": "LA",
+        "parentTag": "MP1-SEC-G4-CS23",
+        "steamGroup": "G4",
+        "iso": {
+          "group": "group2",
+          "support": "rigid"
+        },
+        "source": "assumed"
+      },
+      "status": {
+        "assetTag": "MP1-SEC-G4-CS23-MLA",
+        "zone": "D",
+        "health": "critical",
+        "latest": {
+          "assetTag": "MP1-SEC-G4-CS23-MLA",
+          "ts": "2026-03-02T09:00:00.000Z",
+          "rmsMmS": 5.827,
+          "tempC": 86.96,
+          "envelopeGe": 4.735
+        }
+      },
+      "limits": {
+        "aToB": 1.4,
+        "bToC": 2.8,
+        "cToD": 4.5
+      }
+    }
+  }
+}

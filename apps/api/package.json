@@ -11,7 +11,8 @@
     "demo:data": "tsx src/scripts/generate-demo.ts",
     "start": "node dist/server.js",
     "typecheck": "tsc -p tsconfig.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "golden": "tsx src/scripts/generate-golden.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.3.16",

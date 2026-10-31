@@ -409,7 +409,22 @@ export function noteNumberFor(assetTag: string, raisedAt: string): string {
   const minute = Math.floor((Date.parse(raisedAt) - SIM_EPOCH_MS) / 60_000);
   const slot = DRYER_BEARING_TAGS.findIndex((item) => item.assetTag === assetTag);
 
-  return maintenanceNoteNumber((minute % 90_000) * 10 + (Math.max(0, slot) % 10) + 1);
+  /**
+   * O resto é **euclidiano**, e não o `%` de JavaScript.
+   *
+   * O minuto é medido a partir da época da simulação, então ele é negativo para
+   * qualquer instante anterior a ela — e esses instantes existem: a semente
+   * grava 72 h de histórico de mancal terminando *agora*, e se "agora" estiver
+   * nos três primeiros dias da época, parte desse histórico cai antes dela. O
+   * `%` de JavaScript devolve o sinal do dividendo, o número da nota saía
+   * negativo e `maintenanceNoteNumber` recusava.
+   *
+   * Para todo instante a partir da época os dois restos são iguais, então nada
+   * que já foi gerado muda de número.
+   */
+  const slotOfDay = ((minute % 90_000) + 90_000) % 90_000;
+
+  return maintenanceNoteNumber(slotOfDay * 10 + (Math.max(0, slot) % 10) + 1);
 }
 
 /**

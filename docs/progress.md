@@ -18,7 +18,7 @@ Branch: `dev/fases-4-7`. Nada de push na main, nada de PR, nada de deploy.
 - [x] **4.5** `docs/notas-para-readme.md`
 - [x] **5** Motor de simulação e API
 - [x] **6** As 7 telas (6.1 a 6.6)
-- [ ] **J0** Gabarito da API TypeScript em `reference/golden/`
+- [x] **J0** Gabarito da API TypeScript em `reference/golden/`
 - [ ] **J1–J5** `apps/api-java`: catálogo, núcleo, persistência, retomada, API
 - [ ] **J6** Contrato com o front via `openapi.json`
 - [ ] **J7** Dockerfile e ajuste para 512 MB
@@ -333,6 +333,55 @@ Conferido contra `mp1-parte-seca-3d.html` aberto lado a lado, nas quatro vistas:
 visão geral, parte úmida, úmida → seca e lado acionamento. Os enquadramentos das
 vistas novas são os do protótipo, com as exceções acima.
 
+### J0 — o gabarito da API TypeScript
+
+`reference/golden/`, sete arquivos, 275 kB, gerados por
+`npm run golden --workspace @mp1/api`. Cada um guarda **entrada e saída** da
+implementação atual; os testes da Java leem os mesmos arquivos, alimentam a
+mesma entrada e comparam com tolerância de 1e-9 relativo.
+
+Entrada e saída juntas porque um gabarito que guardasse só a saída obrigaria a
+reconstruir a entrada dos dois lados — e aí o teste compararia duas
+reconstruções, não duas implementações. Sem `Infinity`, `NaN` nem `undefined`,
+que o JSON não tem e cada linguagem inventa o seu. Instantes em milissegundos do
+epoch, não em texto ISO, que é onde duas plataformas divergem em silêncio.
+
+Os casos foram escolhidos por onde uma reimplementação erra, não por cobertura:
+
+- **FOPDT com `dt > τ`** (relação 14, τ = 4,5 s, passo de 10 s). É o único caso
+  em que o retentor de ordem zero se separa de Euler: Euler daria fator
+  `1 − dt/τ = −1,22` e a resposta oscilaria de sinal a cada passo; a exata dá
+  `exp(−10/4,5) = 0,1084`. Quem implementar com Euler falha neste e passa nos
+  outros três.
+- **Bordas do espalhamento CD**: as zonas 1 e 139 truncam, e o que vazaria para
+  fora da folha some em vez de ser redistribuído.
+- **O meio da compressão**, e não só o fim: `afterException` separado de
+  `archived`, para o arquivo dizer _qual_ das duas etapas divergiu.
+- **Média no tempo numa série desigual**, onde a média dos pontos dá outra
+  resposta — e a errada.
+- **Pico e id do alarme**: o pico é o pior valor desde o disparo, não o último;
+  o id é determinístico, e é ele que impede dois cliques de gravarem dois
+  reconhecimentos.
+- **Dormir e acordar**: 0 → 3600 de uma vez contra 0 → 1500, serializar,
+  restaurar e ir até 3600.
+
+#### Um erro que o gabarito achou na versão TypeScript
+
+`noteNumberFor` deriva o número da nota de manutenção do minuto contado a partir
+da época da simulação. O resto usado era o `%` de JavaScript, que **devolve o
+sinal do dividendo** — então para qualquer alarme anterior à época o número saía
+negativo e `maintenanceNoteNumber` recusava, derrubando a retomada inteira.
+
+Esses alarmes existem por construção: a semente grava 72 h de histórico de
+mancal terminando _agora_, e com "agora" nos três primeiros dias de 2026 parte
+desse histórico cai antes da época. Em produção o relógio está meses à frente e
+nunca acontecia, que é o que torna o caso fácil de não ver.
+
+Decisão: **resto euclidiano**. Para todo instante a partir da época os dois
+restos são iguais, então nenhum número já gerado muda — o instantâneo de
+demonstração e os testes continuam idênticos. Há teste de regressão em
+`entities.test.ts`.
+
 ## Suposições para o Felipe revisar
 
 1. **`CD_ZONE_COUNT = 140`** (`process/relations.ts`). O catálogo diz
@@ -434,7 +483,19 @@ values`, limites de alarme desenhados e escrita de setpoint.
 Fase 6 fechada. O instantâneo foi regenerado com o modelo novo: **954 arquivos,
 911 kB, 179 ativos**, compressão 203:1.
 
-### O que vem agora: J0 — gabarito da API TypeScript
+### O que vem agora: J1 — catálogo e relações em Java
+
+`apps/api-java`, Java 21 + Spring Boot 3.x, Maven com wrapper, pacote base
+`dev.felipesantos.papertwin`, organizado por domínio.
+
+J1 lê `reference/research/catalogo-base.csv` e `relacoes-fopdt.csv` com as
+mesmas validações da 4.1/4.2 — cabeçalho, colunas, unicidade, faixas,
+equivalências de unidade explícitas, pontas resolvidas, regra do `[k]` — mais a
+expansão por cilindro, os grupos de vapor com os invariantes, LAB-1201…1212 +
+LAB-1206R e a PIC-712 derivada da relação 5. CSV inválido quebra o **build**, em
+teste, e não o runtime.
+
+### Como era J0 (feito)
 
 Gravar em `reference/golden/` (JSON, versionado) as saídas da implementação
 atual que a Java tem de reproduzir:

@@ -83,6 +83,28 @@ describe('número da nota', () => {
     );
   });
 
+  it('existe também antes da época da simulação', () => {
+    /**
+     * Achado ao gerar o gabarito para o back-end Java.
+     *
+     * A semente grava 72 h de histórico de mancal terminando *agora*. Com
+     * "agora" nos três primeiros dias de 2026, parte desse histórico cai antes
+     * da época, o minuto sai negativo e o número da nota saía negativo junto —
+     * `maintenanceNoteNumber` recusava e a retomada inteira quebrava.
+     *
+     * Em produção o relógio está meses à frente da época e isso nunca
+     * acontecia, o que é justamente o que torna o caso fácil de não ver.
+     */
+    const antes = '2025-12-29T02:00:00.000Z';
+    expect(() => noteNumberFor('MP1-SEC-G4-CS23-MLA', antes)).not.toThrow();
+    expect(noteNumberFor('MP1-SEC-G4-CS23-MLA', antes)).toMatch(/^NM-\d{6}$/);
+
+    // e continua determinístico, que é o que o upsert exige
+    expect(noteNumberFor('MP1-SEC-G4-CS23-MLA', antes)).toBe(
+      noteNumberFor('MP1-SEC-G4-CS23-MLA', antes),
+    );
+  });
+
   it('tem o formato que a LISTA-BASE pede', () => {
     expect(noteNumberFor('MP1-SEC-G4-CS23-MLA', '2026-06-15T18:30:00.000Z')).toMatch(/^NM-\d{6}$/);
   });

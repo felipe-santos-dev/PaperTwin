@@ -1,0 +1,135 @@
+{
+  "tolerance": 1e-9,
+  "note": "readAt devolve o tipo da leitura junto com o valor: exata, interpolada ou extrapolada.",
+  "archived": [
+    {
+      "t": 1767268800000,
+      "v": 100,
+      "reason": "inicial"
+    },
+    {
+      "t": 1767269400000,
+      "v": 100.4,
+      "reason": "intervalo"
+    },
+    {
+      "t": 1767270000000,
+      "v": 118,
+      "reason": "porta"
+    },
+    {
+      "t": 1767270030000,
+      "v": 126,
+      "reason": "porta"
+    },
+    {
+      "t": 1767270060000,
+      "v": 121,
+      "reason": "porta"
+    },
+    {
+      "t": 1767270600000,
+      "v": 103,
+      "reason": "porta"
+    },
+    {
+      "t": 1767272400000,
+      "v": 102.5,
+      "reason": "final"
+    }
+  ],
+  "reads": [
+    {
+      "t": 1767268740000,
+      "expected": {
+        "t": 1767268740000,
+        "v": 100,
+        "kind": "extrapolada"
+      }
+    },
+    {
+      "t": 1767268800000,
+      "expected": {
+        "t": 1767268800000,
+        "v": 100,
+        "kind": "exata"
+      }
+    },
+    {
+      "t": 1767269100000,
+      "expected": {
+        "t": 1767269100000,
+        "v": 100.2,
+        "kind": "interpolada"
+      }
+    },
+    {
+      "t": 1767270015000,
+      "expected": {
+        "t": 1767270015000,
+        "v": 122,
+        "kind": "interpolada"
+      }
+    },
+    {
+      "t": 1767270045000,
+      "expected": {
+        "t": 1767270045000,
+        "v": 123.5,
+        "kind": "interpolada"
+      }
+    },
+    {
+      "t": 1767272400000,
+      "expected": {
+        "t": 1767272400000,
+        "v": 102.5,
+        "kind": "exata"
+      }
+    },
+    {
+      "t": 1767276000000,
+      "expected": {
+        "t": 1767276000000,
+        "v": 102.5,
+        "kind": "extrapolada"
+      }
+    }
+  ],
+  "interpolate": [
+    {
+      "before": {
+        "t": 1767270000000,
+        "v": 118,
+        "reason": "porta"
+      },
+      "after": {
+        "t": 1767270030000,
+        "v": 126,
+        "reason": "porta"
+      },
+      "t": 1767270015000,
+      "expected": 122
+    }
+  ],
+  "timeWeightedAverage": [
+    {
+      "from": 1767268800000,
+      "to": 1767272400000,
+      "expected": 105.12083333333334,
+      "note": "As pontas são interpoladas: a média não depende de onde caiu o ponto mais próximo."
+    },
+    {
+      "from": 1767270000000,
+      "to": 1767270600000,
+      "expected": 113.075,
+      "note": "As pontas são interpoladas: a média não depende de onde caiu o ponto mais próximo."
+    },
+    {
+      "from": 1767269700000,
+      "to": 1767270300000,
+      "expected": 115.875,
+      "note": "As pontas são interpoladas: a média não depende de onde caiu o ponto mais próximo."
+    }
+  ]
+}

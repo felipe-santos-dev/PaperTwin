@@ -308,6 +308,51 @@ function build() {
       emissive: 0xfff3e0,
       emissiveIntensity: 4,
     }),
+
+    /**
+     * Parte úmida.
+     *
+     * As duas telas do formador têm cores levemente diferentes de propósito: na
+     * cena, saber qual tecido é qual é a diferença entre ver um formador de duas
+     * telas e ver um emaranhado. O feltro de prensa é mais claro e mais fosco
+     * que a tela — ele é de fibra prensada, não de monofilamento.
+     */
+    wire: new MeshStandardMaterial({
+      color: 0x2a4652,
+      roughness: 0.7,
+      metalness: 0.2,
+      side: DoubleSide,
+    }),
+    wireTop: new MeshStandardMaterial({ color: 0x2c4a44, roughness: 0.7, side: DoubleSide }),
+    felt: new MeshStandardMaterial({ color: 0x4a4f4c, roughness: 0.95, side: DoubleSide }),
+
+    /**
+     * Lado acionamento.
+     *
+     * Motor azul-acinzentado, redutor cinza encardido, proteção de acoplamento
+     * amarela: é o código de cores de sala de acionamento, e o amarelo tem
+     * função — ele marca justamente a peça que não se encosta com a máquina
+     * girando.
+     */
+    motor: new MeshStandardMaterial({ color: 0x2f5577, roughness: 0.45, metalness: 0.4 }),
+    gearbox: new MeshStandardMaterial({
+      color: 0x6f7b86,
+      map: grime('#9aa3ab'),
+      roughness: 0.55,
+      metalness: 0.45,
+    }),
+    driveCoupling: new MeshStandardMaterial({
+      color: 0x5b6168,
+      roughness: 0.35,
+      metalness: 0.8,
+    }),
+    driveSteel: new MeshStandardMaterial({ color: 0x3c4e60, roughness: 0.55, metalness: 0.5 }),
+    driveTray: new MeshStandardMaterial({ color: 0x8d949b, roughness: 0.4, metalness: 0.6 }),
+    concreteBase: new MeshStandardMaterial({
+      color: 0x8d8a83,
+      map: grime('#b3afa6'),
+      roughness: 0.9,
+    }),
   };
 }
 

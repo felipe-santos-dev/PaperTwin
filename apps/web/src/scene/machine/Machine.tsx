@@ -1,4 +1,7 @@
+import { useMemo } from 'react';
 import {
+  allAssets,
+  HEADBOX,
   MP1,
   POST_DRYER_HOOD,
   POST_DRYER_PAIRS,
@@ -10,12 +13,16 @@ import {
 } from '@mp1/shared';
 import { Building } from './Building';
 import { Calender } from './Calender';
+import { DriveSide } from './DriveSide';
 import { DryingSection } from './DryingSection';
+import { FormingSection } from './FormingSection';
+import { Headbox } from './Headbox';
 import { PaperWeb } from './PaperWeb';
 import { PopeReel } from './PopeReel';
 import { PressSection } from './PressSection';
 import { Scanner } from './Scanner';
 import { SpeedSizer } from './SpeedSizer';
+import { WetEndStructure } from './WetEndStructure';
 
 /**
  * A MP1 inteira, montada a partir do modelo.
@@ -23,11 +30,18 @@ import { SpeedSizer } from './SpeedSizer';
  * Nenhuma posição é escrita aqui: cada componente recebe a sua seção de
  * `MP1.sections` e desenha o que encontra. Mudar o nº de pares de cilindros no
  * modelo muda a cena, e uma tag que não existe no modelo não pode aparecer.
+ *
+ * A ordem em que os componentes aparecem é a ordem do processo, da caixa de
+ * entrada à enroladeira — a mesma que `section.order` declara. É a ordem em que
+ * alguém que conhece a máquina a percorre, e ler o arquivo de cima para baixo
+ * deve ser como andar por ela.
  */
 export function Machine() {
   const webWidth = MP1.webWidthM;
   const halfWidth = webWidth / 2 + 0.9;
 
+  const headbox = sectionById(MP1, 'headbox');
+  const forming = sectionById(MP1, 'forming');
   const press = sectionById(MP1, 'press');
   const preDryer = sectionById(MP1, 'pre-dryer');
   const scanner1 = sectionById(MP1, 'scanner-1')?.assets[0];
@@ -37,6 +51,8 @@ export function Machine() {
   const scanner2 = sectionById(MP1, 'scanner-2')?.assets[0];
   const pope = sectionById(MP1, 'pope-reel');
 
+  const assets = useMemo(() => allAssets(MP1), []);
+
   return (
     <group>
       <Building
@@ -45,7 +61,10 @@ export function Machine() {
         halfWidth={halfWidth}
       />
 
+      {headbox && <Headbox section={headbox} webWidth={webWidth} />}
+      {forming && <FormingSection section={forming} webWidth={webWidth} />}
       {press && <PressSection section={press} webWidth={webWidth} />}
+      <WetEndStructure webWidth={webWidth} />
 
       {preDryer && (
         <DryingSection
@@ -75,6 +94,20 @@ export function Machine() {
       {pope && <PopeReel section={pope} webWidth={webWidth} />}
 
       <PaperWeb webWidth={webWidth} />
+
+      {/*
+        O lado acionamento vem por último e de uma vez, para a máquina inteira:
+        ele não pertence a nenhuma seção. As fileiras de motores são decididas
+        por quem está perto de quem em X, e dividir isso por seção faria dois
+        motores de seções vizinhas caírem no mesmo lugar.
+      */}
+      <DriveSide assets={assets} halfWidth={halfWidth} webWidth={webWidth} />
+
+      {/* a sala continua para trás da caixa de entrada, onde fica a massa */}
+      <mesh position={[HEADBOX.manifoldX - 8, 9.5, 0]}>
+        <boxGeometry args={[0.4, 19, 2 * halfWidth + 14]} />
+        <meshStandardMaterial color="#3a3e45" roughness={0.9} />
+      </mesh>
     </group>
   );
 }

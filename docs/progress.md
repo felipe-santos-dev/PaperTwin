@@ -17,8 +17,25 @@ Branch: `dev/fases-4-7`. Nada de push na main, nada de PR, nada de deploy.
 - [x] **4.4** Entidades de operação + historiador estilo PI
 - [x] **4.5** `docs/notas-para-readme.md`
 - [x] **5** Motor de simulação e API
-- [ ] **6** As 7 telas
+- [x] **6** As 7 telas (6.1 a 6.6)
+- [ ] **J0** Gabarito da API TypeScript em `reference/golden/`
+- [ ] **J1–J5** `apps/api-java`: catálogo, núcleo, persistência, retomada, API
+- [ ] **J6** Contrato com o front via `openapi.json`
+- [ ] **J7** Dockerfile e ajuste para 512 MB
+- [ ] **J8** Remover `apps/api`
 - [ ] **7** Acabamento: Playwright, performance, acessibilidade, CI, checklist de deploy
+
+## Mudança de rumo — back-end em Java
+
+A partir de 31/10/2026 o back-end passa a ser **Java 21 + Spring Boot 3.x**, em
+`apps/api-java`. O front continua React + TypeScript. A razão é de
+posicionamento: o portfólio é de back-end Java/Spring, e este é o projeto
+principal.
+
+A API TypeScript **não** é apagada antes da hora: ela vira o gabarito. As saídas
+dela para entradas fixas são gravadas em `reference/golden/` (fase J0) e a
+implementação Java tem de reproduzi-las. Só quando todos esses testes passarem e
+o front rodar contra a Java é que `apps/api` sai, num commit próprio.
 
 ## O que foi feito
 
@@ -253,6 +270,69 @@ inclinação com o erro padrão dela mesma; e a lista de bobinas afetadas por um
 troca comparava passo com milissegundo — unidade errada numa comparação, que não
 quebra nada e responde errado para sempre.
 
+### 6.5 — a parte úmida, no modelo antes da cena
+
+A cena 3D não podia ser portada direto: o protótipo desenha caixa de entrada,
+formador e três prensas, e o `mp1.ts` tinha `headbox` e `forming` como seções
+**vazias** e uma prensa inventada de um par só. Como a regra do projeto é que a
+cena sai do modelo e uma tag só existe se existir no modelo, a 6.5 começou pelo
+modelo.
+
+No modelo (`geometry.ts` e `mp1.ts`):
+
+- Caixa de entrada: um ativo, `MP1-CXE-CE`, sem mancal. Não gira nada nela.
+  Entrou um `kind` novo, `headbox`, e a coluna `kind` do banco é texto livre,
+  então não precisou de migration.
+- Formador de duas telas: 10 rolos, `MP1-FOR-T1-R1` a `T2-R5`. Dois ganham nome
+  de função — rolo de peito e rolo de transferência.
+- Prensas: 3 nips, 6 rolos, `MP1-PRE-P1-RI`/`RS`/`NIP` e seguintes. Cada nip tem
+  tag própria, porque uma nota ou um alarme são sempre de _uma_ prensa.
+- O modelo foi de 134 para **179 ativos** (57 corpos, 114 mancais, 5 nips,
+  2 scanners, 1 caixa de entrada) e a geometria de 29 para **36 medidas**.
+
+Três decisões que ficam registradas:
+
+1. **Correção no protótipo.** Lá os dois rolos de cada prensa ficam 10 cm
+   afastados. Um nip é o ponto de contato: aqui eles encostam, e as duas alturas
+   saem do nip e do raio. O X, o raio e a altura média do par são os do
+   protótipo.
+2. **Os 14 rolos guia de feltro e tela ficam fora do modelo de ativos.** Eles
+   aparecem na cena, com geometria e proveniência, mas sem tag e sem mancal
+   monitorado: giram puxados pelo feltro e nenhuma fonte os nomeia. Promovê-los
+   encheria a tela de Mancais com 28 pontos que ninguém mede. Há teste cobrando
+   a decisão.
+3. **Quem tem motor sai do raio.** O protótipo põe cardã, redutor e motor em
+   todo rolo de raio ≥ 0,38 m. Virou `DRIVEN_ROLL_MIN_RADIUS_M`, e o lado
+   acionamento é gerado daí — acrescentar um par de cilindros no modelo
+   acrescenta dois acionamentos na cena, sem lista escrita à mão.
+
+Na cena: `Headbox`, `FormingSection`, `PressSection` reescrita, `WetEndStructure`
+e `DriveSide`. Duas coisas valem nota:
+
+- **Telas e feltros são a envoltória convexa dos rolos que abraçam.** Um tecido
+  esticado em volta de vários rolos assume exatamente isso: corre reto entre dois
+  e se enrola no contorno de cada um. Mover um rolo guia reacomoda o circuito
+  inteiro sozinho, sem ninguém reescrever caminho nenhum.
+- **O lado acionamento é malha instanciada**, com as fileiras decididas pela
+  geometria: um rolo vai para a fileira seguinte quando a sua já tem vizinho a
+  menos de 1 m. São ~700 peças em 16 chamadas de desenho.
+
+Três ajustes de cena que a conferência contra o protótipo pediu:
+
+- A parede do fundo foi de −16 para −24 m. Com os motores na cena, 6 m de
+  corredor atrás deles não davam espaço para olhar a fileira de frente — a
+  primeira tentativa de enquadramento ficou preta.
+- O nevoeiro foi de 35–120 para 60–220 m, como no protótipo. A máquina agora tem
+  ~96 m e a visão geral olha de 80: com o alcance antigo a metade seca sumia.
+- A visão geral ficou a 16 m de altura, não aos 26 do protótipo. **O teto aqui
+  está a 19 m e lá a 34** — é uma divergência conhecida contra o protótipo, e a
+  câmera alta só não mostrava o telhado por fora porque o plano do teto tem uma
+  face só. Depender disso seria depender de um descuido.
+
+Conferido contra `mp1-parte-seca-3d.html` aberto lado a lado, nas quatro vistas:
+visão geral, parte úmida, úmida → seca e lado acionamento. Os enquadramentos das
+vistas novas são os do protótipo, com as exceções acima.
+
 ## Suposições para o Felipe revisar
 
 1. **`CD_ZONE_COUNT = 140`** (`process/relations.ts`). O catálogo diz
@@ -318,6 +398,18 @@ quebra nada e responde errado para sempre.
     would be overwritten", apaga as cópias locais antes do merge — elas passam a
     vir do repositório.
 
+21. **Arranjo inteiro da parte úmida** (`WET_END_LAYOUT`): caixa de entrada,
+    formador de duas telas e três prensas saíram do protótipo navegável, não de
+    documento. A MP1 real pode ter mesa plana, outro nº de prensas e outra
+    sequência de telas. Tudo marcado `assumed`.
+22. **Rolos guia de feltro fora do modelo de ativos** (`FELT_ROLLS_NOT_ASSETS`).
+    Se o mapa de rolos der tag a eles, entram — e a tela de Mancais cresce 28
+    pontos.
+23. **Corte de 0,38 m para acionamento próprio** (`DRIVEN_ROLLS`). É o corte do
+    protótipo. A lista de acionamentos da MP1 é documento interno.
+24. **Nips de prensa com os rolos encostados**, contra os 10 cm de folga do
+    protótipo. Vale conferir a carga de nip real.
+
 ## Próximo passo exato
 
 Fase 6: as 7 telas de `reference/prototypes/papertwin-telas.html` em `apps/web`,
@@ -338,3 +430,24 @@ values`, limites de alarme desenhados e escrita de setpoint.
    acionamento, papel), com clique em mancal abrindo o painel de vibração.
 6. **6.6 — instantâneo de demonstração** regenerado cobrindo as rotas novas,
    com instante fixo (o relógio da aplicação já é injetável).
+
+Fase 6 fechada. O instantâneo foi regenerado com o modelo novo: **954 arquivos,
+911 kB, 179 ativos**, compressão 203:1.
+
+### O que vem agora: J0 — gabarito da API TypeScript
+
+Gravar em `reference/golden/` (JSON, versionado) as saídas da implementação
+atual que a Java tem de reproduzir:
+
+1. **FOPDT**: séries de degrau de 3 relações, incluindo a de τ = 4,5 s com
+   dt = 10 s, e o espalhamento CD da ZIC-205[70].
+2. **Historiador**: entrada bruta + saída depois do filtro de exceção + swinging
+   door para 3 tags com `excDev`/`compDev` diferentes; interpolação e plot
+   values.
+3. **Alarmes**: a sequência ISA-18.2 de um cenário — ativo → reconhecido →
+   normalizado, engavetamento, inundação.
+4. **Simulação**: valores de ~20 tags para semente fixa em 3 intervalos,
+   incluindo retomada depois de "dormir".
+5. **Respostas de cada rota da API** para um estado fixo.
+
+Commit: "gabarito da API TypeScript".

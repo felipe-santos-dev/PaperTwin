@@ -26,11 +26,11 @@ describe('cobertura da proveniência', () => {
     expect(orfas).toEqual([]);
   });
 
-  it('cobre as 29 medidas da geometria', () => {
+  it('cobre as 36 medidas da geometria', () => {
     // O número é explícito de propósito: se alguém apagar metade do geometry.ts,
     // os dois testes acima continuariam passando de mãos vazias.
-    expect(measurementExports).toHaveLength(29);
-    expect(Object.keys(MEASUREMENTS)).toHaveLength(29);
+    expect(measurementExports).toHaveLength(36);
+    expect(Object.keys(MEASUREMENTS)).toHaveLength(36);
   });
 
   it('descreve cada origem com rótulo e justificativa', () => {

@@ -96,10 +96,32 @@ export const MEASUREMENTS = {
   POPE_X_M: assumed('X da enroladeira Pope', FROM_PROTOTYPE),
   POPE_DRUM_Y_M: assumed('Altura do tambor da enroladeira', FROM_PROTOTYPE),
   POPE_DRUM_RADIUS_M: assumed('Raio do tambor da enroladeira (0,8 m)', FROM_PROTOTYPE),
-  PRESS_X_M: assumed('X do par de prensas de saída', FROM_PROTOTYPE),
-  PRESS_ROLL_RADIUS_M: assumed('Raio dos rolos de prensa (0,95 m)', FROM_PROTOTYPE),
-  PRESS_BOTTOM_Y_M: assumed('Altura do rolo de prensa inferior', FROM_PROTOTYPE),
-  PRESS_TOP_Y_M: assumed('Altura do rolo de prensa superior', FROM_PROTOTYPE),
+  PRESS_NIPS: assumed(
+    'X, altura e raio dos três nips de prensa',
+    'Tirado do protótipo, com uma correção: lá os dois rolos de cada par ficam 10 cm afastados, e aqui encostam. Falta o mapa de rolos.',
+  ),
+  HEADBOX: assumed('Posição e tamanho da caixa de entrada e do tubulão', FROM_PROTOTYPE),
+  FORMING_ROLLS: assumed('Posição e raio dos dez rolos do formador', FROM_PROTOTYPE),
+  FORMING_TRANSFER_INDEX: assumed(
+    'Qual rolo do formador entrega a folha às prensas',
+    'O protótipo faz a folha abraçar o rolo inferior da tela superior. Falta confirmar.',
+  ),
+  FELT_ROLLS: assumed('Posição e raio dos rolos guia dos feltros e das telas', FROM_PROTOTYPE),
+  FELT_LOOPS: assumed(
+    'Quais rolos cada feltro de prensa abraça',
+    'Desenhado a partir do protótipo. O circuito real de cada feltro falta.',
+  ),
+  DRIVEN_ROLL_MIN_RADIUS_M: assumed(
+    'Raio mínimo para um rolo ter acionamento próprio (0,38 m)',
+    'É o corte que o protótipo usa para pôr motor no lado acionamento. A lista real de acionamentos falta.',
+  ),
+  WET_END_HALF_WIDTH_M: assumed(
+    'Distância do centro até as colunas da parte úmida',
+    FROM_PROTOTYPE,
+  ),
+  WET_END_LEVELS: assumed('Alturas dos três pisos da parte úmida', FROM_PROTOTYPE),
+  WET_END_FRAME_X_M: assumed('X das colunas da parte úmida', FROM_PROTOTYPE),
+  WET_END_FRAME_TOP_Y_M: assumed('Altura das travessas de topo da parte úmida', FROM_PROTOTYPE),
 } as const satisfies Record<string, Provenance>;
 
 export type MeasurementId = keyof typeof MEASUREMENTS;
@@ -125,6 +147,22 @@ export const ARRANGEMENTS = {
   BEARING_SIDES: assumed(
     'Dois mancais por corpo girante, um por lado',
     'Vale para os cilindros secadores; falta confirmar para os demais rolos.',
+  ),
+  WET_END_LAYOUT: assumed(
+    'Arranjo da parte úmida: caixa de entrada, formador de duas telas e três prensas',
+    'Tirado inteiro do protótipo navegável. A MP1 real pode ter formador de mesa plana, outro nº de prensas e outra sequência de telas. Nada aqui veio de documento.',
+  ),
+  PRESS_NIP_COUNT: assumed(
+    'Prensas com três nips',
+    'O protótipo desenhou três. Falta confirmar quantos são e quais são de sapata.',
+  ),
+  DRIVEN_ROLLS: assumed(
+    'Quais rolos têm acionamento próprio',
+    'Decidido pelo raio, com o corte do protótipo em 0,38 m. A lista de acionamentos da MP1 é documento interno.',
+  ),
+  FELT_ROLLS_NOT_ASSETS: assumed(
+    'Rolos guia de feltro e de tela ficam fora do modelo de ativos',
+    'Eles aparecem na cena e têm geometria, mas não têm tag nem mancal monitorado: giram puxados pelo feltro e nenhuma fonte os nomeia. Se o mapa de rolos der tag a eles, entram como ativo.',
   ),
 } as const satisfies Record<string, Provenance>;
 

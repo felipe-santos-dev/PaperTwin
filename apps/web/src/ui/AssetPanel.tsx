@@ -26,6 +26,7 @@ const KIND_LABEL: Record<MachineAsset['kind'], string> = {
   scanner: 'Scanner',
   nip: 'Nip',
   'reel-drum': 'Tambor de enroladeira',
+  headbox: 'Caixa de entrada',
 };
 
 const SIDE_LABEL = { LA: 'lado acionamento', LC: 'lado comando' } as const;

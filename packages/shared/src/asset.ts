@@ -29,6 +29,7 @@ export const ASSET_KINDS = [
   'scanner',
   'nip',
   'reel-drum',
+  'headbox',
 ] as const;
 
 export type AssetKind = (typeof ASSET_KINDS)[number];

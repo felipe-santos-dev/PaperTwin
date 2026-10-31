@@ -124,7 +124,15 @@ export function Building({ pitFrom, pitTo, halfWidth }: BuildingProps) {
         <planeGeometry args={[260, 120]} />
         <meshStandardMaterial color="#50545a" roughness={0.8} />
       </mesh>
-      <mesh position={[40, 9.5, -16]}>
+      {/*
+        A parede do fundo, atrás do lado acionamento.
+
+        Ela recuou de 16 para 24 m quando os motores entraram na cena: os
+        acionamentos ocupam até uns 10 m para fora do centro da máquina, e uma
+        parede a 16 m deixava seis metros de corredor — menos do que basta para
+        a câmera olhar a fileira de motores de frente.
+      */}
+      <mesh position={[40, 9.5, -24]}>
         <boxGeometry args={[260, 19, 0.4]} />
         <meshStandardMaterial color="#3a3e45" roughness={0.9} />
       </mesh>

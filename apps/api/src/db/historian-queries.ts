@@ -268,3 +268,73 @@ export const SAVE_SIM_STATE = `
     state = excluded.state,
     updated_at = excluded.updated_at
 `;
+
+// ------------------------------------------------- consultas de tendência
+
+export interface PlotBucketRow {
+  bucket_start: Date | string;
+  samples: number | string;
+  min_value: number | string;
+  max_value: number | string;
+  first_value: number | string;
+  last_value: number | string;
+}
+
+/**
+ * Uma coluna de um gráfico: o que caber num pixel.
+ *
+ * Quatro valores, e não um: mínimo, máximo, primeiro e último. É o que o PI
+ * chama de *plot values*, e a razão é que uma coluna de pixel de uma semana de
+ * dados pode conter um pico de meio segundo. Com uma média por coluna, o pico
+ * desaparece — e um pico é justamente o que alguém está procurando num gráfico
+ * de uma semana. Com mínimo e máximo, a coluna desenha a faixa que o sinal
+ * percorreu; com primeiro e último, a linha continua ligada à coluna vizinha
+ * sem degrau falso.
+ */
+export interface PlotBucket {
+  readonly bucketStart: string;
+  readonly samples: number;
+  readonly min: number;
+  readonly max: number;
+  readonly first: number;
+  readonly last: number;
+}
+
+export function toPlotBucket(row: PlotBucketRow): PlotBucket {
+  return {
+    bucketStart: new Date(ms(row.bucket_start)).toISOString(),
+    samples: num(row.samples),
+    min: num(row.min_value),
+    max: num(row.max_value),
+    first: num(row.first_value),
+    last: num(row.last_value),
+  };
+}
+
+/**
+ * As colunas do gráfico, agregadas no banco.
+ *
+ * `date_bin` alinha as janelas a uma origem fixa, e não ao primeiro dado: duas
+ * consultas com recortes diferentes devolvem as mesmas bordas, que é o que
+ * permite comparar dois períodos sem as barras andarem. A mesma escolha da
+ * agregação de vibração da Fase 3.
+ *
+ * O primeiro e o último valor saem de `array_agg` ordenado em vez de uma
+ * subconsulta correlacionada por coluna: numa janela de uma semana com milhares
+ * de colunas, a subconsulta seria uma varredura por coluna.
+ */
+export const PLOT_VALUES = `
+  select
+    date_bin($4::interval, ts, timestamptz '2000-01-01 00:00:00+00') as bucket_start,
+    count(*)::int                        as samples,
+    min(value)                           as min_value,
+    max(value)                           as max_value,
+    (array_agg(value order by ts))[1]    as first_value,
+    (array_agg(value order by ts desc))[1] as last_value
+  from historian_archive
+  where point_id = $1
+    and ts >= $2::timestamptz
+    and ts <  $3::timestamptz
+  group by 1
+  order by 1
+`;

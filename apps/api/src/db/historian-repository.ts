@@ -1,6 +1,9 @@
 import type { HistorianPoint, PointArchivedSample, PointSample } from '@mp1/shared';
 
+import type { ReadValue } from '@mp1/shared';
+
 import type { SimState } from './historian-queries';
+import type { Trend, TrendQuery } from './historian-store';
 
 /**
  * O contrato do historiador.
@@ -69,6 +72,17 @@ export interface HistorianRepository {
     readonly state?: unknown;
     readonly updatedAt: Date;
   }): Promise<void>;
+
+  /**
+   * As colunas de um gráfico, com as âncoras e a média no tempo.
+   *
+   * É a consulta que uma tendência longa precisa: mínimo, máximo, primeiro e
+   * último por coluna, para um pico de meio segundo não desaparecer numa janela
+   * de uma semana.
+   */
+  trend(query: TrendQuery): Promise<Trend>;
+  /** O valor de um ponto num instante, interpolado entre os arquivados. */
+  valueAt(pointId: number, at: Date): Promise<ReadValue | null>;
 
   /** Apaga o que passou da retenção de cada tabela. */
   pruneHistorian(now: Date): Promise<PruneResult>;

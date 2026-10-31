@@ -1,16 +1,23 @@
 import {
   archiveCutoff,
   rawCutoff,
+  readAt,
+  timeWeightedAverage,
   type HistorianPoint,
   type PointArchivedSample,
   type PointSample,
+  type ReadValue,
 } from '@mp1/shared';
 
 import type { SqlExecutor } from './executor';
 import {
   ARCHIVE_AFTER,
   FIND_SIM_STATE,
+  PLOT_VALUES,
   SAVE_SIM_STATE,
+  toPlotBucket,
+  type PlotBucket,
+  type PlotBucketRow,
   toSimState,
   type SimState,
   type SimStateRow,
@@ -265,4 +272,119 @@ export async function saveSimState(
     state.state === undefined || state.state === null ? null : JSON.stringify(state.state),
     state.updatedAt.toISOString(),
   ]);
+}
+
+// ------------------------------------------------- consultas de tendência
+
+/**
+ * As colunas de um gráfico, com as âncoras dos dois lados da janela.
+ *
+ * As âncoras vêm juntas porque sem elas o gráfico começa solto: a primeira
+ * coluna não sabe de onde a linha vinha, e a última não sabe para onde ia. É a
+ * mesma razão pela qual `archivedBefore` existe.
+ */
+export interface Trend {
+  readonly pointId: number;
+  readonly from: string;
+  readonly to: string;
+  /** Duração de cada coluna, em segundos. */
+  readonly bucketS: number;
+  readonly buckets: readonly PlotBucket[];
+  /** Último valor arquivado antes da janela; `null` nas bordas do arquivo. */
+  readonly before: PointArchivedSample | null;
+  readonly after: PointArchivedSample | null;
+  /** Média no tempo da janela, pela regra do trapézio. */
+  readonly timeWeightedAverage: number | null;
+}
+
+/**
+ * Teto de colunas por consulta.
+ *
+ * Nenhuma tela tem mais de alguns milhares de pixels de largura, e devolver
+ * mais colunas que pixels é tráfego que o navegador joga fora. O teto também
+ * protege o banco: `date_bin` com intervalo minúsculo numa janela larga produz
+ * uma coluna por amostra, que é o oposto do que esta consulta existe para
+ * fazer.
+ */
+export const MAX_PLOT_BUCKETS = 2000;
+
+export interface TrendQuery {
+  readonly pointId: number;
+  readonly from: Date;
+  readonly to: Date;
+  /** Quantas colunas o gráfico tem. O padrão é 600. */
+  readonly buckets?: number;
+}
+
+export async function trend(sql: SqlExecutor, query: TrendQuery): Promise<Trend> {
+  const columns = Math.min(Math.max(Math.trunc(query.buckets ?? 600), 1), MAX_PLOT_BUCKETS);
+  const spanMs = query.to.getTime() - query.from.getTime();
+
+  if (spanMs <= 0) {
+    throw new RangeError('A janela da tendência precisa terminar depois de começar');
+  }
+
+  // pelo menos um segundo por coluna: abaixo disso as colunas ficam mais finas
+  // que a própria varredura do historiador e vêm vazias
+  const bucketS = Math.max(1, Math.round(spanMs / columns / 1000));
+
+  const [rows, before, after] = await Promise.all([
+    sql.rows<PlotBucketRow>(PLOT_VALUES, [
+      query.pointId,
+      query.from.toISOString(),
+      query.to.toISOString(),
+      `${String(bucketS)} seconds`,
+    ]),
+    archivedBefore(sql, query.pointId, query.from),
+    archivedAfter(sql, query.pointId, query.to),
+  ]);
+
+  const buckets = rows.map(toPlotBucket);
+
+  /**
+   * A média no tempo é calculada sobre as amostras, e não sobre as colunas.
+   *
+   * As colunas já perderam a informação de **quando** cada valor aconteecu
+   * dentro delas; usá-las para a média traria de volta o viés que a média no
+   * tempo existe para evitar.
+   */
+  const samples = await archivedSamples(sql, {
+    pointId: query.pointId,
+    from: query.from,
+    to: query.to,
+  });
+
+  const path = [...(before ? [before] : []), ...samples, ...(after ? [after] : [])];
+
+  return {
+    pointId: query.pointId,
+    from: query.from.toISOString(),
+    to: query.to.toISOString(),
+    bucketS,
+    buckets,
+    before,
+    after,
+    timeWeightedAverage: timeWeightedAverage(path, query.from.getTime(), query.to.getTime()),
+  };
+}
+
+/**
+ * O valor de um ponto num instante, interpolado.
+ *
+ * Duas consultas de uma linha cada, e não uma consulta esperta: achar o ponto
+ * anterior e o seguinte é exatamente o que o índice primário faz bem, e uma
+ * expressão que resolvesse os dois de uma vez acabaria varrendo.
+ */
+export async function valueAt(
+  sql: SqlExecutor,
+  pointId: number,
+  at: Date,
+): Promise<ReadValue | null> {
+  const t = at.getTime();
+  const [before, after] = await Promise.all([
+    archivedBefore(sql, pointId, new Date(t + 1)),
+    archivedAfter(sql, pointId, at),
+  ]);
+
+  return readAt(t, before, after);
 }

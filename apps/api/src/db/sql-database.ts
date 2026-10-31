@@ -4,6 +4,7 @@ import type {
   HistorianPoint,
   PointArchivedSample,
   PointSample,
+  ReadValue,
   GradeChange,
   JumboReel,
   MachineAsset,
@@ -25,6 +26,7 @@ import {
 import type { SimState } from './historian-queries';
 import type { HistorianQuery, HistorianUsage, PruneResult } from './historian-repository';
 import * as historian from './historian-store';
+import type { Trend as HistorianTrend, TrendQuery as HistorianTrendQuery } from './historian-store';
 import { runMigrations } from './migrate';
 import type { StoredShift } from './operations-queries';
 import type {
@@ -300,6 +302,14 @@ export class SqlDatabase implements Database {
 
   latestArchived(pointId: number): Promise<PointArchivedSample | null> {
     return historian.latestArchived(this.sql, pointId);
+  }
+
+  trend(query: HistorianTrendQuery): Promise<HistorianTrend> {
+    return historian.trend(this.sql, query);
+  }
+
+  valueAt(pointId: number, at: Date): Promise<ReadValue | null> {
+    return historian.valueAt(this.sql, pointId, at);
   }
 
   findSimState(): Promise<SimState | null> {

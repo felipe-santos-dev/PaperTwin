@@ -16,6 +16,7 @@ import {
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import type { SqlExecutor } from './executor';
+import { MAX_PLOT_BUCKETS } from './historian-store';
 import type { Database } from './repository';
 import { DRIVERS } from './test-drivers';
 
@@ -252,6 +253,182 @@ for (const driver of DRIVERS) {
         const uso = await db.historianUsage();
         expect(uso.rawRows).toBe(600);
         expect(uso.archiveRows).toBeLessThan(uso.rawRows / 5);
+      });
+    });
+
+    describe('tendência', () => {
+      /** Uma rampa de 0 a 100 em 100 s, um ponto por segundo. */
+      function rampa(): PointArchivedSample[] {
+        return Array.from({ length: 101 }, (_, i) => ({
+          pointId: ponto.pointId,
+          t: T0 + i * 1000,
+          v: i,
+          reason: 'porta' as const,
+        }));
+      }
+
+      it('devolve colunas com mínimo, máximo, primeiro e último', async () => {
+        await db.insertArchiveSamples(rampa());
+
+        const t = await db.trend({
+          pointId: ponto.pointId,
+          from: new Date(T0),
+          to: new Date(T0 + 100_000),
+          buckets: 10,
+        });
+
+        expect(t.bucketS).toBe(10);
+        expect(t.buckets.length).toBeGreaterThan(8);
+
+        const primeira = t.buckets[0];
+        expect(primeira?.min).toBe(0);
+        expect(primeira?.max).toBe(9);
+        expect(primeira?.first).toBe(0);
+        expect(primeira?.last).toBe(9);
+        expect(primeira?.samples).toBe(10);
+      });
+
+      /**
+       * É para isto que a coluna tem quatro valores.
+       *
+       * Um pico de um segundo numa janela de cem, desenhada em dez colunas,
+       * desapareceria numa média por coluna. No máximo da coluna ele aparece.
+       */
+      it('preserva um pico curto que uma média apagaria', async () => {
+        await db.insertArchiveSamples([
+          ...rampa(),
+          { pointId: ponto.pointId, t: T0 + 55_500, v: 900, reason: 'porta' },
+        ]);
+
+        const t = await db.trend({
+          pointId: ponto.pointId,
+          from: new Date(T0),
+          to: new Date(T0 + 100_000),
+          buckets: 10,
+        });
+
+        expect(Math.max(...t.buckets.map((b) => b.max))).toBe(900);
+      });
+
+      it('traz as âncoras dos dois lados da janela', async () => {
+        await db.insertArchiveSamples(rampa());
+
+        const t = await db.trend({
+          pointId: ponto.pointId,
+          from: new Date(T0 + 30_000),
+          to: new Date(T0 + 60_000),
+          buckets: 10,
+        });
+
+        expect(t.before?.t).toBeLessThan(T0 + 30_000);
+        expect(t.after?.t).toBeGreaterThanOrEqual(T0 + 60_000);
+      });
+
+      it('dá média no tempo, não média dos pontos', async () => {
+        await db.insertArchiveSamples(rampa());
+
+        const t = await db.trend({
+          pointId: ponto.pointId,
+          from: new Date(T0),
+          to: new Date(T0 + 100_000),
+          buckets: 10,
+        });
+
+        // rampa de 0 a 100: a média no tempo é 50
+        expect(t.timeWeightedAverage).toBeCloseTo(50, 6);
+      });
+
+      it('alinha as colunas a uma origem fixa, não ao primeiro dado', async () => {
+        await db.insertArchiveSamples(rampa());
+
+        const inteiro = await db.trend({
+          pointId: ponto.pointId,
+          from: new Date(T0),
+          to: new Date(T0 + 100_000),
+          buckets: 10,
+        });
+        const recortado = await db.trend({
+          pointId: ponto.pointId,
+          from: new Date(T0 + 20_000),
+          to: new Date(T0 + 100_000),
+          buckets: 8,
+        });
+
+        const bordasDoInteiro = new Set(inteiro.buckets.map((b) => b.bucketStart));
+        for (const bucket of recortado.buckets) {
+          expect(bordasDoInteiro.has(bucket.bucketStart), bucket.bucketStart).toBe(true);
+        }
+      });
+
+      it('não devolve mais colunas que o teto', async () => {
+        await db.insertArchiveSamples(rampa());
+
+        const t = await db.trend({
+          pointId: ponto.pointId,
+          from: new Date(T0),
+          to: new Date(T0 + 100_000),
+          buckets: 10_000,
+        });
+
+        expect(t.buckets.length).toBeLessThanOrEqual(MAX_PLOT_BUCKETS);
+        // com janela de 100 s, o piso de 1 s por coluna limita a 100
+        expect(t.bucketS).toBe(1);
+      });
+
+      it('recusa janela invertida', async () => {
+        await expect(
+          db.trend({
+            pointId: ponto.pointId,
+            from: new Date(T0 + 1000),
+            to: new Date(T0),
+          }),
+        ).rejects.toThrow(/terminar depois de começar/);
+      });
+
+      it('devolve janela vazia sem explodir', async () => {
+        const t = await db.trend({
+          pointId: ponto.pointId,
+          from: new Date(T0),
+          to: new Date(T0 + 1000),
+        });
+
+        expect(t.buckets).toEqual([]);
+        expect(t.timeWeightedAverage).toBeNull();
+      });
+    });
+
+    describe('valor num instante', () => {
+      it('interpola entre os arquivados', async () => {
+        await db.insertArchiveSamples([
+          { pointId: ponto.pointId, t: T0, v: 100, reason: 'inicial' },
+          { pointId: ponto.pointId, t: T0 + 10_000, v: 200, reason: 'porta' },
+        ]);
+
+        const lido = await db.valueAt(ponto.pointId, new Date(T0 + 5000));
+        expect(lido?.kind).toBe('interpolada');
+        expect(lido?.v).toBeCloseTo(150, 6);
+      });
+
+      it('é exato no instante de um arquivado', async () => {
+        await db.insertArchiveSamples([
+          { pointId: ponto.pointId, t: T0, v: 100, reason: 'inicial' },
+        ]);
+
+        const lido = await db.valueAt(ponto.pointId, new Date(T0));
+        expect(lido).toMatchObject({ v: 100, kind: 'exata' });
+      });
+
+      it('extrapola depois do último, e diz que extrapolou', async () => {
+        await db.insertArchiveSamples([
+          { pointId: ponto.pointId, t: T0, v: 100, reason: 'inicial' },
+        ]);
+
+        const lido = await db.valueAt(ponto.pointId, new Date(T0 + 60_000));
+        expect(lido).toMatchObject({ v: 100, kind: 'extrapolada' });
+      });
+
+      it('devolve null quando o ponto não tem nada arquivado', async () => {
+        await expect(db.valueAt(outroPonto.pointId, new Date(T0))).resolves.toBeNull();
       });
     });
 

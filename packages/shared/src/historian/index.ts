@@ -12,6 +12,7 @@
  */
 
 export * from './compression';
+export * from './interpolation';
 export * from './points';
 export * from './retention';
 export * from './types';

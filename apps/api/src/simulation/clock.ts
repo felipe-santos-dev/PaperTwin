@@ -53,18 +53,29 @@ export const TICKS_PER_MINUTE = 60_000 / TICK_MS;
 export const TICKS_PER_HOUR = TICKS_PER_MINUTE * 60;
 
 /**
- * Teto de passos numa retomada: um dia.
+ * Teto de passos numa retomada: quatro horas.
  *
  * É o limite da garantia de "recalcular = rodar contínuo", e precisa estar
- * escrito. Reexecutar 86.400 passos é rápido; reexecutar um mês, além de lento,
- * geraria mais linhas de arquivo do que a retenção guarda — a simulação
- * reconstruiria dados que seriam apagados no mesmo arranque.
+ * escrito — junto com a razão, que é de orçamento e não de elegância.
  *
- * Acima do teto, a retomada **reancora**: começa um dia antes do instante
+ * A retomada roda **dentro de uma requisição HTTP**, porque não há processo de
+ * fundo: o host gratuito dorme sem tráfego, e quem acorda a API é quem abriu a
+ * tela. Reexecutar quatro horas são 14.400 passos, o que custa cerca de um
+ * segundo de CPU — já é o que alguém espera de uma página que estava dormindo.
+ * Um dia seriam 86.400 passos e uns vinte segundos, o que passa de qualquer
+ * tempo limite razoável e deixaria a primeira visita do dia pendurada.
+ *
+ * Acima do teto, a retomada **reancora**: começa quatro horas antes do instante
  * pedido, em regime, e diz que reancorou. É uma descontinuidade, e dizer isso é
- * melhor que fingir que a máquina rodou o mês inteiro.
+ * melhor que fingir que a máquina rodou a noite inteira.
+ *
+ * **A consequência é um buraco no histórico**, e ela é inerente ao desenho: se
+ * ninguém abrir a tela por um dia, não houve quem rodasse a simulação daquele
+ * dia. O arquivo guarda os períodos em que alguém esteve olhando, mais a janela
+ * da reancoragem. Quem quiser histórico contínuo precisa de alguém batendo na
+ * API de tempos em tempos — é decisão de deploy, e está no checklist.
  */
-export const MAX_CATCHUP_TICKS = 24 * TICKS_PER_HOUR;
+export const MAX_CATCHUP_TICKS = 4 * TICKS_PER_HOUR;
 
 /** O passo que contém um instante. */
 export function tickAt(instant: Date): number {

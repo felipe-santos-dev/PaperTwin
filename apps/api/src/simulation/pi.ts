@@ -69,6 +69,15 @@ export interface PiOptions {
   /** Faixa da MV, do catálogo. */
   readonly min: number;
   readonly max: number;
+  /**
+   * Termo integral inicial, para retomar uma malha gravada.
+   *
+   * É o estado de um PI: o proporcional se recalcula do erro de agora, o
+   * integral é a memória. Retomar com integral zero depois de uma parada faria
+   * a malha largar do bias e levar minutos para voltar — justamente o atraso
+   * que a trava de saturação existe para evitar.
+   */
+  readonly integral?: number;
 }
 
 export interface PiController {
@@ -110,7 +119,7 @@ export function piController(options: PiOptions): PiController {
     );
   }
 
-  let integral = 0;
+  let integral = options.integral ?? 0;
   let output = Math.min(Math.max(options.bias, options.min), options.max);
 
   const clamp = (value: number): number => Math.min(Math.max(value, options.min), options.max);

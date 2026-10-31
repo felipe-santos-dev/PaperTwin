@@ -1,5 +1,7 @@
 import type { HistorianPoint, PointArchivedSample, PointSample } from '@mp1/shared';
 
+import type { SimState } from './historian-queries';
+
 /**
  * O contrato do historiador.
  *
@@ -52,6 +54,21 @@ export interface HistorianRepository {
   archivedBefore(pointId: number, before: Date): Promise<PointArchivedSample | null>;
   archivedAfter(pointId: number, from: Date): Promise<PointArchivedSample | null>;
   latestArchived(pointId: number): Promise<PointArchivedSample | null>;
+
+  /**
+   * Até onde a simulação rodou, ou `null` se nunca rodou.
+   *
+   * Mora com o historiador porque é a mesma pergunta: o marcador diz até onde
+   * existem dados, e quem grava os dados é quem o move.
+   */
+  findSimState(): Promise<SimState | null>;
+  saveSimState(state: {
+    readonly seed: number;
+    readonly lastTick: number;
+    /** O estado da rede. `null` grava sem estado, o que força reancoragem. */
+    readonly state?: unknown;
+    readonly updatedAt: Date;
+  }): Promise<void>;
 
   /** Apaga o que passou da retenção de cada tabela. */
   pruneHistorian(now: Date): Promise<PruneResult>;

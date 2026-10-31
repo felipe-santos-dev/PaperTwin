@@ -9,6 +9,11 @@ import {
 import type { SqlExecutor } from './executor';
 import {
   ARCHIVE_AFTER,
+  FIND_SIM_STATE,
+  SAVE_SIM_STATE,
+  toSimState,
+  type SimState,
+  type SimStateRow,
   ARCHIVE_BEFORE,
   ARCHIVE_OF_POINT,
   buildInsertArchive,
@@ -227,4 +232,37 @@ export async function historianUsage(sql: SqlExecutor): Promise<HistorianUsage> 
     rawRows: raw[0]?.count ?? 0,
     archiveRows: archive[0]?.count ?? 0,
   };
+}
+
+// ---------------------------------------------------- estado da simulação
+
+export async function findSimState(sql: SqlExecutor): Promise<SimState | null> {
+  const rows = await sql.rows<SimStateRow>(FIND_SIM_STATE);
+  const row = rows[0];
+  return row ? toSimState(row) : null;
+}
+
+/**
+ * Grava até onde a simulação chegou.
+ *
+ * Chamado no fim de cada retomada, na mesma transação que gravou as amostras —
+ * o marcador não pode avançar sem os dados que ele diz existirem, senão a
+ * próxima retomada começaria depois de um buraco sem saber.
+ */
+export async function saveSimState(
+  sql: SqlExecutor,
+  state: {
+    readonly seed: number;
+    readonly lastTick: number;
+    readonly state?: unknown;
+    readonly updatedAt: Date;
+  },
+): Promise<void> {
+  await sql.rows(SAVE_SIM_STATE, [
+    state.seed,
+    state.lastTick,
+    // `undefined` e `null` gravam estado nulo, que é o que força reancoragem
+    state.state === undefined || state.state === null ? null : JSON.stringify(state.state),
+    state.updatedAt.toISOString(),
+  ]);
 }

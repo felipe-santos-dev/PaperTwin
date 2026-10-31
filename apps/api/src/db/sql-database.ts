@@ -22,6 +22,7 @@ import {
   type OpenExecutor,
   type SqlExecutor,
 } from './executor';
+import type { SimState } from './historian-queries';
 import type { HistorianQuery, HistorianUsage, PruneResult } from './historian-repository';
 import * as historian from './historian-store';
 import { runMigrations } from './migrate';
@@ -299,6 +300,19 @@ export class SqlDatabase implements Database {
 
   latestArchived(pointId: number): Promise<PointArchivedSample | null> {
     return historian.latestArchived(this.sql, pointId);
+  }
+
+  findSimState(): Promise<SimState | null> {
+    return historian.findSimState(this.sql);
+  }
+
+  saveSimState(state: {
+    readonly seed: number;
+    readonly lastTick: number;
+    readonly state?: unknown;
+    readonly updatedAt: Date;
+  }): Promise<void> {
+    return historian.saveSimState(this.sql, state);
   }
 
   pruneHistorian(now: Date): Promise<PruneResult> {

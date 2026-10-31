@@ -12,7 +12,7 @@ import {
 } from '@mp1/shared';
 
 import { DEFAULT_SEED, TICK_MS } from './clock';
-import { fopdtRunner, type FopdtRunner } from './fopdt';
+import { fopdtRunner, type FopdtRunner, type FopdtState } from './fopdt';
 import { correlatedNoise, streamOf } from './noise';
 import { cylinderSurfaceTempC, piController, simcTuning, type PiController } from './pi';
 import { instrumentNoiseSd, requireOperatingPoint } from './operating-point';
@@ -132,10 +132,54 @@ interface Cascade {
   readonly controller: PiController;
 }
 
+/**
+ * O estado da rede, serializável.
+ *
+ * Isto existe porque a rede **tem** estado, e fingir que não tem foi um erro que
+ * um teste pegou: cada retomada montava um motor novo no ponto de operação, e
+ * acordar no meio de uma troca de gramatura perderia a transição inteira. O
+ * valor de uma tag não é função só de (semente, passo) — é função disso e do que
+ * já estava no caminho.
+ *
+ * O que precisa ser gravado é o que não dá para recalcular:
+ *
+ * - **as linhas de atraso** das relações, que guardam o que entrou nos últimos
+ *   θ segundos (270 s na mais lenta);
+ * - **os termos integrais** das cascatas, que são a memória das malhas;
+ * - **a verdade** de cada tag, de onde a próxima integração parte;
+ * - **os setpoints**, que o operador pode ter mudado.
+ *
+ * A **medida** não é gravada: ela é a verdade mais o ruído do passo, e o ruído é
+ * função da posição. Recalculá-la dá exatamente o mesmo valor.
+ *
+ * São cerca de 1.300 números, ~25 KB em JSON. `version` existe para uma
+ * mudança de formato ser detectada em vez de produzir um motor meio retomado.
+ */
+export interface EngineState {
+  readonly version: 1;
+  readonly tick: number;
+  readonly seed: number;
+  readonly truth: Readonly<Record<string, number>>;
+  readonly setpoints: Readonly<Record<string, number>>;
+  /** Termo integral de cada cascata, pela tag da PV. */
+  readonly integrals: Readonly<Record<string, number>>;
+  /** Estado de cada relação, pelo id dela. */
+  readonly runners: Readonly<Record<string, FopdtState>>;
+}
+
+export const ENGINE_STATE_VERSION = 1 as const;
+
 export interface ProcessEngineOptions {
   readonly seed?: number;
   /** Setpoints iniciais. O que faltar vem do ponto de operação. */
   readonly setpoints?: Readonly<Record<string, number>>;
+  /**
+   * Estado gravado, para retomar exatamente de onde parou.
+   *
+   * Quando vem, `startTick` tem de ser o passo gravado e a semente a mesma: um
+   * estado de outra semente ou de outro instante não é continuação, é mistura.
+   */
+  readonly state?: EngineState;
 }
 
 export interface ProcessEngine {
@@ -153,6 +197,8 @@ export interface ProcessEngine {
   truth(tag: string): number | null;
   /** Todas as medidas do passo atual. */
   snapshot(): Map<string, number>;
+  /** O estado da rede, para gravar e retomar exatamente daqui. */
+  snapshotState(): EngineState;
 
   /** O setpoint de uma malha, ou `null` se a tag não tem setpoint. */
   setpoint(tag: string): number | null;
@@ -165,6 +211,14 @@ export interface ProcessEngine {
    * entre os dois que nenhuma tela explicaria.
    */
   setSetpoint(tag: string, value: number): void;
+  /**
+   * Devolve a malha ao ponto de operação.
+   *
+   * É o que fecha uma perturbação: o cenário mexe num setpoint, e quando o
+   * evento passa a malha volta para onde estava. Guardar o valor anterior em
+   * quem chama daria um lugar a mais para esquecer de restaurar.
+   */
+  resetSetpoint(tag: string): void;
   /** As tags que aceitam setpoint. */
   settableTags(): string[];
 }
@@ -183,6 +237,29 @@ export function processEngine(
   options: ProcessEngineOptions = {},
 ): ProcessEngine {
   const seed = options.seed ?? DEFAULT_SEED;
+  const restored = options.state;
+
+  if (restored) {
+    if (restored.version !== ENGINE_STATE_VERSION) {
+      throw new Error(
+        `Estado da rede na versão ${String(restored.version)}; esta build lê a ` +
+          `${String(ENGINE_STATE_VERSION)}. Reancore em vez de retomar.`,
+      );
+    }
+    if (restored.seed !== seed) {
+      throw new Error(
+        `O estado gravado é da semente ${String(restored.seed)} e esta execução usa ` +
+          `${String(seed)}. Semente diferente é outra máquina.`,
+      );
+    }
+    if (restored.tick !== startTick) {
+      throw new Error(
+        `O estado gravado é do passo ${String(restored.tick)} e a retomada pede ` +
+          `${String(startTick)}. Retomar de outro passo salta ou repete processo.`,
+      );
+    }
+  }
+
   let tick = startTick;
 
   const truth = new Map<string, number>();
@@ -212,7 +289,11 @@ export function processEngine(
       .map((item) => ({
         relation: item,
         inputBase: requireOperatingPoint(item.input),
-        runner: fopdtRunner({ kp: item.kp, deadTimeS: item.deadTimeS, tauS: item.tauS }, DT_S),
+        runner: fopdtRunner(
+          { kp: item.kp, deadTimeS: item.deadTimeS, tauS: item.tauS },
+          DT_S,
+          restored?.runners[item.id],
+        ),
       })),
   }));
 
@@ -289,6 +370,10 @@ export function processEngine(
     settable.map((tag) => [tag, requireOperatingPoint(tag)]),
   );
 
+  for (const [tag, value] of Object.entries(restored?.setpoints ?? {})) {
+    if (setpoints.has(tag)) setpoints.set(tag, value);
+  }
+
   for (const [tag, value] of Object.entries(options.setpoints ?? {})) {
     if (!setpoints.has(tag)) {
       throw new Error(
@@ -325,6 +410,7 @@ export function processEngine(
         bias: requireOperatingPoint(mv),
         min: mvVariable.min,
         max: mvVariable.max,
+        ...(restored ? { integral: restored.integrals[pv] ?? 0 } : {}),
       }),
     };
   });
@@ -378,6 +464,16 @@ export function processEngine(
 
   publish('XI-0002', WEB_WIDTH_M);
   publish('XI-0001', production());
+
+  /**
+   * A verdade gravada substitui o ponto de operação, e a medida é recalculada.
+   *
+   * Vem depois de tudo porque sobrescreve: o arranque põe a rede em regime, e o
+   * estado gravado diz onde ela realmente estava.
+   */
+  if (restored) {
+    for (const [tag, value] of Object.entries(restored.truth)) publish(tag, value);
+  }
 
   const clamp = (value: number, min: number, max: number): number =>
     Math.min(Math.max(value, min), max);
@@ -453,6 +549,28 @@ export function processEngine(
       return new Map(measured);
     },
 
+    snapshotState(): EngineState {
+      const runners: Record<string, FopdtState> = {};
+      for (const output of outputs) {
+        for (const { relation: item, runner } of output.runners) {
+          runners[item.id] = runner.snapshot();
+        }
+      }
+
+      const integrals: Record<string, number> = {};
+      for (const cascade of cascades) integrals[cascade.pv] = cascade.controller.integral;
+
+      return {
+        version: ENGINE_STATE_VERSION,
+        tick,
+        seed,
+        truth: Object.fromEntries(truth),
+        setpoints: Object.fromEntries(setpoints),
+        integrals,
+        runners,
+      };
+    },
+
     setpoint(tag: string): number | null {
       return setpoints.get(tag) ?? null;
     },
@@ -465,6 +583,13 @@ export function processEngine(
         );
       }
       setpoints.set(tag, value);
+    },
+
+    resetSetpoint(tag: string): void {
+      if (!setpoints.has(tag)) {
+        throw new Error(`${tag} não aceita setpoint, então não há o que devolver.`);
+      }
+      setpoints.set(tag, requireOperatingPoint(tag));
     },
 
     settableTags(): string[] {

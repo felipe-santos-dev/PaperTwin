@@ -220,3 +220,51 @@ export const LATEST_ARCHIVE = `
 export const COUNT_ARCHIVE = `select count(*)::int as count from historian_archive`;
 
 export const DELETE_ARCHIVE_BEFORE = `delete from historian_archive where ts < $1::timestamptz`;
+
+// ---------------------------------------------------- estado da simulação
+
+export interface SimStateRow {
+  seed: number | string;
+  last_tick: number | string;
+  state: unknown;
+  updated_at: Date | string;
+}
+
+/** Até onde a simulação rodou, com que semente e em que estado. */
+export interface SimState {
+  readonly seed: number;
+  readonly lastTick: number;
+  /**
+   * O estado da rede no passo gravado, como veio do banco.
+   *
+   * Opaco de propósito: quem sabe o formato é o motor, e é ele que valida a
+   * versão. Tipar aqui como `EngineState` faria a camada de dados depender do
+   * simulador para gravar um bloco que ela nunca lê.
+   */
+  readonly state: unknown;
+  readonly updatedAt: string;
+}
+
+export function toSimState(row: SimStateRow): SimState {
+  return {
+    seed: num(row.seed),
+    // bigint volta como string no postgres.js, para não perder precisão
+    lastTick: num(row.last_tick),
+    state: row.state ?? null,
+    updatedAt: new Date(ms(row.updated_at)).toISOString(),
+  };
+}
+
+export const FIND_SIM_STATE = `
+  select seed, last_tick, state, updated_at from sim_state where id = 1
+`;
+
+export const SAVE_SIM_STATE = `
+  insert into sim_state (id, seed, last_tick, state, updated_at)
+  values (1, $1, $2, $3::jsonb, $4::timestamptz)
+  on conflict (id) do update set
+    seed = excluded.seed,
+    last_tick = excluded.last_tick,
+    state = excluded.state,
+    updated_at = excluded.updated_at
+`;

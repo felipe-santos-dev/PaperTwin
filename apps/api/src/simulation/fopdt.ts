@@ -30,6 +30,21 @@ export interface FopdtModel {
   readonly tauS: number;
 }
 
+/**
+ * O estado de um integrador, serializável.
+ *
+ * A linha de atraso é o estado que não dá para recalcular: ela guarda o que
+ * entrou nos últimos `θ` segundos, e sem ela a retomada perderia tudo que está
+ * no caminho entre a válvula e a medida. Numa relação com 270 s de tempo morto,
+ * isso é quatro minutos e meio de processo que já aconteceu e ainda não
+ * apareceu.
+ */
+export interface FopdtState {
+  readonly line: readonly number[];
+  readonly step: number;
+  readonly output: number;
+}
+
 /** Um integrador em andamento, com a sua linha de atraso. */
 export interface FopdtRunner {
   /**
@@ -37,6 +52,8 @@ export interface FopdtRunner {
    * depois de `dt` segundos.
    */
   advance(inputDeviation: number): number;
+  /** O estado atual, para gravar e retomar. */
+  snapshot(): FopdtState;
 }
 
 function assertUsable(model: FopdtModel, dtS: number): void {
@@ -69,15 +86,26 @@ export function delaySteps(deadTimeS: number, dtS: number): number {
  * `n % L` e lê em `(n + 1) % L`, que é exatamente a entrada de `d` passos
  * atrás. Antes de a janela encher, o que se lê é zero — nenhum desvio.
  */
-export function fopdtRunner(model: FopdtModel, dtS: number): FopdtRunner {
+export function fopdtRunner(model: FopdtModel, dtS: number, state?: FopdtState): FopdtRunner {
   assertUsable(model, dtS);
 
   const decay = decayPerStep(model.tauS, dtS);
   const length = delaySteps(model.deadTimeS, dtS) + 1;
-  const line = new Array<number>(length).fill(0);
 
-  let step = 0;
-  let output = 0;
+  const line = new Array<number>(length).fill(0);
+  if (state) {
+    if (state.line.length !== length) {
+      throw new Error(
+        `A linha de atraso gravada tem ${String(state.line.length)} posições e esta relação ` +
+          `precisa de ${String(length)}. O tempo morto ou o passo mudaram desde a gravação, ` +
+          'e continuar daí misturaria dois modelos.',
+      );
+    }
+    for (const [index, value] of state.line.entries()) line[index] = value;
+  }
+
+  let step = state?.step ?? 0;
+  let output = state?.output ?? 0;
 
   return {
     advance(inputDeviation: number): number {
@@ -87,6 +115,10 @@ export function fopdtRunner(model: FopdtModel, dtS: number): FopdtRunner {
 
       output = decay * output + (1 - decay) * model.kp * delayed;
       return output;
+    },
+
+    snapshot(): FopdtState {
+      return { line: [...line], step, output };
     },
   };
 }

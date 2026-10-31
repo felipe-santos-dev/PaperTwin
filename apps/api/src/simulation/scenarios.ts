@@ -1,4 +1,5 @@
 import {
+  plantOffsetSuffix,
   processVariable,
   REEL_CHANGE_DIAMETER_MM,
   shiftWindowAt,
@@ -150,6 +151,41 @@ export function gradeChangeOf(shift: ShiftWindow): GradeChangePlan | null {
     fromGsm: sobe ? base : ALTERNATE_GSM,
     toGsm: sobe ? ALTERNATE_GSM : base,
   };
+}
+
+/** O passo em que a troca de gramatura de um dia de operação acontece. */
+function gradeChangeTickOf(operationDate: string): number {
+  const shiftIndex = ['A', 'B', 'C'].indexOf(GRADE_CHANGE_SHIFT);
+  const dayStart = tickAt(new Date(`${operationDate}T06:00:00${plantOffsetSuffix()}`));
+
+  return dayStart + (shiftIndex * 8 + GRADE_CHANGE_HOUR_INTO_SHIFT) * TICKS_PER_HOUR;
+}
+
+/**
+ * A gramatura que está valendo num passo.
+ *
+ * É preciso porque a troca de gramatura é **evento**, e um evento só move o
+ * processo se o processo estiver no estado de antes dele. Sem isto, um motor
+ * montado num dia em que a troca é de 80 para 75 arrancaria em 75 e a "troca"
+ * não moveria nada — a tela mostraria uma transição que não aconteceu.
+ *
+ * A conta olha a troca de hoje e a de ontem, e pega a última que já passou:
+ * como as trocas alternam de sentido por dia, o estado de agora é o destino da
+ * última troca.
+ */
+export function gradeInEffectAt(tick: number): number {
+  const base = requireOperatingPoint('AIC-902');
+  const hoje = shiftWindowAt(tickTime(tick)).operationDate;
+  const ontem = new Date(Date.parse(`${hoje}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10);
+
+  let grade = base;
+  for (const dia of [ontem, hoje]) {
+    if (gradeChangeTickOf(dia) <= tick) {
+      grade = daysSinceEpoch(dia) % 2 === 0 ? ALTERNATE_GSM : base;
+    }
+  }
+
+  return grade;
 }
 
 /**

@@ -1,6 +1,9 @@
 import type {
   Alarm,
   AssetTag,
+  HistorianPoint,
+  PointArchivedSample,
+  PointSample,
   GradeChange,
   JumboReel,
   MachineAsset,
@@ -19,6 +22,8 @@ import {
   type OpenExecutor,
   type SqlExecutor,
 } from './executor';
+import type { HistorianQuery, HistorianUsage, PruneResult } from './historian-repository';
+import * as historian from './historian-store';
 import { runMigrations } from './migrate';
 import type { StoredShift } from './operations-queries';
 import type {
@@ -252,6 +257,56 @@ export class SqlDatabase implements Database {
 
   countAlarmsInWindow(from: Date, to: Date): Promise<number> {
     return operations.countAlarmsInWindow(this.sql, from, to);
+  }
+
+  // --- historiador ---
+
+  replaceHistorianPoints(points: readonly HistorianPoint[]): Promise<number> {
+    return historian.replaceHistorianPoints(this.sql, points);
+  }
+
+  listHistorianPoints(): Promise<HistorianPoint[]> {
+    return historian.listHistorianPoints(this.sql);
+  }
+
+  findHistorianPoint(tag: string): Promise<HistorianPoint | null> {
+    return historian.findHistorianPoint(this.sql, tag);
+  }
+
+  insertRawSamples(samples: readonly PointSample[]): Promise<number> {
+    return historian.insertRawSamples(this.sql, samples);
+  }
+
+  insertArchiveSamples(samples: readonly PointArchivedSample[]): Promise<number> {
+    return historian.insertArchiveSamples(this.sql, samples);
+  }
+
+  rawSamples(query: HistorianQuery): Promise<PointSample[]> {
+    return historian.rawSamples(this.sql, query);
+  }
+
+  archivedSamples(query: HistorianQuery): Promise<PointArchivedSample[]> {
+    return historian.archivedSamples(this.sql, query);
+  }
+
+  archivedBefore(pointId: number, before: Date): Promise<PointArchivedSample | null> {
+    return historian.archivedBefore(this.sql, pointId, before);
+  }
+
+  archivedAfter(pointId: number, from: Date): Promise<PointArchivedSample | null> {
+    return historian.archivedAfter(this.sql, pointId, from);
+  }
+
+  latestArchived(pointId: number): Promise<PointArchivedSample | null> {
+    return historian.latestArchived(this.sql, pointId);
+  }
+
+  pruneHistorian(now: Date): Promise<PruneResult> {
+    return historian.pruneHistorian(this.sql, now);
+  }
+
+  historianUsage(): Promise<HistorianUsage> {
+    return historian.historianUsage(this.sql);
   }
 }
 

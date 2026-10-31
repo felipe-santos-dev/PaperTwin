@@ -14,7 +14,7 @@ Branch: `dev/fases-4-7`. Nada de push na main, nada de PR, nada de deploy.
 - [x] **4.1b** `driveGroup` → `steamGroup` (modelo, banco, API, web) + migration 002
 - [x] **4.2** Relações FOPDT + núcleo de simulação de 1ª ordem com tempo morto
 - [x] **4.3** Grupos de vapor como dado de primeira classe
-- [ ] **4.4** Entidades de operação + historiador estilo PI
+- [x] **4.4** Entidades de operação + historiador estilo PI
 - [ ] **4.5** `docs/notas-para-readme.md`
 - [ ] **5** Motor de simulação e API
 - [ ] **6** As 7 telas
@@ -107,6 +107,69 @@ a pós, embora dê o ΔP dos sifões dos dois (`PDIC-721/722`). O tanque existe 
 máquina; a medição não está no catálogo. Inventar `LIC-731` daria ao simulador
 um número que ninguém mediu com a cara dos outros quatro.
 
+### 4.4 — entidades de operação e historiador
+
+Dividida em quatro subfases, cada uma com commit verde.
+
+**4.4a — tipos.** `packages/shared/src/operations`, um módulo por entidade:
+turno, bobina jumbo, quebra de folha, troca de gramatura, ronda, nota de
+manutenção, alteração de setpoint, alarme. Cada módulo carrega a sua
+proveniência, num **terceiro** vocabulário (`B` / `ISA-18.2` / `assumed`) —
+separado do do modelo da máquina e do do catálogo, porque o alarme tira os
+estados da LISTA-BASE e a taxa de inundação de uma norma que o catálogo nunca
+cita.
+
+**4.4b — um repositório, dois drivers.** Antes cada driver tinha a sua classe de
+repositório, com os mesmos métodos escritos duas vezes. Com as entidades de
+operação e o historiador passariam de trinta, e duas listas de trinta métodos
+iguais divergem sem ninguém notar — os testes rodam sempre no PGlite. Agora o
+que varia por driver são três operações (`executor.ts`) e o repositório é um só
+(`sql-database.ts`). Sem mudança de comportamento.
+
+**4.4c — esquema e repositório das entidades.** Migration 003, doze tabelas.
+Listas são tabela filha (passagem, sinais, pontos, evidências), não array nem
+jsonb: array depende de o driver serializar igual, jsonb perde a chave
+estrangeira. As consultas das filhas usam marcadores montados `in ($1, $2, …)`
+porque `= any($1)` sem anotação de tipo é exatamente o caso em que a inferência
+do PGlite falha. As restrições repetem o que o tipo garante, e um teste lê a
+migration e cobra que as enumerações do SQL e as de `@mp1/shared` sejam a mesma
+lista.
+
+**4.4d — historiador estilo PI.** Migration 004, três tabelas: ponto, bruto,
+arquivo. O arquivo guarda `point_id` e não a tag — 320 pontos, ~12 bytes de tag
+por linha na tabela e outros tantos no índice, num banco de 0,5 GB isso é um
+quarto do espaço. O id é o índice da variável no catálogo, não uma sequência do
+banco: com sequência, a ordem de semeadura decidiria os ids e o instantâneo do
+modo de demonstração apontaria para os pontos errados.
+
+A compressão é em dois estágios, em `packages/shared/src/historian`:
+
+- **filtro de exceção** — "este valor é novidade?". Quando é, manda a amostra
+  anterior junto, senão o degrau viraria rampa. No teto de tempo **não** manda,
+  porque não há degrau para preservar.
+- **porta oscilante** — "este trecho ainda cabe numa reta?". Reduz uma rampa de
+  mil amostras a duas pontas.
+
+Dois achados documentados, que os testes levantaram: o erro da reta que o
+gráfico desenha chega a **2 · `compDev`**, não `compDev` (o corredor garante que
+_existe_ uma reta boa, não que a corda entre dois arquivados seja ela); e a
+porta fecha **uma amostra depois** da mudança, então o vértice de um canto é
+arquivado um passo adiante de onde aconteceu.
+
+A conta da retenção (`retention.ts`) é explícita: 320 pontos, ~88 B por linha
+arquivada com índice, 300 MB de orçamento → 3.409.090 linhas → a 7 dias, 1.521
+linhas por ponto por dia, ou uma a cada ~57 s. É orçamento, não previsão: a taxa
+real sai de `historianUsage()` depois de a Fase 5 rodar um turno, e o botão de
+ajuste é `ARCHIVE_RETENTION_DAYS`.
+
+O bruto é um buffer de 15 minutos. Um PI de verdade não guarda bruto — o filtro
+roda na coleta e o descarte não existe depois. A tabela existe para se poder
+_ver_ o que o filtro jogou fora, e a 1 s os 320 pontos geram 19.200 linhas por
+minuto: uma semana de bruto passaria de 100 GB.
+
+A poda não roda em laço de fundo. O host gratuito dorme sem tráfego, e um laço
+que depende do processo estar vivo não poda nada.
+
 ## Suposições para o Felipe revisar
 
 1. **`CD_ZONE_COUNT = 140`** (`process/relations.ts`). O catálogo diz
@@ -119,18 +182,37 @@ um número que ninguém mediu com a cara dos outros quatro.
    `assumed`, como já estava. O único ponto fixo é o CS23 no G4.
 4. **Grupos de vapor** G1 CS1–6 · G2 CS7–12 · G3 CS13–18 · G4 CS19–26 ·
    G5 CS27–32 · G6 CS33–36, como a LISTA-BASE escreve.
-5. **`reference/research/` e `papertwin-telas.html` entraram no repositório.**
-   Eram arquivos não versionados no teu checkout. O conteúdo é byte a byte o
-   mesmo; se o `git merge` na main reclamar de "untracked working tree files
-   would be overwritten", apaga as cópias locais antes do merge — elas passam a
-   vir do repositório.
+5. **Quadro de turnos**: três turnos de 8 h a partir das 06:00, letras A, B, C.
+   A pesquisa não dá a escala da MP1, e uma quarta letra exigiria a regra de
+   rotação das equipes. Fuso fixo em −03:00 (sem horário de verão desde 2019),
+   para a simulação não mudar com a versão dos dados de fuso.
+6. **Prioridade das notas (1–4)**: a LISTA-BASE dá a escala, não o significado.
+   Adotado: 1 parada imediata, 2 próxima parada programada, 3 parada de
+   manutenção, 4 quando houver oportunidade.
+7. **Situações da nota**: aberta / planejada / em execução / encerrada. A lista
+   pede o campo e não enumera os valores.
+8. **Escalas da ronda**: ruído normal/elevado/anormal e vazamento
+   nenhum/gotejamento/jato. Mesma razão.
+9. **Evidência da nota é referência, não arquivo.** O gêmeo não guarda foto nem
+   anexo — não teria onde, nos 0,5 GB — e aponta para o que já existe: janela de
+   tendência, alarme, ponto de ronda, medição.
+10. **Alarme**: nomes das quatro prioridades (baixa/média/alta/crítica), banda
+    morta de 1 % da faixa de operação e teto de um turno para o engavetamento.
+    A ISA-18.2 exige que existam; os valores são nossos. As prioridades que a
+    pesquisa nomeia em prosa (alagamento dos sifões, nip da calandra a 92 °C,
+    falta de óleo no mancal) estão numa tabela de exceções com fonte `B`.
+11. **Historiador**: teto de 1 h entre valores arquivados (o `CompMax` do PI usa
+    8 h; com 8 h um turno estável teria um ponto só) e 10 min entre valores que
+    passam o filtro de exceção. Retenção de 7 dias no arquivo e 15 min no bruto.
+12. **`reference/research/` e `papertwin-telas.html` entraram no repositório.**
+    Eram arquivos não versionados no teu checkout. O conteúdo é byte a byte o
+    mesmo; se o `git merge` na main reclamar de "untracked working tree files
+    would be overwritten", apaga as cópias locais antes do merge — elas passam a
+    vir do repositório.
 
 ## Próximo passo exato
 
-Fase 4.4: as entidades de operação da LISTA-BASE (turno, bobina jumbo, quebra de
-folha, troca de gramatura, ronda, nota de manutenção, alteração de setpoint,
-alarme ISA-18.2) como tipos em `packages/shared/src/operations`, mais as
-migrations SQL e o repositório nas duas implementações (postgres.js e PGlite).
-Junto, as tabelas do historiador estilo PI: valor bruto, valor arquivado depois
-do filtro de exceção + swinging door (com `excDev`/`compDev` do catálogo) e
-retenção dimensionada para caber nos ~0,5 GB do Neon Free.
+Fase 4.5: `docs/notas-para-readme.md` — material bruto para o Felipe escrever o
+README. Fatos, números, comandos e arquitetura: o que cada pacote contém, as
+contas do historiador, o nº de testes por workspace, as migrations, a lista de
+suposições e os comandos de desenvolvimento. Não é texto final (regra 6).

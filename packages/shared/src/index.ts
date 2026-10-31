@@ -1,5 +1,6 @@
 export * from './asset';
 export * from './health';
+export * from './historian';
 export * from './iso20816';
 export * from './machine';
 export * from './operations';

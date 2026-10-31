@@ -14,8 +14,8 @@ if (env.SEED_ON_BOOT) {
   app.log.info(
     seeded,
     seeded.skippedReadings
-      ? 'ativos semeados; série de vibração já existia'
-      : 'ativos semeados e série de vibração gerada',
+      ? 'ativos e pontos do historiador semeados; série de vibração já existia'
+      : 'ativos e pontos do historiador semeados, série de vibração gerada',
   );
 }
 

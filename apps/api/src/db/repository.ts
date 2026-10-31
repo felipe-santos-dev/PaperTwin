@@ -1,3 +1,4 @@
+import type { HistorianRepository } from './historian-repository';
 import type { OperationsRepository } from './operations-repository';
 import type {
   AssetTag,
@@ -57,7 +58,8 @@ export interface VibrationRepository {
 /** Qual driver está atrás do repositório, para o `/health` poder dizer. */
 export type DatabaseDriver = 'pglite' | 'postgres';
 
-export interface Database extends AssetRepository, VibrationRepository, OperationsRepository {
+export interface Database
+  extends AssetRepository, VibrationRepository, OperationsRepository, HistorianRepository {
   readonly driver: DatabaseDriver;
   /** Aplica as migrations pendentes. Seguro de chamar mais de uma vez. */
   migrate(): Promise<void>;

@@ -312,6 +312,10 @@ export class SqlDatabase implements Database {
     return historian.valueAt(this.sql, pointId, at);
   }
 
+  averageOf(pointId: number, from: Date, to: Date): Promise<number | null> {
+    return historian.averageOf(this.sql, pointId, from, to);
+  }
+
   findSimState(): Promise<SimState | null> {
     return historian.findSimState(this.sql);
   }

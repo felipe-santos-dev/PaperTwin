@@ -388,3 +388,28 @@ export async function valueAt(
 
   return readAt(t, before, after);
 }
+
+/**
+ * A média no tempo de um ponto numa janela.
+ *
+ * Separada de `trend` porque quem quer só a média não quer pagar as colunas do
+ * gráfico. É esta que as entidades de operação usam: a gramatura média de uma
+ * bobina, a produção de um turno.
+ */
+export async function averageOf(
+  sql: SqlExecutor,
+  pointId: number,
+  from: Date,
+  to: Date,
+): Promise<number | null> {
+  if (to <= from) return null;
+
+  const [samples, before, after] = await Promise.all([
+    archivedSamples(sql, { pointId, from, to }),
+    archivedBefore(sql, pointId, from),
+    archivedAfter(sql, pointId, to),
+  ]);
+
+  const path = [...(before ? [before] : []), ...samples, ...(after ? [after] : [])];
+  return timeWeightedAverage(path, from.getTime(), to.getTime());
+}

@@ -20,6 +20,7 @@ import {
 } from '../simulation/clock';
 import { processEngine, type EngineState, type ProcessEngine } from '../simulation/process-engine';
 import { gradeInEffectAt, planAt, type BreakPlan, type ShiftPlan } from '../simulation/scenarios';
+import { harvestEntities, persistHarvest } from './entities';
 import { HISTORIAN_SCAN_TICKS, historianRecorder, type RecorderStats } from './recorder';
 
 /**
@@ -89,6 +90,15 @@ export interface CatchupReport {
   readonly raw: number;
   readonly alarmsRaised: number;
   readonly alarmsCleared: number;
+  /** Entidades de operação colhidas do arquivo depois de gravá-lo. */
+  readonly entities: {
+    readonly shifts: number;
+    readonly reels: number;
+    readonly gradeChanges: number;
+    readonly webBreaks: number;
+    readonly rounds: number;
+    readonly notes: number;
+  };
   readonly compression: RecorderStats;
   readonly durationMs: number;
 }
@@ -217,6 +227,14 @@ export async function catchUp(db: Database, options: CatchupOptions = {}): Promi
       raw: 0,
       alarmsRaised: 0,
       alarmsCleared: 0,
+      entities: {
+        shifts: 0,
+        reels: 0,
+        gradeChanges: 0,
+        webBreaks: 0,
+        rounds: 0,
+        notes: 0,
+      },
       compression: { fed: 0, afterException: 0, archived: 0, raw: 0, ratio: 0 },
       durationMs: performance.now() - started,
     };
@@ -296,6 +314,19 @@ export async function catchUp(db: Database, options: CatchupOptions = {}): Promi
   await writeRaw(db, pending.raw);
   if (pending.alarms.size > 0) await db.upsertAlarms([...pending.alarms.values()]);
 
+  /**
+   * As entidades são colhidas **depois** de o arquivo estar gravado.
+   *
+   * A gramatura média de uma bobina é uma consulta ao historiador, não um
+   * acumulador em memória — colher antes de gravar daria bobinas sem gramatura.
+   * E colher antes de podar: a poda corta pelo tempo, e uma bobina que acabou
+   * de fechar está dentro da retenção de todo jeito.
+   */
+  const harvest = await harvestEntities(db, seed, range.fromTick, range.toTick, [
+    ...pending.alarms.values(),
+  ]);
+  await persistHarvest(db, harvest);
+
   await db.pruneHistorian(now);
   await db.saveSimState({
     seed,
@@ -317,6 +348,14 @@ export async function catchUp(db: Database, options: CatchupOptions = {}): Promi
     raw: pending.raw.length,
     alarmsRaised: raised,
     alarmsCleared: cleared,
+    entities: {
+      shifts: harvest.shifts.length,
+      reels: harvest.reels.length,
+      gradeChanges: harvest.gradeChanges.length,
+      webBreaks: harvest.webBreaks.length,
+      rounds: harvest.rounds.length,
+      notes: harvest.notes.length,
+    },
     compression: recorder.stats(),
     durationMs: performance.now() - started,
   };

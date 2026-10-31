@@ -83,6 +83,14 @@ export interface HistorianRepository {
   trend(query: TrendQuery): Promise<Trend>;
   /** O valor de um ponto num instante, interpolado entre os arquivados. */
   valueAt(pointId: number, at: Date): Promise<ReadValue | null>;
+  /**
+   * A média no tempo de um ponto numa janela.
+   *
+   * É a que as entidades de operação usam — a gramatura média de uma bobina, a
+   * produção de um turno — e por isso é separada de `trend`: quem quer só a
+   * média não paga as colunas do gráfico.
+   */
+  averageOf(pointId: number, from: Date, to: Date): Promise<number | null>;
 
   /** Apaga o que passou da retenção de cada tabela. */
   pruneHistorian(now: Date): Promise<PruneResult>;

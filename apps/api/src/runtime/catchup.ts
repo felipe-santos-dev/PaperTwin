@@ -101,6 +101,40 @@ export interface CatchupReport {
   };
   readonly compression: RecorderStats;
   readonly durationMs: number;
+  /**
+   * Onde a máquina está no fim da retomada: a medida de cada tag.
+   *
+   * Vem no relatório porque é o produto da retomada, e não um extra: quem
+   * acabou de reexecutar o intervalo é quem sabe onde o processo chegou, e
+   * reconstruir isso depois significaria montar a rede uma segunda vez.
+   *
+   * Inclui as tags de mancal, que o motor de processo não cuida.
+   */
+  readonly values: ReadonlyMap<string, number>;
+}
+
+/**
+ * As medidas de um passo, juntando processo e mancais.
+ *
+ * Montar a rede a partir do estado gravado e ler o instantâneo custa a
+ * construção dos 24 integradores — microssegundos — e dá o valor **exato** do
+ * passo gravado, sem interpolar nada. É o caminho certo para "valores atuais".
+ */
+export function valuesAt(
+  seed: number,
+  tick: number,
+  state: EngineState | undefined,
+  scenario: DegradationScenario,
+): Map<string, number> {
+  const engine = processEngine(tick, {
+    seed,
+    ...(state ? { state } : { setpoints: { 'AIC-902': gradeInEffectAt(tick) } }),
+  });
+
+  const values = engine.snapshot();
+  for (const [tag, value] of bearingValuesAt(seed, tick, scenario)) values.set(tag, value);
+
+  return values;
 }
 
 /** O que a simulação produziu e ainda não foi gravado. */
@@ -237,6 +271,13 @@ export async function catchUp(db: Database, options: CatchupOptions = {}): Promi
       },
       compression: { fed: 0, afterException: 0, archived: 0, raw: 0, ratio: 0 },
       durationMs: performance.now() - started,
+      // nada rodou, mas a pergunta "onde a máquina está" continua tendo resposta
+      values: valuesAt(
+        seed,
+        range.toTick,
+        saved?.state ? (saved.state as EngineState) : undefined,
+        degradationScenarioAt(now),
+      ),
     };
   }
 
@@ -358,6 +399,13 @@ export async function catchUp(db: Database, options: CatchupOptions = {}): Promi
     },
     compression: recorder.stats(),
     durationMs: performance.now() - started,
+    values: (() => {
+      const values = engine.snapshot();
+      for (const [tag, value] of bearingValuesAt(seed, range.toTick, scenario)) {
+        values.set(tag, value);
+      }
+      return values;
+    })(),
   };
 }
 

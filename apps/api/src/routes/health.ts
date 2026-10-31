@@ -1,6 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { HealthResponse } from '@mp1/shared';
 import { SERVICE_VERSION } from '../env';
+import { DEFAULT_SEED, tickTime } from '../simulation/clock';
 
 /**
  * `GET /health` — sonda de liveness usada pelo dev server e pelo deploy.
@@ -26,6 +27,18 @@ export async function healthRoutes(app: FastifyInstance): Promise<void> {
               uptimeS: { type: 'integer' },
               database: { type: 'string', enum: ['pglite', 'postgres'] },
               databaseUp: { type: 'boolean' },
+              simulation: {
+                type: 'object',
+                description: 'Onde a simulação parou. Lido do marcador, sem rodar a retomada.',
+                properties: {
+                  seed: { type: 'integer' },
+                  lastTick: { type: ['integer', 'null'] },
+                  lastRunAt: { type: ['string', 'null'] },
+                  behindS: { type: ['number', 'null'] },
+                },
+                required: ['seed', 'lastTick', 'lastRunAt', 'behindS'],
+                additionalProperties: false,
+              },
             },
             required: ['status', 'service', 'version', 'uptimeS', 'database', 'databaseUp'],
           },
@@ -35,6 +48,16 @@ export async function healthRoutes(app: FastifyInstance): Promise<void> {
     async (): Promise<HealthResponse> => {
       const databaseUp = await app.db.ping().catch(() => false);
 
+      /**
+       * O marcador é lido, não recalculado.
+       *
+       * Chamar `ensureCurrent` aqui faria da sonda de liveness o caminho mais
+       * caro da API: um balanceador que a chama a cada dez segundos acordaria a
+       * simulação sem ninguém estar olhando.
+       */
+      const state = databaseUp ? await app.db.findSimState().catch(() => null) : null;
+      const now = Date.now();
+
       return {
         status: databaseUp ? 'ok' : 'degraded',
         service: 'mp1-twin-api',
@@ -42,6 +65,15 @@ export async function healthRoutes(app: FastifyInstance): Promise<void> {
         uptimeS: Math.round(process.uptime()),
         database: app.db.driver,
         databaseUp,
+        simulation: {
+          seed: state?.seed ?? DEFAULT_SEED,
+          lastTick: state?.lastTick ?? null,
+          lastRunAt: state?.updatedAt ?? null,
+          behindS:
+            state === null
+              ? null
+              : Math.max(0, Math.round((now - tickTime(state.lastTick).getTime()) / 1000)),
+        },
       };
     },
   );

@@ -205,22 +205,103 @@ describe('GET /assets/:tag/vibration', () => {
 });
 
 describe('OpenAPI', () => {
-  it('documenta as três rotas e os schemas nomeados', () => {
+  /**
+   * O documento é cobrado por **propriedade**, não por lista.
+   *
+   * A primeira versão deste teste listava as quatro rotas da Fase 3, e a Fase 5
+   * levou a API a vinte e cinco — manter a lista à mão daria um teste que quebra
+   * a cada rota nova sem nunca pegar um erro de verdade. O que importa é que
+   * **toda** rota esteja documentada com resumo e etiqueta, porque uma rota sem
+   * schema não aparece aqui: é o schema que a põe no documento.
+   */
+  it('documenta toda rota com resumo e etiqueta', () => {
     const doc = app.swagger() as {
       openapi: string;
-      paths: Record<string, unknown>;
+      paths: Record<string, Record<string, { summary?: string; tags?: string[] }>>;
+      tags: { name: string }[];
       components: { schemas: Record<string, unknown> };
     };
 
     expect(doc.openapi).toMatch(/^3\.1/);
-    expect(Object.keys(doc.paths).sort()).toEqual([
+
+    const declaradas = new Set(doc.tags.map((tag) => tag.name));
+    const métodos = ['get', 'post', 'put', 'patch', 'delete'];
+    let operações = 0;
+
+    for (const [path, operations] of Object.entries(doc.paths)) {
+      for (const method of métodos) {
+        const operation = operations[method];
+        if (!operation) continue;
+
+        operações += 1;
+        expect(
+          operation.summary?.trim(),
+          `${method.toUpperCase()} ${path} sem resumo`,
+        ).toBeTruthy();
+        expect(
+          operation.tags?.length,
+          `${method.toUpperCase()} ${path} sem etiqueta`,
+        ).toBeGreaterThan(0);
+        for (const tag of operation.tags ?? []) {
+          expect(declaradas.has(tag), `etiqueta ${tag} não declarada`).toBe(true);
+        }
+      }
+    }
+
+    expect(operações).toBeGreaterThan(20);
+  });
+
+  it('documenta as rotas de cada família', () => {
+    const doc = app.swagger() as { paths: Record<string, unknown> };
+    const paths = Object.keys(doc.paths);
+
+    for (const esperada of [
+      '/health',
       '/assets',
       '/assets/{tag}',
       '/assets/{tag}/vibration',
-      '/health',
-    ]);
+      '/process/values',
+      '/process/tags/{tag}',
+      '/process/tags/{tag}/trend',
+      '/process/tags/{tag}/setpoint',
+      '/process/steam-groups',
+      '/alarms',
+      '/alarms/{id}/ack',
+      '/alarms/{id}/shelve',
+      '/shifts',
+      '/shifts/{id}',
+      '/reels',
+      '/web-breaks',
+      '/grade-changes',
+      '/rounds',
+      '/notes',
+      '/setpoint-changes',
+      '/stream',
+    ]) {
+      expect(paths, esperada).toContain(esperada);
+    }
+  });
+
+  it('registra os schemas nomeados das duas fases', () => {
+    const doc = app.swagger() as { components: { schemas: Record<string, unknown> } };
+
     expect(Object.keys(doc.components.schemas)).toEqual(
-      expect.arrayContaining(['Asset', 'VibrationBucket', 'RemainingLife']),
+      expect.arrayContaining([
+        'Asset',
+        'VibrationBucket',
+        'RemainingLife',
+        'ProcessVariable',
+        'TagValue',
+        'PlotBucket',
+        'Alarm',
+        'Shift',
+        'JumboReel',
+        'WebBreak',
+        'GradeChange',
+        'Round',
+        'MaintenanceNote',
+        'SetpointChange',
+      ]),
     );
   });
 

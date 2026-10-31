@@ -16,7 +16,7 @@ Branch: `dev/fases-4-7`. Nada de push na main, nada de PR, nada de deploy.
 - [x] **4.3** Grupos de vapor como dado de primeira classe
 - [x] **4.4** Entidades de operação + historiador estilo PI
 - [x] **4.5** `docs/notas-para-readme.md`
-- [ ] **5** Motor de simulação e API
+- [x] **5** Motor de simulação e API
 - [ ] **6** As 7 telas
 - [ ] **7** Acabamento: Playwright, performance, acessibilidade, CI, checklist de deploy
 
@@ -183,6 +183,76 @@ de suposições; e como refazer cada número a partir do código.
 
 Dois números foram corrigidos ao medir: são **13** ensaios de laboratório (não 12) e **86** mancais (dois por corpo girante, não só os dos cilindros).
 
+### 5 — motor de simulação e API
+
+Sete commits. O que sustenta tudo são duas decisões tomadas na 5.1 e uma
+correção que um teste forçou na 5.5.
+
+**Ruído por posição, não por sequência.** Um gerador pseudoaleatório comum
+guarda estado: o n-ésimo número depende de quantas vezes ele foi chamado. Como a
+API dorme e precisa recalcular o intervalo que faltou, isso faria "recalcular"
+diferir de "rodar contínuo". Aqui o ruído é função pura de (semente, passo,
+canal). O ruído correlacionado é um FIR exponencial, e não um filtro de primeira
+ordem, pelo mesmo motivo — o filtro teria estado.
+
+**Grade de passos absoluta.** O passo `k` é sempre `SIM_EPOCH + k · 1 s`, então
+rodar 100→200 e 200→300 dá o mesmo que 100→300. A varredura do historiador é
+ancorada nessa grade (`tick % scanTicks`), e não no início da retomada: com o
+intervalo contado do início, um trecho reexecutado entraria duas vezes no
+arquivo, deslocado de um ou dois segundos, e o `on conflict do nothing` não
+reconheceria a repetição.
+
+**A rede tem estado, e eu estava tratando como se não tivesse.** O teste que
+comparou "de uma vez" com "em pedaços" acusou diferença na nona casa decimal.
+A causa era de desenho: as linhas de atraso guardam o que entrou nos últimos θ
+segundos (270 s na relação mais lenta) e os integrais das malhas são a memória
+delas, e cada retomada montava a rede no ponto de operação. Acordar no meio de
+uma troca de gramatura perdia a transição inteira. Agora o estado é gravado em
+`jsonb` (~1.300 números, ~25 KB) e "recalcular = rodar contínuo" vale de verdade
+dentro do teto.
+
+**Malhas ajustadas por SIMC** sobre os coeficientes que a pesquisa mediu —
+`Kc = τ/(K(λ+θ))`, `Ti = min(τ, 4(λ+θ))`, `λ = θ`. A gramatura responde em
+minutos porque tem 75 s de tempo morto; a espessura em segundos porque tem 6. O
+sinal se resolve sozinho: ganho de processo negativo dá `Kc` negativo. O PI tem
+trava de integral na saturação, que é o que separa um PI que funciona de um que
+parece funcionar.
+
+**Verdade e medida são separadas.** As relações leem a verdade (o processo
+responde ao que a válvula fez); as malhas, o historiador e a tela leem a medida
+(verdade + ruído). A MV é presa à faixa do catálogo porque a válvula tem fim de
+curso; a medida **não** é, senão nenhum alarme de `H`/`HH` fora da faixa
+dispararia.
+
+**O ruído de instrumento sai do `excDev`**, metade dele como desvio. Fecha o
+ciclo: o filtro de exceção foi dimensionado por tag justamente para separar
+tremelique de sinal, então o simulador e o historiador concordam por construção.
+
+**Teto da retomada: 4 h.** Ela roda dentro de uma requisição HTTP, porque não há
+processo de fundo. 14.400 passos custam 3,5 s medidos; um dia custaria vinte
+segundos e deixaria a primeira visita pendurada. A consequência é um buraco no
+histórico quando ninguém abre a tela por horas — inerente ao desenho, e no
+checklist de deploy.
+
+**Compressão medida: 198 para 1.** Quatro horas dão 921.600 amostras alimentadas
+e 4.649 linhas arquivadas. Sete dias de arquivo cabem em ~17 MB, 6 % dos 300
+reservados — o orçamento sobra.
+
+**Entidades derivadas do arquivo**, não acumuladas em memória: a gramatura média
+de uma bobina é uma consulta ao historiador. Isso sai de graça em idempotência e
+tira um estado inteiro do caminho. Os sinais dos 10 min anteriores a uma quebra
+são lidos do arquivo — o cenário perturba uma malha e o processo responde.
+
+**21 rotas**, com a retomada deduplicada e represada num serviço só, relógio
+injetável (o instantâneo de demonstração precisa de instante fixo), e stream por
+SSE mandando só o que mudou pela régua do `excDev`.
+
+Dois outros achados corrigidos no caminho: a estimativa de vida útil usava
+limiar fixo para decidir se a tendência era ruído e passou a comparar a
+inclinação com o erro padrão dela mesma; e a lista de bobinas afetadas por uma
+troca comparava passo com milissegundo — unidade errada numa comparação, que não
+quebra nada e responde errado para sempre.
+
 ## Suposições para o Felipe revisar
 
 1. **`CD_ZONE_COUNT = 140`** (`process/relations.ts`). O catálogo diz
@@ -217,7 +287,32 @@ Dois números foram corrigidos ao medir: são **13** ensaios de laboratório (n�
 11. **Historiador**: teto de 1 h entre valores arquivados (o `CompMax` do PI usa
     8 h; com 8 h um turno estável teria um ponto só) e 10 min entre valores que
     passam o filtro de exceção. Retenção de 7 dias no arquivo e 15 min no bruto.
-12. **`reference/research/` e `papertwin-telas.html` entraram no repositório.**
+12. **Simulação**: passo de 1 s, varredura do historiador de 5 s, teto de
+    retomada de 4 h, semente escrita (`20260101`). A grade de passos é ancorada
+    em 2026-01-01.
+13. **Atraso da MV** seguindo o próprio setpoint: τ de 6 s (válvula + malha
+    escrava). **Ruído de processo** correlacionado com τ de 10 s.
+14. **Temperatura de superfície do cilindro**: saturação do vapor do grupo menos
+    8 °C. A aproximação `T = 100·(p_abs/101,325)^0,25` erra até ~1,5 % na faixa
+    da secagem, e os 8 °C foram escolhidos para o G4 cair no alvo de 125 °C do
+    catálogo.
+15. **Bobina**: ~53 min pela geometria (núcleo de 600 mm, 3.000 mm de troca,
+    102 µm). **A pesquisa diz "~45 min"** — os dois não cabem juntos, e o
+    desempate adotado foi a geometria, porque sai de três valores especificados
+    enquanto os 45 min são prosa aproximada na coluna de amostragem do
+    laboratório. Com núcleo de 1,2 m os 45 min voltam a fechar; há teste dos
+    dois casos.
+16. **Cenários**: uma troca de gramatura por dia no turno B, três horas depois
+    do começo, alternando 75 ↔ 80 g/m²; uma quebra de folha por dia, no turno
+    que o dia escolher, durando 22 min, com a perturbação entrando 10 min antes;
+    uma ronda por turno, duas horas depois do começo, durando 40 min, com seis
+    pontos.
+17. **Degradação do mancal**: 72 h de janela terminando _agora_, no CS23 MLA. É
+    escolha de apresentação — o gêmeo precisa ter o que mostrar a quem abre a
+    tela hoje — e está dita no código.
+18. **Ronda**: o pirômetro de campo lê 3 °C abaixo do sensor do mancal.
+19. **Limiar dos sinais de quebra**: três vezes o `excDev` da tag.
+20. **`reference/research/` e `papertwin-telas.html` entraram no repositório.**
     Eram arquivos não versionados no teu checkout. O conteúdo é byte a byte o
     mesmo; se o `git merge` na main reclamar de "untracked working tree files
     would be overwritten", apaga as cópias locais antes do merge — elas passam a
@@ -225,22 +320,21 @@ Dois números foram corrigidos ao medir: são **13** ensaios de laboratório (n�
 
 ## Próximo passo exato
 
-Fase 5: motor de simulação e API. Na ordem planejada:
+Fase 6: as 7 telas de `reference/prototypes/papertwin-telas.html` em `apps/web`,
+com dados reais da API e o instantâneo do modo de demonstração regenerado.
 
-1. **5.1 — relógio e semente.** Tick de passo fixo determinístico a partir de
-   (semente, tempo), com ruído por semente e por tag, e a regra de recálculo do
-   intervalo que faltou quando a API acorda. É a base de tudo o que vem depois,
-   e o teste de propriedade (mesma semente + mesmo intervalo = mesmos dados;
-   recalcular depois de dormir = igual a rodar contínuo) mora aqui.
-2. **5.2 — rede FOPDT sobre os pontos de operação**, com PI simples nas malhas
-   em que `controlada = sim`, e vibração por mancal com degradação lenta
-   (ISO 20816-3, grupo 2 rígido).
-3. **5.3 — cenários do turno**: troca de gramatura, quebra de folha com os
-   sinais dos 10 min anteriores, degradação de um mancal até alarme, bobina
-   jumbo a cada ~45 min.
-4. **5.4 — gravação no historiador** (exceção + porta oscilante, já prontos) e
-   consulta com interpolação e "plot values" (mín/máx por pixel).
-5. **5.5 — motor de alarmes** ISA-18.2 sobre o catálogo.
-6. **5.6 — rotas Fastify**: valores atuais, histórico, alarmes (listar e
-   reconhecer), escrita de setpoint com auditoria, entidades da 4.4, stream ao
-   vivo por SSE. Schemas validados, erros consistentes, testes de rota.
+Ordem planejada:
+
+1. **6.1 — fundação**: cliente da API para as rotas novas, navegação por teclas
+   1–7 como no protótipo, moldura das telas (cabeçalho, estados vazio, carregando
+   e erro), e os gráficos. Sem biblioteca pesada se der; se usar, uma só.
+2. **6.2 — Turno, Bobinas, Notas**: as três de tabela, que exercem o cliente e
+   os estados.
+3. **6.3 — Processo e Mancais**: as duas de gráfico, com tendência por `plot
+values`, limites de alarme desenhados e escrita de setpoint.
+4. **6.4 — Rondas**: campo ao lado do online.
+5. **6.5 — Máquina**: a cena 3D portada de `mp1-parte-seca-3d.html` para R3F
+   gerada do `mp1.ts` (parte úmida, seções, cilindros, motores do lado
+   acionamento, papel), com clique em mancal abrindo o painel de vibração.
+6. **6.6 — instantâneo de demonstração** regenerado cobrindo as rotas novas,
+   com instante fixo (o relógio da aplicação já é injetável).

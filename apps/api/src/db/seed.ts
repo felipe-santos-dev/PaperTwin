@@ -1,4 +1,4 @@
-import { allAssets, MP1, type AssetTag } from '@mp1/shared';
+import { allAssets, HISTORIAN_POINTS, MP1, type AssetTag } from '@mp1/shared';
 import {
   bearingsOf,
   DEFAULT_INTERVAL_MS,
@@ -16,6 +16,11 @@ import type { Database } from './repository';
  * A série de vibração só é gerada se a tabela estiver vazia. Assim um banco
  * gerenciado mantém o histórico entre reinícios, enquanto o PGlite em memória,
  * que começa vazio sempre, é repovoado.
+ *
+ * Os pontos do historiador são reescritos junto com os ativos, e pelo mesmo
+ * motivo: eles saem do catálogo de processo, que é código. Reescrever é seguro
+ * porque o `point_id` é determinístico — o índice da variável no catálogo — e
+ * não uma sequência do banco.
  */
 
 /**
@@ -28,6 +33,7 @@ export const DEGRADING_TAG: AssetTag = 'MP1-SEC-G4-CS23-MLA';
 
 export interface SeedResult {
   readonly assets: number;
+  readonly historianPoints: number;
   readonly readings: number;
   readonly skippedReadings: boolean;
 }
@@ -42,10 +48,16 @@ export interface SeedOptions {
 export async function seedDatabase(db: Database, options: SeedOptions = {}): Promise<SeedResult> {
   const assets = allAssets(MP1);
   const assetCount = await db.replaceAssets(assets);
+  const pointCount = await db.replaceHistorianPoints(HISTORIAN_POINTS);
 
   const existing = await db.countReadings();
   if (existing > 0) {
-    return { assets: assetCount, readings: existing, skippedReadings: true };
+    return {
+      assets: assetCount,
+      historianPoints: pointCount,
+      readings: existing,
+      skippedReadings: true,
+    };
   }
 
   const to = options.now ?? new Date();
@@ -60,5 +72,10 @@ export async function seedDatabase(db: Database, options: SeedOptions = {}): Pro
   });
 
   const written = await db.insertReadings(readings);
-  return { assets: assetCount, readings: written, skippedReadings: false };
+  return {
+    assets: assetCount,
+    historianPoints: pointCount,
+    readings: written,
+    skippedReadings: false,
+  };
 }

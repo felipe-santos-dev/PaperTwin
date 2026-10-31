@@ -29,8 +29,8 @@ export interface MachineAsset {
   readonly side: MachineSide | null;
   /** Ativo ao qual este pertence — o mancal aponta para o seu cilindro. */
   readonly parentTag: AssetTag | null;
-  /** Grupo de acionamento, ex.: `G4`. */
-  readonly driveGroup: string | null;
+  /** Grupo de vapor, ex.: `G4`. */
+  readonly steamGroup: string | null;
   /** Classe da ISO 20816-3; só os ativos com medição de vibração têm. */
   readonly iso: IsoClass | null;
   /**

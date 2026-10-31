@@ -194,7 +194,7 @@ pós-secagem → calandra → scanner final → Pope.
 O que mais pesa, em ordem de impacto:
 
 1. **Nº de pares de cilindros** — 13 na pré-secagem e 5 na pós, como no protótipo.
-2. **Grupos de acionamento G1–G6** — inventados. O único ponto fixo é o CS23 estar
+2. **Grupos de vapor G1–G6** — inventados. O único ponto fixo é o CS23 estar
    no G4, porque a tag `MP1-SEC-G4-CS23-MLA` aparece no conceito de tela.
 3. **Calandra** — um nip só, com o rolo térmico em cima.
 4. **Todas as posições em X** — as distâncias entre seções vêm do protótipo.

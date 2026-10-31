@@ -53,7 +53,7 @@ describe('tags', () => {
     expect(mancal).not.toBeNull();
     expect(mancal?.kind).toBe('bearing');
     expect(mancal?.side).toBe('LA');
-    expect(mancal?.driveGroup).toBe('G4');
+    expect(mancal?.steamGroup).toBe('G4');
     expect(assetByTag(MP1, 'MP1-SEC-G4-CS23')?.label).toBe('Cilindro secador 23');
   });
 

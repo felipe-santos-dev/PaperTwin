@@ -1,34 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { allAssets, assetByTag, MP1, type MachineAsset, type VibrationReading } from '@mp1/shared';
-import { PgliteRepository } from './pglite-repository';
-import { PostgresRepository } from './postgres-repository';
 import type { Database } from './repository';
-
-/**
- * A mesma suíte contra os dois drivers.
- *
- * É o único jeito de garantir que o SQL é mesmo o mesmo. O PGlite roda sempre;
- * o Postgres só quando `DATABASE_URL` está definido, e fica pulado em vez de
- * falhar — o teste não pode exigir um banco que a máquina não tem.
- *
- * Quem roda contra um Postgres de verdade precisa saber: a suíte **apaga** as
- * tabelas `asset` e `vibration_reading` do banco apontado. Use um banco de teste.
- */
-
-const DATABASE_URL = process.env['DATABASE_URL'];
-
-const drivers = [
-  {
-    name: 'PGlite',
-    enabled: true,
-    open: (): Promise<Database> => PgliteRepository.open(),
-  },
-  {
-    name: 'Postgres',
-    enabled: Boolean(DATABASE_URL),
-    open: (): Promise<Database> => Promise.resolve(PostgresRepository.open(DATABASE_URL ?? '')),
-  },
-];
+import { DRIVERS as drivers } from './test-drivers';
 
 const assets = allAssets(MP1);
 const bearing = assetByTag(MP1, 'MP1-SEC-G4-CS23-MLA');
@@ -117,6 +90,26 @@ for (const driver of drivers) {
       it('recusa mancal apontando para corpo que não existe', async () => {
         const órfão: MachineAsset = { ...bearing, parentTag: 'MP1-NAO-EXISTE' };
         await expect(db.replaceAssets([órfão])).rejects.toThrow();
+      });
+
+      /**
+       * A escrita falha **inteira**, e não pela metade.
+       *
+       * `replaceAssets` apaga antes de inserir. Se a transação não voltasse
+       * atrás, uma lista com um ativo inválido no meio deixaria o banco com
+       * menos ativos do que tinha antes — e a cena 3D é gerada dessa tabela.
+       */
+      it('volta atrás por inteiro quando um ativo da lista é inválido', async () => {
+        await db.replaceAssets(assets);
+        const antes = await db.listAssets();
+
+        const comÓrfão: MachineAsset[] = [
+          ...assets.slice(0, 5),
+          { ...bearing, tag: 'MP1-ORFAO', parentTag: 'MP1-NAO-EXISTE' },
+        ];
+        await expect(db.replaceAssets(comÓrfão)).rejects.toThrow();
+
+        expect(await db.listAssets()).toHaveLength(antes.length);
       });
     });
 

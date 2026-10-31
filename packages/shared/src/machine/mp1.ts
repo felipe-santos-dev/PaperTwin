@@ -29,6 +29,7 @@ import {
   WEB_WIDTH_M,
 } from './geometry';
 import type { Source } from './provenance';
+import { steamGroupOfCylinder } from './steam-groups';
 import type { MachineAsset, MachineModel, MachineSection, Point3 } from './types';
 
 /**
@@ -39,37 +40,16 @@ import type { MachineAsset, MachineModel, MachineSection, Point3 } from './types
  *
  * Padrão de tag: `MP1-<SEÇÃO>-[<GRUPO>-]<ATIVO>[-M<LADO>]`, como em
  * `MP1-SEC-G4-CS23-MLA` — mancal do lado acionamento do cilindro secador 23,
- * no grupo de acionamento 4 da secagem.
+ * no grupo de vapor 4 da secagem.
  */
 
 /**
  * Classe da ISO 20816-3 dos mancais.
  *
  * Provisoriamente a mesma de todos: grupo 2 com apoio rígido. O enquadramento
- * correto depende da potência de acionamento de cada grupo, que ainda falta.
+ * correto depende da potência de acionamento dos cilindros, que ainda falta.
  */
 const BEARING_ISO: IsoClass = DRYER_BEARING_ISO;
-
-/**
- * Grupos de acionamento da secagem, por faixa de cilindro.
- *
- * Provisório: a divisão real sai do mapa de rolos. O que está fixo é que o CS23
- * pertence ao G4, como no conceito de tela de monitoramento.
- */
-const DRYER_DRIVE_GROUPS = [
-  { id: 'G1', from: 1, to: 6 },
-  { id: 'G2', from: 7, to: 12 },
-  { id: 'G3', from: 13, to: 18 },
-  { id: 'G4', from: 19, to: 26 },
-  { id: 'G5', from: 27, to: 32 },
-  { id: 'G6', from: 33, to: 36 },
-] as const;
-
-function driveGroupOfCylinder(cylinder: number): string {
-  const group = DRYER_DRIVE_GROUPS.find((g) => cylinder >= g.from && cylinder <= g.to);
-  if (!group) throw new Error(`Cilindro secador ${String(cylinder)} fora dos grupos conhecidos`);
-  return group.id;
-}
 
 /** Os dois mancais de um corpo girante, um por lado da máquina. */
 function bearingsOf(parent: MachineAsset): MachineAsset[] {
@@ -87,7 +67,7 @@ function bearingsOf(parent: MachineAsset): MachineAsset[] {
     lengthM: null,
     side,
     parentTag: parent.tag,
-    driveGroup: parent.driveGroup,
+    steamGroup: parent.steamGroup,
     iso: BEARING_ISO,
     // Um mancal não existe mais nem menos que o corpo que ele sustenta.
     source: parent.source,
@@ -106,7 +86,7 @@ interface BodySpec {
   readonly section: SectionId;
   readonly position: Point3;
   readonly radius: number;
-  readonly driveGroup?: string;
+  readonly steamGroup?: string;
   readonly source: Source;
 }
 
@@ -121,7 +101,7 @@ function body(spec: BodySpec): MachineAsset {
     lengthM: WEB_WIDTH_M,
     side: null,
     parentTag: null,
-    driveGroup: spec.driveGroup ?? null,
+    steamGroup: spec.steamGroup ?? null,
     iso: null,
     source: spec.source,
   };
@@ -145,7 +125,7 @@ function nip(
     lengthM: WEB_WIDTH_M,
     side: null,
     parentTag: null,
-    driveGroup: null,
+    steamGroup: null,
     iso: null,
     source,
   };
@@ -162,7 +142,7 @@ function scanner(tag: string, label: string, section: SectionId, x: number, y: n
     lengthM: WEB_WIDTH_M + 3.6,
     side: null,
     parentTag: null,
-    driveGroup: null,
+    steamGroup: null,
     iso: null,
     // Os dois scanners e a sua posição na ordem do processo foram confirmados.
     source: 'validated' as const,
@@ -186,7 +166,7 @@ function dryerCylinders(
       [topNumber, x.top, DRYER_TOP_Y_M],
       [topNumber + 1, x.bottom, DRYER_BOTTOM_Y_M],
     ] as const) {
-      const group = driveGroupOfCylinder(number);
+      const group = steamGroupOfCylinder(number);
       cylinders.push(
         body({
           // dois dígitos para a tag ordenar certo: sem o zero à esquerda,
@@ -197,7 +177,7 @@ function dryerCylinders(
           section,
           position: [cx, cy, 0],
           radius: DRYER_RADIUS_M,
-          driveGroup: group,
+          steamGroup: group,
           // Existe porque supusemos 13 e 5 pares; o número real falta.
           source: 'assumed',
         }),

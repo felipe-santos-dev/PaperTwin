@@ -8,10 +8,13 @@
     ".": "./src/index.ts"
   },
   "scripts": {
+    "generate": "tsx scripts/generate-process-catalog.ts && tsx scripts/generate-process-relations.ts",
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run"
   },
   "devDependencies": {
+    "@types/node": "^24.6.2",
+    "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "vitest": "^5.0.5"
   }

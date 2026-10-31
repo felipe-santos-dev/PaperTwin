@@ -15,7 +15,7 @@ Branch: `dev/fases-4-7`. Nada de push na main, nada de PR, nada de deploy.
 - [x] **4.2** Relações FOPDT + núcleo de simulação de 1ª ordem com tempo morto
 - [x] **4.3** Grupos de vapor como dado de primeira classe
 - [x] **4.4** Entidades de operação + historiador estilo PI
-- [ ] **4.5** `docs/notas-para-readme.md`
+- [x] **4.5** `docs/notas-para-readme.md`
 - [ ] **5** Motor de simulação e API
 - [ ] **6** As 7 telas
 - [ ] **7** Acabamento: Playwright, performance, acessibilidade, CI, checklist de deploy
@@ -62,7 +62,7 @@ Postgres do docker-compose.
 
 - `relation-types.ts` — `FopdtRelation` (saída em **desvio** do ponto de
   operação, para poder somar) e `LabVariable`.
-- `lab.ts` — os 12 ensaios da §12.2 da pesquisa B, escritos à mão (as células
+- `lab.ts` — os 13 ensaios da §12.2 da pesquisa B, escritos à mão (as células
   vêm em LaTeX); o teste lê a tabela da pesquisa e exige que as listas batam.
 - `relations.generated.ts` / `relations.ts` — as 23 do CSV + a relação `5d`
   herdada da observação da nº 5 ("aplicar também a PIC-712"), com os
@@ -170,6 +170,19 @@ minuto: uma semana de bruto passaria de 100 GB.
 A poda não roda em laço de fundo. O host gratuito dorme sem tráfego, e um laço
 que depende do processo estar vivo não poda nada.
 
+### 4.5 — notas para o README
+
+`docs/notas-para-readme.md`: material bruto, não texto final (regra 6). Catorze
+seções — arquitetura e direção das dependências, números medidos do modelo
+(134 ativos, 86 mancais, 36 cilindros), do catálogo (320 variáveis, 55 malhas,
+183 pendentes), das relações (24, tempo morto de 6 a 270 s, τ de 4,5 a 450 s),
+do historiador e dos testes (417 passando, 97 pulados por falta de
+`DATABASE_URL`); as decisões que valem no texto com a razão ao lado; as
+migrations e os padrões do esquema; os comandos; o que o deploy assume; a lista
+de suposições; e como refazer cada número a partir do código.
+
+Dois números foram corrigidos ao medir: são **13** ensaios de laboratório (não 12) e **86** mancais (dois por corpo girante, não só os dos cilindros).
+
 ## Suposições para o Felipe revisar
 
 1. **`CD_ZONE_COUNT = 140`** (`process/relations.ts`). O catálogo diz
@@ -212,7 +225,22 @@ que depende do processo estar vivo não poda nada.
 
 ## Próximo passo exato
 
-Fase 4.5: `docs/notas-para-readme.md` — material bruto para o Felipe escrever o
-README. Fatos, números, comandos e arquitetura: o que cada pacote contém, as
-contas do historiador, o nº de testes por workspace, as migrations, a lista de
-suposições e os comandos de desenvolvimento. Não é texto final (regra 6).
+Fase 5: motor de simulação e API. Na ordem planejada:
+
+1. **5.1 — relógio e semente.** Tick de passo fixo determinístico a partir de
+   (semente, tempo), com ruído por semente e por tag, e a regra de recálculo do
+   intervalo que faltou quando a API acorda. É a base de tudo o que vem depois,
+   e o teste de propriedade (mesma semente + mesmo intervalo = mesmos dados;
+   recalcular depois de dormir = igual a rodar contínuo) mora aqui.
+2. **5.2 — rede FOPDT sobre os pontos de operação**, com PI simples nas malhas
+   em que `controlada = sim`, e vibração por mancal com degradação lenta
+   (ISO 20816-3, grupo 2 rígido).
+3. **5.3 — cenários do turno**: troca de gramatura, quebra de folha com os
+   sinais dos 10 min anteriores, degradação de um mancal até alarme, bobina
+   jumbo a cada ~45 min.
+4. **5.4 — gravação no historiador** (exceção + porta oscilante, já prontos) e
+   consulta com interpolação e "plot values" (mín/máx por pixel).
+5. **5.5 — motor de alarmes** ISA-18.2 sobre o catálogo.
+6. **5.6 — rotas Fastify**: valores atuais, histórico, alarmes (listar e
+   reconhecer), escrita de setpoint com auditoria, entidades da 4.4, stream ao
+   vivo por SSE. Schemas validados, erros consistentes, testes de rota.

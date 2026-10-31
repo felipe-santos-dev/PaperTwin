@@ -18,6 +18,10 @@ import type { HistorianPoint } from './types';
  * Os ensaios de laboratório **não** são pontos. A lista base diz: "sem malha,
  * sem compressão". Eles têm valor real e contínuo na simulação, mas o que o
  * laboratório conhece é a amostra do ensaio, não uma série arquivada.
+ *
+ * Hoje eles nunca estiveram no catálogo — moram na lista própria de `lab.ts` —
+ * então o filtro abaixo não remove nada. Ele fica como guarda: se um dia uma
+ * tag `LAB-` entrar no CSV, ela não vira ponto por acidente.
  */
 
 function build(): HistorianPoint[] {

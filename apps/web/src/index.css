@@ -1,21 +1,45 @@
 @import 'tailwindcss';
 
-/* Paleta do conceito de monitoramento: sala de controle escura, acento roxo,
-   semáforo de saúde do ativo alinhado com as zonas da ISO 20816. */
+/* Paleta das sete telas aprovadas (reference/prototypes/papertwin-telas.html).
+   Sala de controle escura e quente, sem acento decorativo.
+
+   A paleta mudou na Fase 6 e vale dizer o que mudou e por quê. A Fase 2 usava
+   um fundo azulado com acento roxo e um semáforo verde/amarelo/vermelho; as
+   telas aprovadas usam um cinza quente, um amarelo só e um vermelho só.
+
+   O que desapareceu foi o verde. Nas telas aprovadas **normal não tem cor**: é
+   o texto comum. É uma decisão de leitura, não de gosto — numa tela com 320
+   variáveis, pintar de verde as 300 que estão bem faz as 20 que importam
+   competirem com elas. Cor aqui significa "olhe isto".
+
+   Por isso `mill-normal` é o próprio primeiro plano. O token continua existindo
+   porque o vocabulário do domínio tem três severidades; o que ele não tem mais é
+   uma cor própria.
+
+   O azul e o laranja são **séries de gráfico**, não severidades. Eles existem
+   para distinguir três linhas num mesmo eixo — vapor de três grupos, campo
+   contra online — e nunca para dizer que algo está bem ou mal. */
 @theme {
   --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 
-  --color-mill-bg: #0b0d14;
-  --color-mill-panel: #141824;
-  --color-mill-line: #242a3a;
-  --color-mill-fg: #e9edf2;
-  --color-mill-muted: #8c96a8;
-  --color-mill-accent: #7d6cf0;
+  --color-mill-bg: #0d0f12;
+  --color-mill-panel: #131518;
+  --color-mill-line: #2b2f35;
+  --color-mill-fg: #ece8df;
+  --color-mill-muted: #a39e93;
+  /* um degrau abaixo do secundário, para rótulo de eixo e nota de pé */
+  --color-mill-dim: #8c877d;
+  --color-mill-accent: #f2c230;
 
-  --color-mill-normal: #3ecf8e;
-  --color-mill-attention: #e2b419;
-  --color-mill-critical: #ef4a5a;
+  --color-mill-normal: #ece8df;
+  --color-mill-attention: #f2c230;
+  --color-mill-critical: #f0605a;
+
+  /* séries de gráfico: três linhas distinguíveis, nenhuma com significado */
+  --color-series-1: #f2c230;
+  --color-series-2: #7fb2ee;
+  --color-series-3: #e8a15a;
 }
 
 @layer base {

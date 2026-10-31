@@ -7,6 +7,7 @@ import {
 } from '@mp1/shared';
 import type { FastifyInstance } from 'fastify';
 
+import { tickTime } from '../simulation/clock';
 import { conflict, notFound, unprocessable } from './errors';
 import {
   acknowledgeAlarmSchema,
@@ -34,7 +35,7 @@ export async function alarmRoutes(app: FastifyInstance): Promise<void> {
       limit?: number;
     };
   }>('/alarms', { schema: listAlarmsSchema }, async (request) => {
-    await app.simulation.ensureCurrent();
+    const report = await app.simulation.ensureCurrent();
 
     const query = request.query;
     const alarms = await app.db.listAlarms({
@@ -53,8 +54,15 @@ export async function alarmRoutes(app: FastifyInstance): Promise<void> {
      * Quem está olhando a lista de alarmes é exatamente quem precisa saber que a
      * lista está inundada — e uma segunda requisição para descobrir isso
      * chegaria depois de a tela já ter desenhado quarenta linhas.
+     *
+     * A janela é contada do **instante da simulação**, não do relógio de parede.
+     * Os dois quase coincidem num host com tráfego, mas não no instantâneo do
+     * modo de demonstração: ele é gerado com o relógio fixo num instante de
+     * 2026, e com o relógio de parede a janela de dez minutos cairia num lugar
+     * onde não há alarme nenhum — a tela mostraria "0 na janela" tendo oito
+     * alarmes na lista.
      */
-    const now = new Date();
+    const now = tickTime(report.toTick);
     const inFloodWindow = await app.db.countAlarmsInWindow(
       new Date(now.getTime() - ALARM_FLOOD_WINDOW_S * 1000),
       now,

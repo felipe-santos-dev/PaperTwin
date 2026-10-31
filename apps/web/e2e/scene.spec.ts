@@ -10,6 +10,18 @@ import { assetByTag, MP1 } from '@mp1/shared';
 /** Mancal usado nos testes de clique — o mesmo que degrada na simulação. */
 const BEARING = 'MP1-SEC-G4-CS23-MLA';
 
+/**
+ * A cena mora na tela de Máquina, que é a sétima.
+ *
+ * Desde a Fase 6 a aplicação tem sete telas e abre na de Turno, então um teste
+ * da cena precisa pedir a tela dela. `?asset=` continua levando direto para lá —
+ * é o link direto da Fase 3 — mas quem não passa ativo nenhum precisa da âncora.
+ */
+const SCENE = '/#maquina';
+
+/** A URL da cena com um ativo selecionado. */
+const sceneWith = (tag: string): string => `/?asset=${encodeURIComponent(tag)}#maquina`;
+
 /** Ruído conhecido do ambiente, que não indica defeito na aplicação. */
 const IGNORED = [/Download the React DevTools/i, /favicon/i];
 
@@ -76,33 +88,44 @@ test.describe('carregamento', () => {
   test('a cena carrega sem erro no console e sem requisição falha', async ({ page }) => {
     const { errors, failures } = collectProblems(page);
 
-    await page.goto('/');
+    await page.goto(SCENE);
     await waitForScene(page);
 
     expect(errors, 'console limpo').toEqual([]);
     expect(failures, 'nenhuma requisição falha').toEqual([]);
   });
 
-  test('o three.js não é baixado antes de a cena entrar', async ({ page }) => {
+  /**
+   * O teste ficou mais forte com as sete telas.
+   *
+   * Antes a aplicação era só a cena, então o máximo que se podia cobrar era a
+   * **ordem**: o chunk do three depois do de entrada. Agora dá para cobrar o que
+   * importa de verdade — quem abre a tela de Turno não baixa 1 MB de three.js —
+   * porque existe uma tela sem cena para abrir.
+   */
+  test('o three.js só é baixado quando a tela de Máquina entra', async ({ page }) => {
     const scripts: string[] = [];
     page.on('request', (request) => {
       if (request.resourceType() === 'script') scripts.push(request.url());
     });
 
     await page.goto('/');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 30_000 });
+
+    const threeNaAbertura = scripts.filter((url) => /\/three-[^/]+\.js$/.test(url));
+    expect(threeNaAbertura, 'three.js não entra no carregamento inicial').toEqual([]);
+
+    await page.goto(SCENE);
     await waitForScene(page);
 
     const three = scripts.findIndex((url) => /\/three-[^/]+\.js$/.test(url));
-    const entry = scripts.findIndex((url) => /\/index-[^/]+\.js$/.test(url));
-
-    expect(entry, 'chunk de entrada requisitado').toBeGreaterThanOrEqual(0);
-    expect(three, 'chunk do three requisitado ao abrir a cena').toBeGreaterThan(entry);
+    expect(three, 'chunk do three requisitado ao abrir a cena').toBeGreaterThanOrEqual(0);
   });
 });
 
 test.describe('seleção por URL', () => {
   test('`?asset=` abre o painel do ativo e enquadra a câmera nele', async ({ page }) => {
-    await page.goto(`/?asset=${BEARING}`);
+    await page.goto(sceneWith(BEARING));
     await waitForScene(page);
 
     const painel = page.getByRole('complementary');
@@ -117,7 +140,7 @@ test.describe('seleção por URL', () => {
   test('uma tag inventada na URL não trava a cena', async ({ page }) => {
     const { errors } = collectProblems(page);
 
-    await page.goto('/?asset=MP1-NAO-EXISTE');
+    await page.goto('/?asset=MP1-NAO-EXISTE#maquina');
     await waitForScene(page);
 
     await expect(page.getByRole('complementary')).toBeHidden();
@@ -125,7 +148,7 @@ test.describe('seleção por URL', () => {
   });
 
   test('clicar num ativo grava a tag na URL', async ({ page }) => {
-    await page.goto(`/?asset=${BEARING}`);
+    await page.goto(sceneWith(BEARING));
     await waitForScene(page);
 
     // dentro do painel: fora dele, "Fechar" também casaria com "Fechar portas"
@@ -140,7 +163,7 @@ test.describe('seleção por URL', () => {
 test.describe('interação com a cena', () => {
   test('clicar num mancal abre o painel com a tag do ativo', async ({ page }) => {
     // abre enquadrado no mancal e fecha o painel, para o clique partir do zero
-    await page.goto(`/?asset=${BEARING}`);
+    await page.goto(sceneWith(BEARING));
     await waitForScene(page);
 
     const painel = page.getByRole('complementary');
@@ -159,7 +182,7 @@ test.describe('interação com a cena', () => {
   });
 
   test('clicar fora desfaz a seleção', async ({ page }) => {
-    await page.goto(`/?asset=${BEARING}`);
+    await page.goto(sceneWith(BEARING));
     const canvas = await waitForScene(page);
 
     const painel = page.getByRole('complementary');
@@ -175,7 +198,7 @@ test.describe('interação com a cena', () => {
   });
 
   test('o painel do mancal mostra a vibração vinda da API', async ({ page }) => {
-    await page.goto(`/?asset=${BEARING}`);
+    await page.goto(sceneWith(BEARING));
     await waitForScene(page);
 
     const painel = page.getByRole('complementary');

@@ -1,4 +1,17 @@
-import type { AssetTag, MachineAsset, VibrationBucket, VibrationReading } from '@mp1/shared';
+import type {
+  Alarm,
+  AssetTag,
+  GradeChange,
+  JumboReel,
+  MachineAsset,
+  MaintenanceNote,
+  Round,
+  SetpointChange,
+  Shift,
+  VibrationBucket,
+  VibrationReading,
+  WebBreak,
+} from '@mp1/shared';
 
 import {
   openPgliteExecutor,
@@ -7,6 +20,17 @@ import {
   type SqlExecutor,
 } from './executor';
 import { runMigrations } from './migrate';
+import type { StoredShift } from './operations-queries';
+import type {
+  AlarmFilter,
+  EventFilter,
+  NoteFilter,
+  ReelFilter,
+  RoundFilter,
+  SetpointFilter,
+  ShiftFilter,
+} from './operations-repository';
+import * as operations from './operations-store';
 import {
   buildInsertReadings,
   chunkReadings,
@@ -118,6 +142,116 @@ export class SqlDatabase implements Database {
   async countReadings(): Promise<number> {
     const rows = await this.sql.rows<{ count: number }>(COUNT_READINGS);
     return rows[0]?.count ?? 0;
+  }
+
+  // --- entidades de operação ---
+  //
+  // Delegação de uma linha para `operations-store.ts`. A lógica está lá, em
+  // funções que recebem o executor, para a mesma função servir ao banco e a uma
+  // transação sem herança nem duplicação.
+
+  upsertShifts(shifts: readonly (Shift | StoredShift)[]): Promise<number> {
+    return operations.upsertShifts(this.sql, shifts);
+  }
+
+  listShifts(filter?: ShiftFilter): Promise<StoredShift[]> {
+    return operations.listShifts(this.sql, filter);
+  }
+
+  findShift(id: string): Promise<StoredShift | null> {
+    return operations.findShift(this.sql, id);
+  }
+
+  upsertReels(reels: readonly JumboReel[]): Promise<number> {
+    return operations.upsertReels(this.sql, reels);
+  }
+
+  listReels(filter?: ReelFilter): Promise<JumboReel[]> {
+    return operations.listReels(this.sql, filter);
+  }
+
+  findReel(number: number): Promise<JumboReel | null> {
+    return operations.findReel(this.sql, number);
+  }
+
+  upsertWebBreaks(breaks: readonly WebBreak[]): Promise<number> {
+    return operations.upsertWebBreaks(this.sql, breaks);
+  }
+
+  listWebBreaks(filter?: EventFilter): Promise<WebBreak[]> {
+    return operations.listWebBreaks(this.sql, filter);
+  }
+
+  upsertGradeChanges(changes: readonly GradeChange[]): Promise<number> {
+    return operations.upsertGradeChanges(this.sql, changes);
+  }
+
+  listGradeChanges(filter?: EventFilter): Promise<GradeChange[]> {
+    return operations.listGradeChanges(this.sql, filter);
+  }
+
+  upsertRounds(rounds: readonly Round[]): Promise<number> {
+    return operations.upsertRounds(this.sql, rounds);
+  }
+
+  listRounds(filter?: RoundFilter): Promise<Round[]> {
+    return operations.listRounds(this.sql, filter);
+  }
+
+  findRound(id: string): Promise<Round | null> {
+    return operations.findRound(this.sql, id);
+  }
+
+  upsertMaintenanceNotes(notes: readonly MaintenanceNote[]): Promise<number> {
+    return operations.upsertMaintenanceNotes(this.sql, notes);
+  }
+
+  listMaintenanceNotes(filter?: NoteFilter): Promise<MaintenanceNote[]> {
+    return operations.listMaintenanceNotes(this.sql, filter);
+  }
+
+  findMaintenanceNote(number: string): Promise<MaintenanceNote | null> {
+    return operations.findMaintenanceNote(this.sql, number);
+  }
+
+  insertSetpointChange(change: SetpointChange): Promise<void> {
+    return operations.insertSetpointChange(this.sql, change);
+  }
+
+  listSetpointChanges(filter?: SetpointFilter): Promise<SetpointChange[]> {
+    return operations.listSetpointChanges(this.sql, filter);
+  }
+
+  latestSetpointChange(tag: string): Promise<SetpointChange | null> {
+    return operations.latestSetpointChange(this.sql, tag);
+  }
+
+  upsertAlarms(alarms: readonly Alarm[]): Promise<number> {
+    return operations.upsertAlarms(this.sql, alarms);
+  }
+
+  listAlarms(filter?: AlarmFilter): Promise<Alarm[]> {
+    return operations.listAlarms(this.sql, filter);
+  }
+
+  findAlarm(id: string): Promise<Alarm | null> {
+    return operations.findAlarm(this.sql, id);
+  }
+
+  acknowledgeAlarm(id: string, by: string, when: Date): Promise<Alarm | null> {
+    return operations.acknowledgeAlarm(this.sql, id, by, when);
+  }
+
+  shelveAlarm(id: string, by: string, until: Date): Promise<Alarm | null> {
+    return operations.shelveAlarm(this.sql, id, by, until);
+  }
+
+  unshelveAlarm(id: string): Promise<Alarm | null> {
+    return operations.unshelveAlarm(this.sql, id);
+  }
+
+  countAlarmsInWindow(from: Date, to: Date): Promise<number> {
+    return operations.countAlarmsInWindow(this.sql, from, to);
   }
 }
 

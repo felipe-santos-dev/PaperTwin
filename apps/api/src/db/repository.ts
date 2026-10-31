@@ -1,3 +1,4 @@
+import type { OperationsRepository } from './operations-repository';
 import type {
   AssetTag,
   MachineAsset,
@@ -11,8 +12,9 @@ import type {
  * O contrato que as rotas enxergam.
  *
  * As rotas não sabem qual banco está atrás: em desenvolvimento e nos testes é o
- * PGlite embutido, em produção é um Postgres gerenciado pelo postgres.js. As
- * duas implementações compartilham o SQL de `queries.ts`, para não divergirem.
+ * PGlite embutido, em produção é um Postgres gerenciado pelo postgres.js. O que
+ * difere entre os dois é só o executor (`executor.ts`); o SQL e o mapeamento
+ * das linhas são os mesmos, para não haver dois comportamentos para manter.
  */
 
 export interface AssetFilter {
@@ -55,7 +57,7 @@ export interface VibrationRepository {
 /** Qual driver está atrás do repositório, para o `/health` poder dizer. */
 export type DatabaseDriver = 'pglite' | 'postgres';
 
-export interface Database extends AssetRepository, VibrationRepository {
+export interface Database extends AssetRepository, VibrationRepository, OperationsRepository {
   readonly driver: DatabaseDriver;
   /** Aplica as migrations pendentes. Seguro de chamar mais de uma vez. */
   migrate(): Promise<void>;

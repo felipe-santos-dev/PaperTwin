@@ -1,33 +1,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { allAssets, assetByTag, MP1, type MachineAsset, type VibrationReading } from '@mp1/shared';
-import { openPglite, openPostgres } from './sql-database';
 import type { Database } from './repository';
-
-/**
- * A mesma suíte contra os dois drivers.
- *
- * É o único jeito de garantir que o SQL é mesmo o mesmo. O PGlite roda sempre;
- * o Postgres só quando `DATABASE_URL` está definido, e fica pulado em vez de
- * falhar — o teste não pode exigir um banco que a máquina não tem.
- *
- * Quem roda contra um Postgres de verdade precisa saber: a suíte **apaga** as
- * tabelas `asset` e `vibration_reading` do banco apontado. Use um banco de teste.
- */
-
-const DATABASE_URL = process.env['DATABASE_URL'];
-
-const drivers = [
-  {
-    name: 'PGlite',
-    enabled: true,
-    open: (): Promise<Database> => openPglite(),
-  },
-  {
-    name: 'Postgres',
-    enabled: Boolean(DATABASE_URL),
-    open: (): Promise<Database> => Promise.resolve(openPostgres(DATABASE_URL ?? '')),
-  },
-];
+import { DRIVERS as drivers } from './test-drivers';
 
 const assets = allAssets(MP1);
 const bearing = assetByTag(MP1, 'MP1-SEC-G4-CS23-MLA');

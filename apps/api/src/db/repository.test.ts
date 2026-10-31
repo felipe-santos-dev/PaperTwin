@@ -1,7 +1,6 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { allAssets, assetByTag, MP1, type MachineAsset, type VibrationReading } from '@mp1/shared';
-import { PgliteRepository } from './pglite-repository';
-import { PostgresRepository } from './postgres-repository';
+import { openPglite, openPostgres } from './sql-database';
 import type { Database } from './repository';
 
 /**
@@ -21,12 +20,12 @@ const drivers = [
   {
     name: 'PGlite',
     enabled: true,
-    open: (): Promise<Database> => PgliteRepository.open(),
+    open: (): Promise<Database> => openPglite(),
   },
   {
     name: 'Postgres',
     enabled: Boolean(DATABASE_URL),
-    open: (): Promise<Database> => Promise.resolve(PostgresRepository.open(DATABASE_URL ?? '')),
+    open: (): Promise<Database> => Promise.resolve(openPostgres(DATABASE_URL ?? '')),
   },
 ];
 
@@ -117,6 +116,26 @@ for (const driver of drivers) {
       it('recusa mancal apontando para corpo que não existe', async () => {
         const órfão: MachineAsset = { ...bearing, parentTag: 'MP1-NAO-EXISTE' };
         await expect(db.replaceAssets([órfão])).rejects.toThrow();
+      });
+
+      /**
+       * A escrita falha **inteira**, e não pela metade.
+       *
+       * `replaceAssets` apaga antes de inserir. Se a transação não voltasse
+       * atrás, uma lista com um ativo inválido no meio deixaria o banco com
+       * menos ativos do que tinha antes — e a cena 3D é gerada dessa tabela.
+       */
+      it('volta atrás por inteiro quando um ativo da lista é inválido', async () => {
+        await db.replaceAssets(assets);
+        const antes = await db.listAssets();
+
+        const comÓrfão: MachineAsset[] = [
+          ...assets.slice(0, 5),
+          { ...bearing, tag: 'MP1-ORFAO', parentTag: 'MP1-NAO-EXISTE' },
+        ];
+        await expect(db.replaceAssets(comÓrfão)).rejects.toThrow();
+
+        expect(await db.listAssets()).toHaveLength(antes.length);
       });
     });
 

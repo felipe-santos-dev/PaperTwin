@@ -1,11 +1,10 @@
 import type { Env } from '../env';
-import { PgliteRepository } from './pglite-repository';
-import { PostgresRepository } from './postgres-repository';
 import type { Database } from './repository';
+import { openPglite, openPostgres } from './sql-database';
 
 export type { AssetFilter, Database, DatabaseDriver, VibrationQuery } from './repository';
-export { PgliteRepository } from './pglite-repository';
-export { PostgresRepository } from './postgres-repository';
+export type { SqlExecutor } from './executor';
+export { openPglite, openPostgres, SqlDatabase } from './sql-database';
 
 /**
  * Escolhe o banco pela configuração: `DATABASE_URL` definido leva ao Postgres
@@ -17,7 +16,7 @@ export { PostgresRepository } from './postgres-repository';
  */
 export async function openDatabase(env: Env): Promise<Database> {
   if (env.DATABASE_URL) {
-    return PostgresRepository.open(env.DATABASE_URL);
+    return openPostgres(env.DATABASE_URL);
   }
-  return PgliteRepository.open(env.PGLITE_DIR);
+  return openPglite(env.PGLITE_DIR);
 }

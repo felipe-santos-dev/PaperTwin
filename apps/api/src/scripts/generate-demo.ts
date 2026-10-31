@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import type { FastifyInstance } from 'fastify';
 import { allAssets, MP1 } from '@mp1/shared';
 import { buildApp } from '../app';
-import { PgliteRepository } from '../db/pglite-repository';
+import { openPglite } from '../db/sql-database';
 import { seedDatabase } from '../db/seed';
 import { loadEnv } from '../env';
 
@@ -59,7 +59,7 @@ async function capture(app: FastifyInstance, url: string): Promise<unknown> {
 }
 
 async function main(): Promise<void> {
-  const db = await PgliteRepository.open();
+  const db = await openPglite();
   await db.migrate();
   const seeded = await seedDatabase(db, { now: NOW });
 

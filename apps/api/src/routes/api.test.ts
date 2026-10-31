@@ -12,7 +12,7 @@ import {
   type VibrationBucket,
 } from '@mp1/shared';
 import { buildApp } from '../app';
-import { PgliteRepository } from '../db/pglite-repository';
+import { openPglite } from '../db/sql-database';
 import { DEGRADING_TAG, seedDatabase } from '../db/seed';
 import { loadEnv } from '../env';
 
@@ -29,7 +29,7 @@ const FROM = new Date(NOW.getTime() - WINDOW_MS);
 let app: FastifyInstance;
 
 beforeAll(async () => {
-  const db = await PgliteRepository.open();
+  const db = await openPglite();
   await db.migrate();
   await seedDatabase(db, { now: NOW, windowMs: WINDOW_MS });
   app = await buildApp(loadEnv({ NODE_ENV: 'test' }), db);

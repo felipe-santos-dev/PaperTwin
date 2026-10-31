@@ -1,3 +1,4 @@
+export * from './bearing-tags';
 export * from './catalog';
 export * from './lab';
 export * from './per-cylinder';

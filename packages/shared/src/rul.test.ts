@@ -45,6 +45,35 @@ describe('estimateRemainingLife', () => {
     expect(life.trendMmSPerDay).toBeCloseTo(0, 9);
   });
 
+  /**
+   * A inclinação precisa passar do ruído do próprio ajuste.
+   *
+   * Um limiar fixo não resolve isto: o quanto a reta pode subir só por azar
+   * depende da dispersão das leituras e de quantas há. A série abaixo tem
+   * inclinação positiva, mas espalhada o bastante para que a inclinação caiba
+   * dentro do erro padrão dela mesma — e aí não há previsão a dar.
+   */
+  it('não estima nada quando a inclinação cabe no ruído do ajuste', () => {
+    const espalhada = estimateRemainingLife(
+      buckets([2.0, 2.4, 1.7, 2.3, 1.8, 2.5, 1.9, 2.4, 2.0, 2.3]),
+      limits,
+    );
+
+    expect(espalhada.trendMmSPerDay).toBeGreaterThan(0);
+    expect(espalhada.daysToZoneD).toBeNull();
+  });
+
+  it('estima quando a subida é clara, com a mesma dispersão', () => {
+    // o mesmo tremor, mas em cima de uma subida de 0,3/dia
+    const subindo = estimateRemainingLife(
+      buckets([2.0, 2.4, 1.7, 2.3, 1.8, 2.5, 1.9, 2.4, 2.0, 2.3].map((v, i) => v + i * 0.3)),
+      limits,
+    );
+
+    expect(subindo.trendMmSPerDay).toBeGreaterThan(0.25);
+    expect(subindo.daysToZoneD).not.toBeNull();
+  });
+
   it('não estima nada com tendência de queda', () => {
     const life = estimateRemainingLife(buckets([3, 2.5, 2, 1.5]), limits);
     expect(life.trendMmSPerDay).toBeLessThan(0);

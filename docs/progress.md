@@ -20,7 +20,8 @@ Branch: `dev/fases-4-7`. Nada de push na main, nada de PR, nada de deploy.
 - [x] **6** As 7 telas (6.1 a 6.6)
 - [x] **J0** Gabarito da API TypeScript em `reference/golden/`
 - [x] **J1** `apps/api-java`: catálogo e relações
-- [ ] **J2–J5** núcleo, persistência, retomada, API
+- [x] **J2** núcleo: FOPDT, CD, ruído, PI, rede, alarmes, mancais, cenários
+- [ ] **J3–J5** persistência, retomada, API
 - [ ] **J6** Contrato com o front via `openapi.json`
 - [ ] **J7** Dockerfile e ajuste para 512 MB
 - [ ] **J8** Remover `apps/api`
@@ -448,6 +449,47 @@ renderizam o mesmo instante de duas formas, e um teste de data passa num lugar e
 falha no outro. O primeiro teste de `date_bin` que escrevi caiu exatamente
 nisso.
 
+### J2 — o núcleo em Java, conferido contra o gabarito
+
+**148 testes verdes.** O que vale não é a contagem: é que os números batem com a
+implementação TypeScript a 1e-9, e em alguns casos exatamente.
+
+Coberto pelo gabarito: FOPDT (4 casos), espalhamento CD (3 zonas, bordas
+incluídas), a rede de processo (21 tags × 3 instantes + retomada), o motor de
+alarmes (cenário ISA-18.2 inteiro, varredura a varredura), os mancais (3 tags ×
+8 passos, com arredondamento) e o plano de turno (4 instantes).
+
+O caso mais forte é a rede: vinte e quatro relações, seis cascatas com trava de
+integral, ruído correlacionado por tag e trinta e seis cilindros seguindo a
+saturação do vapor do seu grupo, reproduzindo o gabarito depois de milhares de
+passos. Não é uma fórmula batendo — é um sistema com estado chegando ao mesmo
+lugar.
+
+#### Três armadilhas de porte JavaScript → Java
+
+1. **A aritmética do ruído é `int`.** `Math.imul` e `>>>` do JS são exatamente o
+   que o `int` do Java faz. Usar `long` em qualquer ponto mudaria os bits e,
+   com eles, toda série do simulador.
+2. **`>>` do JS converte para inteiro com sinal; `%` sobre número não.** Na
+   assinatura do mancal, `hash % 1000` opera no valor sem sinal e
+   `(hash >> 10) % 100` no valor com sinal. Portar as três contas do mesmo jeito
+   dava temperatura de base 10 °C acima em metade dos mancais. **Consequência
+   anotada**: a temperatura de base vai de 48 a 68 °C em vez dos 58 a 68 que a
+   fórmula aparenta, e o envelope de 0,05 a 0,55 em vez de 0,3 a 0,55. As duas
+   faixas são plausíveis para um mancal saudável, então ficou como paridade e
+   não como correção — mudar trocaria a assinatura dos 114 mancais e
+   invalidaria o instantâneo publicado.
+3. **`toFixed` arredonda sobre o valor exato do double**, não sobre a
+   representação decimal curta. `BigDecimal` com o construtor de `double` e
+   `HALF_UP` é o equivalente; `Math.round(x * 1000) / 1000.0` divergiria na
+   terceira casa em alguns valores, e a terceira casa é a que a tela mostra.
+
+#### E uma falha de teste que valia mais que o teste
+
+O caso dos mancais comparava `progress` do cenário em vez do progresso
+**aplicado àquela tag** — que é zero quando o cenário é de outro mancal. Os
+valores batiam; a asserção é que estava perguntando outra coisa.
+
 ## Suposições para o Felipe revisar
 
 1. **`CD_ZONE_COUNT = 140`** (`process/relations.ts`). O catálogo diz
@@ -553,7 +595,14 @@ values`, limites de alarme desenhados e escrita de setpoint.
 Fase 6 fechada. O instantâneo foi regenerado com o modelo novo: **954 arquivos,
 911 kB, 179 ativos**, compressão 203:1.
 
-### O que vem agora: J2 — o núcleo
+### O que vem agora: J3 — persistência
+
+Flyway com o SQL das migrations atuais, historiador (exceção + porta oscilante,
+interpolação, média ponderada, plot values, retenção para o Neon Free), estado
+do motor em `jsonb` e as entidades de operação. Testes contra o Postgres
+embarcado, que já está de pé.
+
+### Como era J2 (feito)
 
 FOPDT com ZOH exata, kernel CD pelo pico com corte 3σ, rede de processo, PI das
 malhas, ruído determinístico por `hash(seed, passo)`, vibração ISO 20816-3 e

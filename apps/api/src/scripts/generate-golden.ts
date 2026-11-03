@@ -4,12 +4,16 @@ import { fileURLToPath } from 'node:url';
 
 import {
   alarmThreshold,
+  classifyIsoZone,
+  DRYER_BEARING_ISO,
+  isoLimitsOf,
   exceptionFilter,
   historianPoint,
   interpolate,
   readAt,
   recordSeries,
   relation,
+  shiftWindowAt,
   swingingDoor,
   timeWeightedAverage,
   type Alarm,
@@ -25,8 +29,22 @@ import { seedDatabase } from '../db/seed';
 import { loadEnv } from '../env';
 import { catchUp } from '../runtime/catchup';
 import { alarmEngine } from '../simulation/alarm-engine';
+import {
+  bearingSampleAt,
+  degradationProgress,
+  signatureOf,
+  type DegradationScenario,
+} from '../simulation/bearings';
 import { cdKernel, cdSteadyState } from '../simulation/cd-profile';
-import { DEFAULT_SEED, tickTime } from '../simulation/clock';
+import { DEFAULT_SEED, TICKS_PER_HOUR, tickTime } from '../simulation/clock';
+import {
+  gradeInEffectAt,
+  nominalShiftProductionT,
+  REEL_TICKS,
+  reelDurationS,
+  reelLengthM,
+  shiftPlan,
+} from '../simulation/scenarios';
 import { decayPerStep, delaySteps, stepResponse } from '../simulation/fopdt';
 import { processEngine } from '../simulation/process-engine';
 
@@ -482,6 +500,119 @@ function simulationFixture(): unknown {
   };
 }
 
+// -------------------------------------------------------------- turnos ----
+
+/**
+ * O plano de turno: o que acontece e quando.
+ *
+ * <p>Os dias escolhidos cobrem o que varia: um turno B, que é o único com troca
+ * de gramatura; os três turnos de um mesmo dia, para ver em qual deles a quebra
+ * cai; e a virada do turno C, que começa num dia e termina no outro — é ali que
+ * uma conta de dia de operação feita no fuso errado aparece.
+ */
+function shiftFixture(): unknown {
+  const instants = [
+    '2026-06-15T09:00:00Z', // turno A
+    '2026-06-15T18:00:00Z', // turno B — o da troca de gramatura
+    '2026-06-16T02:00:00Z', // turno C, que começou no dia 15
+    '2026-03-02T09:00:00Z', // o instante do gabarito das rotas
+  ];
+
+  return {
+    tolerance: TOLERANCE,
+    seed: DEFAULT_SEED,
+    note: 'O plano é função de (semente, dia, letra). Nada é sorteado ao vivo nem guardado em tabela.',
+    reelTicks: REEL_TICKS,
+    reelLengthM: reelLengthM(),
+    reelDurationS: reelDurationS(),
+    cases: instants.map((iso) => {
+      const shift = shiftWindowAt(new Date(iso));
+      const plan = shiftPlan(DEFAULT_SEED, shift);
+
+      return {
+        instant: iso,
+        atMs: Date.parse(iso),
+        expected: {
+          shift: {
+            id: shift.id,
+            letter: shift.letter,
+            operationDate: shift.operationDate,
+            startedAtMs: Date.parse(shift.startedAt),
+            endedAtMs: Date.parse(shift.endedAt),
+          },
+          startTick: plan.startTick,
+          endTick: plan.endTick,
+          reels: plan.reels,
+          gradeChange: plan.gradeChange,
+          webBreak: plan.webBreak,
+          round: plan.round,
+          gradeInEffect: gradeInEffectAt(plan.startTick),
+          nominalProductionT: nominalShiftProductionT(shift),
+        },
+      };
+    }),
+  };
+}
+
+// -------------------------------------------------------------- mancais ----
+
+/**
+ * A assinatura e a degradação de um mancal.
+ *
+ * O caso que importa é o arredondamento: a implementação TypeScript usa
+ * `toFixed`, que arredonda meio para cima sobre o valor **exato** do double. Uma
+ * reimplementação que arredonde sobre a representação decimal curta diverge na
+ * terceira casa em alguns valores, e a terceira casa é a que a tela mostra.
+ *
+ * Os passos escolhidos cobrem a janela de degradação inteira: antes, no começo,
+ * no meio, perto do fim e depois. É na subida que a vibração cruza as fronteiras
+ * da ISO, e é lá que uma diferença de modelo aparece.
+ */
+function bearingFixture(): unknown {
+  const tags = ['MP1-SEC-G4-CS23-MLA', 'MP1-SEC-G1-CS01-MLC', 'MP1-POP-TBR-MLA'];
+
+  const scenario: DegradationScenario = {
+    assetTag: 'MP1-SEC-G4-CS23-MLA',
+    fromTick: 0,
+    toTick: 72 * TICKS_PER_HOUR,
+  };
+
+  const ticks = [
+    -3600,
+    0,
+    9 * TICKS_PER_HOUR,
+    36 * TICKS_PER_HOUR,
+    60 * TICKS_PER_HOUR,
+    71 * TICKS_PER_HOUR,
+    72 * TICKS_PER_HOUR,
+    80 * TICKS_PER_HOUR,
+  ];
+
+  const limits = isoLimitsOf(DRYER_BEARING_ISO);
+
+  return {
+    tolerance: TOLERANCE,
+    note:
+      'A amostra é função pura de (semente, passo, tag, cenário). Os valores saem arredondados: ' +
+      '3 casas em mm/s e gE, 2 em °C.',
+    seed: DEFAULT_SEED,
+    scenario,
+    isoLimits: limits,
+    signatures: tags.map((tag) => ({ tag, expected: signatureOf(tag) })),
+    samples: tags.flatMap((tag) =>
+      ticks.map((tick) => {
+        const sample = bearingSampleAt(DEFAULT_SEED, tick, tag, scenario);
+        return {
+          tag,
+          tick,
+          progress: tag === scenario.assetTag ? degradationProgress(scenario, tick) : 0,
+          expected: { ...sample, zone: classifyIsoZone(sample.rmsMmS, limits) },
+        };
+      }),
+    ),
+  };
+}
+
 // -------------------------------------------------------------- as rotas ----
 
 /**
@@ -548,6 +679,8 @@ async function main(): Promise<void> {
   await put('historian/interpolation.json', interpolationFixture());
   await put('alarms/sequence.json', alarmFixture());
   await put('simulation/tags.json', simulationFixture());
+  await put('vibration/bearings.json', bearingFixture());
+  await put('operation/shifts.json', shiftFixture());
 
   // as rotas precisam de banco; o resto é tudo função pura
   const now = GOLDEN_INSTANT;

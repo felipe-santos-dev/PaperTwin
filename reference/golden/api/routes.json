@@ -12,14 +12,14 @@
       "status": "ok",
       "service": "mp1-twin-api",
       "version": "0.0.0",
-      "uptimeS": 16,
+      "uptimeS": 15,
       "database": "pglite",
       "databaseUp": true,
       "simulation": {
         "seed": 20260101,
         "lastTick": 5216400,
         "lastRunAt": "2026-03-02T09:00:00.000Z",
-        "behindS": 21230946
+        "behindS": 21231889
       }
     },
     "/assets": {

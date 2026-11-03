@@ -1,0 +1,322 @@
+{
+  "tolerance": 1e-9,
+  "seed": 20260101,
+  "note": "O plano é função de (semente, dia, letra). Nada é sorteado ao vivo nem guardado em tabela.",
+  "reelTicks": 3193,
+  "reelLengthM": 66527.84442896034,
+  "reelDurationS": 3193.336532590096,
+  "cases": [
+    {
+      "instant": "2026-06-15T09:00:00Z",
+      "atMs": 1781514000000,
+      "expected": {
+        "shift": {
+          "id": "T-2026-06-15-A",
+          "letter": "A",
+          "operationDate": "2026-06-15",
+          "startedAtMs": 1781514000000,
+          "endedAtMs": 1781542800000
+        },
+        "startTick": 14288400,
+        "endTick": 14317200,
+        "reels": [
+          {
+            "number": 4475,
+            "startTick": 14285482,
+            "endTick": 14288675
+          },
+          {
+            "number": 4476,
+            "startTick": 14288675,
+            "endTick": 14291868
+          },
+          {
+            "number": 4477,
+            "startTick": 14291868,
+            "endTick": 14295061
+          },
+          {
+            "number": 4478,
+            "startTick": 14295061,
+            "endTick": 14298254
+          },
+          {
+            "number": 4479,
+            "startTick": 14298254,
+            "endTick": 14301447
+          },
+          {
+            "number": 4480,
+            "startTick": 14301447,
+            "endTick": 14304640
+          },
+          {
+            "number": 4481,
+            "startTick": 14304640,
+            "endTick": 14307833
+          },
+          {
+            "number": 4482,
+            "startTick": 14307833,
+            "endTick": 14311026
+          },
+          {
+            "number": 4483,
+            "startTick": 14311026,
+            "endTick": 14314219
+          },
+          {
+            "number": 4484,
+            "startTick": 14314219,
+            "endTick": 14317412
+          }
+        ],
+        "gradeChange": null,
+        "webBreak": {
+          "section": "press",
+          "probableCause": "perda de vácuo na prensa de sapata",
+          "upsetTag": "WIC-401",
+          "upsetSetpoint": 640,
+          "startTick": 14295992,
+          "endTick": 14297312,
+          "upsetTick": 14295392
+        },
+        "round": {
+          "startTick": 14295600,
+          "endTick": 14298000
+        },
+        "gradeInEffect": 80,
+        "nominalProductionT": 360
+      }
+    },
+    {
+      "instant": "2026-06-15T18:00:00Z",
+      "atMs": 1781546400000,
+      "expected": {
+        "shift": {
+          "id": "T-2026-06-15-B",
+          "letter": "B",
+          "operationDate": "2026-06-15",
+          "startedAtMs": 1781542800000,
+          "endedAtMs": 1781571600000
+        },
+        "startTick": 14317200,
+        "endTick": 14346000,
+        "reels": [
+          {
+            "number": 4484,
+            "startTick": 14314219,
+            "endTick": 14317412
+          },
+          {
+            "number": 4485,
+            "startTick": 14317412,
+            "endTick": 14320605
+          },
+          {
+            "number": 4486,
+            "startTick": 14320605,
+            "endTick": 14323798
+          },
+          {
+            "number": 4487,
+            "startTick": 14323798,
+            "endTick": 14326991
+          },
+          {
+            "number": 4488,
+            "startTick": 14326991,
+            "endTick": 14330184
+          },
+          {
+            "number": 4489,
+            "startTick": 14330184,
+            "endTick": 14333377
+          },
+          {
+            "number": 4490,
+            "startTick": 14333377,
+            "endTick": 14336570
+          },
+          {
+            "number": 4491,
+            "startTick": 14336570,
+            "endTick": 14339763
+          },
+          {
+            "number": 4492,
+            "startTick": 14339763,
+            "endTick": 14342956
+          },
+          {
+            "number": 4493,
+            "startTick": 14342956,
+            "endTick": 14346149
+          }
+        ],
+        "gradeChange": {
+          "startTick": 14328000,
+          "fromGsm": 80,
+          "toGsm": 75
+        },
+        "webBreak": null,
+        "round": {
+          "startTick": 14324400,
+          "endTick": 14326800
+        },
+        "gradeInEffect": 80,
+        "nominalProductionT": 360
+      }
+    },
+    {
+      "instant": "2026-06-16T02:00:00Z",
+      "atMs": 1781575200000,
+      "expected": {
+        "shift": {
+          "id": "T-2026-06-15-C",
+          "letter": "C",
+          "operationDate": "2026-06-15",
+          "startedAtMs": 1781571600000,
+          "endedAtMs": 1781600400000
+        },
+        "startTick": 14346000,
+        "endTick": 14374800,
+        "reels": [
+          {
+            "number": 4493,
+            "startTick": 14342956,
+            "endTick": 14346149
+          },
+          {
+            "number": 4494,
+            "startTick": 14346149,
+            "endTick": 14349342
+          },
+          {
+            "number": 4495,
+            "startTick": 14349342,
+            "endTick": 14352535
+          },
+          {
+            "number": 4496,
+            "startTick": 14352535,
+            "endTick": 14355728
+          },
+          {
+            "number": 4497,
+            "startTick": 14355728,
+            "endTick": 14358921
+          },
+          {
+            "number": 4498,
+            "startTick": 14358921,
+            "endTick": 14362114
+          },
+          {
+            "number": 4499,
+            "startTick": 14362114,
+            "endTick": 14365307
+          },
+          {
+            "number": 4500,
+            "startTick": 14365307,
+            "endTick": 14368500
+          },
+          {
+            "number": 4501,
+            "startTick": 14368500,
+            "endTick": 14371693
+          },
+          {
+            "number": 4502,
+            "startTick": 14371693,
+            "endTick": 14374886
+          }
+        ],
+        "gradeChange": null,
+        "webBreak": null,
+        "round": {
+          "startTick": 14353200,
+          "endTick": 14355600
+        },
+        "gradeInEffect": 75,
+        "nominalProductionT": 360
+      }
+    },
+    {
+      "instant": "2026-03-02T09:00:00Z",
+      "atMs": 1772442000000,
+      "expected": {
+        "shift": {
+          "id": "T-2026-03-02-A",
+          "letter": "A",
+          "operationDate": "2026-03-02",
+          "startedAtMs": 1772442000000,
+          "endedAtMs": 1772470800000
+        },
+        "startTick": 5216400,
+        "endTick": 5245200,
+        "reels": [
+          {
+            "number": 1634,
+            "startTick": 5214169,
+            "endTick": 5217362
+          },
+          {
+            "number": 1635,
+            "startTick": 5217362,
+            "endTick": 5220555
+          },
+          {
+            "number": 1636,
+            "startTick": 5220555,
+            "endTick": 5223748
+          },
+          {
+            "number": 1637,
+            "startTick": 5223748,
+            "endTick": 5226941
+          },
+          {
+            "number": 1638,
+            "startTick": 5226941,
+            "endTick": 5230134
+          },
+          {
+            "number": 1639,
+            "startTick": 5230134,
+            "endTick": 5233327
+          },
+          {
+            "number": 1640,
+            "startTick": 5233327,
+            "endTick": 5236520
+          },
+          {
+            "number": 1641,
+            "startTick": 5236520,
+            "endTick": 5239713
+          },
+          {
+            "number": 1642,
+            "startTick": 5239713,
+            "endTick": 5242906
+          },
+          {
+            "number": 1643,
+            "startTick": 5242906,
+            "endTick": 5246099
+          }
+        ],
+        "gradeChange": null,
+        "webBreak": null,
+        "round": {
+          "startTick": 5223600,
+          "endTick": 5226000
+        },
+        "gradeInEffect": 75,
+        "nominalProductionT": 360
+      }
+    }
+  ]
+}

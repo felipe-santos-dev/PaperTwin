@@ -89,27 +89,21 @@ public final class Bearings {
    * <p>A linha de base fica entre 0,8 e 2,0 mm/s: dentro das zonas A e B do grupo 2 com apoio
    * rígido, ou seja, uma máquina em operação normal.
    *
-   * <p>As três contas usam o hash de formas diferentes, e isso <b>não é descuido</b> — é o que a
-   * implementação de origem faz, e portar sem reparar daria outra assinatura para cada mancal.
+   * <p>A temperatura fica entre 58 e 68 °C e o envelope entre 0,3 e 0,55 gE.
    *
-   * <p>Em JavaScript, {@code streamOf} devolve o hash sem sinal, como número. O resto {@code %
-   * 1000} opera sobre esse número e sai sempre positivo. Já {@code >>} força a conversão para
-   * inteiro de 32 bits <b>com</b> sinal antes de deslocar, então em metade das tags o resultado é
-   * negativo e o resto sai negativo junto.
-   *
-   * <p>Na prática a temperatura de base vai de 48 a 68 °C em vez dos 58 a 68 que a fórmula
-   * aparenta, e o envelope de 0,05 a 0,55 em vez de 0,3 a 0,55. As duas faixas são plausíveis para
-   * um mancal saudável, então isto fica como <b>paridade</b> e não como correção: mudar agora
-   * trocaria a assinatura de todos os 114 mancais e invalidaria o instantâneo publicado.
+   * <p><b>Os três termos operam sobre o hash sem sinal</b>, e isto já esteve errado dos dois
+   * lados. Em JavaScript {@code >>} converte para inteiro de 32 bits com sinal antes de deslocar,
+   * então em metade das tags o resto saía negativo e a temperatura de base caía para 48 °C. Aqui
+   * o hash vira {@code long} sem sinal uma vez, e os deslocamentos e restos sobre ele são sempre
+   * não negativos — que é o que torna desnecessário um {@code Math.floorMod} em cada linha.
    */
   public static Signature signatureOf(String tag) {
-    int signed = Noise.streamOf(tag);
-    long unsigned = Integer.toUnsignedLong(signed);
+    long hash = Integer.toUnsignedLong(Noise.streamOf(tag));
 
     return new Signature(
-        0.8 + (unsigned % 1000) / 1000.0 * 1.2,
-        58 + ((signed >> 10) % 100) / 10.0,
-        0.3 + ((signed >> 17) % 100) / 400.0);
+        0.8 + (hash % 1000) / 1000.0 * 1.2,
+        58 + ((hash >>> 10) % 100) / 10.0,
+        0.3 + ((hash >>> 17) % 100) / 400.0);
   }
 
   /** Quanto do caminho da degradação já foi percorrido, de 0 a 1. */

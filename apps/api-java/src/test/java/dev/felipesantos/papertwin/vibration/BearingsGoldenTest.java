@@ -47,17 +47,44 @@ class BearingsGoldenTest {
   }
 
   @Test
-  @DisplayName("a linha de base cai nas zonas A e B: um mancal saudável não acusa nada")
+  @DisplayName("todos os 114 mancais têm linha de base dentro das faixas que a fórmula promete")
   void healthyBaseline() {
+    /*
+     * Sobre a máquina inteira, e não só sobre as três tags do gabarito.
+     *
+     * Este é o teste que impede a volta de um erro que já esteve nos dois
+     * lados: `>>` em JavaScript converte para inteiro COM sinal antes de
+     * deslocar, e em metade das tags o resto saía negativo — a temperatura de
+     * base caía para 48 °C e o envelope para 0,05. Com três tags no gabarito
+     * dava para passar sem notar; com 114, não.
+     */
     var limits = Iso20816.limitsOf(Iso20816.DRYER_BEARING);
+    var bearings =
+        dev.felipesantos.papertwin.machine.SteamGroups.allCylinders().stream()
+            .flatMap(
+                cylinder ->
+                    java.util.stream.Stream.of(
+                        "MP1-SEC-%s-CS%02d-MLA"
+                            .formatted(
+                                dev.felipesantos.papertwin.machine.SteamGroups.ofCylinder(cylinder),
+                                cylinder),
+                        "MP1-SEC-%s-CS%02d-MLC"
+                            .formatted(
+                                dev.felipesantos.papertwin.machine.SteamGroups.ofCylinder(cylinder),
+                                cylinder)))
+            .toList();
 
-    for (var entry : GOLDEN.get("signatures")) {
-      var tag = entry.get("tag").asText();
-      var base = Bearings.signatureOf(tag).rmsBase();
+    assertThat(bearings).hasSize(72);
 
-      assertThat(base).as("%s", tag).isBetween(0.8, 2.0);
-      assertThat(Iso20816.classify(base, limits))
-          .as("%s", tag)
+    for (var tag : bearings) {
+      var signature = Bearings.signatureOf(tag);
+
+      assertThat(signature.rmsBase()).as("%s: base RMS", tag).isBetween(0.8, 2.0);
+      assertThat(signature.tempBase()).as("%s: base de temperatura", tag).isBetween(58.0, 68.0);
+      assertThat(signature.envelopeBase()).as("%s: base do envelope", tag).isBetween(0.3, 0.55);
+
+      assertThat(Iso20816.classify(signature.rmsBase(), limits))
+          .as("%s: um mancal saudável não acusa nada", tag)
           .isIn(Iso20816.Zone.A, Iso20816.Zone.B);
     }
   }

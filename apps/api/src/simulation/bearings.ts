@@ -88,14 +88,22 @@ interface Signature {
  * A assinatura de um mancal saudável.
  *
  * A linha de base fica entre 0,8 e 2,0 mm/s: dentro das zonas A e B do grupo 2
- * com apoio rígido, ou seja, uma máquina em operação normal.
+ * com apoio rígido, ou seja, uma máquina em operação normal. A temperatura fica
+ * entre 58 e 68 °C e o envelope entre 0,3 e 0,55 gE.
+ *
+ * **Os três deslocamentos são sem sinal**, e isto já esteve errado. `streamOf`
+ * devolve o hash sem sinal, mas `>>` converte para inteiro de 32 bits **com** sinal
+ * antes de deslocar: em metade das tags o resultado saía negativo, o resto saía
+ * negativo junto, e a temperatura de base caía para 48 °C em vez dos 58 que a
+ * fórmula promete. Com `>>>` o deslocamento é sem sinal e as faixas são as
+ * escritas.
  */
 export function signatureOf(tag: AssetTag): Signature {
   const hash = hashTag(tag);
   return {
     rmsBase: 0.8 + ((hash % 1000) / 1000) * 1.2,
-    tempBase: 58 + ((hash >> 10) % 100) / 10,
-    envelopeBase: 0.3 + ((hash >> 17) % 100) / 400,
+    tempBase: 58 + ((hash >>> 10) % 100) / 10,
+    envelopeBase: 0.3 + ((hash >>> 17) % 100) / 400,
   };
 }
 

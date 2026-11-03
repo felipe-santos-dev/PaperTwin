@@ -12,14 +12,14 @@
       "status": "ok",
       "service": "mp1-twin-api",
       "version": "0.0.0",
-      "uptimeS": 15,
+      "uptimeS": 25,
       "database": "pglite",
       "databaseUp": true,
       "simulation": {
         "seed": 20260101,
         "lastTick": 5216400,
         "lastRunAt": "2026-03-02T09:00:00.000Z",
-        "behindS": 21231889
+        "behindS": 21298872
       }
     },
     "/assets": {
@@ -4577,14 +4577,14 @@
         },
         {
           "tag": "VE-5101A",
-          "value": 0.285,
+          "value": 0.455,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "VE-5102A",
-          "value": 0.216,
+          "value": 0.386,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -4605,42 +4605,42 @@
         },
         {
           "tag": "VE-5105A",
-          "value": 0.121,
+          "value": 0.291,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "VE-5106A",
-          "value": 0.127,
+          "value": 0.297,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "VE-5107A",
-          "value": 0.05,
+          "value": 0.47,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "VE-5108A",
-          "value": 0.06,
+          "value": 0.48,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "VE-5109A",
-          "value": 0.289,
+          "value": 0.459,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "VE-5110A",
-          "value": 0.119,
+          "value": 0.539,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -4675,14 +4675,14 @@
         },
         {
           "tag": "VE-5115A",
-          "value": 0.142,
+          "value": 0.312,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "VE-5116A",
-          "value": 0.247,
+          "value": 0.417,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -4710,21 +4710,21 @@
         },
         {
           "tag": "VE-5120A",
-          "value": 0.241,
+          "value": 0.411,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "VE-5121A",
-          "value": 0.306,
+          "value": 0.476,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "VE-5122A",
-          "value": 0.221,
+          "value": 0.391,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -4738,14 +4738,14 @@
         },
         {
           "tag": "VE-5124A",
-          "value": 0.072,
+          "value": 0.492,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "VE-5125A",
-          "value": 0.16,
+          "value": 0.33,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -4773,7 +4773,7 @@
         },
         {
           "tag": "VE-5129A",
-          "value": 0.208,
+          "value": 0.378,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -4794,21 +4794,21 @@
         },
         {
           "tag": "VE-5132A",
-          "value": 0.081,
+          "value": 0.501,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "VE-5133A",
-          "value": 0.294,
+          "value": 0.464,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "VE-5134A",
-          "value": 0.264,
+          "value": 0.434,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -4829,14 +4829,14 @@
         },
         {
           "tag": "VE-5101B",
-          "value": 0.138,
+          "value": 0.308,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "VE-5102B",
-          "value": 0.099,
+          "value": 0.519,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -4857,42 +4857,42 @@
         },
         {
           "tag": "VE-5105B",
-          "value": 0.233,
+          "value": 0.403,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "VE-5106B",
-          "value": 0.267,
+          "value": 0.437,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "VE-5107B",
-          "value": 0.214,
+          "value": 0.384,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "VE-5108B",
-          "value": 0.157,
+          "value": 0.327,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "VE-5109B",
-          "value": 0.132,
+          "value": 0.302,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "VE-5110B",
-          "value": 0.253,
+          "value": 0.423,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -4927,14 +4927,14 @@
         },
         {
           "tag": "VE-5115B",
-          "value": 0.235,
+          "value": 0.405,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "VE-5116B",
-          "value": 0.155,
+          "value": 0.325,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -4962,21 +4962,21 @@
         },
         {
           "tag": "VE-5120B",
-          "value": 0.1,
+          "value": 0.52,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "VE-5121B",
-          "value": 0.163,
+          "value": 0.333,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "VE-5122B",
-          "value": 0.113,
+          "value": 0.533,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -4990,14 +4990,14 @@
         },
         {
           "tag": "VE-5124B",
-          "value": 0.156,
+          "value": 0.326,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "VE-5125B",
-          "value": 0.264,
+          "value": 0.434,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -5025,7 +5025,7 @@
         },
         {
           "tag": "VE-5129B",
-          "value": 0.083,
+          "value": 0.503,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -5046,21 +5046,21 @@
         },
         {
           "tag": "VE-5132B",
-          "value": 0.22,
+          "value": 0.39,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "VE-5133B",
-          "value": 0.193,
+          "value": 0.363,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "VE-5134B",
-          "value": 0.114,
+          "value": 0.534,
           "unit": "gE",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -5081,14 +5081,14 @@
         },
         {
           "tag": "TI-5301A",
-          "value": 50.26,
+          "value": 60.66,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "TI-5302A",
-          "value": 57.81,
+          "value": 68.21,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -5109,42 +5109,42 @@
         },
         {
           "tag": "TI-5305A",
-          "value": 50.51,
+          "value": 60.91,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "TI-5306A",
-          "value": 48.69,
+          "value": 59.09,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "TI-5307A",
-          "value": 53.19,
+          "value": 63.59,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "TI-5308A",
-          "value": 52.64,
+          "value": 63.04,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "TI-5309A",
-          "value": 52.16,
+          "value": 62.56,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "TI-5310A",
-          "value": 56.24,
+          "value": 66.64,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -5179,14 +5179,14 @@
         },
         {
           "tag": "TI-5315A",
-          "value": 52.83,
+          "value": 63.23,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "TI-5316A",
-          "value": 48.25,
+          "value": 58.65,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -5214,21 +5214,21 @@
         },
         {
           "tag": "TI-5320A",
-          "value": 56.63,
+          "value": 67.03,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "TI-5321A",
-          "value": 55.5,
+          "value": 65.9,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "TI-5322A",
-          "value": 54.19,
+          "value": 64.59,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -5242,14 +5242,14 @@
         },
         {
           "tag": "TI-5324A",
-          "value": 49.1,
+          "value": 59.5,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "TI-5325A",
-          "value": 50.56,
+          "value": 60.96,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -5277,7 +5277,7 @@
         },
         {
           "tag": "TI-5329A",
-          "value": 51.65,
+          "value": 62.05,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -5298,21 +5298,21 @@
         },
         {
           "tag": "TI-5332A",
-          "value": 53.93,
+          "value": 64.33,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "TI-5333A",
-          "value": 49.54,
+          "value": 59.94,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "TI-5334A",
-          "value": 53.52,
+          "value": 63.92,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -5333,14 +5333,14 @@
         },
         {
           "tag": "TI-5301B",
-          "value": 52.96,
+          "value": 63.36,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "TI-5302B",
-          "value": 54.29,
+          "value": 64.69,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -5361,42 +5361,42 @@
         },
         {
           "tag": "TI-5305B",
-          "value": 53.18,
+          "value": 63.58,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "TI-5306B",
-          "value": 55.46,
+          "value": 65.86,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "TI-5307B",
-          "value": 50.45,
+          "value": 60.85,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "TI-5308B",
-          "value": 56.04,
+          "value": 66.44,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "TI-5309B",
-          "value": 55.13,
+          "value": 65.53,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "TI-5310B",
-          "value": 53.44,
+          "value": 63.84,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -5431,14 +5431,14 @@
         },
         {
           "tag": "TI-5315B",
-          "value": 55.92,
+          "value": 66.32,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "TI-5316B",
-          "value": 55.11,
+          "value": 65.51,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -5466,21 +5466,21 @@
         },
         {
           "tag": "TI-5320B",
-          "value": 49.68,
+          "value": 60.08,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "TI-5321B",
-          "value": 48.75,
+          "value": 59.15,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "TI-5322B",
-          "value": 50.82,
+          "value": 61.22,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -5494,14 +5494,14 @@
         },
         {
           "tag": "TI-5324B",
-          "value": 52.51,
+          "value": 62.91,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "TI-5325B",
-          "value": 53.79,
+          "value": 64.19,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -5529,7 +5529,7 @@
         },
         {
           "tag": "TI-5329B",
-          "value": 48.92,
+          "value": 59.32,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -5550,21 +5550,21 @@
         },
         {
           "tag": "TI-5332B",
-          "value": 50.78,
+          "value": 61.18,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "TI-5333B",
-          "value": 56.26,
+          "value": 66.66,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
         },
         {
           "tag": "TI-5334B",
-          "value": 56.51,
+          "value": 66.91,
           "unit": "°C",
           "ts": "2026-03-02T09:00:00.000Z",
           "setpoint": null
@@ -6537,12 +6537,12 @@
             },
             {
               "assetTag": "MP1-SEC-G1-CS01-MLA",
-              "fieldTempC": 47.5,
+              "fieldTempC": 57.9,
               "noise": "normal",
               "leak": "nenhum",
               "note": null,
               "onlineTag": "TI-5301A",
-              "onlineValue": 49.8
+              "onlineValue": 60.2
             },
             {
               "assetTag": "MP1-SEC-G6-CS36-MLC",

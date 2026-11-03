@@ -25,16 +25,16 @@
       "tag": "MP1-SEC-G1-CS01-MLC",
       "expected": {
         "rmsBase": 0.8468,
-        "tempBase": 53,
-        "envelopeBase": 0.1425
+        "tempBase": 63.4,
+        "envelopeBase": 0.3125
       }
     },
     {
       "tag": "MP1-POP-TBR-MLA",
       "expected": {
         "rmsBase": 1.8092,
-        "tempBase": 57,
-        "envelopeBase": 0.245
+        "tempBase": 67.4,
+        "envelopeBase": 0.415
       }
     }
   ],
@@ -133,8 +133,8 @@
       "progress": 0,
       "expected": {
         "rmsMmS": 0.826,
-        "tempC": 53.2,
-        "envelopeGe": 0.124,
+        "tempC": 63.6,
+        "envelopeGe": 0.294,
         "zone": "A"
       }
     },
@@ -144,8 +144,8 @@
       "progress": 0,
       "expected": {
         "rmsMmS": 0.857,
-        "tempC": 52.64,
-        "envelopeGe": 0.154,
+        "tempC": 63.04,
+        "envelopeGe": 0.324,
         "zone": "A"
       }
     },
@@ -155,8 +155,8 @@
       "progress": 0,
       "expected": {
         "rmsMmS": 0.857,
-        "tempC": 52.86,
-        "envelopeGe": 0.153,
+        "tempC": 63.26,
+        "envelopeGe": 0.323,
         "zone": "A"
       }
     },
@@ -166,8 +166,8 @@
       "progress": 0,
       "expected": {
         "rmsMmS": 0.85,
-        "tempC": 52.93,
-        "envelopeGe": 0.154,
+        "tempC": 63.33,
+        "envelopeGe": 0.324,
         "zone": "A"
       }
     },
@@ -177,8 +177,8 @@
       "progress": 0,
       "expected": {
         "rmsMmS": 0.865,
-        "tempC": 53.01,
-        "envelopeGe": 0.155,
+        "tempC": 63.41,
+        "envelopeGe": 0.325,
         "zone": "A"
       }
     },
@@ -188,8 +188,8 @@
       "progress": 0,
       "expected": {
         "rmsMmS": 0.881,
-        "tempC": 53.25,
-        "envelopeGe": 0.148,
+        "tempC": 63.65,
+        "envelopeGe": 0.318,
         "zone": "A"
       }
     },
@@ -199,8 +199,8 @@
       "progress": 0,
       "expected": {
         "rmsMmS": 0.824,
-        "tempC": 52.78,
-        "envelopeGe": 0.128,
+        "tempC": 63.18,
+        "envelopeGe": 0.298,
         "zone": "A"
       }
     },
@@ -210,8 +210,8 @@
       "progress": 0,
       "expected": {
         "rmsMmS": 0.862,
-        "tempC": 52.94,
-        "envelopeGe": 0.156,
+        "tempC": 63.34,
+        "envelopeGe": 0.326,
         "zone": "A"
       }
     },
@@ -221,8 +221,8 @@
       "progress": 0,
       "expected": {
         "rmsMmS": 1.787,
-        "tempC": 56.87,
-        "envelopeGe": 0.265,
+        "tempC": 67.27,
+        "envelopeGe": 0.435,
         "zone": "B"
       }
     },
@@ -232,8 +232,8 @@
       "progress": 0,
       "expected": {
         "rmsMmS": 1.823,
-        "tempC": 56.88,
-        "envelopeGe": 0.242,
+        "tempC": 67.28,
+        "envelopeGe": 0.412,
         "zone": "B"
       }
     },
@@ -243,8 +243,8 @@
       "progress": 0,
       "expected": {
         "rmsMmS": 1.786,
-        "tempC": 56.99,
-        "envelopeGe": 0.224,
+        "tempC": 67.39,
+        "envelopeGe": 0.394,
         "zone": "B"
       }
     },
@@ -254,8 +254,8 @@
       "progress": 0,
       "expected": {
         "rmsMmS": 1.836,
-        "tempC": 57,
-        "envelopeGe": 0.235,
+        "tempC": 67.4,
+        "envelopeGe": 0.405,
         "zone": "B"
       }
     },
@@ -265,8 +265,8 @@
       "progress": 0,
       "expected": {
         "rmsMmS": 1.809,
-        "tempC": 57.06,
-        "envelopeGe": 0.244,
+        "tempC": 67.46,
+        "envelopeGe": 0.414,
         "zone": "B"
       }
     },
@@ -276,8 +276,8 @@
       "progress": 0,
       "expected": {
         "rmsMmS": 1.798,
-        "tempC": 56.93,
-        "envelopeGe": 0.255,
+        "tempC": 67.33,
+        "envelopeGe": 0.425,
         "zone": "B"
       }
     },
@@ -287,8 +287,8 @@
       "progress": 0,
       "expected": {
         "rmsMmS": 1.797,
-        "tempC": 57.09,
-        "envelopeGe": 0.241,
+        "tempC": 67.49,
+        "envelopeGe": 0.411,
         "zone": "B"
       }
     },
@@ -298,8 +298,8 @@
       "progress": 0,
       "expected": {
         "rmsMmS": 1.788,
-        "tempC": 57.06,
-        "envelopeGe": 0.259,
+        "tempC": 67.46,
+        "envelopeGe": 0.429,
         "zone": "B"
       }
     }

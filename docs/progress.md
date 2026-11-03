@@ -471,14 +471,10 @@ lugar.
    que o `int` do Java faz. Usar `long` em qualquer ponto mudaria os bits e,
    com eles, toda série do simulador.
 2. **`>>` do JS converte para inteiro com sinal; `%` sobre número não.** Na
-   assinatura do mancal, `hash % 1000` opera no valor sem sinal e
+   assinatura do mancal, `hash % 1000` operava no valor sem sinal e
    `(hash >> 10) % 100` no valor com sinal. Portar as três contas do mesmo jeito
-   dava temperatura de base 10 °C acima em metade dos mancais. **Consequência
-   anotada**: a temperatura de base vai de 48 a 68 °C em vez dos 58 a 68 que a
-   fórmula aparenta, e o envelope de 0,05 a 0,55 em vez de 0,3 a 0,55. As duas
-   faixas são plausíveis para um mancal saudável, então ficou como paridade e
-   não como correção — mudar trocaria a assinatura dos 114 mancais e
-   invalidaria o instantâneo publicado.
+   dava temperatura de base 10 °C acima em metade dos mancais. **Corrigido nos
+   dois lados em 03/11/2026** — veja a entrada própria abaixo.
 3. **`toFixed` arredonda sobre o valor exato do double**, não sobre a
    representação decimal curta. `BigDecimal` com o construtor de `double` e
    `HALF_UP` é o equivalente; `Math.round(x * 1000) / 1000.0` divergiria na
@@ -489,6 +485,25 @@ lugar.
 O caso dos mancais comparava `progress` do cenário em vez do progresso
 **aplicado àquela tag** — que é zero quando o cenário é de outro mancal. Os
 valores batiam; a asserção é que estava perguntando outra coisa.
+
+### Correção: assinatura do mancal com resto sem sinal
+
+A esquisitice herdada do JavaScript foi **corrigida**, e não preservada.
+
+`streamOf` devolve o hash sem sinal, mas `>>` converte para inteiro de 32 bits
+**com** sinal antes de deslocar. Em metade das tags o resto saía negativo, e a
+linha de base do mancal caía para 48 °C de temperatura e 0,05 gE de envelope —
+quando a fórmula promete 58 a 68 °C e 0,3 a 0,55 gE.
+
+Agora é `>>>` no TypeScript e `Integer.toUnsignedLong` uma vez no Java, com os
+deslocamentos sobre o `long` sem sinal (o que dispensa `Math.floorMod` em cada
+linha, já que tudo fica não negativo).
+
+O que mudou de verdade: a assinatura dos 114 mancais. O gabarito foi regerado, a
+paridade Java confirmada a 1e-9 e o instantâneo de demonstração regerado.
+
+O teste que impede a volta disso cobre **os 114 mancais**, e não as três tags do
+gabarito: com três dava para passar sem notar, com 114 não dá.
 
 ## Suposições para o Felipe revisar
 

@@ -30,7 +30,27 @@
     <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <testcontainers.version>1.20.4</testcontainers.version>
+    <!--
+      Postgres de verdade nos testes, sem Docker.
+
+      O historiador depende de coisas que só o Postgres tem — `date_bin`, BRIN,
+      `jsonb`, `pg_advisory_lock` — e um H2 em modo de compatibilidade mentiria
+      justamente onde está o risco. Testcontainers daria o Postgres de verdade,
+      mas exige um daemon de Docker, e a máquina de desenvolvimento deste
+      projeto não tem: os testes de banco ficariam verdes só no CI, que é onde
+      menos adianta.
+
+      O zonky baixa um binário do Postgres e o sobe como processo filho. Mesma
+      infraestrutura na máquina de quem desenvolve e no `ubuntu-latest` do
+      Actions, sem segundo caminho de teste para manter.
+
+      A versão é a 17, que é o padrão do Neon hoje. **Suposição**: o projeto no
+      Neon ainda não existe, então não há o que conferir. Quando existir, é para
+      acertar este número com o de lá — rodar o teste numa versão e produção em
+      outra é o tipo de divergência que só aparece em produção.
+    -->
+    <zonky.version>2.2.2</zonky.version>
+    <postgres.version>17.11.0</postgres.version>
   </properties>
 
   <dependencies>
@@ -53,7 +73,32 @@
       <artifactId>assertj-core</artifactId>
       <scope>test</scope>
     </dependency>
+
+    <dependency>
+      <groupId>io.zonky.test</groupId>
+      <artifactId>embedded-postgres</artifactId>
+      <version>${zonky.version}</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
+
+  <dependencyManagement>
+    <dependencies>
+      <!--
+        Fixa a versão do binário do Postgres para as duas plataformas de uma vez.
+
+        Sem o BOM, o zonky escolhe a versão mais nova que encontrar, e a build
+        passaria a depender de quando ela roda.
+      -->
+      <dependency>
+        <groupId>io.zonky.test.postgres</groupId>
+        <artifactId>embedded-postgres-binaries-bom</artifactId>
+        <version>${postgres.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <build>
     <!--
@@ -82,6 +127,26 @@
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <!--
+            Os testes rodam em UTC.
+
+            Não é preferência: o driver do Postgres manda o fuso da JVM como
+            parâmetro de conexão, e o servidor renderiza `timestamptz` nele. Esta
+            máquina está em −03:00 e o runner do CI em UTC, então sem fixar isto
+            o mesmo instante sai escrito de duas formas e um teste de data passa
+            num lugar e falha no outro.
+
+            Vale também para o lado Java: `LocalDate`, formatação e truncamento
+            de dia passam a ser os mesmos em qualquer máquina.
+          -->
+          <argLine>-Duser.timezone=UTC</argLine>
+        </configuration>
       </plugin>
     </plugins>
   </build>

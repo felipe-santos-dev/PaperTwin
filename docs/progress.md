@@ -417,18 +417,36 @@ A gramática do `nn` foi portada com a armadilha junto: **"scanner" contém
 um `replace` escreveria "sca7er" no nome dela. Daí a tag ser casada com âncora e
 o nome com ``.
 
-#### O que não pôde ser verificado aqui
+#### Banco nos testes: Postgres embarcado, sem Docker
 
 **Não há Docker nesta máquina** (nem Docker Desktop, nem WSL, nem Postgres
-local). Testcontainers, que J3 em diante pedem, não roda localmente — os testes
-de persistência só serão exercitados no CI da Fase 7, onde o runner do GitHub
-Actions tem Docker.
+local), então Testcontainers deixaria J3 a J5 verdes só no CI — que é onde menos
+adianta, porque é durante a escrita que o teste serve.
 
-Isso muda o que dá para prometer: J1 e J2 são puros e ficam verificados de
-verdade aqui; J3, J4 e J5 serão escritos com os testes, mas verdes só no CI. A
-alternativa seria um Postgres embarcado sem Docker (zonky) só para
-desenvolvimento, o que significaria duas infraestruturas de teste para a mesma
-coisa. Fica anotado como decisão a tomar quando J3 começar.
+Decisão do Felipe, de 02/11/2026: **zonky embedded-postgres em todos os testes
+de banco, local e no CI**. Uma infraestrutura só. O `docker-compose.yml` fica
+como opção de desenvolvimento, não como requisito.
+
+O zonky baixa um binário do Postgres e o sobe como processo filho. Vale o
+Postgres de verdade, e não um H2 em modo de compatibilidade: o historiador
+depende de `date_bin`, BRIN, `jsonb` e `pg_advisory_lock`, que é exatamente onde
+um banco "compatível" mentiria.
+
+Arranjo: **um servidor por JVM, um banco por chamada**. Subir o Postgres custa
+uns 10 s e fazer isso por classe somaria minutos; `CREATE DATABASE` é
+instantâneo e isola igual. O servidor não é desligado no fim — morre com a JVM, e
+um `shutdown hook` só criaria corrida com os testes que ainda terminam.
+
+**Versão 17.11, e é suposição**: o projeto no Neon ainda não existe, então não há
+o que conferir. Quando existir, é para acertar este número com o de lá.
+
+Um achado do caminho: os testes rodam com `-Duser.timezone=UTC`, fixado no
+surefire. O driver do Postgres manda o fuso da JVM como parâmetro de conexão e
+ele vence qualquer `options` ou `ALTER DATABASE`, então a JVM é o único lugar
+onde dá para fixá-lo. Sem isso, esta máquina (−03:00) e o runner do CI (UTC)
+renderizam o mesmo instante de duas formas, e um teste de data passa num lugar e
+falha no outro. O primeiro teste de `date_bin` que escrevi caiu exatamente
+nisso.
 
 ## Suposições para o Felipe revisar
 
@@ -506,6 +524,10 @@ coisa. Fica anotado como decisão a tomar quando J3 começar.
     protótipo. A lista de acionamentos da MP1 é documento interno.
 24. **Nips de prensa com os rolos encostados**, contra os 10 cm de folga do
     protótipo. Vale conferir a carga de nip real.
+25. **Postgres 17.11 nos testes** (`pom.xml`, `postgres.version`). É o padrão do
+    Neon hoje, mas o projeto lá ainda não existe para conferir. Quando existir,
+    acertar os dois — rodar teste numa versão e produção em outra é divergência
+    que só aparece em produção.
 
 ## Próximo passo exato
 

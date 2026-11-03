@@ -393,6 +393,14 @@ function alarmFixture(): unknown {
  * TypeScript, revelou que o estado do motor precisava ser persistido.
  */
 function simulationFixture(): unknown {
+  /**
+   * As tags escolhidas.
+   *
+   * Cada uma cobre um caminho diferente da rede: malha de campo, PV de cascata,
+   * saída de relação, ensaio movido por relação, variável livre e superfície de
+   * cilindro. Todas existem no catálogo — uma tag inventada aqui daria `null`
+   * nos dois lados e o caso passaria sem comparar nada.
+   */
   const tags = [
     'PIC-514',
     'PIC-711',
@@ -409,11 +417,14 @@ function simulationFixture(): unknown {
     'AIC-905',
     'AI-407',
     'AI-907',
-    'TIC-5201',
-    'LIC-5301',
+    'TIC-505',
+    'LIC-534',
     'PDIC-702',
-    'QIC-301',
-    'NIC-601',
+    'JIC-101',
+    'AIC-601',
+    // uma superfície de cilindro: é a única tag da lista que exercita o caminho
+    // pressão do grupo → temperatura de saturação → queda na casca
+    'TI-5223',
   ];
 
   const ticks = [0, 600, 3600];

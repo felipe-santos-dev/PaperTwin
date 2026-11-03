@@ -21,7 +21,8 @@ Branch: `dev/fases-4-7`. Nada de push na main, nada de PR, nada de deploy.
 - [x] **J0** Gabarito da API TypeScript em `reference/golden/`
 - [x] **J1** `apps/api-java`: catálogo e relações
 - [x] **J2** núcleo: FOPDT, CD, ruído, PI, rede, alarmes, mancais, cenários
-- [ ] **J3–J5** persistência, retomada, API
+- [ ] **J3** persistência — migrations feitas; historiador e entidades a fazer
+- [ ] **J4–J5** retomada, API
 - [ ] **J6** Contrato com o front via `openapi.json`
 - [ ] **J7** Dockerfile e ajuste para 512 MB
 - [ ] **J8** Remover `apps/api`
@@ -504,6 +505,30 @@ paridade Java confirmada a 1e-9 e o instantâneo de demonstração regerado.
 
 O teste que impede a volta disso cobre **os 114 mancais**, e não as três tags do
 gabarito: com três dava para passar sem notar, com 114 não dá.
+
+### J3 — migrations (primeira parte)
+
+Flyway com **o mesmo SQL** da implementação TypeScript, migration por migration:
+`V1` a `V5`, inclusive a V2, que renomeia uma coluna que a V1 acabou de criar.
+Num banco novo essa V2 parece inútil, e é — menos pelo que importa: com o
+histórico idêntico, ninguém precisa provar que as duas sequências chegam ao
+mesmo lugar. O esquema que a Java cria é o mesmo contra o qual o gabarito das
+rotas foi gravado.
+
+**`RUN_MIGRATIONS` vem desligado.** Num host que dorme e acorda, o boot acontece
+quando o primeiro visitante abre a tela — migration que roda no boot é migration
+que roda numa hora que ninguém escolheu. Quem as aplica é o checklist de deploy,
+uma vez.
+
+O teste cobra a lista **exata** de dezenove tabelas, e não "contém": uma tabela
+a mais ou a menos é divergência de esquema, mesmo que nada quebre hoje. Ele
+também achou dois chutes meus — as tabelas são `jumbo_reel` e `inspection_round`,
+não `reel` e `round`.
+
+Sem JPA, como combinado: `spring-boot-starter-jdbc` e `JdbcClient`. O historiador
+escreve milhares de linhas por retomada, e o lote de inserção — que é o que
+decide se a retomada cabe numa requisição — não pode ficar escondido atrás de um
+`saveAll`.
 
 ## Suposições para o Felipe revisar
 

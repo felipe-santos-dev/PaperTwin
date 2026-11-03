@@ -63,6 +63,35 @@
       <artifactId>spring-boot-starter-validation</artifactId>
     </dependency>
 
+    <!--
+      JDBC sem JPA.
+
+      O historiador escreve milhares de linhas por retomada e lê agregações que
+      o Postgres resolve melhor do que qualquer mapeamento: `date_bin`, média
+      ponderada no tempo, valores de plotagem. Um ORM aqui seria uma camada a
+      mais entre o SQL que importa e quem o lê, e o lote de inserção — que é o
+      que decide se a retomada cabe numa requisição — ficaria escondido atrás
+      de um `saveAll`.
+    -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-jdbc</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <scope>runtime</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-core</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.flywaydb</groupId>
+      <artifactId>flyway-database-postgresql</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>

@@ -21,7 +21,7 @@ Branch: `dev/fases-4-7`. Nada de push na main, nada de PR, nada de deploy.
 - [x] **J0** Gabarito da API TypeScript em `reference/golden/`
 - [x] **J1** `apps/api-java`: catálogo e relações
 - [x] **J2** núcleo: FOPDT, CD, ruído, PI, rede, alarmes, mancais, cenários
-- [ ] **J3** persistência — migrations feitas; historiador e entidades a fazer
+- [x] **J3** persistência: migrations, historiador, entidades, estado da rede
 - [ ] **J4–J5** retomada, API
 - [ ] **J6** Contrato com o front via `openapi.json`
 - [ ] **J7** Dockerfile e ajuste para 512 MB
@@ -508,6 +508,40 @@ paridade Java confirmada a 1e-9 e o instantâneo de demonstração regerado.
 O teste que impede a volta disso cobre **os 114 mancais**, e não as três tags do
 gabarito: com três dava para passar sem notar, com 114 não dá.
 
+### J3 — entidades e estado da rede (terceira parte, fase fechada)
+
+**205 testes.** Fecha a J3.
+
+As oito entidades de operação com as tabelas filhas, e o estado da rede em
+`jsonb`. Três coisas valem registro:
+
+1. **Toda escrita é upsert com `do update`.** A retomada reexecuta trechos, e
+   reexecutar tem de produzir o mesmo banco. `insert` puro quebraria na segunda
+   passagem; `do nothing` deixaria a entidade com os valores da primeira, que
+   podem estar incompletos. O `do update` é o único que converge.
+2. **Os filhos são apagados e reinseridos** na mesma transação do pai.
+   Reconciliar linha a linha custaria mais do que vale para listas de meia
+   dúzia, e deixaria órfãos quando a lista encolhesse.
+3. **Reconhecer alarme é um comando só**, com `returning`. A leitura e a escrita
+   na mesma instrução é o que impede dois cliques simultâneos de gravarem dois
+   reconhecimentos — o segundo não encontra linha com `acknowledged_at is null`.
+   Há teste para isso.
+
+As restrições do banco são exercitadas, e não só as felizes: eficiência fora de
+0–100, perfil CD pela metade, bobina rebaixada sem motivo, sinal de quebra fora
+da janela de dez minutos, nota encerrada sem data, motivo de setpoint em branco.
+
+O estado da rede faz a volta pelo `jsonb` e **retoma idêntico**: há um caso que
+roda 0→400 de uma vez e 0→200, grava, lê do banco, restaura e vai até 400 — os
+dois têm de dar o mesmo valor, bit a bit.
+
+Uma asserção minha estava errada: `listShifts` contava os turnos de toda a
+classe, não os do caso. Passou a contar por id, que é o que ela queria dizer.
+
+O JSON vai para o banco como texto com `cast(? as jsonb)`, e não por `PGobject`:
+o driver está no escopo de execução, não no de compilação, e nada no código
+precisa conhecer a API dele.
+
 ### J3 — historiador (segunda parte)
 
 **186 testes.** O historiador portado e conferido: compressão e interpolação
@@ -662,12 +696,15 @@ values`, limites de alarme desenhados e escrita de setpoint.
 Fase 6 fechada. O instantâneo foi regenerado com o modelo novo: **954 arquivos,
 911 kB, 179 ativos**, compressão 203:1.
 
-### O que vem agora: J3 — persistência
+### O que vem agora: J4 — retomada e concorrência
 
-Flyway com o SQL das migrations atuais, historiador (exceção + porta oscilante,
-interpolação, média ponderada, plot values, retenção para o Neon Free), estado
-do motor em `jsonb` e as entidades de operação. Testes contra o Postgres
-embarcado, que já está de pé.
+A retomada dentro da requisição que acorda a API, com `pg_advisory_lock`: a
+segunda requisição espera e lê o resultado em vez de retomar a mesma janela.
+Teste com requisições paralelas.
+
+Medir tempo e memória para recuperar 1 h, 24 h e 72 h. Se 72 h não couber com
+folga em ~20 s, teto de N horas e o resto marcado como lacuna "sem dados" no
+historiador, de forma determinística. Os números vão para as notas do README.
 
 ### Como era J2 (feito)
 

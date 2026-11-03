@@ -439,8 +439,10 @@ uns 10 s e fazer isso por classe somaria minutos; `CREATE DATABASE` é
 instantâneo e isola igual. O servidor não é desligado no fim — morre com a JVM, e
 um `shutdown hook` só criaria corrida com os testes que ainda terminam.
 
-**Versão 17.11, e é suposição**: o projeto no Neon ainda não existe, então não há
-o que conferir. Quando existir, é para acertar este número com o de lá.
+**Versão 18.6, a mesma do Neon** — conferida pelo Felipe com `select version()`
+no console do projeto, em 03/11/2026. Não é mais suposição. O zonky tem binário
+de 18.6 para `windows-amd64` (esta máquina) e `linux-amd64` (o `ubuntu-latest`
+do CI), então as duas rodam a mesma major e a mesma minor que produção.
 
 Um achado do caminho: os testes rodam com `-Duser.timezone=UTC`, fixado no
 surefire. O driver do Postgres manda o fuso da JVM como parâmetro de conexão e
@@ -606,10 +608,9 @@ decide se a retomada cabe numa requisição — não pode ficar escondido atrás
     protótipo. A lista de acionamentos da MP1 é documento interno.
 24. **Nips de prensa com os rolos encostados**, contra os 10 cm de folga do
     protótipo. Vale conferir a carga de nip real.
-25. **Postgres 17.11 nos testes** (`pom.xml`, `postgres.version`). É o padrão do
-    Neon hoje, mas o projeto lá ainda não existe para conferir. Quando existir,
-    acertar os dois — rodar teste numa versão e produção em outra é divergência
-    que só aparece em produção.
+25. ~~**Postgres 17.11 nos testes**~~ — **resolvido em 03/11/2026**. O Neon do
+    projeto roda 18.6, e os testes passaram a rodar 18.6 também. Deixa de ser
+    suposição.
 
 ## Próximo passo exato
 

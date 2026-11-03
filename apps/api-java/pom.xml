@@ -44,13 +44,14 @@
       infraestrutura na máquina de quem desenvolve e no `ubuntu-latest` do
       Actions, sem segundo caminho de teste para manter.
 
-      A versão é a 17, que é o padrão do Neon hoje. **Suposição**: o projeto no
-      Neon ainda não existe, então não há o que conferir. Quando existir, é para
-      acertar este número com o de lá — rodar o teste numa versão e produção em
-      outra é o tipo de divergência que só aparece em produção.
+      A versão é a **18.6, a mesma do Neon**, conferida com `select version()` no
+      console do projeto. Rodar o teste numa versão e produção em outra é o tipo
+      de divergência que só aparece em produção, e o zonky tem binário de 18.6
+      para windows-amd64 (a máquina de desenvolvimento) e linux-amd64 (o
+      `ubuntu-latest` do CI).
     -->
     <zonky.version>2.2.2</zonky.version>
-    <postgres.version>17.11.0</postgres.version>
+    <postgres.version>18.6.0</postgres.version>
   </properties>
 
   <dependencies>

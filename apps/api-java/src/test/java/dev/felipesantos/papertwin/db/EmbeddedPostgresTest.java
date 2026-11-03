@@ -30,15 +30,16 @@ class EmbeddedPostgresTest {
   }
 
   @Test
-  @DisplayName("é o Postgres 17, a versão fixada no pom")
+  @DisplayName("é o Postgres 18, a mesma major do Neon")
   void version() throws SQLException {
     try (var connection = EmbeddedPostgresExtension.shared().getConnection();
         var statement = connection.createStatement();
         var rows = statement.executeQuery("show server_version")) {
 
       assertThat(rows.next()).isTrue();
-      // a major é o que importa: é ela que decide quais funções existem
-      assertThat(rows.getString(1)).startsWith("17.");
+      // a major é o que importa: é ela que decide quais funções existem.
+      // O Neon do projeto roda 18.6, conferido com `select version()`.
+      assertThat(rows.getString(1)).startsWith("18.");
     }
   }
 

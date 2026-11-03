@@ -2,6 +2,7 @@ import { useLayoutEffect, useMemo, useRef } from 'react';
 import { BoxGeometry, CylinderGeometry, type InstancedMesh, type Material, Object3D } from 'three';
 import { DRIVEN_ROLL_MIN_RADIUS_M, type MachineAsset } from '@mp1/shared';
 import { materials } from '../materials';
+import { CABLE_TRAY_Y_M, CEILING_Y_M } from '../room';
 
 /**
  * O lado acionamento: cardã, redutor e motor de cada rolo principal.
@@ -35,9 +36,6 @@ export interface DriveSideProps {
   readonly halfWidth: number;
   readonly webWidth: number;
 }
-
-/** Altura da eletrocalha pendurada no teto, de onde descem os cabos. */
-const CABLE_TRAY_Y_M = 12.2;
 
 /** Afastamento entre uma fileira de acionamentos e a seguinte. */
 const LANE_PITCH_M = 2.4;
@@ -246,7 +244,14 @@ export function DriveSide({ assets, halfWidth, webWidth }: DriveSideProps) {
       const to = span.to + 1.5;
       tray.push([(from + to) / 2, CABLE_TRAY_Y_M, z - 0.08, to - from, 0.12, 0.7]);
       for (let x = from; x <= to; x += 9) {
-        hanger.push([x, (CABLE_TRAY_Y_M + 19) / 2, z - 0.08, 0.08, 19 - CABLE_TRAY_Y_M, 0.08]);
+        hanger.push([
+          x,
+          (CABLE_TRAY_Y_M + CEILING_Y_M) / 2,
+          z - 0.08,
+          0.08,
+          CEILING_Y_M - CABLE_TRAY_Y_M,
+          0.08,
+        ]);
       }
     }
 

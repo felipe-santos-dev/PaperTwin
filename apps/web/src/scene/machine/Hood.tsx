@@ -6,8 +6,13 @@ import { materials } from '../materials';
 import { useScene } from '../sceneState';
 
 /**
- * A capota de uma secagem: teto, parede de trás, fechamento das pontas e a
- * fileira de portas do lado operação.
+ * A capota de uma secagem: teto, fechamento das pontas e a fileira de portas do
+ * lado operação.
+ *
+ * **Não tem parede de trás**, como no protótipo final. Não é economia de
+ * polígono: sem ela, a mesma capota que fecha a secagem pelo lado de quem opera
+ * deixa ver os cilindros por dentro de quem olha do lado acionamento — e é de lá
+ * que a cena mostra os motores.
  *
  * As portas abrem para cima, com o pivô no topo, e não todas ao mesmo tempo —
  * cada uma atrasa um pouco em relação à anterior ao longo da máquina, o que dá
@@ -68,9 +73,6 @@ export function Hood({ span, halfWidth, doorWidth = 3.6 }: HoodProps) {
     <group>
       <mesh material={m.hoodWall} position={[centerX, ROOF_Y, 0]} castShadow receiveShadow>
         <boxGeometry args={[length, 0.4, 2 * z]} />
-      </mesh>
-      <mesh material={m.hoodWall} position={[centerX, HOOD_CENTER_Y, -z]} castShadow receiveShadow>
-        <boxGeometry args={[length, HOOD_HEIGHT, 0.3]} />
       </mesh>
       {/* viga acima das portas */}
       <mesh material={m.hoodWall} position={[centerX, 9.4, z]} castShadow>

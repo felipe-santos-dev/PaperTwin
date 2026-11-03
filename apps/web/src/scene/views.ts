@@ -39,16 +39,15 @@ export const SCENE_VIEWS: readonly SceneView[] = [
     label: 'Visão geral',
     hint: '',
     /**
-     * De longe e de cima, mas **por baixo do teto**.
+     * De longe e de cima, por dentro da sala.
      *
-     * O protótipo olha de 26 m de altura, e pode: lá o teto está a 34 m. Aqui
-     * ele está a 19, e uma câmera acima dele só não mostra o telhado por fora
-     * porque o plano do teto tem uma face só. Depender disso é depender de um
-     * descuido — basta alguém tornar o teto visível dos dois lados para a vista
-     * principal ficar preta.
+     * É o enquadramento do protótipo: 26 m de altura, 74 de afastamento. Ele só
+     * cabe porque o teto está a 34 m — é a altura que uma sala de máquinas de
+     * papel tem, e é ela que dá à câmera de onde olhar a máquina inteira de uma
+     * vez.
      */
-    position: [0, 16, 78],
-    target: [(PRE_DRYER_HOOD.from + POPE_X_M) / 2, 2, 0],
+    position: [0, 26, 74],
+    target: [32, 2, 0],
   },
   {
     id: 'headbox',

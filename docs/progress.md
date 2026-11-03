@@ -508,6 +508,32 @@ paridade Java confirmada a 1e-9 e o instantâneo de demonstração regerado.
 O teste que impede a volta disso cobre **os 114 mancais**, e não as três tags do
 gabarito: com três dava para passar sem notar, com 114 não dá.
 
+### J3 — historiador (segunda parte)
+
+**186 testes.** O historiador portado e conferido: compressão e interpolação
+contra o gabarito, repositório contra o Postgres embarcado.
+
+- **Compressão**: filtro de exceção e porta oscilante, com os três casos do
+  gabarito comparados **etapa por etapa**. Guardar o meio (`afterException`
+  separado de `archived`) é o que faz o teste dizer _qual_ das duas divergiu.
+- **Interpolação**: `readAt` com o tipo da leitura — exata, interpolada,
+  extrapolada — e a média no tempo pela regra do trapézio. Há um caso que mostra
+  que ela **não** é a média dos pontos, que é a razão de ela existir.
+- **Repositório**: inserção em lote (5.000 linhas num caso), `date_bin` para as
+  colunas do gráfico com mínimo/máximo/primeiro/último, âncoras dos dois lados
+  da janela, `valueAt` interpolado, média no tempo e poda com as duas retenções.
+
+Reinserir o mesmo trecho não quebra: `on conflict do nothing`, porque a retomada
+é idempotente por desenho e a segunda passagem não tem o que acrescentar.
+
+#### Uma imprecisão de documentação, nos dois lados
+
+O comentário dizia "com `compDev` zero nada é descartado". Quase: numa rampa
+**exata** o corredor degenera numa inclinação só e nunca fecha, então ela sai em
+dois pontos mesmo com desvio zero. Com qualquer dado de processo — que tem ruído
+de instrumento e nunca é colinear — a porta fecha na primeira amostra fora da
+reta. O comentário foi corrigido e os dois comportamentos viraram caso de teste.
+
 ### J3 — migrations (primeira parte)
 
 Flyway com **o mesmo SQL** da implementação TypeScript, migration por migration:

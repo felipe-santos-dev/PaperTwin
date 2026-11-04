@@ -48,12 +48,21 @@ public class AppConfig {
     return new SimStateRepository(dataSource, mapper);
   }
 
+  /**
+   * A retomada, com o teto que o ambiente mandar.
+   *
+   * <p>Quatro horas é o padrão, medido num desktop. O Render Free dá uma fração de CPU e a JVM
+   * acorda fria: lá a mesma janela custa várias vezes mais, e o ajuste é por variável de
+   * ambiente, lendo o log da primeira retomada — não por recompilação.
+   */
   @Bean
   public CatchUp catchUp(
       HistorianRepository historian,
       OperationsRepository operations,
-      SimStateRepository simState) {
-    return new CatchUp(historian, operations, simState);
+      SimStateRepository simState,
+      @Value("${RESUME_MAX_HOURS:4}") long maxHours) {
+
+    return new CatchUp(historian, operations, simState, maxHours);
   }
 
   @Bean

@@ -322,6 +322,53 @@ class CatchUpTest {
     }
   }
 
+  @Nested
+  @DisplayName("o teto configurável")
+  class ConfigurableCeiling {
+
+    @Test
+    @DisplayName("RESUME_MAX_HOURS corta a janela no valor pedido")
+    @Timeout(180)
+    void respectsConfiguredCeiling() {
+      /*
+       * O teto depende da máquina. Quatro horas foram medidas num desktop; no
+       * Render Free, que dá uma fração de CPU, a mesma janela custa várias
+       * vezes mais — e quem opera precisa poder baixar o teto sem recompilar.
+       */
+      var oneHour = new CatchUp(historian, operations, simState, 1);
+      var report = oneHour.run(SimClock.DEFAULT_SEED, NOW, Recorder.SCAN_TICKS);
+
+      assertThat(oneHour.maxHours()).isEqualTo(1);
+      assertThat(report.ticks()).isEqualTo(SimClock.TICKS_PER_HOUR);
+      assertThat(report.reanchored()).as("cortou, e diz que cortou").isTrue();
+    }
+
+    @Test
+    @DisplayName("um teto menor que uma hora é recusado na montagem")
+    void refusesTinyCeiling() {
+      // meia hora de janela não dá tempo de a rede sair do transiente de
+      // arranque antes do que alguém vai olhar
+      assertThat(
+              org.assertj.core.api.Assertions.catchThrowable(
+                  () -> new CatchUp(historian, operations, simState, 0)))
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("pelo menos uma hora");
+    }
+
+    @Test
+    @DisplayName("o relatório traz o heap em uso, que é o que o Render Free limita")
+    @Timeout(180)
+    void reportsHeap() {
+      var report =
+          catchUp.run(SimClock.DEFAULT_SEED, at(SimClock.TICKS_PER_HOUR), Recorder.SCAN_TICKS);
+
+      assertThat(report.heapUsedMb())
+          .as("heap em uso ao fim da retomada")
+          .isPositive()
+          .isLessThan(512);
+    }
+  }
+
   @Test
   @DisplayName("os valores do relatório cobrem processo e mancais")
   @Timeout(180)

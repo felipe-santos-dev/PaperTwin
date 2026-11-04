@@ -185,8 +185,37 @@ por isso não é ela que decide o teto.
 | 24 h             | 86.400  | 10,5 s | 24.959            |
 | 72 h             | 259.200 | 32,8 s | 73.802            |
 
-Com a escrita no banco incluída, a janela do teto custa **~4,5 s** e produz
-~4.550 linhas, com compressão medida de **~200:1**.
+### Os três números da janela de 4 h, e por que são três
+
+A mesma janela aparece com três custos neste documento, e a diferença entre eles
+é o que se está medindo:
+
+| Medida                          | Tempo     | O que inclui                                 |
+| ------------------------------- | --------- | -------------------------------------------- |
+| Motor + gravador, JIT aquecido  | **1,1 s** | só CPU de simulação; sem banco               |
+| Retomada completa, JIT aquecido | **4,5 s** | + escrita no banco, alarmes, entidades, poda |
+| **Retomada completa, JVM fria** | **6,2 s** | + JIT interpretando e classes carregando     |
+
+A JVM fria também usa mais memória: **153 MB** de heap contra os ~44 MB em
+regime.
+
+**O número que vale para produção é o de JVM fria**, porque é exatamente a
+situação do Render Free: o host dorme sem tráfego, a instância é derrubada, e a
+primeira retomada do dia roda com a JVM recém-iniciada. Os outros dois são úteis
+para saber onde o tempo vai — e mostram que a simulação em si é a parte barata.
+
+**Aviso importante**: estes 6,2 s foram medidos num desktop. O Render Free dá
+uma fração de vCPU, então lá o número será várias vezes maior. É por isso que o
+teto é **configurável** por `RESUME_MAX_HOURS` (padrão 4) e que toda retomada
+registra no log as horas recuperadas, a duração e o heap em uso:
+
+```
+retomada: 4,00 h recuperadas em 6193 ms, heap 153 MB, 4538 linhas arquivadas, compressão 200:1
+```
+
+Depois do primeiro deploy é só ler esse log e ajustar. Está no checklist.
+
+### Por que o teto existe
 
 **É daqui que sai o teto de quatro horas.** A retomada roda dentro de uma
 requisição HTTP, porque não há processo de fundo — quem acorda a API é quem

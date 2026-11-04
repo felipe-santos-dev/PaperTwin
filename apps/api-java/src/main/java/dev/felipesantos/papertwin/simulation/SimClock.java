@@ -120,10 +120,22 @@ public final class SimClock {
    * pedido, o que dá à rede tempo de sair do transiente de arranque antes do que alguém vai olhar.
    */
   public static CatchupRange catchupRange(Long fromTick, Instant to) {
+    return catchupRange(fromTick, to, MAX_CATCHUP_TICKS);
+  }
+
+  /**
+   * O mesmo, com o teto dado.
+   *
+   * <p>O teto é parâmetro, e não só a constante, porque ele depende da <b>máquina</b>. As quatro
+   * horas foram medidas num desktop; o Render Free dá uma fração de CPU, e lá a mesma janela pode
+   * custar várias vezes mais. Quem opera ajusta {@code RESUME_MAX_HOURS} olhando o log da
+   * retomada, sem recompilar nada.
+   */
+  public static CatchupRange catchupRange(Long fromTick, Instant to, long maxTicks) {
     long toTick = tickAt(to);
 
     if (fromTick == null) {
-      long start = toTick - MAX_CATCHUP_TICKS;
+      long start = toTick - maxTicks;
       return new CatchupRange(start, toTick, toTick - start, true);
     }
 
@@ -132,9 +144,9 @@ public final class SimClock {
     }
 
     long gap = toTick - fromTick;
-    if (gap > MAX_CATCHUP_TICKS) {
-      long start = toTick - MAX_CATCHUP_TICKS;
-      return new CatchupRange(start, toTick, MAX_CATCHUP_TICKS, true);
+    if (gap > maxTicks) {
+      long start = toTick - maxTicks;
+      return new CatchupRange(start, toTick, maxTicks, true);
     }
 
     return new CatchupRange(fromTick, toTick, gap, false);

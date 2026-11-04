@@ -2,6 +2,7 @@ package dev.felipesantos.papertwin.runtime;
 
 import java.time.Clock;
 import java.time.Duration;
+import dev.felipesantos.papertwin.simulation.SimClock;
 import java.time.Instant;
 import javax.sql.DataSource;
 import org.slf4j.Logger;
@@ -108,14 +109,27 @@ public class SimulationService {
             lastReport = report;
             lastRun = afterLock;
 
+            /*
+             * O log da retomada é o instrumento de ajuste do teto em produção.
+             *
+             * As medições do desenho foram feitas num desktop; o Render Free dá
+             * uma fração de CPU e a JVM acorda fria. Sem este log, descobrir que
+             * quatro horas custam vinte segundos lá exigiria reproduzir o
+             * ambiente. Com ele, basta ler a primeira retomada depois do start e
+             * baixar `RESUME_MAX_HOURS` se o número incomodar.
+             *
+             * Por isso saem as três grandezas que decidem: quantas horas foram
+             * recuperadas, quanto tempo levou e quanto de heap ficou em uso.
+             */
             if (report.ticks() > 0) {
               log.info(
-                  "retomada: {} passos em {} ms, {} linhas arquivadas, compressão {}:1{}",
-                  report.ticks(),
+                  "retomada: {} h recuperadas em {} ms, heap {} MB, {} linhas arquivadas, compressão {}:1{}",
+                  String.format("%.2f", report.ticks() / (double) SimClock.TICKS_PER_HOUR),
                   report.durationMs(),
+                  report.heapUsedMb(),
                   report.archived(),
                   Math.round(report.compression().ratio()),
-                  report.reanchored() ? " (reancorou)" : "");
+                  report.reanchored() ? " (reancorou: o teto cortou o início)" : "");
             }
 
             return report;

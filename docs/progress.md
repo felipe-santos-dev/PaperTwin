@@ -738,6 +738,30 @@ values`, limites de alarme desenhados e escrita de setpoint.
 Fase 6 fechada. O instantâneo foi regenerado com o modelo novo: **954 arquivos,
 911 kB, 179 ativos**, compressão 203:1.
 
+### J4b — teto configurável e o número da JVM fria
+
+Ajuste pedido em 04/11/2026, antes de seguir a J5.
+
+As medições da J4 foram feitas num desktop, e o Render Free dá uma fração de
+vCPU com a JVM acordando fria. Três mudanças:
+
+1. **`RESUME_MAX_HOURS`** (padrão 4) — o teto deixou de ser constante e virou
+   configuração. Quem opera baixa sem recompilar. Teto menor que uma hora é
+   recusado na montagem: meia hora não dá tempo de a rede sair do transiente.
+2. **O log de cada retomada** traz as três grandezas que decidem o ajuste:
+   horas recuperadas, duração e heap em uso.
+3. **O número de JVM fria foi medido**: 4 h em **6,2 s** com **153 MB** de heap,
+   contra 4,5 s e ~44 MB em regime. Há uma classe de teste só para isso
+   (`ColdStartTest`), que roda uma retomada e nada mais — dentro da suíte o
+   número sai aquecido, então ela documenta como rodá-la isolada.
+
+As notas do README ganharam a tabela com os **três** custos da mesma janela —
+1,1 s (motor, aquecido), 4,5 s (completa, aquecida), 6,2 s (completa, fria) — e
+a explicação de por que são três.
+
+**Para a Fase 7**: o `deploy-checklist.md` tem de incluir "depois do primeiro
+deploy, ler o log da retomada e ajustar `RESUME_MAX_HOURS` se passar de ~15 s".
+
 ### J5 — o começo (parado por limite de uso em 03/11/2026)
 
 O que **já está** no repositório e compila, com os 217 testes da J4 verdes:

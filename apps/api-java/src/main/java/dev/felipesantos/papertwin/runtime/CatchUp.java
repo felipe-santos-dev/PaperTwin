@@ -65,14 +65,43 @@ public class CatchUp {
   private final HistorianRepository historian;
   private final OperationsRepository operations;
   private final SimStateRepository simState;
+  private final long maxCatchupTicks;
 
+  /** Com o teto padrão de quatro horas. */
   public CatchUp(
       HistorianRepository historian,
       OperationsRepository operations,
       SimStateRepository simState) {
+    this(historian, operations, simState, MAX_CATCHUP_HOURS);
+  }
+
+  /**
+   * Com o teto dado, em horas.
+   *
+   * <p>O teto depende da máquina. As quatro horas padrão foram medidas num desktop; o Render Free
+   * dá uma fração de CPU e a JVM acorda fria, então lá a mesma janela custa várias vezes mais.
+   * Quem opera ajusta {@code RESUME_MAX_HOURS} olhando o log da retomada.
+   */
+  public CatchUp(
+      HistorianRepository historian,
+      OperationsRepository operations,
+      SimStateRepository simState,
+      long maxHours) {
+
+    if (maxHours < 1) {
+      throw new IllegalArgumentException(
+          "O teto da retomada precisa ser de pelo menos uma hora: " + maxHours);
+    }
+
     this.historian = historian;
     this.operations = operations;
     this.simState = simState;
+    this.maxCatchupTicks = maxHours * SimClock.TICKS_PER_HOUR;
+  }
+
+  /** O teto em vigor, em horas. */
+  public long maxHours() {
+    return maxCatchupTicks / SimClock.TICKS_PER_HOUR;
   }
 
   /** O que a retomada fez, para o log e para o {@code /health}. */
@@ -91,7 +120,14 @@ public class CatchUp {
       int alarmsCleared,
       Recorder.Stats compression,
       long durationMs,
+      /** Heap em uso ao fim da retomada, em MB. É o número que o Render Free limita. */
+      long heapUsedMb,
       Map<String, Double> values) {}
+
+  private static long heapUsedMb() {
+    var runtime = Runtime.getRuntime();
+    return (runtime.totalMemory() - runtime.freeMemory()) / 1_048_576;
+  }
 
   /**
    * O cenário de degradação do mancal, ancorado no instante pedido.
@@ -190,7 +226,7 @@ public class CatchUp {
     boolean seedChanged = saved != null && saved.seed() != seed;
     Long fromSaved = saved == null || seedChanged ? null : saved.lastTick();
 
-    var range = SimClock.catchupRange(fromSaved, now);
+    var range = SimClock.catchupRange(fromSaved, now, maxCatchupTicks);
     var scenario = scenarioAt(now);
 
     /*
@@ -216,6 +252,7 @@ public class CatchUp {
           0, 0, 0, 0, 0,
           new Recorder.Stats(0, 0, 0, 0, 0),
           (System.nanoTime() - started) / 1_000_000,
+          heapUsedMb(),
           // nada rodou, mas a pergunta "onde a máquina está" continua tendo resposta
           valuesAt(seed, range.toTick(), saved == null ? null : saved.state(), scenario));
     }
@@ -341,6 +378,7 @@ public class CatchUp {
         cleared,
         recorder.stats(),
         (System.nanoTime() - started) / 1_000_000,
+        heapUsedMb(),
         values);
   }
 

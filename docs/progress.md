@@ -22,7 +22,8 @@ Branch: `dev/fases-4-7`. Nada de push na main, nada de PR, nada de deploy.
 - [x] **J1** `apps/api-java`: catálogo e relações
 - [x] **J2** núcleo: FOPDT, CD, ruído, PI, rede, alarmes, mancais, cenários
 - [x] **J3** persistência: migrations, historiador, entidades, estado da rede
-- [ ] **J4–J5** retomada, API
+- [x] **J4** retomada e concorrência
+- [ ] **J5** API
 - [ ] **J6** Contrato com o front via `openapi.json`
 - [ ] **J7** Dockerfile e ajuste para 512 MB
 - [ ] **J8** Remover `apps/api`
@@ -508,6 +509,47 @@ paridade Java confirmada a 1e-9 e o instantâneo de demonstração regerado.
 O teste que impede a volta disso cobre **os 114 mancais**, e não as três tags do
 gabarito: com três dava para passar sem notar, com 114 não dá.
 
+### J4 — retomada e concorrência
+
+**217 testes.** A retomada roda dentro da requisição que acorda a API, com duas
+camadas de coordenação e duas correções que os testes acharam.
+
+**O lock.** Quando o host dorme a noite e alguém abre a tela de manhã, o
+navegador dispara as quinze buscas das sete telas ao mesmo tempo. Sem
+coordenação, quinze requisições reexecutariam as mesmas quatro horas em
+paralelo. Dentro do processo, um bloqueio comum basta; entre processos — e o
+Render pode subir duas instâncias num deploy — é `pg_advisory_lock`. A segunda
+requisição **espera e lê o resultado**, em vez de retomar a mesma janela:
+esperar é melhor que falhar, porque quem abriu a tela quer o dado, não um 409.
+Há teste com dez chamadas simultâneas: **uma retomada só**.
+
+O lock é liberado num `finally`, e se o processo morrer no meio o Postgres o
+libera ao fechar a conexão — que é a razão de ser lock de aviso e não uma linha
+numa tabela de controle, que ficaria travada para sempre. Há teste para a falha.
+
+**Os números**, medidos e registrados em `notas-para-readme.md`: 1 h em 0,55 s,
+4 h em 1,1 s, 24 h em 10,5 s, **72 h em 32,8 s**. Como 72 h não cabem nos ~20 s
+de uma requisição, o teto de quatro horas se confirma pela medida e não por
+gosto. Com banco, a janela do teto custa ~4,5 s e comprime ~200:1.
+
+#### Duas correções que os testes acharam
+
+As duas têm a mesma causa: **o relógio do host pode andar para trás**, que é o
+que uma correção de NTP faz.
+
+1. **`valuesAt` crashava.** Ela passava o estado gravado para o motor sem
+   conferir o passo, e o motor recusa estado de outro passo — com razão.
+   Numa rota de leitura isso derrubaria a requisição. Agora o estado só é usado
+   quando o passo bate; senão a rede monta em regime e responde.
+2. **O motor de alarmes normalizaria um alarme antes de ele ter disparado.**
+   Um alarme carregado do banco com `raisedAt` depois do fim da janela sendo
+   simulada recebia `clearedAt` anterior ao disparo. O banco pegou, pela
+   restrição `alarm_cleared_after_raised`. Agora o motor só recebe o que já
+   existia quando a janela terminou.
+
+A segunda é um bom argumento para as restrições do banco existirem: ela virou
+uma exceção clara em vez de uma linha incoerente gravada em silêncio.
+
 ### J3 — entidades e estado da rede (terceira parte, fase fechada)
 
 **205 testes.** Fecha a J3.
@@ -696,15 +738,13 @@ values`, limites de alarme desenhados e escrita de setpoint.
 Fase 6 fechada. O instantâneo foi regenerado com o modelo novo: **954 arquivos,
 911 kB, 179 ativos**, compressão 203:1.
 
-### O que vem agora: J4 — retomada e concorrência
+### O que vem agora: J5 — a API
 
-A retomada dentro da requisição que acorda a API, com `pg_advisory_lock`: a
-segunda requisição espera e lê o resultado em vez de retomar a mesma janela.
-Teste com requisições paralelas.
-
-Medir tempo e memória para recuperar 1 h, 24 h e 72 h. Se 72 h não couber com
-folga em ~20 s, teto de N horas e o resto marcado como lacuna "sem dados" no
-historiador, de forma determinística. Os números vão para as notas do README.
+As mesmas rotas e formatos da API TypeScript: valores atuais, histórico, alarmes
+(listar e reconhecer), setpoint com auditoria e limites do catálogo, entidades,
+SSE com `SseEmitter`, `/health`. Erros em Problem Details (RFC 9457). Testes de
+rota comparando com `reference/golden/api/routes.json`. O `openapi.json` é
+gerado na build e versionado.
 
 ### Como era J2 (feito)
 

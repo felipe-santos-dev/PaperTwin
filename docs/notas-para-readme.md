@@ -171,6 +171,40 @@ simulador um número que ninguém mediu, com a mesma cara dos outros quatro.
 
 ---
 
+## 4b. Custo da retomada — medido
+
+Medido em 03/11/2026, na máquina de desenvolvimento (Java 25, Postgres 18.6
+embarcado). É o custo de CPU do motor mais o gravador, sem banco: a escrita é
+proporcional às linhas arquivadas, que a compressão mantém em alguns milhares, e
+por isso não é ela que decide o teto.
+
+| Janela           | Passos  | Tempo  | Linhas arquivadas |
+| ---------------- | ------- | ------ | ----------------- |
+| 1 h              | 3.600   | 0,55 s | 1.415             |
+| **4 h (o teto)** | 14.400  | 1,1 s  | 4.538             |
+| 24 h             | 86.400  | 10,5 s | 24.959            |
+| 72 h             | 259.200 | 32,8 s | 73.802            |
+
+Com a escrita no banco incluída, a janela do teto custa **~4,5 s** e produz
+~4.550 linhas, com compressão medida de **~200:1**.
+
+**É daqui que sai o teto de quatro horas.** A retomada roda dentro de uma
+requisição HTTP, porque não há processo de fundo — quem acorda a API é quem
+abriu a tela. Trinta e três segundos passam de qualquer tempo limite razoável de
+requisição, então 72 h não cabem; quatro horas cabem com folga.
+
+A consequência é dita e não escondida: acima do teto a retomada **reancora**, o
+relatório diz que reancorou, e o intervalo que não rodou fica como buraco no
+histórico. Se ninguém abrir a tela por um dia, não houve quem rodasse a
+simulação daquele dia. Quem quiser histórico contínuo precisa de alguém batendo
+na API de tempos em tempos — é decisão de deploy, e está no checklist.
+
+Sobre memória: o número de heap foi medido e **não** virou asserção de teste. O
+delta entre dois instantes é dominado por quando o coletor resolveu rodar, não
+pelo tamanho da janela — na mesma execução, 1 h mediu +33 MB e 24 h mediu +17 MB.
+O que limita a memória está no desenho e é verificável sem medir: o gravador é
+esvaziado a cada varredura e o motor guarda um estado de tamanho fixo.
+
 ## 5. Decisões que valem no texto
 
 ### 5.1 Proveniência: três vocabulários, não um

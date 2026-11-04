@@ -22,6 +22,7 @@ public enum VariableSource {
     this.label = label;
   }
 
+  @com.fasterxml.jackson.annotation.JsonValue
   /** O texto como o CSV escreve. */
   public String label() {
     return label;

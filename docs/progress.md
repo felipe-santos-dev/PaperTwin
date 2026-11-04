@@ -23,7 +23,7 @@ Branch: `dev/fases-4-7`. Nada de push na main, nada de PR, nada de deploy.
 - [x] **J2** núcleo: FOPDT, CD, ruído, PI, rede, alarmes, mancais, cenários
 - [x] **J3** persistência: migrations, historiador, entidades, estado da rede
 - [x] **J4** retomada e concorrência
-- [ ] **J5** API
+- [ ] **J5** API — começada: configuração, Problem Details e rotas de processo
 - [ ] **J6** Contrato com o front via `openapi.json`
 - [ ] **J7** Dockerfile e ajuste para 512 MB
 - [ ] **J8** Remover `apps/api`
@@ -738,7 +738,31 @@ values`, limites de alarme desenhados e escrita de setpoint.
 Fase 6 fechada. O instantâneo foi regenerado com o modelo novo: **954 arquivos,
 911 kB, 179 ativos**, compressão 203:1.
 
-### O que vem agora: J5 — a API
+### J5 — o começo (parado por limite de uso em 03/11/2026)
+
+O que **já está** no repositório e compila, com os 217 testes da J4 verdes:
+
+- `config/JacksonConfig` — instantes sempre com três casas e em UTC. O padrão do
+  Jackson omite os milissegundos quando são zero, e o gabarito usa o formato do
+  `toISOString()` do JavaScript, que sempre os escreve.
+- `config/AppConfig` — os beans. O relógio é bean de propósito: a geração do
+  instantâneo e os testes de rota precisam de instante fixo.
+- `api/ApiErrors` — RFC 9457, com `type` para o cliente decidir sem casar texto
+  em português.
+- `api/ProcessController` — `/process/values`, `/process/tags/{tag}`,
+  `/process/tags/{tag}/trend`, `/process/steam-groups`.
+
+Os registros de domínio serializam direto, sem camada de DTO: as formas já
+batem com o gabarito. Os enums ganharam `@JsonValue` no `label()`, para o JSON
+falar o vocabulário do domínio (`"média"`, `"normalizado"`) e não o do Java.
+
+**O que falta na J5**: `/health`, `/assets` e `/assets/{tag}`, `/alarms` com
+reconhecer/engavetar, as rotas das entidades, a escrita de setpoint com
+auditoria, o SSE com `SseEmitter`, o `openapi.json` gerado na build, e os testes
+de rota comparando com `reference/golden/api/routes.json` (as 14 rotas já estão
+gravadas lá).
+
+### Como era o plano da J5
 
 As mesmas rotas e formatos da API TypeScript: valores atuais, histórico, alarmes
 (listar e reconhecer), setpoint com auditoria e limites do catálogo, entidades,

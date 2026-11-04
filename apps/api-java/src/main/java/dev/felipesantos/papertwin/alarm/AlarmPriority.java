@@ -17,6 +17,7 @@ public enum AlarmPriority {
     this.label = label;
   }
 
+  @com.fasterxml.jackson.annotation.JsonValue
   public String label() {
     return label;
   }

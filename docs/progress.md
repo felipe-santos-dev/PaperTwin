@@ -27,7 +27,7 @@ Branch: `dev/fases-4-7`. Nada de push na main, nada de PR, nada de deploy.
 - [x] **J6** Contrato com o front via `openapi.json`
 - [x] **J7** Dockerfile e ajuste para 512 MB (escrito, não executado)
 - [x] **J8** Remover `apps/api`
-- [ ] **7** Acabamento: Playwright, performance, acessibilidade, CI, checklist de deploy
+- [x] **7** Acabamento: Playwright, performance, acessibilidade, CI, checklist de deploy
 
 ## Mudança de rumo — back-end em Java
 
@@ -714,37 +714,64 @@ decide se a retomada cabe numa requisição — não pode ficar escondido atrás
     projeto roda 18.6, e os testes passaram a rodar 18.6 também. Deixa de ser
     suposição.
 26. **A semeadura de ativos no Java faz upsert sem apagar**, contra o `delete
-    from asset` da versão TypeScript. Aquilo funciona num banco em memória que
+from asset` da versão TypeScript. Aquilo funciona num banco em memória que
     nasce vazio e falha num banco gerenciado: assim que existe uma ronda ou uma
     nota apontando para o ativo, o `delete` bate na chave estrangeira e o
     arranque inteiro cai. O custo de não apagar é uma tag removida do modelo
     ficar para trás na tabela; o custo de apagar é a API não subir. Vale
     confirmar se é o que o Felipe quer — a alternativa seria apagar só o que
     nada referencia.
+27. **A nulabilidade do contrato é declarada à mão**, com `@Nullable` nos
+    componentes de registro; tudo o mais sai como obrigatório. Está conferida
+    contra o que o código de fato produz hoje, mas é uma afirmação que nada
+    verifica em tempo de compilação: uma rota nova que devolva nulo num campo
+    não marcado faria o contrato mentir, e o front não trataria. Vale uma
+    passada de olho a cada rota nova.
+28. **O piso de quadros por segundo da cena é 4**, e não 30. O alvo de verdade
+    é 30 num desktop com GPU; 4 é o que distingue "a cena desenha" de "a cena
+    parou" num Chromium sem cabeça que entrega 8,7. Se o CI ganhar GPU, vale
+    subir.
 
 ## Próximo passo exato
 
-Fase 6: as 7 telas de `reference/prototypes/papertwin-telas.html` em `apps/web`,
-com dados reais da API e o instantâneo do modo de demonstração regenerado.
+**Todas as fases do plano estão fechadas.** O que falta é do Felipe:
 
-Ordem planejada:
+1. **Revisar e mesclar na `main`.** O ramo é `dev/fases-4-7`; nenhum PR foi
+   aberto e nada foi empurrado para a `main`, pela regra.
+2. **Reescrever o `README.md`.** Ele ainda descreve `apps/api` e a pilha
+   Fastify, que saíram na J8. Não foi tocado, pela regra de que ele é seu — e
+   `docs/notas-para-readme.md` tem o material atualizado, inclusive a tabela de
+   módulos, os números medidos e os avisos.
+3. **Conferir as suposições** da seção "Suposições para o Felipe revisar", que
+   ganhou duas na reescrita: a nulabilidade declarada no contrato e a semeadura
+   de ativos por upsert sem apagar.
+4. **Executar o deploy**, se for a hora: `docs/deploy-checklist.md` tem o passo
+   a passo, a ordem das três peças e o que medir no primeiro arranque.
 
-1. **6.1 — fundação**: cliente da API para as rotas novas, navegação por teclas
-   1–7 como no protótipo, moldura das telas (cabeçalho, estados vazio, carregando
-   e erro), e os gráficos. Sem biblioteca pesada se der; se usar, uma só.
-2. **6.2 — Turno, Bobinas, Notas**: as três de tabela, que exercem o cliente e
-   os estados.
-3. **6.3 — Processo e Mancais**: as duas de gráfico, com tendência por `plot
-values`, limites de alarme desenhados e escrita de setpoint.
-4. **6.4 — Rondas**: campo ao lado do online.
-5. **6.5 — Máquina**: a cena 3D portada de `mp1-parte-seca-3d.html` para R3F
-   gerada do `mp1.ts` (parte úmida, seções, cilindros, motores do lado
-   acionamento, papel), com clique em mancal abrindo o painel de vibração.
-6. **6.6 — instantâneo de demonstração** regenerado cobrindo as rotas novas,
-   com instante fixo (o relógio da aplicação já é injetável).
+### O que ficou medido e não resolvido
 
-Fase 6 fechada. O instantâneo foi regenerado com o modelo novo: **954 arquivos,
-911 kB, 179 ativos**, compressão 203:1.
+- **A colheita é mais da metade do custo da retomada** (7,9 s de 13,5 s numa
+  janela de 4 h). Ela paga por turno e por bobina, então baixar
+  `RESUME_MAX_HOURS` ajuda pouco nessa metade. As saídas seriam colher fora da
+  requisição ou só para o turno corrente — as duas são decisão de produto, e
+  por isso não foram tomadas aqui.
+- **O CI gera o instantâneo três vezes** (nos jobs `verify`, `e2e` e no do
+  Pages), e cada vez leva ~4 min. Dava para gerar uma vez e passar como
+  artefato entre os jobs; não foi feito para não acoplar os jobs antes de
+  alguém reclamar do tempo.
+- **O RSS real nunca foi medido**, porque não há Docker nesta máquina e porque
+  medir no Windows e chamar de RSS seria dar precisão a um número que não a
+  tem. Está no checklist, no primeiro deploy.
+
+---
+
+## Histórico das fases
+
+### Fase 6 — as 7 telas
+
+Fechada. As sete telas de `reference/prototypes/papertwin-telas.html` em
+`apps/web`, com dados da API e a cena 3D gerada do `mp1.ts`. O instantâneo foi
+regenerado com o modelo novo: **954 arquivos, 179 ativos**, compressão 203:1.
 
 ### J4b — teto configurável e o número da JVM fria
 
@@ -769,6 +796,100 @@ a explicação de por que são três.
 
 **Para a Fase 7**: o `deploy-checklist.md` tem de incluir "depois do primeiro
 deploy, ler o log da retomada e ajustar `RESUME_MAX_HOURS` se passar de ~15 s".
+
+### Fase 7 — CI, ponta a ponta, orçamento e checklist
+
+**CI com três jobs**, e nenhum publica nada:
+
+- `java` — `./mvnw verify` (compila, roda os 252 testes, empacota o jar) e
+  confere que o `openapi.json` versionado está em dia;
+- `verify` — formatação, lint, tipos, testes e build de todos os workspaces,
+  mais `check:api-types`, que refaz os tipos gerados e falha com o diff;
+- `e2e` — Playwright contra a API Java de verdade.
+
+Os três jobs de Node agora precisam de **JDK**: o build da web gera o
+instantâneo do modo de demonstração chamando a API Java. O workflow do Pages
+também.
+
+**Ponta a ponta** (`apps/web/e2e/`), contra a API Java com Postgres embutido:
+
+- `telas.spec.ts` — as sete telas carregam com dados da API, console limpo e
+  nenhuma requisição falha; as teclas 1–7; a colheita chegou à tela (bobina
+  fechada com gramatura, CS23 em zona D); e o **modo de demonstração com a API
+  bloqueada**, que é o que o GitHub Pages serve.
+- `acessibilidade.spec.ts` — varredura do axe (WCAG 2.1 A e AA) em seis telas,
+  cortando em **sério e crítico**. A cena fica de fora porque um `canvas` é
+  opaco para o axe, e tem um teste próprio: as seções são botões nomeados.
+- `orcamento.spec.ts` — chunk de entrada abaixo de 400 kB (está em **115 kB**),
+  primeira tela abaixo de 600 kB e sem three.js (ele tem 964 kB e é carregado
+  só na tela de Máquina), e quadros por segundo da cena.
+- `scene.spec.ts` — o que já havia.
+
+**O piso de quadros por segundo é 4, e não 30.** Medido nesta máquina: **8,7**,
+porque o Chromium sem cabeça desenha por software no mesmo processador que roda
+o teste. Trinta seria um teste vermelho de nascença, e teste vermelho de
+nascença se desliga. O piso pega regressão de ordem de grandeza — uma cena que
+recria geometria a cada quadro cai para menos de um, não para oito.
+
+Três defeitos que o ponta a ponta encontrou, nenhum deles visível em teste de
+unidade:
+
+- **Dois marcos complementares, um dentro do outro**, na tela de Máquina: a
+  coluna que segura o painel e o painel. Quem navega por marcos entrava no de
+  fora e encontrava o de dentro vazio de significado. O de fora virou `div`; o
+  de dentro ganhou nome.
+- **As linhas das tabelas são botões**, porque são clicáveis — e um seletor por
+  `row` encontrava só o cabeçalho, contando zero bobinas para sempre.
+- **O prazo de vinte segundos do painel de mancal não basta mais.** A primeira
+  chamada da sessão paga a retomada, e com a colheita de entidades ela passou
+  de poucos segundos a treze. Encurtar o teste seria esconder isso — então o
+  prazo subiu, e a suíte passou a **acordar a simulação antes do primeiro
+  teste** (`e2e/global-setup.ts`). Sem isso o custo cai sobre o teste que
+  calhar de ser o primeiro, que falha por capacidade e não por defeito — e
+  muda a cada reordenação da suíte. O custo da JVM fria continua medido onde dá
+  para medi-lo sem um navegador no meio: `ColdStartTest`, no lado Java.
+
+#### O defeito que o ponta a ponta encontrou, e que nenhum teste de unidade veria
+
+O painel de mancal ficava em "Consultando a API…" por noventa segundos. A causa
+não estava na rota: estava em **a colheita rodar em toda retomada**. A janela
+de frescor é de cinco segundos, então duas telas abertas com seis segundos de
+intervalo colhiam duas vezes a mesma coisa — e colher é ler o arquivo de ~20
+tags pela janela do turno (até oito horas) e reescrever as entidades dele.
+
+Medido com a aplicação já acordada: `/assets/{tag}` levava **11,3 s** e
+`/assets/{tag}/vibration` **11,1 s**. Agora levam **5 ms** e **9 ms**.
+
+A regra tem teste próprio (`HarvestCadenceTest`), e ele não toca no banco — o
+que é a propriedade que torna a decisão barata. Ele cobra os dois lados: que
+uma janela de cinco segundos em turno calmo **não** colhe, e que uma bobina
+fechando, uma ronda terminando ou o cruzamento da grade **colhem**. O instante
+"calmo" é procurado, e não escrito à mão: um número fixo deixaria de valer em
+silêncio quando o plano do turno mudasse.
+
+A correção não foi um cache. `Harvest.dueIn` decide se há o que colher por
+aritmética pura, sem tocar no banco: colhe quando uma **fronteira de entidade**
+cai na janela (bobina fecha, turno vira, ronda termina, quebra começa ou acaba,
+troca de gramatura começa — todas saem do plano, que é função de semente e
+tempo) ou quando a janela cruza a **grade absoluta de cinco minutos**, que
+atualiza o que muda continuamente: a produção e a eficiência do turno.
+
+A grade é absoluta pelo mesmo motivo que a varredura do historiador é: duas
+retomadas que começassem em passos diferentes colheriam em instantes
+diferentes, e a idempotência se perderia. O que se perde é até cinco minutos de
+atraso na produção acumulada; uma bobina que fecha aparece na hora.
+
+**`docs/deploy-checklist.md`** escrito, com a ordem das três peças (Neon →
+Render → Pages), a migration rodada à mão, e a linha que a J4b pedia: _depois do
+primeiro deploy, ler o log da retomada e ajustar `RESUME_MAX_HOURS` se passar de
+~15 s_ — com a explicação de que a parcela da colheita não se ajusta pelo teto.
+
+Uma coisa que a Fase 7 obrigou: o `build` da web regenerava os 954 arquivos do
+instantâneo a cada vez, e isso passou de segundos (TypeScript) a **quatro
+minutos** (contexto do Spring + Postgres embutido). O `demo:data` passou a
+**pular quando o instantâneo já existe**, com `--force` para refazer. Em CI ele
+nunca existe, porque a pasta é ignorada pelo git e o checkout é limpo — que é
+onde refazer importa.
 
 ### J8 — `apps/api` saiu
 
@@ -795,8 +916,7 @@ Para isso dar certo, três coisas que faltavam apareceram:
   que a versão TypeScript já fazia e estava escrito nas notas. Quando a
   simulação nunca rodou, `simulation` vem nulo em vez de zeros.
 - **Não havia como subir a API sem Docker.** `DevServer` (em `src/test`) sobe a
-  aplicação de verdade contra o mesmo Postgres embutido dos testes, na porta
-  3333. Desenvolver deixou de exigir Docker.
+  aplicação de verdade contra o mesmo Postgres embutido dos testes, na porta 3333. Desenvolver deixou de exigir Docker.
 
 O instantâneo do modo de demonstração passou a sair da API Java
 (`DemoSnapshotTest`, ligado por `-Ddemo.write=true`): **954 arquivos, 1,9 MB**,

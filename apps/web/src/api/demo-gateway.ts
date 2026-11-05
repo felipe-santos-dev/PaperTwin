@@ -175,11 +175,7 @@ export const DEMO_GATEWAY: DataGateway = {
   },
 
   async shifts(filter = {}, signal) {
-    const all = await load<ShiftsResponse>(
-      '/shifts',
-      ['count', 'shifts'],
-      signal,
-    );
+    const all = await load<ShiftsResponse>('/shifts', ['count', 'shifts'], signal);
     const shifts = capped(all.shifts, filter.limit);
     return { count: shifts.length, shifts };
   },

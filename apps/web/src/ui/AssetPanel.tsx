@@ -64,7 +64,10 @@ export function AssetPanel({ asset, data, onClose }: AssetPanelProps) {
   const zone = detail?.status?.zone ?? null;
 
   return (
-    <aside className="absolute top-4 right-4 flex max-h-[calc(100%-2rem)] w-80 flex-col overflow-y-auto rounded-xl border border-mill-line bg-mill-panel/92 p-4 backdrop-blur">
+    <aside
+      aria-label="Ativo selecionado"
+      className="absolute top-4 right-4 flex max-h-[calc(100%-2rem)] w-80 flex-col overflow-y-auto rounded-xl border border-mill-line bg-mill-panel/92 p-4 backdrop-blur"
+    >
       <div className="flex items-start gap-3">
         <div className="min-w-0">
           {zone && (

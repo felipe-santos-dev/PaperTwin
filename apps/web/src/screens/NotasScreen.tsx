@@ -1,6 +1,11 @@
 import { useCallback, useState } from 'react';
 
-import { NOTE_PRIORITY_LABELS, NOTE_STATUSES, type NotePriority, type NoteStatus } from '@mp1/shared';
+import {
+  NOTE_PRIORITY_LABELS,
+  NOTE_STATUSES,
+  type NotePriority,
+  type NoteStatus,
+} from '@mp1/shared';
 import type { MaintenanceNoteView } from '@mp1/shared/api';
 
 import type { DataGateway } from '../api/gateway';

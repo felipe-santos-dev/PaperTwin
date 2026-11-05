@@ -3,3 +3,9 @@ dist
 coverage
 reference
 package-lock.json
+
+# Gerado e conferido pelo lado Java: `OpenApiContractTest` grava este arquivo e
+# compara com o que a aplicação publica, byte a byte. Deixar o Prettier
+# reformatá-lo poria os dois para brigar — um verde depois do outro, nunca os
+# dois juntos.
+apps/api-java/openapi.json

@@ -15,8 +15,44 @@ env:
   # O esbuild precisa do postinstall para baixar o binário da plataforma, e o
   # npm 12 bloqueia scripts por padrão. O allowScripts no package.json cobre isso.
   NODE_VERSION: '24'
+  # A mesma do Dockerfile. A 21 é LTS e é o que o Render roda.
+  JAVA_VERSION: '21'
 
 jobs:
+  java:
+    name: API Java
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven
+
+      # `verify` e não `test`: é o que também empacota o jar, e um jar que não
+      # fecha é um deploy que falha depois do merge.
+      - name: Verificar
+        run: ./mvnw -B verify
+        working-directory: apps/api-java
+
+      # O contrato é versionado porque o front gera os tipos dele. Se ele mudou
+      # e não foi regravado, isto falha aqui — e não na tela de quem abriu.
+      - name: O openapi.json versionado está em dia
+        run: git diff --exit-code apps/api-java/openapi.json
+
+      - name: Guardar os relatórios do surefire
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: apps/api-java/target/surefire-reports
+          retention-days: 7
+          if-no-files-found: ignore
+
   verify:
     name: Lint, tipos, testes e build
     runs-on: ubuntu-latest
@@ -30,8 +66,19 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
 
+      # O build da web gera o instantâneo do modo de demonstração chamando a
+      # API Java (`npm run demo:data`), então este job também precisa de um JDK.
+      - uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven
+
       - name: Instalar dependências
         run: npm ci
+
+      - name: Os tipos gerados do contrato estão em dia
+        run: npm run check:api-types --workspace @mp1/shared
 
       - name: Formatação
         run: npm run format:check
@@ -72,6 +119,14 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
+
+      # O e2e roda contra a API Java de verdade: o Playwright sobe o
+      # `DevServer` com o Postgres embutido antes de servir a web.
+      - uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven
 
       - name: Instalar dependências
         run: npm ci

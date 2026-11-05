@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -22,6 +23,28 @@ import { fileURLToPath } from 'node:url';
  */
 
 const MODULE = fileURLToPath(new URL('../../../apps/api-java', import.meta.url));
+
+/** Um arquivo que só existe se o instantâneo já foi gerado por inteiro. */
+const SENTINELA = fileURLToPath(
+  new URL('../../../apps/web/public/demo/health.json', import.meta.url),
+);
+
+/*
+ * Gerar o instantâneo leva alguns minutos: sobe um contexto do Spring, um
+ * Postgres embutido, roda a retomada e grava novecentos e poucos arquivos. O
+ * `build` da web chama isto, e refazer tudo a cada build local torna o ciclo
+ * insuportável — e o `vite preview` do e2e estoura o prazo esperando.
+ *
+ * Então: se o instantâneo já está lá, não refaz. Em CI ele nunca está, porque
+ * a pasta é ignorada pelo git e o checkout é limpo — que é exatamente onde
+ * refazer importa. Quem quiser refazer localmente passa `--force`.
+ */
+if (!process.argv.includes('--force') && existsSync(SENTINELA)) {
+  console.log(
+    'instantâneo do modo de demonstração já existe; use --force para refazer ' + `(${SENTINELA})`,
+  );
+  process.exit(0);
+}
 
 /*
  * O caminho vai absoluto, e não relativo ao `cwd`.

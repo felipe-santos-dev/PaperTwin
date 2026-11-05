@@ -2,6 +2,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 
 import openapiTS, { astToString } from 'openapi-typescript';
+import * as prettier from 'prettier';
 
 /**
  * Gera os tipos do front a partir do contrato da API Java.
@@ -46,6 +47,20 @@ const HEADER = `/**
  */
 `;
 
+/**
+ * A saída passa pelo Prettier antes de ser gravada.
+ *
+ * O arquivo é versionado, e o `format:check` do CI olha para ele como para
+ * qualquer outro. Sem isto, o Prettier reformata o gerado, a conferência de
+ * tipos regenera no formato do `openapi-typescript`, e os dois passam a brigar
+ * — um verde depois do outro, nunca os dois juntos.
+ */
+const formatar = async (source: string): Promise<string> => {
+  const file = fileURLToPath(OUT);
+  const options = await prettier.resolveConfig(file);
+  return prettier.format(source, { ...options, filepath: file });
+};
+
 const generate = async (): Promise<string> => {
   const ast = await openapiTS(CONTRACT, {
     // `Date` não ajuda aqui: os instantes atravessam como texto ISO e é como
@@ -54,7 +69,7 @@ const generate = async (): Promise<string> => {
     alphabetize: true,
   });
 
-  return `${HEADER}\n${astToString(ast)}`;
+  return formatar(`${HEADER}\n${astToString(ast)}`);
 };
 
 const generated = await generate();

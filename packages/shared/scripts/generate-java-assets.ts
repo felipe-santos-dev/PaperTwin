@@ -67,7 +67,10 @@ const rows = assets
   .join(',\n');
 
 const sections = MP1.sections
-  .map((section) => `          new Section(${java(section.id)}, ${java(section.label)}, ${section.order})`)
+  .map(
+    (section) =>
+      `          new Section(${java(section.id)}, ${java(section.label)}, ${section.order})`,
+  )
   .join(',\n');
 
 const source = `package dev.felipesantos.papertwin.machine;

@@ -37,6 +37,83 @@ import java.util.Map;
  */
 public final class Harvest {
 
+  /**
+   * De quanto em quanto tempo as entidades são recolhidas, em passos.
+   *
+   * <p>Cinco minutos. A colheita lê o arquivo de cada tag pela janela do turno — até oito horas
+   * — e reescreve as entidades dele. Isso custa alguns segundos, e rodá-la em <b>toda</b>
+   * retomada fazia cada requisição pagar esse preço: a janela de frescor é de cinco segundos,
+   * então duas telas abertas com seis segundos de intervalo colhiam duas vezes a mesma coisa.
+   * Medido: um {@code /assets/…} que deveria custar milissegundos levava <b>11 s</b>.
+   */
+  public static final long HARVEST_EVERY_TICKS = 5 * SimClock.TICKS_PER_MINUTE;
+
+  /**
+   * Se vale colher nesta janela.
+   *
+   * <p>Duas razões para colher, e nenhuma delas é "passou tempo":
+   *
+   * <ol>
+   *   <li><b>Uma fronteira caiu dentro.</b> Uma bobina fechou, um turno virou, uma ronda
+   *       terminou, uma quebra começou ou acabou, uma troca de gramatura começou. São os
+   *       instantes em que uma entidade nasce ou muda de estado, e eles saem do plano —
+   *       aritmética pura, sem banco.
+   *   <li><b>A janela cruzou a grade de cinco minutos.</b> É o que atualiza o que muda
+   *       continuamente: a produção acumulada do turno e a eficiência. A grade é absoluta, e
+   *       não contada a partir da última colheita, pelo mesmo motivo que a varredura do
+   *       historiador é: duas retomadas que começassem em passos diferentes colheriam em
+   *       instantes diferentes, e a idempotência se perderia.
+   * </ol>
+   *
+   * <p>O que se perde: uma bobina que fecha aparece na tela no mesmo instante (é fronteira), mas
+   * a produção do turno pode estar até cinco minutos atrasada. Numa tela de passagem de turno
+   * isso não se nota; num gráfico de tendência notaria, e por isso a tendência não vem daqui.
+   */
+  public static boolean dueIn(int seed, long fromTick, long toTick) {
+    if (toTick <= fromTick) {
+      return false;
+    }
+
+    if (Math.floorDiv(fromTick, HARVEST_EVERY_TICKS)
+        != Math.floorDiv(toTick, HARVEST_EVERY_TICKS)) {
+      return true;
+    }
+
+    for (var plan : shiftsInRange(seed, fromTick, toTick)) {
+      if (crosses(fromTick, toTick, plan.startTick(), plan.endTick(), plan.round().endTick())) {
+        return true;
+      }
+
+      var brk = plan.webBreak();
+      if (brk != null && crosses(fromTick, toTick, brk.startTick(), brk.endTick())) {
+        return true;
+      }
+
+      var change = plan.gradeChange();
+      if (change != null && crosses(fromTick, toTick, change.startTick())) {
+        return true;
+      }
+
+      for (var reel : plan.reels()) {
+        if (crosses(fromTick, toTick, reel.startTick(), reel.endTick())) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  /** Se algum dos instantes cai dentro da janela {@code (from, to]}. */
+  private static boolean crosses(long fromTick, long toTick, long... instants) {
+    for (var instant : instants) {
+      if (instant > fromTick && instant <= toTick) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /** O resultado da colheita. */
   public record Result(
       List<Entities.Shift> shifts,

@@ -136,8 +136,7 @@ export interface DataGateway {
 
   /** `null` quando a fonte não aceita reconhecimento. */
   readonly acknowledgeAlarm:
-    | ((id: string, acknowledgedBy: string, signal?: AbortSignal) => Promise<AlarmResponse>)
-    | null;
+    ((id: string, acknowledgedBy: string, signal?: AbortSignal) => Promise<AlarmResponse>) | null;
 }
 
 /** O portão que fala com a API. */

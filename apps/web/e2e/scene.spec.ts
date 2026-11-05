@@ -128,7 +128,7 @@ test.describe('seleção por URL', () => {
     await page.goto(sceneWith(BEARING));
     await waitForScene(page);
 
-    const painel = page.getByRole('complementary');
+    const painel = page.getByRole('complementary', { name: 'Ativo selecionado' });
     await expect(painel).toBeVisible();
     await expect(painel.getByText(BEARING)).toBeVisible();
 
@@ -143,7 +143,7 @@ test.describe('seleção por URL', () => {
     await page.goto('/?asset=MP1-NAO-EXISTE#maquina');
     await waitForScene(page);
 
-    await expect(page.getByRole('complementary')).toBeHidden();
+    await expect(page.getByRole('complementary', { name: 'Ativo selecionado' })).toBeHidden();
     expect(errors).toEqual([]);
   });
 
@@ -152,7 +152,10 @@ test.describe('seleção por URL', () => {
     await waitForScene(page);
 
     // dentro do painel: fora dele, "Fechar" também casaria com "Fechar portas"
-    await page.getByRole('complementary').getByRole('button', { name: 'Fechar' }).click();
+    await page
+      .getByRole('complementary', { name: 'Ativo selecionado' })
+      .getByRole('button', { name: 'Fechar' })
+      .click();
     await expect(page).toHaveURL((url) => !url.searchParams.has('asset'));
 
     await clickAsset(page, BEARING);
@@ -166,7 +169,7 @@ test.describe('interação com a cena', () => {
     await page.goto(sceneWith(BEARING));
     await waitForScene(page);
 
-    const painel = page.getByRole('complementary');
+    const painel = page.getByRole('complementary', { name: 'Ativo selecionado' });
     await painel.getByRole('button', { name: 'Fechar' }).click();
     await expect(painel).toBeHidden();
 
@@ -185,7 +188,7 @@ test.describe('interação com a cena', () => {
     await page.goto(sceneWith(BEARING));
     const canvas = await waitForScene(page);
 
-    const painel = page.getByRole('complementary');
+    const painel = page.getByRole('complementary', { name: 'Ativo selecionado' });
     await expect(painel).toBeVisible();
 
     // só os mancais respondem ao clique; qualquer outro ponto da cena é "fora"
@@ -201,10 +204,18 @@ test.describe('interação com a cena', () => {
     await page.goto(sceneWith(BEARING));
     await waitForScene(page);
 
-    const painel = page.getByRole('complementary');
+    const painel = page.getByRole('complementary', { name: 'Ativo selecionado' });
 
-    // a zona só aparece depois de a API responder — é a fatia vertical inteira
-    await expect(painel).toContainText(/ISO 20816 · zona [ABCD]/, { timeout: 20_000 });
+    /*
+     * A zona só aparece depois de a API responder — é a fatia vertical inteira.
+     *
+     * O prazo é largo porque a **primeira** chamada da sessão paga a retomada:
+     * a simulação reexecuta o intervalo que faltou dentro da requisição, e num
+     * banco recém-nascido isso é a janela inteira do teto. Vinte segundos
+     * bastavam enquanto a API era TypeScript e não existia colheita de
+     * entidades; hoje não bastam, e encurtar o teste seria esconder isso.
+     */
+    await expect(painel).toContainText(/ISO 20816 · zona [ABCD]/, { timeout: 60_000 });
     await expect(painel.getByRole('img', { name: /Vibração RMS/ })).toBeVisible();
     await expect(painel).toContainText('mm/s');
 

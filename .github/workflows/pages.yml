@@ -18,6 +18,7 @@ concurrency:
 
 env:
   NODE_VERSION: '24'
+  JAVA_VERSION: '21'
 
 jobs:
   build:
@@ -32,6 +33,14 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
+
+      # O instantâneo do modo de demonstração é gerado pela API Java — é ele
+      # que faz o site abrir com dados quando o Render está dormindo.
+      - uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: maven
 
       - name: Instalar dependências
         run: npm ci

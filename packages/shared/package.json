@@ -15,7 +15,8 @@
     "generate:java": "tsx scripts/generate-java-assets.ts",
     "generate:api-types": "tsx scripts/generate-api-types.ts",
     "check:api-types": "tsx scripts/generate-api-types.ts --check",
-    "demo:data": "tsx scripts/generate-demo.ts"
+    "demo:data": "tsx scripts/generate-demo.ts",
+    "demo:data:force": "tsx scripts/generate-demo.ts --force"
   },
   "devDependencies": {
     "@types/node": "^24.6.2",

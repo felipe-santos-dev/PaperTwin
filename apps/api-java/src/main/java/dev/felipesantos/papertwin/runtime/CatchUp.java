@@ -387,11 +387,28 @@ public class CatchUp {
      * bobina que acabou de fechar está dentro da retenção de todo jeito.
      */
     long harvestStarted = System.nanoTime();
-    var harvest =
-        new Harvest(historian)
-            .run(seed, range.fromTick(), range.toTick(), List.copyOf(pendingAlarms.values()));
-    Harvest.persist(operations, harvest);
-    long harvestMs = (System.nanoTime() - harvestStarted) / 1_000_000;
+    long harvestMs = 0;
+
+    /*
+     * A colheita não roda em toda retomada.
+     *
+     * Ela lê o arquivo de cada tag pela janela do turno — até oito horas — e
+     * reescreve as entidades dele. Com a janela de frescor de cinco segundos,
+     * duas telas abertas com seis segundos de intervalo colhiam duas vezes a
+     * mesma coisa, e cada requisição pagava alguns segundos por isso: um
+     * `/assets/...`, que deveria custar milissegundos, levava 11 s.
+     *
+     * `Harvest.dueIn` decide por aritmética pura, sem tocar no banco: colhe
+     * quando uma fronteira de entidade cai na janela, ou quando ela cruza a
+     * grade de cinco minutos.
+     */
+    if (Harvest.dueIn(seed, range.fromTick(), range.toTick())) {
+      var harvest =
+          new Harvest(historian)
+              .run(seed, range.fromTick(), range.toTick(), List.copyOf(pendingAlarms.values()));
+      Harvest.persist(operations, harvest);
+      harvestMs = (System.nanoTime() - harvestStarted) / 1_000_000;
+    }
 
     historian.prune(now);
     simState.save(seed, range.toTick(), engine.snapshotState(), now);

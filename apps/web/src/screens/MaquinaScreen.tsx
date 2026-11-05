@@ -148,8 +148,15 @@ export function MaquinaScreen({ gateway, assetTag, onSelect }: MaquinaScreenProp
           )}
         </div>
 
+        {/*
+          Um `div`, e não um `aside`: o `AssetPanel` já é um — e dois marcos
+          complementares, um dentro do outro, é pior que nenhum. Quem navega
+          por marcos entra no de fora e encontra o de dentro vazio de
+          significado, e um seletor por papel acha os dois sem saber de qual
+          falar. Aqui isto é só a coluna que segura o painel.
+        */}
         {selected && (
-          <aside className="w-96 shrink-0 overflow-auto border-l border-mill-line pl-4 max-lg:w-full max-lg:border-l-0 max-lg:pl-0">
+          <div className="w-96 shrink-0 overflow-auto border-l border-mill-line pl-4 max-lg:w-full max-lg:border-l-0 max-lg:pl-0">
             <AssetPanel
               asset={selected}
               data={assetData}
@@ -157,7 +164,7 @@ export function MaquinaScreen({ gateway, assetTag, onSelect }: MaquinaScreenProp
                 onSelect(null);
               }}
             />
-          </aside>
+          </div>
         )}
       </div>
     </>

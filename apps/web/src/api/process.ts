@@ -1,33 +1,92 @@
+import type { AlarmPriority, AlarmState, NoteStatus } from '@mp1/shared';
 import type {
-  Alarm,
-  AlarmLimits,
-  AlarmPriority,
-  AlarmState,
-  ArchiveReason,
-  GradeChange,
-  MaintenanceNote,
-  NoteStatus,
-  ProcessVariable,
-  Round,
-  SetpointChange,
-  WebBreak,
-} from '@mp1/shared';
+  AlarmList,
+  AlarmResponse,
+  ApiAlarm,
+  GradeChangesResponse,
+  NotesResponse,
+  ProcessValues,
+  ReelDetail,
+  ReelsResponse,
+  RoundsResponse,
+  SetpointAccepted,
+  SetpointChangesResponse,
+  ShiftDetail,
+  ShiftsResponse,
+  SteamGroupsResponse,
+  TagDetail,
+  TagTrend,
+  WebBreaksResponse,
+} from '@mp1/shared/api';
+import type {
+  ArchivedSampleView,
+  GradeChangeView,
+  PlotBucket,
+  MaintenanceNoteView,
+  ReelView,
+  RoundView,
+  SetpointChangeView,
+  ShiftView,
+  SteamGroupView,
+  WebBreakView,
+} from '@mp1/shared/api';
 
 import { API_URL, ApiError } from './client';
 
 /**
- * O cliente das rotas da Fase 5.
+ * O cliente das rotas da API.
  *
- * Os tipos de resposta são **escritos aqui** e não importados da API, e isso é
- * de propósito: a web não depende do pacote do servidor. O que as duas
- * compartilham é `@mp1/shared`, onde estão as entidades do domínio — e as
- * respostas de rota são envelopes em volta delas, com `count`, `ts` e afins.
+ * Os tipos de resposta **vêm de `@mp1/shared/api`**, que são gerados do
+ * `openapi.json` da aplicação Java. Antes eram escritos aqui, e o servidor
+ * tinha de concordar com eles — o que funcionava enquanto os dois lados eram
+ * TypeScript e importavam o mesmo arquivo, porque o compilador cobrava. Com o
+ * back-end em Java, nada cobrava: uma rota podia mudar de forma e o front
+ * continuar compilando, para quebrar na primeira requisição de quem estivesse
+ * olhando a tela.
  *
- * Um pacote de tipos de rota gerado do OpenAPI resolveria isso de vez, e é
- * trabalho de outra fase; por ora o que impede as duas pontas de divergirem é o
- * teste de rota do lado do servidor, que valida a resposta contra o mesmo schema
- * que gera o documento.
+ * Agora quem cobra é o `tsc`. E foi assim que apareceram quatro divergências
+ * que nenhum teste pegava — a tendência sem `unit` e sem limites, a escrita de
+ * setpoint em `POST` em vez de `PUT`, o corpo de recusa sem a faixa, e o
+ * `/reels/:number` devolvendo a bobina crua em vez do envelope.
  */
+
+/*
+ * Reexportados para quem consome este cliente.
+ *
+ * As telas e os gateways importam as formas de resposta daqui, de `./process`,
+ * e não de `@mp1/shared/api`: este módulo é a borda da API para o front, e
+ * quem chama `fetchReels` quer o tipo ao lado da função. São os mesmos tipos
+ * gerados do contrato — reexportar não declara forma nenhuma.
+ */
+export type {
+  AlarmList,
+  AlarmResponse,
+  ApiAlarm,
+  ArchivedSampleView,
+  GradeChangesResponse,
+  GradeChangeView,
+  MaintenanceNoteView,
+  NotesResponse,
+  PlotBucket,
+  ProcessValues,
+  ReelDetail,
+  ReelsResponse,
+  RoundsResponse,
+  SetpointAccepted,
+  SetpointChangesResponse,
+  ReelView,
+  RoundView,
+  SetpointChangeView,
+  ShiftDetail,
+  ShiftsResponse,
+  ShiftView,
+  SteamGroupsResponse,
+  SteamGroupView,
+  TagDetail,
+  TagTrend,
+  WebBreaksResponse,
+  WebBreakView,
+};
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, init);
@@ -35,7 +94,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!response.ok) {
     const detail = await response
       .json()
-      .then((body: { message?: string }) => body.message)
+      .then((body: { detail?: string }) => body.detail)
       .catch(() => undefined);
     throw new ApiError(response.status, detail ?? `A API respondeu ${String(response.status)}`);
   }
@@ -56,20 +115,6 @@ const signalOf = (signal?: AbortSignal): RequestInit | undefined =>
 
 // ------------------------------------------------------------- processo
 
-export interface TagValue {
-  readonly tag: string;
-  readonly value: number;
-  readonly unit: string;
-  readonly ts: string;
-  readonly setpoint: number | null;
-}
-
-export interface ProcessValues {
-  readonly ts: string;
-  readonly count: number;
-  readonly values: readonly TagValue[];
-}
-
 export function fetchProcessValues(
   filter: { area?: string; group?: string } = {},
   signal?: AbortSignal,
@@ -77,47 +122,8 @@ export function fetchProcessValues(
   return request<ProcessValues>(`/process/values${query(filter)}`, signalOf(signal));
 }
 
-export interface TagDetail {
-  readonly variable: ProcessVariable;
-  readonly value: TagValue | null;
-  readonly writable: boolean;
-  readonly notWritableBecause: string | null;
-  readonly archived: boolean;
-}
-
 export function fetchTag(tag: string, signal?: AbortSignal): Promise<TagDetail> {
   return request<TagDetail>(`/process/tags/${encodeURIComponent(tag)}`, signalOf(signal));
-}
-
-/** Uma coluna do gráfico: quatro valores, para um pico curto não desaparecer. */
-export interface PlotBucket {
-  readonly bucketStart: string;
-  readonly samples: number;
-  readonly min: number;
-  readonly max: number;
-  readonly first: number;
-  readonly last: number;
-}
-
-export interface ArchivedSample {
-  readonly t: number;
-  readonly v: number;
-  readonly pointId: number;
-  readonly reason: ArchiveReason;
-}
-
-export interface TagTrend {
-  readonly tag: string;
-  readonly unit: string;
-  readonly from: string;
-  readonly to: string;
-  readonly bucketS: number;
-  readonly buckets: readonly PlotBucket[];
-  readonly before: ArchivedSample | null;
-  readonly after: ArchivedSample | null;
-  readonly timeWeightedAverage: number | null;
-  readonly limits: AlarmLimits | null;
-  readonly target: number | null;
 }
 
 export interface TrendQuery {
@@ -141,38 +147,26 @@ export function fetchTagTrend(
   );
 }
 
-export interface SteamGroupView {
-  readonly id: string;
-  readonly label: string;
-  readonly role: string | null;
-  readonly section: string;
-  readonly cylinders: readonly number[];
-  readonly pressure: TagValue | null;
-  readonly siphonDeltaP: TagValue | null;
-  readonly condensateLevel: TagValue | null;
-  readonly condensateNote: string | null;
-  readonly division: { readonly source: string; readonly note: string };
-  readonly tagMap: { readonly source: string; readonly note: string };
+export function fetchSteamGroups(signal?: AbortSignal): Promise<SteamGroupsResponse> {
+  return request<SteamGroupsResponse>(`/process/steam-groups`, signalOf(signal));
 }
 
-export function fetchSteamGroups(
-  signal?: AbortSignal,
-): Promise<{ ts: string; groups: readonly SteamGroupView[] }> {
-  return request(`/process/steam-groups`, signalOf(signal));
-}
-
-/** O que a API devolve quando recusa uma escrita de setpoint. */
+/**
+ * O que a API devolve quando recusa uma escrita de setpoint.
+ *
+ * É Problem Details (RFC 9457) com três membros de extensão: o `rejection`, que
+ * o cliente testa sem casar texto em português, e a faixa, que é o que falta
+ * para quem errou o valor acertar na segunda tentativa.
+ *
+ * Não é gerado do contrato porque o springdoc não descreve o corpo de erro das
+ * rotas — ele documenta a resposta de sucesso. Está escrito aqui, e o teste de
+ * rota do lado Java confere os três campos.
+ */
 export interface SetpointRejection {
-  readonly statusCode: number;
-  readonly error: string;
-  readonly message: string;
+  readonly type: string;
+  readonly status: number;
+  readonly detail: string;
   readonly rejection: string | null;
-  readonly min: number | null;
-  readonly max: number | null;
-}
-
-export interface SetpointAccepted {
-  readonly change: SetpointChange;
   readonly min: number | null;
   readonly max: number | null;
 }
@@ -200,27 +194,26 @@ export async function writeSetpoint(
     return { ok: true, accepted: (await response.json()) as SetpointAccepted };
   }
 
-  if (response.status === 422) {
+  /*
+   * 404 também é recusa de domínio aqui, e não falha.
+   *
+   * A API separa os dois de propósito: 404 é "a tag não existe, não tente de
+   * novo" e 422 é "existe, mas este pedido não serve". Os dois têm de chegar à
+   * tela como texto, e não como exceção — quem digitou a tag errada precisa
+   * ler o que houve.
+   */
+  if (response.status === 422 || response.status === 404) {
     return { ok: false, rejected: (await response.json()) as SetpointRejection };
   }
 
   const detail = await response
     .json()
-    .then((payload: { message?: string }) => payload.message)
+    .then((payload: { detail?: string }) => payload.detail)
     .catch(() => undefined);
   throw new ApiError(response.status, detail ?? `A API respondeu ${String(response.status)}`);
 }
 
 // -------------------------------------------------------------- alarmes
-
-export interface AlarmList {
-  readonly count: number;
-  readonly floodWindowS: number;
-  readonly floodThreshold: number;
-  readonly inFloodWindow: number;
-  readonly flooding: boolean;
-  readonly alarms: readonly Alarm[];
-}
 
 export interface AlarmQuery {
   readonly state?: AlarmState;
@@ -238,8 +231,8 @@ export function acknowledgeAlarm(
   id: string,
   acknowledgedBy: string,
   signal?: AbortSignal,
-): Promise<{ alarm: Alarm }> {
-  return request(`/alarms/${encodeURIComponent(id)}/ack`, {
+): Promise<AlarmResponse> {
+  return request<AlarmResponse>(`/alarms/${encodeURIComponent(id)}/ack`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ acknowledgedBy }),
@@ -250,52 +243,11 @@ export function acknowledgeAlarm(
 // ------------------------------------------------------------- operação
 
 /** O turno como a API devolve: a entidade mais o dia de operação. */
-export interface ShiftView {
-  readonly id: string;
-  readonly letter: string;
-  readonly operationDate: string;
-  readonly startedAt: string;
-  readonly endedAt: string | null;
-  readonly operator: string;
-  readonly productionT: number;
-  readonly efficiencyPct: number;
-  readonly handover: readonly string[];
-}
-
-export interface ReelView {
-  readonly number: number;
-  readonly shiftId: string;
-  readonly startedAt: string;
-  readonly endedAt: string | null;
-  readonly weightT: number | null;
-  readonly lengthM: number | null;
-  readonly finalDiameterMm: number | null;
-  readonly basisWeightGsm: number | null;
-  readonly moisturePct: number | null;
-  readonly caliperUm: number | null;
-  readonly cdSpread: {
-    readonly basisWeightGsm: number;
-    readonly moisturePct: number;
-    readonly caliperUm: number;
-  } | null;
-  readonly splices: number;
-  readonly disposition: 'aprovada' | 'rebaixada' | 'segregada' | null;
-  readonly dispositionReason: string | null;
-}
-
 export function fetchShifts(
-  filter: { limit?: number } = {},
+  filter: { from?: string; to?: string; limit?: number } = {},
   signal?: AbortSignal,
-): Promise<{ count: number; shifts: readonly ShiftView[] }> {
-  return request(`/shifts${query(filter)}`, signalOf(signal));
-}
-
-export interface ShiftDetail {
-  readonly shift: ShiftView;
-  readonly reels: readonly ReelView[];
-  readonly webBreaks: readonly WebBreak[];
-  readonly gradeChanges: readonly GradeChange[];
-  readonly rounds: readonly Round[];
+): Promise<ShiftsResponse> {
+  return request<ShiftsResponse>(`/shifts${query(filter)}`, signalOf(signal));
 }
 
 export function fetchShift(id: string, signal?: AbortSignal): Promise<ShiftDetail> {
@@ -305,45 +257,45 @@ export function fetchShift(id: string, signal?: AbortSignal): Promise<ShiftDetai
 export function fetchReels(
   filter: { shiftId?: string; limit?: number } = {},
   signal?: AbortSignal,
-): Promise<{ count: number; reels: readonly ReelView[] }> {
-  return request(`/reels${query(filter)}`, signalOf(signal));
+): Promise<ReelsResponse> {
+  return request<ReelsResponse>(`/reels${query(filter)}`, signalOf(signal));
 }
 
-export function fetchReel(number: number, signal?: AbortSignal): Promise<{ reel: ReelView }> {
-  return request(`/reels/${String(number)}`, signalOf(signal));
+export function fetchReel(number: number, signal?: AbortSignal): Promise<ReelDetail> {
+  return request<ReelDetail>(`/reels/${String(number)}`, signalOf(signal));
 }
 
 export function fetchWebBreaks(
   filter: { shiftId?: string; limit?: number } = {},
   signal?: AbortSignal,
-): Promise<{ count: number; webBreaks: readonly WebBreak[] }> {
-  return request(`/web-breaks${query(filter)}`, signalOf(signal));
+): Promise<WebBreaksResponse> {
+  return request<WebBreaksResponse>(`/web-breaks${query(filter)}`, signalOf(signal));
 }
 
 export function fetchGradeChanges(
   filter: { shiftId?: string; limit?: number } = {},
   signal?: AbortSignal,
-): Promise<{ count: number; gradeChanges: readonly GradeChange[] }> {
-  return request(`/grade-changes${query(filter)}`, signalOf(signal));
+): Promise<GradeChangesResponse> {
+  return request<GradeChangesResponse>(`/grade-changes${query(filter)}`, signalOf(signal));
 }
 
 export function fetchRounds(
   filter: { shiftId?: string; limit?: number } = {},
   signal?: AbortSignal,
-): Promise<{ count: number; rounds: readonly Round[] }> {
-  return request(`/rounds${query(filter)}`, signalOf(signal));
+): Promise<RoundsResponse> {
+  return request<RoundsResponse>(`/rounds${query(filter)}`, signalOf(signal));
 }
 
 export function fetchNotes(
   filter: { status?: NoteStatus; assetTag?: string; limit?: number } = {},
   signal?: AbortSignal,
-): Promise<{ count: number; notes: readonly MaintenanceNote[] }> {
-  return request(`/notes${query(filter)}`, signalOf(signal));
+): Promise<NotesResponse> {
+  return request<NotesResponse>(`/notes${query(filter)}`, signalOf(signal));
 }
 
 export function fetchSetpointChanges(
   filter: { tag?: string; limit?: number } = {},
   signal?: AbortSignal,
-): Promise<{ count: number; changes: readonly SetpointChange[] }> {
-  return request(`/setpoint-changes${query(filter)}`, signalOf(signal));
+): Promise<SetpointChangesResponse> {
+  return request<SetpointChangesResponse>(`/setpoint-changes${query(filter)}`, signalOf(signal));
 }

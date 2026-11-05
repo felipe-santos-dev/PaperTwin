@@ -1,4 +1,4 @@
-import type { HealthResponse } from '@mp1/shared';
+import type { HealthResponse } from '@mp1/shared/api';
 import { ApiError, type AssetDetail, type VibrationSeries } from './client';
 
 /**

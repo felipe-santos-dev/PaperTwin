@@ -24,7 +24,7 @@ Branch: `dev/fases-4-7`. Nada de push na main, nada de PR, nada de deploy.
 - [x] **J3** persistência: migrations, historiador, entidades, estado da rede
 - [x] **J4** retomada e concorrência
 - [x] **J5** API — 14 rotas contra o gabarito, `openapi.json` versionado
-- [ ] **J6** Contrato com o front via `openapi.json`
+- [x] **J6** Contrato com o front via `openapi.json`
 - [ ] **J7** Dockerfile e ajuste para 512 MB
 - [ ] **J8** Remover `apps/api`
 - [ ] **7** Acabamento: Playwright, performance, acessibilidade, CI, checklist de deploy
@@ -769,6 +769,51 @@ a explicação de por que são três.
 
 **Para a Fase 7**: o `deploy-checklist.md` tem de incluir "depois do primeiro
 deploy, ler o log da retomada e ajustar `RESUME_MAX_HOURS` se passar de ~15 s".
+
+### J6 — o front consome o contrato
+
+Os tipos de resposta do front **saem do `openapi.json`**, por
+`packages/shared/src/api/generated.ts` (gerado por `openapi-typescript`) e
+apelidados em `packages/shared/src/api/index.ts` com os nomes que as telas usam.
+Nenhuma forma de resposta é mais escrita à mão no front.
+
+`npm run generate:api-types --workspace @mp1/shared` regrava;
+`npm run check:api-types` **confere** e falha com o diff, e é o que o CI roda.
+
+O ponto todo era este: enquanto os dois lados eram TypeScript e importavam o
+mesmo arquivo, o compilador cobrava. Com o back-end em Java, nada cobrava — uma
+rota podia mudar de forma e o front continuar compilando, para quebrar na
+primeira requisição de quem estivesse olhando a tela. Na primeira
+compilação contra o contrato apareceram **46 erros**, e dentro deles cinco
+divergências reais entre as duas APIs (listadas na J5, mais a mensagem de erro,
+que estava em `message` e passou a `detail` da RFC 9457).
+
+Duas decisões de contrato que saíram disto:
+
+1. **Obrigatório por padrão, nulo por anotação.** `@Nullable` nos componentes de
+   registro e um `ModelConverter` que marca o resto. O padrão é obrigatório
+   porque esquecer a anotação faria o contrato **mentir** — o front deixaria de
+   tratar um nulo que acontece — enquanto esquecer na outra direção só o deixa
+   pessimista, e o `tsc` cobra na hora.
+2. **Chave sempre presente, valor talvez nulo.** No OpenAPI "obrigatório" diz
+   que a chave existe e o tipo diz o que o valor pode ser. O Jackson escreve
+   `"endedAt": null` e nunca omite a chave, então o contrato diz
+   `endedAt: string | null` e não `endedAt?: string`. Com
+   `exactOptionalPropertyTypes` ligado, a diferença é entre o front tratar dois
+   casos ou três.
+   No 3.1 nulo é um **tipo**, e o `setNullable` do swagger não aparece na saída
+   — some em silêncio. O conversor envolve o esquema num `anyOf` com
+   `{"type":"null"}`, o que preserva formato e enumeração.
+
+Três campos passaram a sair como enumeração em vez de texto livre, porque no
+contrato isso é a diferença entre `string` e uma união que o compilador confere:
+a zona ISO, a severidade e o tamanho de janela da vibração (agora
+`Bearings.BucketSize`). E o `bucketStart` de uma coluna do gráfico passou de
+milissegundos crus a instante.
+
+**O que a J8 ainda vai limpar**: `packages/shared` continua com as entidades
+escritas à mão (`operations/*`, `health.ts`, partes de `vibration.ts`) porque a
+API TypeScript ainda as usa. São elas que saem junto com `apps/api`.
 
 ### J5 — fechada
 

@@ -1,7 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { assetByTag, DRYER_BEARING_ISO, isoLimitsOf, MP1, type VibrationBucket } from '@mp1/shared';
+import {
+  assetByTag,
+  DRYER_BEARING_ISO,
+  isoLimitsOf,
+  MP1,
+  type MachineAsset,
+  type VibrationBucket,
+} from '@mp1/shared';
+import type { AssetView } from '@mp1/shared/api';
 import type { AssetDetail, VibrationSeries } from '../api/client';
 import { AssetPanel } from './AssetPanel';
 import type { AssetData } from './useAssetDetail';
@@ -13,6 +21,11 @@ function asset(tag: string) {
   if (!found) throw new Error(`ativo ausente no modelo: ${tag}`);
   return found;
 }
+
+/**
+ * O ativo como a API o publica: só a posição muda de tripla para vetor de três.
+ */
+const viewOf = (asset: MachineAsset): AssetView => ({ ...asset, position: [...asset.position] });
 
 const bearing = asset('MP1-SEC-G4-CS23-MLA');
 
@@ -30,7 +43,7 @@ function buckets(values: readonly number[]): VibrationBucket[] {
 
 function ready(overrides: Partial<AssetData> = {}): AssetData {
   const detail: AssetDetail = {
-    asset: bearing,
+    asset: viewOf(bearing),
     status: {
       assetTag: bearing.tag,
       zone: 'D',
@@ -168,8 +181,9 @@ describe('AssetPanel', () => {
         data={{
           phase: 'ready',
           detail: {
-            asset: scanner,
-            status: { assetTag: scanner.tag, zone: null, health: null, latest: null },
+            // um ativo sem classe ISO não tem estado: um nip não vibra
+            asset: viewOf(scanner),
+            status: null,
             limits: null,
           },
           series: null,

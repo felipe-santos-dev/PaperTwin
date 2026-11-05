@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { HealthResponse } from '@mp1/shared';
+import type { HealthResponse } from '@mp1/shared/api';
 import { API_URL, fetchHealth } from './client';
 
 const payload: HealthResponse = {
@@ -9,6 +9,13 @@ const payload: HealthResponse = {
   uptimeS: 12,
   database: 'pglite',
   databaseUp: true,
+  simulation: {
+    seed: 20260101,
+    lastTick: 5216400,
+    lastRunAt: '2026-03-02T09:00:00.000Z',
+    behindS: 0,
+    maxHours: 4,
+  },
 };
 
 afterEach(() => {

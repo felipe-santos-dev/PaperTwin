@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { HealthResponse } from '@mp1/shared';
+import type { HealthResponse } from '@mp1/shared/api';
 
 /**
  * De onde os dados vêm nesta sessão.

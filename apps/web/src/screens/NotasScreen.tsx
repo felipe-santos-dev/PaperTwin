@@ -1,11 +1,7 @@
 import { useCallback, useState } from 'react';
 
-import {
-  NOTE_PRIORITY_LABELS,
-  NOTE_STATUSES,
-  type MaintenanceNote,
-  type NoteStatus,
-} from '@mp1/shared';
+import { NOTE_PRIORITY_LABELS, NOTE_STATUSES, type NotePriority, type NoteStatus } from '@mp1/shared';
+import type { MaintenanceNoteView } from '@mp1/shared/api';
 
 import type { DataGateway } from '../api/gateway';
 import { Block, ScreenTitle, StatRow } from '../ui/Shell';
@@ -13,6 +9,17 @@ import { Facts, Table } from '../ui/Table';
 import { dayTime, int } from '../ui/format';
 import { ResourceState } from '../ui/ResourceState';
 import { useResource } from '../ui/useResource';
+
+/**
+ * O rótulo de uma prioridade, aceitando o número que o contrato publica.
+ *
+ * A prioridade vai no contrato como {@code int}, porque é isso que a tabela guarda e o que a
+ * restrição do banco confere — de 1 a 4. Do lado de cá o mapa é indexado pela união, e um
+ * {@code number} não entra nela: em vez de mentir com um {@code as}, a conversão é explicita e
+ * o que não estiver na faixa não ganha rótulo.
+ */
+const priorityLabel = (priority: number): string | undefined =>
+  NOTE_PRIORITY_LABELS[priority as NotePriority];
 
 /**
  * Notas de manutenção — a fila de trabalho.
@@ -140,7 +147,7 @@ export function NotasScreen({ gateway, onOpenTrend, onOpenBearing }: NotasScreen
                     render: (n) => (
                       <span
                         className={n.priority === 1 ? 'text-mill-critical' : undefined}
-                        title={NOTE_PRIORITY_LABELS[n.priority]}
+                        title={priorityLabel(n.priority)}
                       >
                         {int(n.priority)}
                       </span>
@@ -190,12 +197,12 @@ function NoteDetail({
   onOpenTrend,
   onOpenBearing,
 }: {
-  readonly note: MaintenanceNote;
+  readonly note: MaintenanceNoteView;
   readonly onOpenTrend: (tag: string) => void;
   readonly onOpenBearing: (assetTag: string) => void;
 }) {
   return (
-    <Block title={`Nota ${note.number}`} aside={NOTE_PRIORITY_LABELS[note.priority]}>
+    <Block title={`Nota ${note.number}`} aside={priorityLabel(note.priority)}>
       <div className="flex flex-col gap-4 border-t border-mill-line pt-3">
         <Facts
           columns={4}

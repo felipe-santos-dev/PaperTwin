@@ -56,6 +56,20 @@ class RoutesGoldenTest {
   @Autowired private WebApplicationContext context;
   @Autowired private ObjectMapper mapper;
   @Autowired private SimStateRepository simState;
+  @Autowired private dev.felipesantos.papertwin.runtime.SimulationService simulation;
+
+  /**
+   * A simulação roda uma vez, antes de qualquer comparação.
+   *
+   * <p>É o mesmo roteiro que gerou o gabarito — semear, retomar, e só então servir as rotas — e
+   * agora precisa estar escrito, porque o {@code /health} deixou de rodar a retomada: ele lê o
+   * marcador, e sem ninguém ter retomado antes o marcador não existe. Era a rota que, por ser a
+   * primeira da lista, acabava acordando a simulação para todas as outras.
+   */
+  @org.junit.jupiter.api.BeforeEach
+  void ensureSimulationHasRun() {
+    simulation.ensureCurrent();
+  }
 
   private MockMvc mvc() {
     return MockMvcBuilders.webAppContextSetup(context).build();

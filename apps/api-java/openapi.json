@@ -2014,7 +2014,11 @@
             "type" : "boolean"
           },
           "simulation" : {
-            "$ref" : "#/components/schemas/Simulation"
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/Simulation"
+            }, {
+              "type" : "null"
+            } ]
           }
         },
         "required" : [ "database", "databaseUp", "service", "simulation", "status", "uptimeS", "version" ]

@@ -25,8 +25,8 @@ Branch: `dev/fases-4-7`. Nada de push na main, nada de PR, nada de deploy.
 - [x] **J4** retomada e concorrência
 - [x] **J5** API — 14 rotas contra o gabarito, `openapi.json` versionado
 - [x] **J6** Contrato com o front via `openapi.json`
-- [ ] **J7** Dockerfile e ajuste para 512 MB
-- [ ] **J8** Remover `apps/api`
+- [x] **J7** Dockerfile e ajuste para 512 MB (escrito, não executado)
+- [x] **J8** Remover `apps/api`
 - [ ] **7** Acabamento: Playwright, performance, acessibilidade, CI, checklist de deploy
 
 ## Mudança de rumo — back-end em Java
@@ -769,6 +769,74 @@ a explicação de por que são três.
 
 **Para a Fase 7**: o `deploy-checklist.md` tem de incluir "depois do primeiro
 deploy, ler o log da retomada e ajustar `RESUME_MAX_HOURS` se passar de ~15 s".
+
+### J8 — `apps/api` saiu
+
+As duas condições do plano foram cumpridas antes de apagar:
+
+1. **Os testes de gabarito passam em Java** — 251 verdes, as 14 rotas do
+   gabarito entre eles.
+2. **O front roda contra a API Java** — conferido no navegador, com a faixa
+   dizendo "Dados vindo da API" e dados do instante ao vivo (turno C de
+   05/11, bobina 8.344) em vez do instantâneo (turno B de 15/06). As sete telas
+   carregaram: turno, bobinas com gramatura e destino, processo com as 320
+   tags, mancais com o MLA do CS23 em zona D, rondas, notas e a cena 3D.
+
+Para isso dar certo, três coisas que faltavam apareceram:
+
+- **Não havia CORS.** A API respondia a `curl` e não ao navegador, que bloqueia
+  a resposta antes de ela chegar ao JavaScript. `CorsConfig` lê `CORS_ORIGINS` e
+  libera tudo quando ela está vazia — a API não tem autenticação nem dado de
+  ninguém, e fechar a origem daria aparência de proteção que não existe.
+- **O `/health` rodava a retomada.** A sonda mais barata da API era a mais cara,
+  e o efeito era visível: o front sonda com prazo de quatro segundos antes de
+  escolher entre API e instantâneo, a primeira sonda estourava o prazo e a tela
+  caía para o instantâneo **com a API no ar**. Agora ele lê o marcador, que é o
+  que a versão TypeScript já fazia e estava escrito nas notas. Quando a
+  simulação nunca rodou, `simulation` vem nulo em vez de zeros.
+- **Não havia como subir a API sem Docker.** `DevServer` (em `src/test`) sobe a
+  aplicação de verdade contra o mesmo Postgres embutido dos testes, na porta
+  3333. Desenvolver deixou de exigir Docker.
+
+O instantâneo do modo de demonstração passou a sair da API Java
+(`DemoSnapshotTest`, ligado por `-Ddemo.write=true`): **954 arquivos, 1,9 MB**,
+no mesmo instante escolhido de antes — turno B de 15/06/2026, quatro horas
+adentro, que é quando a janela contém a troca de gramatura inteira.
+`npm run demo:data` continua sendo o comando; o que mudou é quem ele chama.
+
+**O `README.md` ainda descreve `apps/api`** e a pilha Fastify. Não foi tocado,
+pela regra de que ele é do Felipe.
+
+### J7 — a imagem, escrita e medida
+
+`apps/api-java/Dockerfile` em duas etapas (JDK compila, JRE roda), usuário sem
+privilégios, `.dockerignore` na raiz e o serviço `api` no `docker-compose.yml`
+com `mem_limit: 512m` — para a imagem ser conferida contra a restrição que ela
+vai encontrar, e não contra a memória do desktop. O Postgres do compose subiu de
+17 para **18**, a mesma versão do Neon.
+
+**Não executado**: não há Docker nesta máquina. A imagem não foi construída nem
+rodada, e isso está dito no próprio Dockerfile e nas notas.
+
+O que **foi** medido, com o jar empacotado e as mesmas opções de produção (a
+aplicação sobe sem banco porque nada consulta no boot e a migration está
+desligada):
+
+- **220 MB comprometidos em repouso** — 45 de heap, 33 de metaspace, 21 de cache
+  de código, 6 de metadados de classe, 2,5 de pilhas. É **comprometido**, não
+  RSS: são as páginas que a JVM pediu, o que é um teto para o RSS. O RSS depende
+  do sistema, e este é Windows enquanto o Render é Linux — medir aqui e chamar
+  de RSS seria dar precisão a um número que não a tem. Fica no checklist.
+- **2,5 s para subir o contexto**; jar de 29 MB.
+- **Pico de heap**: 165 MB na retomada de 4 h (o teto padrão) e 231 MB numa de
+  24 h com o teto levantado, por `FootprintTest`, que fica **desligado** porque
+  24 h não acontece com a configuração padrão. O número existe para a decisão de
+  subir o teto ser tomada com ele — e o que impede as 24 h não é a memória
+  (~406 MB de 512), são os 26 s.
+- **AppCDS: 2,49 s → 1,83 s**, 26 % a menos. Deixado **pronto e comentado** no
+  Dockerfile em vez de ligado: 0,65 s são 5 % do tempo até a primeira tela, que
+  a retomada domina, em troca de 42 MB na imagem. O número está ao lado das
+  linhas para a decisão ser do Felipe.
 
 ### J6 — o front consome o contrato
 

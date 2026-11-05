@@ -621,6 +621,82 @@ Nada aqui foi executado; o passo a passo fica em `docs/deploy-checklist.md`.
 
 ---
 
+## 11b. A imagem e os 512 MB — medido
+
+Medido em 05/11/2026 num desktop (JDK 25, jar empacotado, **sem banco** — a
+aplicação sobe sem ele porque nada consulta no boot e a migration está
+desligada). O container ainda não foi construído: não há Docker nesta máquina, e
+o Dockerfile está escrito e não executado, como o resto do deploy.
+
+### Em repouso
+
+| Grandeza                    | Medido     |
+| --------------------------- | ---------- |
+| Jar empacotado              | 29 MB      |
+| Subir o contexto do Spring  | 2,5 s      |
+| **Memória comprometida**    | **220 MB** |
+|  heap                       | 45 MB      |
+|  metaspace                  | 33 MB      |
+|  cache de código           | 21 MB      |
+|  metadados de classe        | 6 MB       |
+|  pilhas de thread           | 2,5 MB     |
+
+Os números saem do `NativeMemoryTracking` com a aplicação de pé. **Comprometida**,
+e não RSS: são as páginas que a JVM pediu ao sistema, o que é um teto para o RSS
+e não o RSS. O RSS de verdade depende do sistema, e este é o Windows enquanto o
+Render é Linux — medir aqui e chamar de RSS seria dar precisão a um número que
+não a tem. **O RSS real se mede no primeiro deploy**, e está no checklist.
+
+O que importa: **70 % de 512 MB dá 358 MB de heap máximo**, e fora do heap a JVM
+usa ~175 MB. É por isso que `MaxRAMPercentage` é 70 e não mais: a conta tem de
+fechar com o que não é heap.
+
+### Durante uma retomada
+
+| Janela                  | Tempo     | Pico de heap | Cabe nos 512 MB?                 |
+| ----------------------- | --------- | ------------ | -------------------------------- |
+| **4 h (o teto padrão)** | 13,5 s    | 165 MB       | sim, com folga                   |
+| 24 h (teto levantado)   | 26,3 s    | 231 MB       | cabe, e **estoura o tempo**      |
+
+A de 24 h foi medida com o teto subido de propósito, por
+`FootprintTest` — que fica **desligado**, porque isso não acontece com a
+configuração padrão. O número existe para a decisão de subir o teto ser tomada
+com ele: 231 MB de pico mais ~175 MB fora do heap dá ~406 MB num container de
+512 MB, e 26 s passam de qualquer tempo limite de requisição. O limite de 24 h
+não é a memória; é o relógio.
+
+### AppCDS — medido, deixado pronto, não ligado
+
+| Subir o contexto | Média de 4 execuções |
+| ---------------- | ------------------- |
+| Sem AppCDS       | 2,49 s              |
+| **Com AppCDS**   | **1,83 s**          |
+
+**26 % a menos, ~0,65 s.** O ganho é real e pequeno diante do que domina este
+serviço: a retomada, com 13,5 s. São 5 % do tempo até a primeira tela, em troca
+de 42 MB a mais na imagem e de uma execução de treino na build. O Dockerfile tem
+as linhas prontas e comentadas, com este número ao lado.
+
+O que fez a medição ser possível: `-Dspring.context.exit=onRefresh` sobe o
+contexto inteiro — Tomcat incluso — e sai limpo, que é quando a JVM grava o
+arquivo. E o jar precisa ser **extraído** antes
+(`-Djarmode=tools ... extract`): classes dentro de um jar aninhado não entram no
+arquivo compartilhado.
+
+### As opções da JVM, e por que cada uma
+
+```
+-XX:MaxRAMPercentage=70      358 MB de heap; o resto é metaspace, código e pilhas
+-XX:+UseSerialGC             uma fração de vCPU não tem onde rodar as threads do G1
+-Xss512k                     pilha de 1 MB × threads do Tomcat são dezenas de MB
+-XX:+ExitOnOutOfMemoryError  morrer e reiniciar é melhor que ficar vivo e inútil
+```
+
+Sem o `MaxRAMPercentage`, a JVM usaria 25 % — 128 MB — e o pico de 165 MB da
+retomada padrão bateria no teto.
+
+---
+
 ## 12. Suposições, para a seção de pendências
 
 Tudo abaixo está marcado no código e repetido em `docs/progress.md`.

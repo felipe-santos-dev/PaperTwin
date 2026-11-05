@@ -14,8 +14,7 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently -n api,web -c cyan,magenta \"npm:dev:api\" \"npm:dev:web\"",
-    "dev:api": "npm run dev --workspace @mp1/api",
+    "dev": "npm run dev --workspace @mp1/web",
     "dev:web": "npm run dev --workspace @mp1/web",
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
@@ -29,7 +28,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.37.0",
-    "concurrently": "^9.2.1",
     "eslint": "^9.37.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react-hooks": "^6.1.1",

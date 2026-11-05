@@ -6,6 +6,7 @@ import {
   alarmThreshold,
   classifyIsoZone,
   DRYER_BEARING_ISO,
+  estimateRemainingLife,
   isoLimitsOf,
   exceptionFilter,
   historianPoint,
@@ -20,6 +21,7 @@ import {
   type ArchivedSample,
   type HistorianPoint,
   type Sample,
+  type VibrationBucket,
 } from '@mp1/shared';
 import type { FastifyInstance } from 'fastify';
 
@@ -613,6 +615,59 @@ function bearingFixture(): unknown {
   };
 }
 
+// ----------------------------------------------------- vida útil restante ----
+
+/**
+ * A estimativa de vida útil restante, nos casos que decidem o comportamento.
+ *
+ * São os quatro que importam: poucos pontos, tendência plana, tendência dentro
+ * do próprio ruído do ajuste, e degradação de verdade. Os três primeiros têm de
+ * devolver `daysToZoneD: null` — e cada um por uma razão diferente, que é
+ * justamente o que um caso só não verificaria.
+ */
+function remainingLifeFixture(): unknown {
+  const t0 = Date.parse('2026-03-01T00:00:00.000Z');
+  const hour = 60 * 60 * 1000;
+
+  const series = (values: readonly number[]): VibrationBucket[] =>
+    values.map((value, index) => ({
+      bucketStart: new Date(t0 + index * 6 * hour).toISOString(),
+      samples: 24,
+      rmsAvgMmS: value,
+      rmsMaxMmS: value + 0.1,
+      tempAvgC: 62,
+      envelopeMaxGe: 0.4,
+    }));
+
+  const limits = isoLimitsOf(DRYER_BEARING_ISO);
+
+  const cases = [
+    { name: 'poucos pontos', buckets: series([1.0, 1.1]) },
+    { name: 'tendência plana', buckets: series([1.2, 1.2, 1.2, 1.2, 1.2, 1.2]) },
+    {
+      name: 'inclinação dentro do ruído do ajuste',
+      buckets: series([1.2, 1.5, 1.1, 1.6, 1.2, 1.5, 1.3, 1.6]),
+    },
+    {
+      name: 'degradação sustentada',
+      buckets: series([1.2, 1.5, 1.9, 2.3, 2.6, 3.0, 3.4, 3.8]),
+    },
+    { name: 'já passou da fronteira', buckets: series([4.0, 4.4, 4.8, 5.2, 5.6, 6.0]) },
+  ];
+
+  return {
+    tolerance: TOLERANCE,
+    note:
+      'Ajuste linear por mínimos quadrados contra a fronteira C→D. A inclinação só vale como ' +
+      'degradação se passar de dois erros padrão dela mesma.',
+    isoLimits: limits,
+    cases: cases.map((entry) => ({
+      ...entry,
+      expected: estimateRemainingLife(entry.buckets, limits),
+    })),
+  };
+}
+
 // -------------------------------------------------------------- as rotas ----
 
 /**
@@ -657,7 +712,15 @@ async function routeFixture(app: FastifyInstance, nowMs: number): Promise<unknow
       '`volatileFields` — o teste Java os ignora.',
     nowMs,
     seed: DEFAULT_SEED,
-    volatileFields: ['uptimeS', 'generatedAt'],
+    /**
+     * O que não se compara entre as duas implementações.
+     *
+     * Nenhum destes é comportamento: `uptimeS` e `behindS` dependem de quando a
+     * resposta foi gerada; `version` é a versão do artefato; e `database` diz
+     * qual driver está embaixo — PGlite de um lado, Postgres do outro, o que é
+     * a diferença entre as duas implementações e não um defeito de uma delas.
+     */
+    volatileFields: ['uptimeS', 'generatedAt', 'behindS', 'version', 'database'],
     responses,
   };
 }
@@ -680,6 +743,7 @@ async function main(): Promise<void> {
   await put('alarms/sequence.json', alarmFixture());
   await put('simulation/tags.json', simulationFixture());
   await put('vibration/bearings.json', bearingFixture());
+  await put('vibration/remaining-life.json', remainingLifeFixture());
   await put('operation/shifts.json', shiftFixture());
 
   // as rotas precisam de banco; o resto é tudo função pura

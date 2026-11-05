@@ -185,33 +185,68 @@ por isso não é ela que decide o teto.
 | 24 h             | 86.400  | 10,5 s | 24.959            |
 | 72 h             | 259.200 | 32,8 s | 73.802            |
 
-### Os três números da janela de 4 h, e por que são três
+### Os quatro números da janela de 4 h, e por que são quatro
 
-A mesma janela aparece com três custos neste documento, e a diferença entre eles
-é o que se está medindo:
+A mesma janela aparece com custos diferentes neste documento, e a diferença entre
+eles é o que se está medindo. Os números abaixo foram refeitos em 05/11/2026,
+depois de a **colheita de entidades** entrar na retomada — ela não existia quando
+a primeira medição foi feita, e muda a conta pela metade.
 
-| Medida                          | Tempo     | O que inclui                                 |
-| ------------------------------- | --------- | -------------------------------------------- |
-| Motor + gravador, JIT aquecido  | **1,1 s** | só CPU de simulação; sem banco               |
-| Retomada completa, JIT aquecido | **4,5 s** | + escrita no banco, alarmes, entidades, poda |
-| **Retomada completa, JVM fria** | **6,2 s** | + JIT interpretando e classes carregando     |
+| Medida                              | Tempo      | O que inclui                                   |
+| ----------------------------------- | ---------- | ---------------------------------------------- |
+| Motor + gravador, JIT aquecido      | **1,0 s**  | só CPU de simulação; sem banco                 |
+| Retomada sem colheita, JIT aquecido | **5,6 s**  | + escrita no banco, alarmes, poda              |
+| Retomada completa, JIT aquecido     | **13,5 s** | + colheita de entidades (7,9 s)                |
+| **Retomada completa, JVM fria**     | **13,5 s** | + JIT interpretando e classes carregando       |
 
-A JVM fria também usa mais memória: **153 MB** de heap contra os ~44 MB em
-regime.
+A JVM fria usa mais memória: **165 MB** de heap contra ~45 MB em regime.
+
+**A colheita é mais da metade do custo**, e isso é informação de desenho, não
+defeito: a gramatura média de uma bobina é uma **consulta ao historiador**, não
+um acumulador em memória, e é por isso que ela existe — o número que a tela
+mostra é o que ficou gravado, e não o que alguém somou de passagem. O preço é
+uma ida ao banco por série.
+
+Duas coisas já foram feitas para ele não ser pior:
+
+- **Uma leitura por tag, e não uma por pergunta.** A primeira versão consultava a
+  média de cada bobina separadamente: são seis séries por bobina, e uma janela de
+  72 h fechava dezenas de bobinas. Num `DataSource` sem pool — o dos testes —
+  cada consulta é uma conexão nova, e o servidor recusou antes de o cálculo
+  acabar. Agora cada série é lida uma vez pela janela inteira e as médias saem da
+  mesma lista; o resultado é idêntico, porque a média no tempo recebe o recorte e
+  as amostras de fora dele só ancoram as pontas.
+- **Uma transação para toda a colheita**, em vez de uma por entidade. Também a
+  torna atómica: uma retomada interrompida no meio não deixa um turno com metade
+  das bobinas dele.
 
 **O número que vale para produção é o de JVM fria**, porque é exatamente a
 situação do Render Free: o host dorme sem tráfego, a instância é derrubada, e a
-primeira retomada do dia roda com a JVM recém-iniciada. Os outros dois são úteis
-para saber onde o tempo vai — e mostram que a simulação em si é a parte barata.
+primeira retomada do dia roda com a JVM recém-iniciada. Os outros são úteis para
+saber onde o tempo vai — e mostram que a simulação em si é a parte barata.
 
-**Aviso importante**: estes 6,2 s foram medidos num desktop. O Render Free dá
-uma fração de vCPU, então lá o número será várias vezes maior. É por isso que o
-teto é **configurável** por `RESUME_MAX_HOURS` (padrão 4) e que toda retomada
-registra no log as horas recuperadas, a duração e o heap em uso:
+**Aviso importante, e mais forte agora**: estes 13,5 s foram medidos num desktop,
+contra um Postgres **embarcado, no mesmo processo**. O Render Free dá uma fração
+de vCPU e o Neon fica do outro lado da rede — e a colheita é justamente a parte
+que paga latência de rede. Lá o número será **várias vezes maior**, e o padrão de
+quatro horas provavelmente será alto demais.
+
+É por isso que o teto é **configurável** por `RESUME_MAX_HOURS` (padrão 4) e que
+toda retomada registra no log as horas recuperadas, a duração, **a parcela da
+colheita** e o heap em uso:
 
 ```
-retomada: 4,00 h recuperadas em 6193 ms, heap 153 MB, 4538 linhas arquivadas, compressão 200:1
+retomada: 4,00 h recuperadas em 13464 ms (7937 ms de colheita), heap 165 MB, 4538 linhas arquivadas, compressão 200:1
 ```
+
+A parcela sai separada porque as duas metades se ajustam de maneiras diferentes:
+
+- tempo **no motor** → baixar `RESUME_MAX_HOURS` resolve: menos passos, menos
+  tempo;
+- tempo **na colheita** → baixar o teto ajuda pouco. Ela paga por turno e por
+  bobina, e um turno fecha dez bobinas qualquer que seja o tamanho da janela que
+  o alcançou. O que ajudaria ali é outra coisa — colher fora da requisição, ou
+  só para o turno corrente — e é decisão de produto, não de configuração.
 
 Depois do primeiro deploy é só ler esse log e ajustar. Está no checklist.
 
@@ -219,8 +254,9 @@ Depois do primeiro deploy é só ler esse log e ajustar. Está no checklist.
 
 **É daqui que sai o teto de quatro horas.** A retomada roda dentro de uma
 requisição HTTP, porque não há processo de fundo — quem acorda a API é quem
-abriu a tela. Trinta e três segundos passam de qualquer tempo limite razoável de
-requisição, então 72 h não cabem; quatro horas cabem com folga.
+abriu a tela. Trinta e três segundos de simulação — mais a colheita — passam de qualquer tempo
+limite razoável de requisição, então 72 h não cabem. Quatro horas cabem num
+desktop; num host com uma fração de vCPU, é o log do primeiro deploy que diz.
 
 A consequência é dita e não escondida: acima do teto a retomada **reancora**, o
 relatório diz que reancorou, e o intervalo que não rodou fica como buraco no

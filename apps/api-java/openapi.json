@@ -1,0 +1,2376 @@
+{
+  "openapi" : "3.1.0",
+  "info" : {
+    "title" : "PaperTwin — API do gêmeo digital da MP1",
+    "description" : "O estado da máquina de papel MP1: valores de processo, histórico comprimido,\nalarmes ISO 20816-3 / ISA-18.2, vibração de mancais e as entidades de operação (turno, bobina, quebra de folha, ronda, nota de manutenção).\n\nNão há processo de fundo: a simulação é reexecutada dentro da requisição, a partir do último passo gravado. É o que permite rodar num host que dorme sem tráfego.\n\nOs erros seguem a RFC 9457 (`application/problem+json`), com `type` para o cliente decidir sem casar texto em português.",
+    "license" : {
+      "name" : "MIT"
+    },
+    "version" : "0.0.1"
+  },
+  "servers" : [ {
+    "url" : "http://localhost",
+    "description" : "Generated server url"
+  } ],
+  "paths" : {
+    "/process/tags/{tag}/setpoint" : {
+      "put" : {
+        "tags" : [ "operation-controller" ],
+        "operationId" : "writeSetpoint",
+        "parameters" : [ {
+          "name" : "tag",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/WriteSetpoint"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SetpointWritten"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/alarms/{id}/unshelve" : {
+      "post" : {
+        "tags" : [ "operation-controller" ],
+        "operationId" : "unshelve",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AlarmResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/alarms/{id}/shelve" : {
+      "post" : {
+        "tags" : [ "operation-controller" ],
+        "operationId" : "shelve",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Shelve"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AlarmResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/alarms/{id}/ack" : {
+      "post" : {
+        "tags" : [ "operation-controller" ],
+        "operationId" : "acknowledge",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/Acknowledge"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AlarmResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/web-breaks" : {
+      "get" : {
+        "tags" : [ "operation-controller" ],
+        "operationId" : "webBreaks",
+        "parameters" : [ {
+          "name" : "shiftId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/WebBreaks"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stream" : {
+      "get" : {
+        "tags" : [ "stream-controller" ],
+        "operationId" : "stream",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "text/event-stream" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SseEmitter"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shifts" : {
+      "get" : {
+        "tags" : [ "operation-controller" ],
+        "operationId" : "shifts",
+        "parameters" : [ {
+          "name" : "from",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "to",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Shifts"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/shifts/{id}" : {
+      "get" : {
+        "tags" : [ "operation-controller" ],
+        "operationId" : "shift",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ShiftDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/setpoint-changes" : {
+      "get" : {
+        "tags" : [ "operation-controller" ],
+        "operationId" : "setpointChanges",
+        "parameters" : [ {
+          "name" : "tag",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SetpointChanges"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rounds" : {
+      "get" : {
+        "tags" : [ "operation-controller" ],
+        "operationId" : "rounds",
+        "parameters" : [ {
+          "name" : "shiftId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Rounds"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/rounds/{id}" : {
+      "get" : {
+        "tags" : [ "operation-controller" ],
+        "operationId" : "round",
+        "parameters" : [ {
+          "name" : "id",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/RoundDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reels" : {
+      "get" : {
+        "tags" : [ "operation-controller" ],
+        "operationId" : "reels",
+        "parameters" : [ {
+          "name" : "shiftId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Reels"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reels/{number}" : {
+      "get" : {
+        "tags" : [ "operation-controller" ],
+        "operationId" : "reel",
+        "parameters" : [ {
+          "name" : "number",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/ReelDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/process/values" : {
+      "get" : {
+        "tags" : [ "process-controller" ],
+        "operationId" : "values",
+        "parameters" : [ {
+          "name" : "area",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "group",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Values"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/process/tags/{tag}" : {
+      "get" : {
+        "tags" : [ "process-controller" ],
+        "operationId" : "tag",
+        "parameters" : [ {
+          "name" : "tag",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TagDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/process/tags/{tag}/trend" : {
+      "get" : {
+        "tags" : [ "process-controller" ],
+        "operationId" : "trend",
+        "parameters" : [ {
+          "name" : "tag",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "from",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "to",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "buckets",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/TagTrend"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/process/steam-groups" : {
+      "get" : {
+        "tags" : [ "process-controller" ],
+        "operationId" : "steamGroups",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/SteamGroupsView"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notes" : {
+      "get" : {
+        "tags" : [ "operation-controller" ],
+        "operationId" : "notes",
+        "parameters" : [ {
+          "name" : "status",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "assetTag",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Notes"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/notes/{number}" : {
+      "get" : {
+        "tags" : [ "operation-controller" ],
+        "operationId" : "note",
+        "parameters" : [ {
+          "name" : "number",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/NoteDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health" : {
+      "get" : {
+        "tags" : [ "health-controller" ],
+        "operationId" : "health",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Health"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/grade-changes" : {
+      "get" : {
+        "tags" : [ "operation-controller" ],
+        "operationId" : "gradeChanges",
+        "parameters" : [ {
+          "name" : "shiftId",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/GradeChanges"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assets" : {
+      "get" : {
+        "tags" : [ "asset-controller" ],
+        "operationId" : "list",
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Assets"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assets/{tag}" : {
+      "get" : {
+        "tags" : [ "asset-controller" ],
+        "operationId" : "detail",
+        "parameters" : [ {
+          "name" : "tag",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/AssetDetail"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/assets/{tag}/vibration" : {
+      "get" : {
+        "tags" : [ "asset-controller" ],
+        "operationId" : "vibration",
+        "parameters" : [ {
+          "name" : "tag",
+          "in" : "path",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "from",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "to",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "bucket",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Vibration"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/alarms" : {
+      "get" : {
+        "tags" : [ "operation-controller" ],
+        "operationId" : "alarms",
+        "parameters" : [ {
+          "name" : "state",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "priority",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "tag",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "string"
+          }
+        }, {
+          "name" : "limit",
+          "in" : "query",
+          "required" : false,
+          "schema" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "description" : "OK",
+            "content" : {
+              "*/*" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/Alarms"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components" : {
+    "schemas" : {
+      "WriteSetpoint" : {
+        "type" : "object",
+        "properties" : {
+          "value" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "changedBy" : {
+            "anyOf" : [ {
+              "type" : "string"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "reason" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "changedBy", "reason", "value" ]
+      },
+      "SetpointChange" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "tag" : {
+            "type" : "string"
+          },
+          "previousValue" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "newValue" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "unit" : {
+            "type" : "string"
+          },
+          "changedBy" : {
+            "type" : "string"
+          },
+          "changedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "reason" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "changedAt", "changedBy", "id", "newValue", "previousValue", "reason", "tag", "unit" ]
+      },
+      "SetpointWritten" : {
+        "type" : "object",
+        "properties" : {
+          "change" : {
+            "$ref" : "#/components/schemas/SetpointChange"
+          },
+          "min" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "max" : {
+            "type" : "number",
+            "format" : "double"
+          }
+        },
+        "required" : [ "change", "max", "min" ]
+      },
+      "Alarm" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "tag" : {
+            "type" : "string"
+          },
+          "limit" : {
+            "type" : "string",
+            "enum" : [ "LL", "L", "H", "HH" ]
+          },
+          "threshold" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "priority" : {
+            "type" : "string",
+            "enum" : [ "baixa", "média", "alta", "crítica" ]
+          },
+          "state" : {
+            "type" : "string",
+            "enum" : [ "ativo", "reconhecido", "normalizado" ]
+          },
+          "raisedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "peakValue" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "acknowledgedAt" : {
+            "anyOf" : [ {
+              "type" : "string",
+              "format" : "date-time"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "acknowledgedBy" : {
+            "anyOf" : [ {
+              "type" : "string"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "clearedAt" : {
+            "anyOf" : [ {
+              "type" : "string",
+              "format" : "date-time"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "shelvedUntil" : {
+            "anyOf" : [ {
+              "type" : "string",
+              "format" : "date-time"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "shelvedBy" : {
+            "anyOf" : [ {
+              "type" : "string"
+            }, {
+              "type" : "null"
+            } ]
+          }
+        },
+        "required" : [ "acknowledgedAt", "acknowledgedBy", "clearedAt", "id", "limit", "peakValue", "priority", "raisedAt", "shelvedBy", "shelvedUntil", "state", "tag", "threshold" ]
+      },
+      "AlarmResponse" : {
+        "type" : "object",
+        "properties" : {
+          "alarm" : {
+            "$ref" : "#/components/schemas/Alarm"
+          }
+        },
+        "required" : [ "alarm" ]
+      },
+      "Shelve" : {
+        "type" : "object",
+        "properties" : {
+          "shelvedBy" : {
+            "type" : "string",
+            "minLength" : 1
+          },
+          "hours" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "hours", "shelvedBy" ]
+      },
+      "Acknowledge" : {
+        "type" : "object",
+        "properties" : {
+          "acknowledgedBy" : {
+            "type" : "string",
+            "minLength" : 1
+          }
+        },
+        "required" : [ "acknowledgedBy" ]
+      },
+      "Precursor" : {
+        "type" : "object",
+        "properties" : {
+          "leadTimeS" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "tag" : {
+            "type" : "string"
+          },
+          "description" : {
+            "type" : "string"
+          },
+          "valueBefore" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "valueAtSignal" : {
+            "type" : "number",
+            "format" : "double"
+          }
+        },
+        "required" : [ "description", "leadTimeS", "tag", "valueAtSignal", "valueBefore" ]
+      },
+      "WebBreak" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "shiftId" : {
+            "type" : "string"
+          },
+          "startedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "endedAt" : {
+            "anyOf" : [ {
+              "type" : "string",
+              "format" : "date-time"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "section" : {
+            "type" : "string"
+          },
+          "probableCause" : {
+            "type" : "string"
+          },
+          "precursors" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Precursor"
+            }
+          }
+        },
+        "required" : [ "endedAt", "id", "precursors", "probableCause", "section", "shiftId", "startedAt" ]
+      },
+      "WebBreaks" : {
+        "type" : "object",
+        "properties" : {
+          "count" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "webBreaks" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/WebBreak"
+            }
+          }
+        },
+        "required" : [ "count", "webBreaks" ]
+      },
+      "SseEmitter" : {
+        "type" : "object",
+        "properties" : {
+          "timeout" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        }
+      },
+      "Shift" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "letter" : {
+            "type" : "string"
+          },
+          "operationDate" : {
+            "type" : "string",
+            "format" : "date"
+          },
+          "startedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "endedAt" : {
+            "anyOf" : [ {
+              "type" : "string",
+              "format" : "date-time"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "operator" : {
+            "type" : "string"
+          },
+          "productionT" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "efficiencyPct" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "handover" : {
+            "type" : "array",
+            "items" : {
+              "type" : "string"
+            }
+          }
+        },
+        "required" : [ "efficiencyPct", "endedAt", "handover", "id", "letter", "operationDate", "operator", "productionT", "startedAt" ]
+      },
+      "Shifts" : {
+        "type" : "object",
+        "properties" : {
+          "count" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "shifts" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Shift"
+            }
+          }
+        },
+        "required" : [ "count", "shifts" ]
+      },
+      "CdSpread" : {
+        "type" : "object",
+        "properties" : {
+          "basisWeightGsm" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "moisturePct" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "caliperUm" : {
+            "type" : "number",
+            "format" : "double"
+          }
+        },
+        "required" : [ "basisWeightGsm", "caliperUm", "moisturePct" ]
+      },
+      "GradeChange" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "shiftId" : {
+            "type" : "string"
+          },
+          "fromGsm" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "toGsm" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "startedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "stabilizedAt" : {
+            "anyOf" : [ {
+              "type" : "string",
+              "format" : "date-time"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "affectedReels" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          }
+        },
+        "required" : [ "affectedReels", "fromGsm", "id", "shiftId", "stabilizedAt", "startedAt", "toGsm" ]
+      },
+      "Reel" : {
+        "type" : "object",
+        "properties" : {
+          "number" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "shiftId" : {
+            "type" : "string"
+          },
+          "startedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "endedAt" : {
+            "anyOf" : [ {
+              "type" : "string",
+              "format" : "date-time"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "weightT" : {
+            "anyOf" : [ {
+              "type" : "number",
+              "format" : "double"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "lengthM" : {
+            "anyOf" : [ {
+              "type" : "number",
+              "format" : "double"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "finalDiameterMm" : {
+            "anyOf" : [ {
+              "type" : "number",
+              "format" : "double"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "basisWeightGsm" : {
+            "anyOf" : [ {
+              "type" : "number",
+              "format" : "double"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "moisturePct" : {
+            "anyOf" : [ {
+              "type" : "number",
+              "format" : "double"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "caliperUm" : {
+            "anyOf" : [ {
+              "type" : "number",
+              "format" : "double"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "cdSpread" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/CdSpread"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "splices" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "disposition" : {
+            "anyOf" : [ {
+              "type" : "string",
+              "enum" : [ "aprovada", "rebaixada", "segregada" ]
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "dispositionReason" : {
+            "anyOf" : [ {
+              "type" : "string"
+            }, {
+              "type" : "null"
+            } ]
+          }
+        },
+        "required" : [ "basisWeightGsm", "caliperUm", "cdSpread", "disposition", "dispositionReason", "endedAt", "finalDiameterMm", "lengthM", "moisturePct", "number", "shiftId", "splices", "startedAt", "weightT" ]
+      },
+      "Round" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "shiftId" : {
+            "type" : "string"
+          },
+          "startedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "finishedAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "inspector" : {
+            "type" : "string"
+          },
+          "points" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/RoundPoint"
+            }
+          }
+        },
+        "required" : [ "finishedAt", "id", "inspector", "points", "shiftId", "startedAt" ]
+      },
+      "RoundPoint" : {
+        "type" : "object",
+        "properties" : {
+          "assetTag" : {
+            "type" : "string"
+          },
+          "fieldTempC" : {
+            "anyOf" : [ {
+              "type" : "number",
+              "format" : "double"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "noise" : {
+            "type" : "string",
+            "enum" : [ "normal", "elevado", "anormal" ]
+          },
+          "leak" : {
+            "type" : "string",
+            "enum" : [ "nenhum", "gotejamento", "jato" ]
+          },
+          "note" : {
+            "anyOf" : [ {
+              "type" : "string"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "onlineTag" : {
+            "anyOf" : [ {
+              "type" : "string"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "onlineValue" : {
+            "anyOf" : [ {
+              "type" : "number",
+              "format" : "double"
+            }, {
+              "type" : "null"
+            } ]
+          }
+        },
+        "required" : [ "assetTag", "fieldTempC", "leak", "noise", "note", "onlineTag", "onlineValue" ]
+      },
+      "ShiftDetail" : {
+        "type" : "object",
+        "properties" : {
+          "shift" : {
+            "$ref" : "#/components/schemas/Shift"
+          },
+          "reels" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Reel"
+            }
+          },
+          "webBreaks" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/WebBreak"
+            }
+          },
+          "gradeChanges" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/GradeChange"
+            }
+          },
+          "rounds" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Round"
+            }
+          }
+        },
+        "required" : [ "gradeChanges", "reels", "rounds", "shift", "webBreaks" ]
+      },
+      "SetpointChanges" : {
+        "type" : "object",
+        "properties" : {
+          "count" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "changes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SetpointChange"
+            }
+          }
+        },
+        "required" : [ "changes", "count" ]
+      },
+      "Rounds" : {
+        "type" : "object",
+        "properties" : {
+          "count" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "rounds" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Round"
+            }
+          }
+        },
+        "required" : [ "count", "rounds" ]
+      },
+      "RoundDetail" : {
+        "type" : "object",
+        "properties" : {
+          "round" : {
+            "$ref" : "#/components/schemas/Round"
+          }
+        },
+        "required" : [ "round" ]
+      },
+      "Reels" : {
+        "type" : "object",
+        "properties" : {
+          "count" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "reels" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Reel"
+            }
+          }
+        },
+        "required" : [ "count", "reels" ]
+      },
+      "ReelDetail" : {
+        "type" : "object",
+        "properties" : {
+          "reel" : {
+            "$ref" : "#/components/schemas/Reel"
+          }
+        },
+        "required" : [ "reel" ]
+      },
+      "TagValue" : {
+        "type" : "object",
+        "properties" : {
+          "tag" : {
+            "type" : "string"
+          },
+          "value" : {
+            "anyOf" : [ {
+              "type" : "number",
+              "format" : "double"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "unit" : {
+            "type" : "string"
+          },
+          "ts" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "setpoint" : {
+            "anyOf" : [ {
+              "type" : "number",
+              "format" : "double"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "zone" : {
+            "anyOf" : [ {
+              "type" : "string"
+            }, {
+              "type" : "null"
+            } ]
+          }
+        },
+        "required" : [ "setpoint", "tag", "ts", "unit", "value", "zone" ]
+      },
+      "Values" : {
+        "type" : "object",
+        "properties" : {
+          "ts" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "count" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "values" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/TagValue"
+            }
+          }
+        },
+        "required" : [ "count", "ts", "values" ]
+      },
+      "AlarmLimits" : {
+        "type" : "object",
+        "properties" : {
+          "ll" : {
+            "anyOf" : [ {
+              "type" : "number",
+              "format" : "double"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "l" : {
+            "anyOf" : [ {
+              "type" : "number",
+              "format" : "double"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "h" : {
+            "anyOf" : [ {
+              "type" : "number",
+              "format" : "double"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "hh" : {
+            "anyOf" : [ {
+              "type" : "number",
+              "format" : "double"
+            }, {
+              "type" : "null"
+            } ]
+          }
+        },
+        "required" : [ "h", "hh", "l", "ll" ]
+      },
+      "Compression" : {
+        "type" : "object",
+        "properties" : {
+          "excDev" : {
+            "anyOf" : [ {
+              "type" : "number",
+              "format" : "double"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "compDev" : {
+            "anyOf" : [ {
+              "type" : "number",
+              "format" : "double"
+            }, {
+              "type" : "null"
+            } ]
+          }
+        },
+        "required" : [ "compDev", "excDev" ]
+      },
+      "ProcessVariable" : {
+        "type" : "object",
+        "properties" : {
+          "tag" : {
+            "type" : "string"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "area" : {
+            "type" : "string"
+          },
+          "group" : {
+            "type" : "string"
+          },
+          "unit" : {
+            "type" : "string"
+          },
+          "min" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "max" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "target" : {
+            "anyOf" : [ {
+              "type" : "number",
+              "format" : "double"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "limits" : {
+            "$ref" : "#/components/schemas/AlarmLimits"
+          },
+          "controlled" : {
+            "type" : "boolean"
+          },
+          "mv" : {
+            "anyOf" : [ {
+              "type" : "string"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "compression" : {
+            "$ref" : "#/components/schemas/Compression"
+          },
+          "source" : {
+            "type" : "string",
+            "enum" : [ "B", "ISO 20816-3", "assumed" ]
+          },
+          "confidence" : {
+            "type" : "string",
+            "enum" : [ "alta", "média", "baixa" ]
+          },
+          "note" : {
+            "anyOf" : [ {
+              "type" : "string"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "cylinder" : {
+            "anyOf" : [ {
+              "type" : "integer",
+              "format" : "int32"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "steamGroup" : {
+            "anyOf" : [ {
+              "type" : "string"
+            }, {
+              "type" : "null"
+            } ]
+          }
+        },
+        "required" : [ "area", "compression", "confidence", "controlled", "cylinder", "group", "limits", "max", "min", "mv", "name", "note", "source", "steamGroup", "tag", "target", "unit" ]
+      },
+      "TagDetail" : {
+        "type" : "object",
+        "properties" : {
+          "variable" : {
+            "$ref" : "#/components/schemas/ProcessVariable"
+          },
+          "writable" : {
+            "type" : "boolean"
+          },
+          "notWritableBecause" : {
+            "anyOf" : [ {
+              "type" : "string"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "archived" : {
+            "type" : "boolean"
+          },
+          "value" : {
+            "$ref" : "#/components/schemas/TagValue"
+          }
+        },
+        "required" : [ "archived", "notWritableBecause", "value", "variable", "writable" ]
+      },
+      "ArchivedSample" : {
+        "type" : "object",
+        "properties" : {
+          "t" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "v" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "reason" : {
+            "type" : "string",
+            "enum" : [ "INICIAL", "PORTA", "INTERVALO", "EVENTO", "FINAL" ]
+          }
+        },
+        "required" : [ "reason", "t", "v" ]
+      },
+      "PlotBucket" : {
+        "type" : "object",
+        "properties" : {
+          "bucketStart" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "samples" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "min" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "max" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "first" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "last" : {
+            "type" : "number",
+            "format" : "double"
+          }
+        },
+        "required" : [ "bucketStart", "first", "last", "max", "min", "samples" ]
+      },
+      "TagTrend" : {
+        "type" : "object",
+        "properties" : {
+          "tag" : {
+            "type" : "string"
+          },
+          "unit" : {
+            "type" : "string"
+          },
+          "from" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "to" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "bucketS" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "buckets" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/PlotBucket"
+            }
+          },
+          "before" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ArchivedSample"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "after" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/ArchivedSample"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "timeWeightedAverage" : {
+            "anyOf" : [ {
+              "type" : "number",
+              "format" : "double"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "limits" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/AlarmLimits"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "target" : {
+            "anyOf" : [ {
+              "type" : "number",
+              "format" : "double"
+            }, {
+              "type" : "null"
+            } ]
+          }
+        },
+        "required" : [ "after", "before", "bucketS", "buckets", "from", "limits", "tag", "target", "timeWeightedAverage", "to", "unit" ]
+      },
+      "Provenance" : {
+        "type" : "object",
+        "properties" : {
+          "source" : {
+            "type" : "string"
+          },
+          "note" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "note", "source" ]
+      },
+      "SteamGroupView" : {
+        "type" : "object",
+        "properties" : {
+          "id" : {
+            "type" : "string"
+          },
+          "label" : {
+            "type" : "string"
+          },
+          "section" : {
+            "type" : "string"
+          },
+          "cylinders" : {
+            "type" : "array",
+            "items" : {
+              "type" : "integer",
+              "format" : "int32"
+            }
+          },
+          "condensateNote" : {
+            "anyOf" : [ {
+              "type" : "string"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "role" : {
+            "anyOf" : [ {
+              "type" : "string"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "pressure" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/TagValue"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "siphonDeltaP" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/TagValue"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "condensateLevel" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/TagValue"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "division" : {
+            "$ref" : "#/components/schemas/Provenance"
+          },
+          "tagMap" : {
+            "$ref" : "#/components/schemas/Provenance"
+          }
+        },
+        "required" : [ "condensateLevel", "condensateNote", "cylinders", "division", "id", "label", "pressure", "role", "section", "siphonDeltaP", "tagMap" ]
+      },
+      "SteamGroupsView" : {
+        "type" : "object",
+        "properties" : {
+          "ts" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "groups" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/SteamGroupView"
+            }
+          }
+        },
+        "required" : [ "groups", "ts" ]
+      },
+      "Evidence" : {
+        "type" : "object",
+        "properties" : {
+          "kind" : {
+            "type" : "string",
+            "enum" : [ "tendência", "alarme", "ronda", "medição" ]
+          },
+          "ref" : {
+            "type" : "string"
+          },
+          "label" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "kind", "label", "ref" ]
+      },
+      "MaintenanceNote" : {
+        "type" : "object",
+        "properties" : {
+          "number" : {
+            "type" : "string"
+          },
+          "assetTag" : {
+            "type" : "string"
+          },
+          "symptom" : {
+            "type" : "string"
+          },
+          "priority" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "origin" : {
+            "type" : "string",
+            "enum" : [ "alarme", "ronda", "operação" ]
+          },
+          "originRef" : {
+            "anyOf" : [ {
+              "type" : "string"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "status" : {
+            "type" : "string",
+            "enum" : [ "aberta", "planejada", "em execução", "encerrada" ]
+          },
+          "requiresShutdown" : {
+            "type" : "boolean"
+          },
+          "createdAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "closedAt" : {
+            "anyOf" : [ {
+              "type" : "string",
+              "format" : "date-time"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "evidence" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Evidence"
+            }
+          }
+        },
+        "required" : [ "assetTag", "closedAt", "createdAt", "evidence", "number", "origin", "originRef", "priority", "requiresShutdown", "status", "symptom" ]
+      },
+      "Notes" : {
+        "type" : "object",
+        "properties" : {
+          "count" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "notes" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/MaintenanceNote"
+            }
+          }
+        },
+        "required" : [ "count", "notes" ]
+      },
+      "NoteDetail" : {
+        "type" : "object",
+        "properties" : {
+          "note" : {
+            "$ref" : "#/components/schemas/MaintenanceNote"
+          }
+        },
+        "required" : [ "note" ]
+      },
+      "Health" : {
+        "type" : "object",
+        "properties" : {
+          "status" : {
+            "type" : "string"
+          },
+          "service" : {
+            "type" : "string"
+          },
+          "version" : {
+            "type" : "string"
+          },
+          "uptimeS" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "database" : {
+            "type" : "string"
+          },
+          "databaseUp" : {
+            "type" : "boolean"
+          },
+          "simulation" : {
+            "$ref" : "#/components/schemas/Simulation"
+          }
+        },
+        "required" : [ "database", "databaseUp", "service", "simulation", "status", "uptimeS", "version" ]
+      },
+      "Simulation" : {
+        "type" : "object",
+        "properties" : {
+          "seed" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "lastTick" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "lastRunAt" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "behindS" : {
+            "type" : "integer",
+            "format" : "int64"
+          },
+          "maxHours" : {
+            "type" : "integer",
+            "format" : "int64"
+          }
+        },
+        "required" : [ "behindS", "lastRunAt", "lastTick", "maxHours", "seed" ]
+      },
+      "GradeChanges" : {
+        "type" : "object",
+        "properties" : {
+          "count" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "gradeChanges" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/GradeChange"
+            }
+          }
+        },
+        "required" : [ "count", "gradeChanges" ]
+      },
+      "AssetView" : {
+        "type" : "object",
+        "properties" : {
+          "tag" : {
+            "type" : "string"
+          },
+          "kind" : {
+            "type" : "string"
+          },
+          "label" : {
+            "type" : "string"
+          },
+          "section" : {
+            "type" : "string"
+          },
+          "position" : {
+            "type" : "array",
+            "items" : {
+              "type" : "number",
+              "format" : "double"
+            }
+          },
+          "radius" : {
+            "anyOf" : [ {
+              "type" : "number",
+              "format" : "double"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "lengthM" : {
+            "anyOf" : [ {
+              "type" : "number",
+              "format" : "double"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "side" : {
+            "anyOf" : [ {
+              "type" : "string"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "parentTag" : {
+            "anyOf" : [ {
+              "type" : "string"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "steamGroup" : {
+            "anyOf" : [ {
+              "type" : "string"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "iso" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/IsoClass"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "source" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "iso", "kind", "label", "lengthM", "parentTag", "position", "radius", "section", "side", "source", "steamGroup", "tag" ]
+      },
+      "Assets" : {
+        "type" : "object",
+        "properties" : {
+          "count" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "assets" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/AssetView"
+            }
+          }
+        },
+        "required" : [ "assets", "count" ]
+      },
+      "IsoClass" : {
+        "type" : "object",
+        "properties" : {
+          "group" : {
+            "type" : "string"
+          },
+          "support" : {
+            "type" : "string"
+          }
+        },
+        "required" : [ "group", "support" ]
+      },
+      "AssetDetail" : {
+        "type" : "object",
+        "properties" : {
+          "asset" : {
+            "$ref" : "#/components/schemas/AssetView"
+          },
+          "status" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/Status"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "limits" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/Limits"
+            }, {
+              "type" : "null"
+            } ]
+          }
+        },
+        "required" : [ "asset", "limits", "status" ]
+      },
+      "Limits" : {
+        "type" : "object",
+        "properties" : {
+          "aToB" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "bToC" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "cToD" : {
+            "type" : "number",
+            "format" : "double"
+          }
+        },
+        "required" : [ "aToB", "bToC", "cToD" ]
+      },
+      "Reading" : {
+        "type" : "object",
+        "properties" : {
+          "assetTag" : {
+            "type" : "string"
+          },
+          "ts" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "rmsMmS" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "tempC" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "envelopeGe" : {
+            "type" : "number",
+            "format" : "double"
+          }
+        },
+        "required" : [ "assetTag", "envelopeGe", "rmsMmS", "tempC", "ts" ]
+      },
+      "Status" : {
+        "type" : "object",
+        "properties" : {
+          "assetTag" : {
+            "type" : "string"
+          },
+          "zone" : {
+            "type" : "string",
+            "enum" : [ "A", "B", "C", "D" ]
+          },
+          "health" : {
+            "type" : "string",
+            "enum" : [ "normal", "attention", "critical" ]
+          },
+          "latest" : {
+            "$ref" : "#/components/schemas/Reading"
+          }
+        },
+        "required" : [ "assetTag", "health", "latest", "zone" ]
+      },
+      "Bucket" : {
+        "type" : "object",
+        "properties" : {
+          "bucketStart" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "samples" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "rmsAvgMmS" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "rmsMaxMmS" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "tempAvgC" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "envelopeMaxGe" : {
+            "type" : "number",
+            "format" : "double"
+          }
+        },
+        "required" : [ "bucketStart", "envelopeMaxGe", "rmsAvgMmS", "rmsMaxMmS", "samples", "tempAvgC" ]
+      },
+      "Estimate" : {
+        "type" : "object",
+        "properties" : {
+          "trendMmSPerDay" : {
+            "type" : "number",
+            "format" : "double"
+          },
+          "daysToZoneD" : {
+            "anyOf" : [ {
+              "type" : "number",
+              "format" : "double"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "samples" : {
+            "type" : "integer",
+            "format" : "int32"
+          }
+        },
+        "required" : [ "daysToZoneD", "samples", "trendMmSPerDay" ]
+      },
+      "Vibration" : {
+        "type" : "object",
+        "properties" : {
+          "assetTag" : {
+            "type" : "string"
+          },
+          "from" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "to" : {
+            "type" : "string",
+            "format" : "date-time"
+          },
+          "bucket" : {
+            "type" : "string",
+            "enum" : [ "1 minute", "5 minutes", "15 minutes", "1 hour", "6 hours", "1 day" ]
+          },
+          "limits" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/Limits"
+            }, {
+              "type" : "null"
+            } ]
+          },
+          "buckets" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Bucket"
+            }
+          },
+          "remainingLife" : {
+            "anyOf" : [ {
+              "$ref" : "#/components/schemas/Estimate"
+            }, {
+              "type" : "null"
+            } ]
+          }
+        },
+        "required" : [ "assetTag", "bucket", "buckets", "from", "limits", "remainingLife", "to" ]
+      },
+      "Alarms" : {
+        "type" : "object",
+        "properties" : {
+          "count" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "floodWindowS" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "floodThreshold" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "inFloodWindow" : {
+            "type" : "integer",
+            "format" : "int32"
+          },
+          "flooding" : {
+            "type" : "boolean"
+          },
+          "alarms" : {
+            "type" : "array",
+            "items" : {
+              "$ref" : "#/components/schemas/Alarm"
+            }
+          }
+        },
+        "required" : [ "alarms", "count", "floodThreshold", "floodWindowS", "flooding", "inFloodWindow" ]
+      }
+    }
+  }
+}

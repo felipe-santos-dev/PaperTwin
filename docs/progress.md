@@ -23,7 +23,7 @@ Branch: `dev/fases-4-7`. Nada de push na main, nada de PR, nada de deploy.
 - [x] **J2** núcleo: FOPDT, CD, ruído, PI, rede, alarmes, mancais, cenários
 - [x] **J3** persistência: migrations, historiador, entidades, estado da rede
 - [x] **J4** retomada e concorrência
-- [ ] **J5** API — começada: configuração, Problem Details e rotas de processo
+- [x] **J5** API — 14 rotas contra o gabarito, `openapi.json` versionado
 - [ ] **J6** Contrato com o front via `openapi.json`
 - [ ] **J7** Dockerfile e ajuste para 512 MB
 - [ ] **J8** Remover `apps/api`
@@ -713,6 +713,14 @@ decide se a retomada cabe numa requisição — não pode ficar escondido atrás
 25. ~~**Postgres 17.11 nos testes**~~ — **resolvido em 03/11/2026**. O Neon do
     projeto roda 18.6, e os testes passaram a rodar 18.6 também. Deixa de ser
     suposição.
+26. **A semeadura de ativos no Java faz upsert sem apagar**, contra o `delete
+    from asset` da versão TypeScript. Aquilo funciona num banco em memória que
+    nasce vazio e falha num banco gerenciado: assim que existe uma ronda ou uma
+    nota apontando para o ativo, o `delete` bate na chave estrangeira e o
+    arranque inteiro cai. O custo de não apagar é uma tag removida do modelo
+    ficar para trás na tabela; o custo de apagar é a API não subir. Vale
+    confirmar se é o que o Felipe quer — a alternativa seria apagar só o que
+    nada referencia.
 
 ## Próximo passo exato
 
@@ -761,6 +769,62 @@ a explicação de por que são três.
 
 **Para a Fase 7**: o `deploy-checklist.md` tem de incluir "depois do primeiro
 deploy, ler o log da retomada e ajustar `RESUME_MAX_HOURS` se passar de ~15 s".
+
+### J5 — fechada
+
+As 14 rotas do gabarito respondem igual à implementação TypeScript, com o mesmo
+roteiro: banco limpo, migrations, semeadura, uma retomada até o instante fixo e
+comparação campo a campo.
+
+O que entrou depois do começo descrito abaixo:
+
+- **`runtime/Harvest`** — a colheita das entidades. É o que faltava para
+  `/shifts`, `/reels`, `/rounds` e `/notes` terem conteúdo: as médias de uma
+  bobina são **consulta ao historiador**, não acumulador em memória, e por isso
+  a colheita roda depois de o arquivo estar gravado e antes da poda. Os ids saem
+  do passo, e não de sequência: reexecutar um trecho reencontra a mesma linha.
+- **`AssetController`, `OperationController`, `HealthController`,
+  `StreamController`** — ativos, entidades, alarmes com reconhecer e engavetar,
+  escrita de setpoint com auditoria (o valor anterior é lido no servidor), SSE
+  com `SseEmitter`, `/health`.
+- **`openapi.json` versionado** em `apps/api-java/`, conferido por
+  `OpenApiContractTest`: ele **compara** por padrão e só regrava com
+  `-Dopenapi.write=true`. Regravar sozinho faria o arquivo seguir o código em
+  silêncio, e o diff — que é o ponto — nunca chamaria a atenção de ninguém.
+
+#### Quatro defeitos que o gabarito encontrou
+
+1. **`JacksonConfig` usava `builder.modules(...)`, que SUBSTITUI a lista** que o
+   Boot montou — e dentro dela estava o `JavaTimeModule`. `Instant` continuava
+   funcionando, porque o módulo próprio o cobre; `LocalDate` passou a estourar
+   na serialização. Resultado: a data de operação do turno derrubava `/shifts` e
+   nada mais. Trocado por `modulesToInstall`.
+2. **Erro sem corpo.** Uma `ErrorResponseException` lançada por um controlador
+   virava status sem corpo: o resolvedor padrão chama `sendError` e o
+   `ProblemDetail` se perde. Resolvido com
+   `spring.mvc.problemdetails.enabled: true`. Os dois `@ExceptionHandler` que
+   **devolviam** a exceção também estavam errados — ela seria serializada como
+   objeto Java; passam a devolver o `ProblemDetail` com
+   `application/problem+json`.
+3. **A tabela `asset` nunca era semeada no lado Java.** O primeiro ponto de
+   ronda batia na chave estrangeira, a retomada morria antes de salvar o estado,
+   e a requisição seguinte refazia as 4 h inteiras para morrer igual — 14 rotas
+   quebradas e 11 min de suite. A semeadura entrou no mesmo lugar onde os pontos
+   do historiador já se auto-curavam.
+4. **Enums sem `@JsonValue`** saíam como `"APROVADA"` em vez de `"aprovada"`.
+
+#### Duas formas corrigidas no modelo
+
+- **`Reel.cdSpread`** deixou de ser três campos opcionais soltos e passou a ser
+  um registro de três `double` primitivos. O gabarito publica aninhado, e a
+  regra "ou os três ou nenhum" — que a restrição `reel_cd_spread_complete` já
+  guardava no banco — agora está **no tipo**: meio perfil deixou de ser
+  representável. O teste que escrevia meio perfil passou a escrevê-lo por SQL
+  direto, que é o único caminho que sobrou.
+- **`RoundPoint` e `Evidence` perderam o campo `sequence`.** A ordem é a
+  posição na lista; o repositório grava a coluna a partir do índice. Guardar o
+  número no registro dava duas verdades para a mesma coisa, e uma lista
+  reordenada passaria a mentir sem nada reclamar.
 
 ### J5 — o começo (parado por limite de uso em 03/11/2026)
 

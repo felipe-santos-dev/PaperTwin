@@ -76,6 +76,43 @@ public class SimStateRepository {
         .orElse(null);
   }
 
+  /**
+   * Escreve um setpoint no estado gravado.
+   *
+   * <p>É o que faz uma escrita de setpoint ter <b>efeito</b>. A rede é remontada do estado a
+   * cada retomada, e o setpoint faz parte dele: sem isto, a auditoria registraria uma escrita que
+   * a simulação nunca viu — o pior dos dois mundos, porque a tela mostraria o registro e o
+   * processo não se mexeria.
+   *
+   * <p>Sem estado gravado não há o que atualizar, e devolve {@code false}: acontece antes da
+   * primeira retomada, e aí o ponto de operação do catálogo é que vale.
+   */
+  public boolean applySetpoint(String tag, double value) {
+    var marker = find();
+    if (marker == null || marker.state() == null) {
+      return false;
+    }
+
+    var state = marker.state();
+    var setpoints = new java.util.LinkedHashMap<>(state.setpoints());
+    setpoints.put(tag, value);
+
+    save(
+        marker.seed(),
+        marker.lastTick(),
+        new ProcessEngine.State(
+            state.version(),
+            state.tick(),
+            state.seed(),
+            state.truth(),
+            setpoints,
+            state.integrals(),
+            state.runners()),
+        marker.updatedAt());
+
+    return true;
+  }
+
   public void save(int seed, long lastTick, ProcessEngine.State state, Instant updatedAt) {
     String json = null;
 

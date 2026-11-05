@@ -1,5 +1,6 @@
 package dev.felipesantos.papertwin.alarm;
 
+import dev.felipesantos.papertwin.api.Nullable;
 import java.time.Instant;
 
 /**
@@ -21,11 +22,11 @@ public record Alarm(
     AlarmState state,
     Instant raisedAt,
     double peakValue,
-    Instant acknowledgedAt,
-    String acknowledgedBy,
-    Instant clearedAt,
-    Instant shelvedUntil,
-    String shelvedBy) {
+    @Nullable Instant acknowledgedAt,
+    @Nullable String acknowledgedBy,
+    @Nullable Instant clearedAt,
+    @Nullable Instant shelvedUntil,
+    @Nullable String shelvedBy) {
 
   /** Se o alarme está engavetado num instante. */
   public boolean shelvedAt(Instant at) {

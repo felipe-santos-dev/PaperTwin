@@ -4,6 +4,7 @@ import dev.felipesantos.papertwin.simulation.Noise;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
+import java.util.List;
 
 /**
  * O mancal: assinatura, degradação e ruído, como função do passo.
@@ -81,7 +82,128 @@ public final class Bearings {
   /** Uma leitura com instante, como gravada. */
   public record Reading(String assetTag, Instant ts, double rmsMmS, double tempC, double envelopeGe) {}
 
+  /**
+   * Leituras agregadas numa janela de tempo.
+   *
+   * <p>A média serve à tendência; o máximo é o que não pode ser perdido, porque um pico de
+   * vibração de poucos segundos some numa média de dez minutos.
+   */
+  public record Bucket(
+      Instant bucketStart,
+      int samples,
+      double rmsAvgMmS,
+      double rmsMaxMmS,
+      double tempAvgC,
+      double envelopeMaxGe) {}
+
+  /**
+   * Os tamanhos de janela que a API aceita.
+   *
+   * <p>Os rótulos são os do {@code date_bin} do Postgres, porque foi de lá que vieram: a versão
+   * TypeScript agregava no banco. Aqui a agregação é em memória — a amostra é função pura de
+   * (semente, passo, tag, cenário), e 72 h a cada 15 min são 289 pontos, que custam menos de
+   * gerar do que de buscar. Os rótulos ficaram para o contrato não mudar debaixo do front.
+   *
+   * <p>É enumeração, e não texto com um mapa de milissegundos ao lado: assim o contrato publica
+   * {@code "1 minute" | ... | "1 day"} em vez de {@code string}, e a tela que escolhe a janela é
+   * conferida pelo compilador.
+   */
+  public enum BucketSize {
+    ONE_MINUTE("1 minute", 60_000L),
+    FIVE_MINUTES("5 minutes", 5 * 60_000L),
+    FIFTEEN_MINUTES("15 minutes", 15 * 60_000L),
+    ONE_HOUR("1 hour", 60 * 60_000L),
+    SIX_HOURS("6 hours", 6 * 60 * 60_000L),
+    ONE_DAY("1 day", 24 * 60 * 60_000L);
+
+    private final String label;
+    private final long millis;
+
+    BucketSize(String label, long millis) {
+      this.label = label;
+      this.millis = millis;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonValue
+    public String label() {
+      return label;
+    }
+
+    public long millis() {
+      return millis;
+    }
+
+    /** Pelo rótulo, ou {@code null} se não existe — quem chama decide o que dizer a quem errou. */
+    public static BucketSize byLabel(String label) {
+      for (var value : values()) {
+        if (value.label.equals(label)) {
+          return value;
+        }
+      }
+      return null;
+    }
+
+    /** Os rótulos aceitos, para a mensagem de recusa. */
+    public static String labels() {
+      var out = new java.util.StringJoiner(", ");
+      for (var value : values()) {
+        out.add(value.label);
+      }
+      return out.toString();
+    }
+  }
+
+  /** A janela padrão da tela: uma hora. */
+  public static final BucketSize DEFAULT_BUCKET = BucketSize.ONE_HOUR;
+
   private Bearings() {}
+
+  /**
+   * Agrega leituras em janelas alinhadas à época.
+   *
+   * <p>O início de cada janela vem de {@code floor(t / tamanho)}, e não da primeira leitura: é
+   * o que o {@code date_bin} faz, e é o que faz duas consultas com recortes diferentes
+   * devolverem as mesmas janelas. Alinhar na primeira leitura deslocaria o gráfico a cada
+   * recarga.
+   */
+  public static List<Bucket> bucketize(List<Reading> readings, long bucketMs) {
+    if (bucketMs <= 0) {
+      throw new IllegalArgumentException("O tamanho da janela precisa ser positivo: " + bucketMs);
+    }
+
+    var groups = new java.util.TreeMap<Long, List<Reading>>();
+    for (var reading : readings) {
+      long start = Math.floorDiv(reading.ts().toEpochMilli(), bucketMs) * bucketMs;
+      groups.computeIfAbsent(start, key -> new java.util.ArrayList<>()).add(reading);
+    }
+
+    var out = new java.util.ArrayList<Bucket>(groups.size());
+    groups.forEach(
+        (start, group) -> {
+          double rmsSum = 0;
+          double tempSum = 0;
+          double rmsMax = 0;
+          double envelopeMax = 0;
+
+          for (var reading : group) {
+            rmsSum += reading.rmsMmS();
+            tempSum += reading.tempC();
+            rmsMax = Math.max(rmsMax, reading.rmsMmS());
+            envelopeMax = Math.max(envelopeMax, reading.envelopeGe());
+          }
+
+          out.add(
+              new Bucket(
+                  Instant.ofEpochMilli(start),
+                  group.size(),
+                  round(rmsSum / group.size(), 3),
+                  rmsMax,
+                  round(tempSum / group.size(), 2),
+                  envelopeMax));
+        });
+
+    return List.copyOf(out);
+  }
 
   /**
    * A assinatura de um mancal saudável.

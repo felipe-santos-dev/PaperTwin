@@ -279,10 +279,12 @@ class CatchUpTest {
       long after = runtime.totalMemory() - runtime.freeMemory();
 
       System.out.printf(
-          "[orçamento] %s: %d passos em %d ms, %d linhas arquivadas, compressão %.0f:1, heap +%d MB%n",
+          "[orçamento] %s: %d passos em %d ms (%d ms de colheita), %d linhas arquivadas,"
+              + " compressão %.0f:1, heap +%d MB%n",
           label,
           report.ticks(),
           elapsedMs,
+          report.harvestMs(),
           report.archived(),
           report.compression().ratio(),
           Math.max(0, (after - before) / 1_048_576));

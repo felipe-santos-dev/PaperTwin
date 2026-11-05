@@ -8,6 +8,7 @@ import dev.felipesantos.papertwin.alarm.Alarm;
 import dev.felipesantos.papertwin.alarm.AlarmLimitLevel;
 import dev.felipesantos.papertwin.alarm.AlarmPriority;
 import dev.felipesantos.papertwin.alarm.AlarmState;
+import dev.felipesantos.papertwin.operation.Entities;
 import dev.felipesantos.papertwin.operation.Entities.Disposition;
 import dev.felipesantos.papertwin.operation.Entities.Evidence;
 import dev.felipesantos.papertwin.operation.Entities.EvidenceKind;
@@ -177,18 +178,30 @@ class OperationsRepositoryTest {
       var complete =
           new Reel(
               1001, "T-2026-03-04-B", T0, T0.plusSeconds(3180), 24.1, 66_500.0, 3000.0,
-              75.1, 4.8, 102.0, 0.9, 0.21, 2.4, 0, Disposition.APROVADA, null);
+              75.1, 4.8, 102.0, new Entities.CdSpread(0.9, 0.21, 2.4), 0,
+              Disposition.APROVADA, null);
       repository.saveReel(complete);
 
-      assertThat(repository.findReel(1001).cdCaliperUm()).isCloseTo(2.4, Offset.offset(1e-9));
+      var stored = repository.findReel(1001);
+      assertThat(stored.cdSpread().caliperUm()).isCloseTo(2.4, Offset.offset(1e-9));
 
-      var half =
+      var withoutProfile =
           new Reel(
               1002, "T-2026-03-04-B", T0, null, null, null, null, null, null, null,
-              0.9, null, null, 0, null, null);
+              null, 0, null, null);
+      repository.saveReel(withoutProfile);
+      assertThat(repository.findReel(1002).cdSpread()).isNull();
 
-      // meia medição de perfil não diz nada
-      assertThatThrownBy(() -> repository.saveReel(half))
+      /*
+       * Meia medição de perfil não existe neste modelo: `CdSpread` guarda os
+       * três como `double` primitivo, então o tipo já recusa. A restrição do
+       * banco continua sendo testada por escrita direta — ela é a última linha,
+       * para quem chegar na tabela sem passar pelo repositório.
+       */
+      assertThatThrownBy(
+              () ->
+                  template.update(
+                      "update jumbo_reel set cd_basis_weight_gsm = 0.9 where number = ?", 1002))
           .hasMessageContaining("reel_cd_spread_complete");
     }
 
@@ -200,7 +213,7 @@ class OperationsRepositoryTest {
       var downgraded =
           new Reel(
               1003, "T-2026-03-05-B", T0, T0.plusSeconds(3180), 24.1, 66_500.0, 3000.0,
-              79.4, 4.8, 102.0, null, null, null, 0, Disposition.REBAIXADA, null);
+              79.4, 4.8, 102.0, null, 0, Disposition.REBAIXADA, null);
 
       assertThatThrownBy(() -> repository.saveReel(downgraded))
           .hasMessageContaining("reel_reason_matches_disposition");
@@ -214,10 +227,10 @@ class OperationsRepositoryTest {
 
       repository.saveReel(
           new Reel(2001, "T-2026-03-06-A", T0, null, null, null, null, null, null, null,
-              null, null, null, 0, null, null));
+              null, 0, null, null));
       repository.saveReel(
           new Reel(2002, "T-2026-03-06-B", T0, null, null, null, null, null, null, null,
-              null, null, null, 0, null, null));
+              null, 0, null, null));
 
       assertThat(repository.listReels("T-2026-03-06-A", 10)).hasSize(1);
       assertThat(repository.listReels(null, 100)).hasSizeGreaterThanOrEqualTo(2);
@@ -300,7 +313,7 @@ class OperationsRepositoryTest {
               "operador-turno-B",
               List.of(
                   new RoundPoint(
-                      1, "MP1-SEC-G4-CS23-MLA", 63.0, Noise.ELEVADO, Leak.NENHUM,
+                      "MP1-SEC-G4-CS23-MLA", 63.0, Noise.ELEVADO, Leak.NENHUM,
                       "ruído metálico no LA", "TI-5323A", 66.0))));
 
       var point = repository.listRounds(10).getFirst().points().getFirst();
@@ -328,8 +341,8 @@ class OperationsRepositoryTest {
               T0,
               null,
               List.of(
-                  new Evidence(1, EvidenceKind.TENDENCIA, "VI-5123A/72h", "72 h de vibração"),
-                  new Evidence(2, EvidenceKind.ALARME, "AL-1772442000-VI-5123A-H", "H em 2,8"))));
+                  new Evidence(EvidenceKind.TENDENCIA, "VI-5123A/72h", "72 h de vibração"),
+                  new Evidence(EvidenceKind.ALARME, "AL-1772442000-VI-5123A-H", "H em 2,8"))));
 
       var note = repository.listNotes(10).getFirst();
 

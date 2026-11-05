@@ -46,6 +46,15 @@ public class JacksonConfig {
           }
         });
 
-    return builder -> builder.modules(module);
+    /*
+     * `modulesToInstall`, e nunca `modules`.
+     *
+     * `modules` SUBSTITUI a lista que o Boot montou, e lá dentro está o
+     * `JavaTimeModule`. Trocada a lista, `Instant` continuaria funcionando
+     * — este módulo o cobre — e `LocalDate` passaria a estourar na
+     * serialização, o que é um jeito peculiar de quebrar: a data de operação
+     * do turno derrubaria a rota /shifts e nada mais.
+     */
+    return builder -> builder.modulesToInstall(module);
   }
 }

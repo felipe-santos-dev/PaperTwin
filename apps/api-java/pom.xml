@@ -50,6 +50,7 @@
       para windows-amd64 (a máquina de desenvolvimento) e linux-amd64 (o
       `ubuntu-latest` do CI).
     -->
+    <springdoc.version>2.8.13</springdoc.version>
     <zonky.version>2.2.2</zonky.version>
     <postgres.version>18.6.0</postgres.version>
   </properties>
@@ -82,6 +83,20 @@
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
       <scope>runtime</scope>
+    </dependency>
+
+    <!--
+      A documentação da API sai do código, e não de um arquivo escrito à mão.
+
+      O `openapi.json` é o contrato que o front consome — ele gera os tipos
+      TypeScript a partir dele. Um arquivo mantido à mão divergiria das rotas na
+      primeira mudança, e a divergência só apareceria como erro de tipo no
+      front, longe de onde foi causada.
+    -->
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <version>${springdoc.version}</version>
     </dependency>
 
     <dependency>

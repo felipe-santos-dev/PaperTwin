@@ -1,5 +1,6 @@
 package dev.felipesantos.papertwin.catalog;
 
+import dev.felipesantos.papertwin.api.Nullable;
 /**
  * Ponto de partida da compressão do histórico, no estilo do PI.
  *
@@ -8,7 +9,7 @@ package dev.felipesantos.papertwin.catalog;
  * ponto). Os dois saem da lista base e devem ser reajustados depois de medir a taxa de compressão
  * de verdade.
  */
-public record Compression(Double excDev, Double compDev) {
+public record Compression(@Nullable Double excDev, @Nullable Double compDev) {
 
   /** Sem compressão: tudo que chega é arquivado. */
   public boolean none() {

@@ -1,5 +1,6 @@
 package dev.felipesantos.papertwin.db;
 
+import dev.felipesantos.papertwin.api.Nullable;
 import dev.felipesantos.papertwin.historian.ArchiveReason;
 import dev.felipesantos.papertwin.historian.HistorianPoints;
 import dev.felipesantos.papertwin.historian.Interpolation;
@@ -202,11 +203,127 @@ public class HistorianRepository {
         .orElse(null);
   }
 
+  /**
+   * O arquivo de um ponto numa janela, com as âncoras de entrada e saída.
+   *
+   * <p>São as mesmas três consultas que a média de uma janela faz — a diferença é que o
+   * resultado <b>serve qualquer sub-janela dentro dela</b>. A colheita precisa da média de cada
+   * bobina, de cada turno e do valor em cada ponto de ronda: com uma consulta por pergunta, uma
+   * retomada de 72 h fazia milhares de idas ao banco, e num {@code DataSource} sem pool cada ida
+   * é uma conexão nova — o servidor recusa muito antes de o cálculo acabar.
+   *
+   * <p>Com a janela inteira em mãos, a média de uma sub-janela sai da mesma lista: a média no
+   * tempo recorta o que precisa, e as amostras de fora servem de âncora. O resultado é o mesmo
+   * até o último bit; o número de consultas cai de milhares para três por tag.
+   */
+  public static final class Window {
+
+    private final int pointId;
+    private final @Nullable ArchivedSample before;
+    private final List<ArchivedSample> samples;
+    private final @Nullable ArchivedSample after;
+
+    /**
+     * O caminho, montado uma vez.
+     *
+     * <p>É o que a interpolação consome, e a colheita o consome muitas vezes — uma por bobina,
+     * uma por turno, uma por ponto de ronda. Remontá-lo a cada pergunta alocaria a janela
+     * inteira de novo em cada uma delas.
+     *
+     * <p>É por isto que {@code Window} não é registro: o estado derivado ficaria como um
+     * componente redundante, que o construtor canônico deixaria qualquer um preencher errado.
+     */
+    private final List<Sample> path;
+
+    Window(
+        int pointId,
+        @Nullable ArchivedSample before,
+        List<ArchivedSample> samples,
+        @Nullable ArchivedSample after) {
+
+      this.pointId = pointId;
+      this.before = before;
+      this.samples = samples;
+      this.after = after;
+
+      var built = new ArrayList<Sample>(samples.size() + 2);
+      if (before != null) {
+        built.add(before.sample());
+      }
+      samples.forEach(sample -> built.add(sample.sample()));
+      if (after != null) {
+        built.add(after.sample());
+      }
+      this.path = List.copyOf(built);
+    }
+
+    public int pointId() {
+      return pointId;
+    }
+
+    public List<Sample> path() {
+      return path;
+    }
+
+    /**
+     * A média no tempo de uma sub-janela.
+     *
+     * <p>Dá o mesmo valor que {@code averageOf} daria com as suas próprias consultas, porque a
+     * média no tempo recebe o recorte e as amostras de fora dele só ancoram as pontas.
+     */
+    public Double averageIn(Instant start, Instant end) {
+      if (!end.isAfter(start)) {
+        return null;
+      }
+      return Interpolation.timeWeightedAverage(path, start.toEpochMilli(), end.toEpochMilli());
+    }
+
+    /** O valor num instante, interpolado — as mesmas âncoras que {@code valueAt} usaria. */
+    public Interpolation.ReadValue valueAt(Instant at) {
+      long millis = at.toEpochMilli();
+      Sample previous = before == null ? null : before.sample();
+      Sample next = after == null ? null : after.sample();
+
+      for (var archived : samples) {
+        if (archived.t() <= millis) {
+          previous = archived.sample();
+        } else {
+          next = archived.sample();
+          break;
+        }
+      }
+
+      return Interpolation.readAt(millis, previous, next);
+    }
+
+    /** As amostras dentro de um recorte, sem as âncoras. */
+    public List<ArchivedSample> samplesIn(Instant start, Instant end) {
+      long a = start.toEpochMilli();
+      long b = end.toEpochMilli();
+      return samples.stream().filter(sample -> sample.t() >= a && sample.t() <= b).toList();
+    }
+  }
+
+  public Window window(int pointId, Instant from, Instant to) {
+    return new Window(
+        pointId,
+        archivedBefore(pointId, from),
+        archivedSamples(pointId, from, to),
+        archivedAfter(pointId, to));
+  }
+
   // -------------------------------------------------- tendência e agregação ----
 
   /** Uma coluna do gráfico. */
+  /**
+   * Uma coluna do gráfico.
+   *
+   * <p>O início da janela sai como <b>instante</b>, e não como milissegundos crus: é o que o
+   * contrato publica como {@code date-time} e o que o eixo do gráfico desenha. Um número obrigaria
+   * cada cliente a saber que a unidade é milissegundo — e a errar em segundos uma vez.
+   */
   public record PlotBucket(
-      long bucketStart, int samples, double min, double max, double first, double last) {}
+      Instant bucketStart, int samples, double min, double max, double first, double last) {}
 
   /**
    * Teto de colunas por consulta.
@@ -232,9 +349,9 @@ public class HistorianRepository {
       Instant to,
       long bucketS,
       List<PlotBucket> buckets,
-      ArchivedSample before,
-      ArchivedSample after,
-      Double timeWeightedAverage) {}
+      @Nullable ArchivedSample before,
+      @Nullable ArchivedSample after,
+      @Nullable Double timeWeightedAverage) {}
 
   public Trend trend(int pointId, Instant from, Instant to, Integer requestedBuckets) {
     long spanMs = to.toEpochMilli() - from.toEpochMilli();
@@ -273,7 +390,7 @@ public class HistorianRepository {
             .query(
                 (rs, row) ->
                     new PlotBucket(
-                        rs.getTimestamp("bucket_start").getTime(),
+                        rs.getTimestamp("bucket_start").toInstant(),
                         rs.getInt("samples"),
                         rs.getDouble("min_value"),
                         rs.getDouble("max_value"),

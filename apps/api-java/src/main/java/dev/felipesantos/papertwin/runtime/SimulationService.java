@@ -123,9 +123,11 @@ public class SimulationService {
              */
             if (report.ticks() > 0) {
               log.info(
-                  "retomada: {} h recuperadas em {} ms, heap {} MB, {} linhas arquivadas, compressão {}:1{}",
+                  "retomada: {} h recuperadas em {} ms ({} ms de colheita), heap {} MB,"
+                      + " {} linhas arquivadas, compressão {}:1{}",
                   String.format("%.2f", report.ticks() / (double) SimClock.TICKS_PER_HOUR),
                   report.durationMs(),
+                  report.harvestMs(),
                   report.heapUsedMb(),
                   report.archived(),
                   Math.round(report.compression().ratio()),
@@ -146,34 +148,39 @@ public class SimulationService {
   }
 
   /**
-   * Roda com o lock de aviso tomado.
+   * Roda com o lock de aviso tomado, <b>na mesma conexão do começo ao fim</b>.
+   *
+   * <p>Este é o detalhe que faz o lock funcionar, e a primeira versão o errou. {@code
+   * pg_advisory_lock} é <b>por sessão</b>, não por transação nem por chamada: quem o detém é a
+   * conexão. Tomá-lo com uma conexão do pool, devolvê-la, fazer o trabalho e liberar com outra
+   * conexão não libera nada — o {@code pg_advisory_unlock} de uma sessão que não detém o lock
+   * devolve falso e vai embora quieto.
+   *
+   * <p>O efeito seria pior que não ter lock nenhum: ele vazaria, e a retomada seguinte esperaria
+   * para sempre por um lock de uma sessão que já voltou para o pool. Numa API que só retoma
+   * quando alguém abre a tela, isso é a aplicação parar de responder sem um erro sequer no log.
    *
    * <p>{@code pg_advisory_lock} espera; não há variante com tempo limite que valha aqui, porque
    * desistir deixaria quem chamou sem resposta justamente no caso em que a resposta está a
    * caminho.
    */
   private CatchUp.Report withAdvisoryLock(java.util.function.Supplier<CatchUp.Report> work) {
-    template.execute(
+    return template.execute(
         (java.sql.Connection connection) -> {
-          try (var statement = connection.prepareStatement("select pg_advisory_lock(?)")) {
-            statement.setLong(1, ADVISORY_LOCK_KEY);
-            statement.execute();
+          try (var lock = connection.prepareStatement("select pg_advisory_lock(?)")) {
+            lock.setLong(1, ADVISORY_LOCK_KEY);
+            lock.execute();
           }
-          return null;
-        });
 
-    try {
-      return work.get();
-    } finally {
-      template.execute(
-          (java.sql.Connection connection) -> {
-            try (var statement = connection.prepareStatement("select pg_advisory_unlock(?)")) {
-              statement.setLong(1, ADVISORY_LOCK_KEY);
-              statement.execute();
+          try {
+            return work.get();
+          } finally {
+            try (var unlock = connection.prepareStatement("select pg_advisory_unlock(?)")) {
+              unlock.setLong(1, ADVISORY_LOCK_KEY);
+              unlock.execute();
             }
-            return null;
-          });
-    }
+          }
+        });
   }
 
   /** O último relatório, ou {@code null} se a simulação ainda não rodou nesta instância. */

@@ -120,6 +120,15 @@ public class CatchUp {
       int alarmsCleared,
       Recorder.Stats compression,
       long durationMs,
+      /**
+       * Quanto da retomada foi colheita de entidades, em ms.
+       *
+       * <p>Vai separado porque as duas metades se ajustam de maneiras diferentes. Se o tempo está
+       * no motor, o jeito é baixar {@code RESUME_MAX_HOURS}: menos passos, menos tempo. Se está na
+       * colheita, baixar o teto ajuda pouco — ela paga por turno e por bobina, e um turno fecha
+       * dez bobinas qualquer que seja o tamanho da janela que o alcançou.
+       */
+      long harvestMs,
       /** Heap em uso ao fim da retomada, em MB. É o número que o Render Free limita. */
       long heapUsedMb,
       Map<String, Double> values) {}
@@ -252,6 +261,7 @@ public class CatchUp {
           0, 0, 0, 0, 0,
           new Recorder.Stats(0, 0, 0, 0, 0),
           (System.nanoTime() - started) / 1_000_000,
+          0,
           heapUsedMb(),
           // nada rodou, mas a pergunta "onde a máquina está" continua tendo resposta
           valuesAt(seed, range.toTick(), saved == null ? null : saved.state(), scenario));
@@ -348,14 +358,40 @@ public class CatchUp {
 
     pendingArchive.addAll(recorder.flush());
 
-    // a semeadura dos pontos precisa estar feita antes das amostras
+    /*
+     * A semeadura precisa estar feita antes de gravar o que aponta para ela.
+     *
+     * As amostras referenciam o ponto do historiador; o ponto de ronda e a
+     * nota referenciam o ativo. Chamar aqui é inócuo quando a semeadura já
+     * está feita, e evita que a primeira retomada de um banco novo falhe por
+     * chave estrangeira — o que é exatamente o arranque que ninguém vê
+     * acontecer, porque acontece dentro da primeira requisição.
+     */
     if (historian.countPoints() == 0) {
       historian.replacePoints();
+    }
+    if (operations.countAssets() == 0) {
+      operations.replaceAssets(dev.felipesantos.papertwin.machine.MachineAssets.ALL);
     }
 
     writeInChunks(pendingArchive, historian::insertArchive);
     writeInChunks(pendingRaw, historian::insertRaw);
     pendingAlarms.values().forEach(operations::saveAlarm);
+
+    /*
+     * As entidades são colhidas DEPOIS de o arquivo estar gravado.
+     *
+     * A gramatura média de uma bobina é uma consulta ao historiador, não um
+     * acumulador em memória — colher antes de gravar daria bobinas sem
+     * gramatura. E colher antes de podar: a poda corta pelo tempo, e uma
+     * bobina que acabou de fechar está dentro da retenção de todo jeito.
+     */
+    long harvestStarted = System.nanoTime();
+    var harvest =
+        new Harvest(historian)
+            .run(seed, range.fromTick(), range.toTick(), List.copyOf(pendingAlarms.values()));
+    Harvest.persist(operations, harvest);
+    long harvestMs = (System.nanoTime() - harvestStarted) / 1_000_000;
 
     historian.prune(now);
     simState.save(seed, range.toTick(), engine.snapshotState(), now);
@@ -378,6 +414,7 @@ public class CatchUp {
         cleared,
         recorder.stats(),
         (System.nanoTime() - started) / 1_000_000,
+        harvestMs,
         heapUsedMb(),
         values);
   }

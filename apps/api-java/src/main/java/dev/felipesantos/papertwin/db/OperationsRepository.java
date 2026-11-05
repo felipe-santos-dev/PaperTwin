@@ -4,6 +4,7 @@ import dev.felipesantos.papertwin.alarm.Alarm;
 import dev.felipesantos.papertwin.alarm.AlarmLimitLevel;
 import dev.felipesantos.papertwin.alarm.AlarmPriority;
 import dev.felipesantos.papertwin.alarm.AlarmState;
+import dev.felipesantos.papertwin.operation.Entities;
 import dev.felipesantos.papertwin.operation.Entities.Disposition;
 import dev.felipesantos.papertwin.operation.Entities.Evidence;
 import dev.felipesantos.papertwin.operation.Entities.EvidenceKind;
@@ -72,6 +73,90 @@ public class OperationsRepository {
     return rs.wasNull() ? null : value;
   }
 
+  /**
+   * Roda um bloco de escritas numa transação só.
+   *
+   * <p>Cada {@code saveX} abre a sua própria transação, o que é o certo quando é chamado
+   * sozinho. A colheita grava algumas dezenas de entidades de uma vez, e aí cada {@code commit}
+   * é uma ida ao banco: num banco gerenciado, do outro lado da rede, isso domina o custo. As
+   * transações internas se juntam a esta — é o que {@code PROPAGATION_REQUIRED} faz —, de modo
+   * que tudo entra ou nada entra.
+   */
+  public void inOneTransaction(Runnable work) {
+    transaction.executeWithoutResult(status -> work.run());
+  }
+
+  // ----------------------------------------------------------------- ativo ----
+
+  /**
+   * Reescreve a tabela de ativos a partir do modelo da máquina.
+   *
+   * <p>O modelo é a fonte da verdade das tags, então o banco segue o código e nunca o contrário. A
+   * tabela existe porque as entidades apontam para ela — um ponto de ronda referencia o ativo que
+   * a pessoa foi olhar, e sem a linha o banco recusa a ronda.
+   *
+   * <p>É <b>upsert sem apagar</b>, e aqui está a diferença em relação à versão TypeScript, que
+   * fazia {@code delete from asset} antes de inserir. Aquilo funciona num banco em memória que
+   * nasce vazio e falha num banco gerenciado: assim que existe uma ronda ou uma nota, o {@code
+   * delete} bate na chave estrangeira e o arranque inteiro cai. O custo de não apagar é uma tag
+   * removida do modelo ficar para trás na tabela; o custo de apagar é a API não subir.
+   *
+   * <p>A ordem importa: {@code parent_tag} referencia a própria tabela, então o corpo girante
+   * precisa entrar antes do mancal. {@code MachineAssets.ALL} já vem nessa ordem.
+   */
+  public int replaceAssets(List<dev.felipesantos.papertwin.machine.MachineAssets.Asset> assets) {
+    transaction.executeWithoutResult(
+        status -> {
+          for (var asset : assets) {
+            template.update(
+                """
+                insert into asset
+                  (tag, kind, label, section, position_x, position_y, position_z,
+                   radius_m, length_m, side, parent_tag, steam_group,
+                   iso_group, iso_support, source)
+                values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                on conflict (tag) do update set
+                  kind = excluded.kind,
+                  label = excluded.label,
+                  section = excluded.section,
+                  position_x = excluded.position_x,
+                  position_y = excluded.position_y,
+                  position_z = excluded.position_z,
+                  radius_m = excluded.radius_m,
+                  length_m = excluded.length_m,
+                  side = excluded.side,
+                  parent_tag = excluded.parent_tag,
+                  steam_group = excluded.steam_group,
+                  iso_group = excluded.iso_group,
+                  iso_support = excluded.iso_support,
+                  source = excluded.source
+                """,
+                asset.tag(),
+                asset.kind(),
+                asset.label(),
+                asset.section(),
+                asset.x(),
+                asset.y(),
+                asset.z(),
+                asset.radius(),
+                asset.lengthM(),
+                asset.side(),
+                asset.parentTag(),
+                asset.steamGroup(),
+                asset.iso() == null ? null : asset.iso().group(),
+                asset.iso() == null ? null : asset.iso().support(),
+                asset.source());
+          }
+        });
+
+    return assets.size();
+  }
+
+  public int countAssets() {
+    var count = jdbc.sql("select count(*) from asset").query(Long.class).single();
+    return count == null ? 0 : count.intValue();
+  }
+
   // ----------------------------------------------------------------- turno ----
 
   public void saveShift(Shift shift) {
@@ -114,9 +199,15 @@ public class OperationsRepository {
   }
 
   public List<Shift> listShifts(int limit) {
+    return listShifts(null, null, limit);
+  }
+
+  public List<Shift> listShifts(Instant from, Instant to, int limit) {
+    var filter = new Filter().atOrAfter("started_at", from).atOrBefore("started_at", to);
+
     var shifts =
-        jdbc.sql("select * from shift order by started_at desc limit ?")
-            .param(limit)
+        jdbc.sql("select * from shift%s order by started_at desc limit ?".formatted(filter.where()))
+            .params(filter.params(limit))
             .query((rs, row) -> shiftRow(rs))
             .list();
 
@@ -197,6 +288,57 @@ public class OperationsRepository {
    * posicional sem ambiguidade, enquanto o array exige dizer o tipo do elemento e falha de formas
    * difíceis de ler quando a lista está vazia.
    */
+  /**
+   * Um filtro de lista: as condições que vieram, e só elas.
+   *
+   * <p>As rotas de lista aceitam filtros opcionais — turno, tag, estado, janela. Escrever um
+   * {@code select} por combinação daria dezenas; passar os nulos para dentro do SQL com {@code
+   * (? is null or coluna = ?)} funciona, mas cega o planejador: ele não sabe se o filtro existe e
+   * escolhe o plano pelo pior caso. Montar a cláusula com o que chegou é mais código aqui e uma
+   * consulta honesta lá.
+   */
+  private static final class Filter {
+
+    private final List<String> conditions = new ArrayList<>();
+    private final List<Object> values = new ArrayList<>();
+
+    Filter eq(String column, Object value) {
+      if (value != null) {
+        conditions.add(column + " = ?");
+        values.add(value);
+      }
+      return this;
+    }
+
+    Filter atOrAfter(String column, Instant value) {
+      if (value != null) {
+        conditions.add(column + " >= ?");
+        values.add(stamp(value));
+      }
+      return this;
+    }
+
+    Filter atOrBefore(String column, Instant value) {
+      if (value != null) {
+        conditions.add(column + " <= ?");
+        values.add(stamp(value));
+      }
+      return this;
+    }
+
+    /** O {@code where}, ou nada quando não há condição. */
+    String where() {
+      return conditions.isEmpty() ? "" : " where " + String.join(" and ", conditions);
+    }
+
+    /** Os valores na ordem das condições, com o {@code limit} no fim. */
+    Object[] params(int limit) {
+      var out = new ArrayList<>(values);
+      out.add(limit);
+      return out.toArray();
+    }
+  }
+
   private static String placeholders(int count) {
     return String.join(", ", java.util.Collections.nCopies(count, "?"));
   }
@@ -238,9 +380,9 @@ public class OperationsRepository {
         reel.basisWeightGsm(),
         reel.moisturePct(),
         reel.caliperUm(),
-        reel.cdBasisWeightGsm(),
-        reel.cdMoisturePct(),
-        reel.cdCaliperUm(),
+        reel.cdSpread() == null ? null : reel.cdSpread().basisWeightGsm(),
+        reel.cdSpread() == null ? null : reel.cdSpread().moisturePct(),
+        reel.cdSpread() == null ? null : reel.cdSpread().caliperUm(),
         reel.splices(),
         reel.disposition() == null ? null : reel.disposition().label(),
         reel.dispositionReason());
@@ -281,12 +423,26 @@ public class OperationsRepository {
         nullableDouble(rs, "basis_weight_gsm"),
         nullableDouble(rs, "moisture_pct"),
         nullableDouble(rs, "caliper_um"),
-        nullableDouble(rs, "cd_basis_weight_gsm"),
-        nullableDouble(rs, "cd_moisture_pct"),
-        nullableDouble(rs, "cd_caliper_um"),
+        cdSpread(rs),
         rs.getInt("splices"),
         Disposition.fromLabel(rs.getString("disposition")),
         rs.getString("disposition_reason"));
+  }
+
+  /**
+   * O perfil transversal, se o scanner mediu as tres coisas.
+   *
+   * <p>A tabela guarda tres colunas e o modelo um registro so, e a conversao mora aqui. A coluna
+   * de gramatura decide: a restricao {@code reel_cd_spread_complete} garante que as tres sejam
+   * nulas juntas ou nao-nulas juntas, entao nao ha meio perfil para desempatar.
+   */
+  private static Entities.CdSpread cdSpread(ResultSet rs) throws SQLException {
+    var basisWeight = nullableDouble(rs, "cd_basis_weight_gsm");
+    if (basisWeight == null) {
+      return null;
+    }
+    return new Entities.CdSpread(
+        basisWeight, rs.getDouble("cd_moisture_pct"), rs.getDouble("cd_caliper_um"));
   }
 
   // ------------------------------------------------------- quebra de folha ----
@@ -332,9 +488,17 @@ public class OperationsRepository {
   }
 
   public List<WebBreak> listWebBreaks(int limit) {
+    return listWebBreaks(null, limit);
+  }
+
+  public List<WebBreak> listWebBreaks(String shiftId, int limit) {
+    var filter = new Filter().eq("shift_id", shiftId);
+
     var breaks =
-        jdbc.sql("select * from web_break order by started_at desc limit ?")
-            .param(limit)
+        jdbc.sql(
+                "select * from web_break%s order by started_at desc limit ?"
+                    .formatted(filter.where()))
+            .params(filter.params(limit))
             .query(
                 (rs, row) ->
                     new WebBreak(
@@ -425,9 +589,17 @@ public class OperationsRepository {
   }
 
   public List<GradeChange> listGradeChanges(int limit) {
+    return listGradeChanges(null, limit);
+  }
+
+  public List<GradeChange> listGradeChanges(String shiftId, int limit) {
+    var filter = new Filter().eq("shift_id", shiftId);
+
     var changes =
-        jdbc.sql("select * from grade_change order by started_at desc limit ?")
-            .param(limit)
+        jdbc.sql(
+                "select * from grade_change%s order by started_at desc limit ?"
+                    .formatted(filter.where()))
+            .params(filter.params(limit))
             .query(
                 (rs, row) ->
                     new GradeChange(
@@ -497,7 +669,16 @@ public class OperationsRepository {
 
           template.update("delete from round_point where round_id = ?", round.id());
 
+          /*
+           * A ordem do roteiro e a da lista, e a coluna sai do indice.
+           *
+           * O ponto nao carrega o numero: ele e a posicao. Guardar o numero no
+           * registro daria duas verdades para a mesma coisa, e uma lista
+           * reordenada passaria a mentir sem que nada reclamasse.
+           */
+          int sequence = 0;
           for (var point : round.points()) {
+            sequence++;
             template.update(
                 """
                 insert into round_point
@@ -506,7 +687,7 @@ public class OperationsRepository {
                 values (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 round.id(),
-                point.sequence(),
+                sequence,
                 point.assetTag(),
                 point.fieldTempC(),
                 point.noise().label(),
@@ -519,20 +700,51 @@ public class OperationsRepository {
   }
 
   public List<Round> listRounds(int limit) {
-    var rounds =
-        jdbc.sql("select * from inspection_round order by started_at desc limit ?")
-            .param(limit)
-            .query(
-                (rs, row) ->
-                    new Round(
-                        rs.getString("id"),
-                        rs.getString("shift_id"),
-                        instant(rs, "started_at"),
-                        instant(rs, "finished_at"),
-                        rs.getString("inspector"),
-                        List.of()))
-            .list();
+    return listRounds(null, limit);
+  }
 
+  public List<Round> listRounds(String shiftId, int limit) {
+    var filter = new Filter().eq("shift_id", shiftId);
+
+    return withPoints(
+        jdbc.sql(
+                "select * from inspection_round%s order by started_at desc limit ?"
+                    .formatted(filter.where()))
+            .params(filter.params(limit))
+            .query(ROUND_WITHOUT_POINTS)
+            .list());
+  }
+
+  /** Uma ronda pelo id. */
+  public Round findRound(String id) {
+    var found =
+        withPoints(
+            jdbc.sql("select * from inspection_round where id = ?")
+                .param(id)
+                .query(ROUND_WITHOUT_POINTS)
+                .list());
+
+    return found.isEmpty() ? null : found.getFirst();
+  }
+
+  private static final org.springframework.jdbc.core.RowMapper<Round> ROUND_WITHOUT_POINTS =
+      (rs, row) ->
+          new Round(
+              rs.getString("id"),
+              rs.getString("shift_id"),
+              instant(rs, "started_at"),
+              instant(rs, "finished_at"),
+              rs.getString("inspector"),
+              List.of());
+
+  /**
+   * Preenche os pontos de um conjunto de rondas numa consulta só.
+   *
+   * <p>Uma consulta por ronda seria o {@code N+1} de sempre; com {@code in (...)} é uma ida,
+   * independentemente de serem uma ronda ou cinquenta. É o que faz o {@code findRound}
+   * compartilhar este caminho em vez de ter um próprio.
+   */
+  private List<Round> withPoints(List<Round> rounds) {
     if (rounds.isEmpty()) {
       return rounds;
     }
@@ -550,7 +762,6 @@ public class OperationsRepository {
                   .computeIfAbsent(rs.getString("round_id"), key -> new ArrayList<>())
                   .add(
                       new RoundPoint(
-                          rs.getInt("sequence"),
                           rs.getString("asset_tag"),
                           nullableDouble(rs, "field_temp_c"),
                           Noise.fromLabel(rs.getString("noise")),
@@ -610,12 +821,14 @@ public class OperationsRepository {
 
           template.update("delete from note_evidence where note_number = ?", note.number());
 
+          int sequence = 0;
           for (var evidence : note.evidence()) {
+            sequence++;
             template.update(
                 "insert into note_evidence (note_number, sequence, kind, ref, label)"
                     + " values (?, ?, ?, ?, ?)",
                 note.number(),
-                evidence.sequence(),
+                sequence,
                 evidence.kind().label(),
                 evidence.ref(),
                 evidence.label());
@@ -624,25 +837,54 @@ public class OperationsRepository {
   }
 
   public List<MaintenanceNote> listNotes(int limit) {
-    var notes =
-        jdbc.sql("select * from maintenance_note order by created_at desc limit ?")
-            .param(limit)
-            .query(
-                (rs, row) ->
-                    new MaintenanceNote(
-                        rs.getString("number"),
-                        rs.getString("asset_tag"),
-                        rs.getString("symptom"),
-                        rs.getShort("priority"),
-                        NoteOrigin.fromLabel(rs.getString("origin")),
-                        rs.getString("origin_ref"),
-                        NoteStatus.fromLabel(rs.getString("status")),
-                        rs.getBoolean("requires_shutdown"),
-                        instant(rs, "created_at"),
-                        instant(rs, "closed_at"),
-                        List.of()))
-            .list();
+    return listNotes(null, null, limit);
+  }
 
+  public List<MaintenanceNote> listNotes(NoteStatus status, String assetTag, int limit) {
+    var filter =
+        new Filter()
+            .eq("status", status == null ? null : status.label())
+            .eq("asset_tag", assetTag);
+
+    return withEvidence(
+        jdbc.sql(
+                "select * from maintenance_note%s order by created_at desc limit ?"
+                    .formatted(filter.where()))
+            .params(filter.params(limit))
+            .query(NOTE_WITHOUT_EVIDENCE)
+            .list());
+  }
+
+  /** Uma nota pelo número. */
+  public MaintenanceNote findNote(String number) {
+    var found =
+        withEvidence(
+            jdbc.sql("select * from maintenance_note where number = ?")
+                .param(number)
+                .query(NOTE_WITHOUT_EVIDENCE)
+                .list());
+
+    return found.isEmpty() ? null : found.getFirst();
+  }
+
+  private static final org.springframework.jdbc.core.RowMapper<MaintenanceNote>
+      NOTE_WITHOUT_EVIDENCE =
+          (rs, row) ->
+              new MaintenanceNote(
+                  rs.getString("number"),
+                  rs.getString("asset_tag"),
+                  rs.getString("symptom"),
+                  rs.getShort("priority"),
+                  NoteOrigin.fromLabel(rs.getString("origin")),
+                  rs.getString("origin_ref"),
+                  NoteStatus.fromLabel(rs.getString("status")),
+                  rs.getBoolean("requires_shutdown"),
+                  instant(rs, "created_at"),
+                  instant(rs, "closed_at"),
+                  List.of());
+
+  /** Preenche as evidências de um conjunto de notas numa consulta só, como nas rondas. */
+  private List<MaintenanceNote> withEvidence(List<MaintenanceNote> notes) {
     if (notes.isEmpty()) {
       return notes;
     }
@@ -660,7 +902,6 @@ public class OperationsRepository {
                   .computeIfAbsent(rs.getString("note_number"), key -> new ArrayList<>())
                   .add(
                       new Evidence(
-                          rs.getInt("sequence"),
                           EvidenceKind.fromLabel(rs.getString("kind")),
                           rs.getString("ref"),
                           rs.getString("label")));
@@ -706,10 +947,30 @@ public class OperationsRepository {
         change.reason());
   }
 
+  /**
+   * A última escrita registrada numa tag.
+   *
+   * <p>É a primeira escolha para o "valor anterior" de uma auditoria: o que vale como anterior é
+   * o que alguém escreveu, e não o que a rede estava mostrando — entre a escrita e agora o
+   * processo andou, e o valor da rede já é outro.
+   */
+  public SetpointChange latestSetpointChange(String tag) {
+    var found = listSetpointChanges(tag, 1);
+    return found.isEmpty() ? null : found.getFirst();
+  }
+
   public List<SetpointChange> listSetpointChanges(int limit) {
+    return listSetpointChanges(null, limit);
+  }
+
+  public List<SetpointChange> listSetpointChanges(String tag, int limit) {
+    var filter = new Filter().eq("tag", tag);
+
     return jdbc
-        .sql("select * from setpoint_change order by changed_at desc limit ?")
-        .param(limit)
+        .sql(
+            "select * from setpoint_change%s order by changed_at desc limit ?"
+                .formatted(filter.where()))
+        .params(filter.params(limit))
         .query(
             (rs, row) ->
                 new SetpointChange(
@@ -758,9 +1019,21 @@ public class OperationsRepository {
   }
 
   public List<Alarm> listAlarms(int limit) {
+    return listAlarms(null, null, null, limit);
+  }
+
+  public List<Alarm> listAlarms(
+      AlarmState state, AlarmPriority priority, String tag, int limit) {
+
+    var filter =
+        new Filter()
+            .eq("state", state == null ? null : state.label())
+            .eq("priority", priority == null ? null : priority.label())
+            .eq("tag", tag);
+
     return jdbc
-        .sql("select * from alarm order by raised_at desc limit ?")
-        .param(limit)
+        .sql("select * from alarm%s order by raised_at desc limit ?".formatted(filter.where()))
+        .params(filter.params(limit))
         .query((rs, row) -> alarmRow(rs))
         .list();
   }
@@ -795,6 +1068,33 @@ public class OperationsRepository {
             """)
         .param(stamp(at))
         .param(by)
+        .param(id)
+        .query((rs, row) -> alarmRow(rs))
+        .optional()
+        .orElse(null);
+  }
+
+  /**
+   * Engavetar: silenciar um alarme por um prazo.
+   *
+   * <p>O prazo fica no banco e não num temporizador em memória, porque o host dorme: um
+   * engavetamento que vivesse num `setTimeout` evaporaria no primeiro cochilo da instância, e o
+   * alarme voltaria a tocar sem ninguém ter desengavetado.
+   */
+  public Alarm shelveAlarm(String id, String by, Instant until) {
+    return jdbc
+        .sql("update alarm set shelved_until = ?, shelved_by = ? where id = ? returning *")
+        .param(stamp(until))
+        .param(by)
+        .param(id)
+        .query((rs, row) -> alarmRow(rs))
+        .optional()
+        .orElse(null);
+  }
+
+  public Alarm unshelveAlarm(String id) {
+    return jdbc
+        .sql("update alarm set shelved_until = null, shelved_by = null where id = ? returning *")
         .param(id)
         .query((rs, row) -> alarmRow(rs))
         .optional()

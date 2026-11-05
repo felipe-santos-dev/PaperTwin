@@ -1,5 +1,6 @@
 package dev.felipesantos.papertwin.catalog;
 
+import dev.felipesantos.papertwin.api.Nullable;
 /**
  * Uma variável de processo do catálogo.
  *
@@ -23,16 +24,16 @@ public record ProcessVariable(
     String unit,
     double min,
     double max,
-    Double target,
+    @Nullable Double target,
     AlarmLimits limits,
     boolean controlled,
-    String mv,
+    @Nullable String mv,
     Compression compression,
     VariableSource source,
     Confidence confidence,
-    String note,
-    Integer cylinder,
-    String steamGroup) {
+    @Nullable String note,
+    @Nullable Integer cylinder,
+    @Nullable String steamGroup) {
 
   /** Se a variável ainda não foi conferida na MP1. */
   public boolean pending() {

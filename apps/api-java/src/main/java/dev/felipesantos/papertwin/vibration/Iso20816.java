@@ -49,6 +49,7 @@ public final class Iso20816 {
       this.label = label;
     }
 
+    @com.fasterxml.jackson.annotation.JsonValue
     public String label() {
       return label;
     }

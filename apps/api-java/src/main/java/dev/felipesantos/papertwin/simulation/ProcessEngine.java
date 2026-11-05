@@ -582,6 +582,20 @@ public final class ProcessEngine {
         .toList();
   }
 
+  /**
+   * O mestre de uma escrava de cascata, ou {@code null} se a tag não é escrava.
+   *
+   * <p>A mensagem de recusa precisa dizer <b>onde mexer</b>. "Esta tag não aceita escrita" manda
+   * quem clicou procurar; "o setpoint pertence ao AIC-903" resolve.
+   */
+  public static String cascadeMasterOf(String tag) {
+    return CASCADES.stream()
+        .filter(spec -> spec.mv().equals(tag))
+        .map(CascadeSpec::pv)
+        .findFirst()
+        .orElse(null);
+  }
+
   /** Se a tag é a entrada manipulada de alguma cascata. */
   public static boolean isCascadeSlave(String tag) {
     return CASCADES.stream().anyMatch(spec -> spec.mv().equals(tag));

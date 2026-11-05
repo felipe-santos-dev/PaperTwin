@@ -1,5 +1,7 @@
 package dev.felipesantos.papertwin.operation;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+import dev.felipesantos.papertwin.api.Nullable;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
@@ -33,7 +35,7 @@ public final class Entities {
       String letter,
       LocalDate operationDate,
       Instant startedAt,
-      Instant endedAt,
+      @Nullable Instant endedAt,
       String operator,
       double productionT,
       double efficiencyPct,
@@ -53,6 +55,7 @@ public final class Entities {
       this.label = label;
     }
 
+    @JsonValue
     public String label() {
       return label;
     }
@@ -79,23 +82,31 @@ public final class Entities {
    *
    * @param dispositionReason obrigatório quando a bobina não foi aprovada
    */
+  /**
+   * A dispersão 2σ do perfil transversal de uma bobina.
+   *
+   * <p>Os três vêm juntos num registro, e não como três campos soltos, porque meia medição de
+   * perfil não diz nada: ou o scanner atravessou a folha e mediu as três coisas, ou não há perfil.
+   * Com três campos opcionais, nada no tipo impediria uma bobina com dispersão de gramatura e sem
+   * dispersão de umidade — um estado que o processo não produz.
+   */
+  public record CdSpread(double basisWeightGsm, double moisturePct, double caliperUm) {}
+
   public record Reel(
       int number,
       String shiftId,
       Instant startedAt,
-      Instant endedAt,
-      Double weightT,
-      Double lengthM,
-      Double finalDiameterMm,
-      Double basisWeightGsm,
-      Double moisturePct,
-      Double caliperUm,
-      Double cdBasisWeightGsm,
-      Double cdMoisturePct,
-      Double cdCaliperUm,
+      @Nullable Instant endedAt,
+      @Nullable Double weightT,
+      @Nullable Double lengthM,
+      @Nullable Double finalDiameterMm,
+      @Nullable Double basisWeightGsm,
+      @Nullable Double moisturePct,
+      @Nullable Double caliperUm,
+      @Nullable CdSpread cdSpread,
       int splices,
-      Disposition disposition,
-      String dispositionReason) {}
+      @Nullable Disposition disposition,
+      @Nullable String dispositionReason) {}
 
   // ------------------------------------------------------- quebra de folha ----
 
@@ -119,7 +130,7 @@ public final class Entities {
       String id,
       String shiftId,
       Instant startedAt,
-      Instant endedAt,
+      @Nullable Instant endedAt,
       String section,
       String probableCause,
       List<Precursor> precursors) {}
@@ -139,7 +150,7 @@ public final class Entities {
       double fromGsm,
       double toGsm,
       Instant startedAt,
-      Instant stabilizedAt,
+      @Nullable Instant stabilizedAt,
       List<Integer> affectedReels) {}
 
   // ----------------------------------------------------------------- ronda ----
@@ -155,6 +166,7 @@ public final class Entities {
       this.label = label;
     }
 
+    @JsonValue
     public String label() {
       return label;
     }
@@ -180,6 +192,7 @@ public final class Entities {
       this.label = label;
     }
 
+    @JsonValue
     public String label() {
       return label;
     }
@@ -200,16 +213,19 @@ public final class Entities {
    * <p>O {@code onlineValue} é o que o instrumento dizia no mesmo instante, guardado junto com o
    * que a pessoa mediu em campo. É a comparação que dá valor à ronda: pirômetro e sensor
    * discordando é notícia, e sem os dois lado a lado ninguém vê.
+   *
+   * <p>A ordem do ponto no roteiro não é campo: ela é a posição na lista da ronda, e o repositório
+   * a grava na coluna {@code sequence} a partir do índice. Guardar o número aqui também daria
+   * duas verdades para a mesma coisa, e uma lista reordenada passaria a mentir.
    */
   public record RoundPoint(
-      int sequence,
       String assetTag,
-      Double fieldTempC,
+      @Nullable Double fieldTempC,
       Noise noise,
       Leak leak,
-      String note,
-      String onlineTag,
-      Double onlineValue) {}
+      @Nullable String note,
+      @Nullable String onlineTag,
+      @Nullable Double onlineValue) {}
 
   public record Round(
       String id,
@@ -232,6 +248,7 @@ public final class Entities {
       this.label = label;
     }
 
+    @JsonValue
     public String label() {
       return label;
     }
@@ -258,6 +275,7 @@ public final class Entities {
       this.label = label;
     }
 
+    @JsonValue
     public String label() {
       return label;
     }
@@ -284,6 +302,7 @@ public final class Entities {
       this.label = label;
     }
 
+    @JsonValue
     public String label() {
       return label;
     }
@@ -304,8 +323,10 @@ public final class Entities {
    * <p>É <b>referência</b>, não arquivo. O gêmeo não guarda foto nem anexo — não teria onde, nos
    * 0,5 GB — e aponta para o que já existe: uma janela de tendência, um alarme, um ponto de ronda,
    * uma medição.
+   *
+   * <p>A ordem é a da lista, como nos pontos de ronda.
    */
-  public record Evidence(int sequence, EvidenceKind kind, String ref, String label) {}
+  public record Evidence(EvidenceKind kind, String ref, String label) {}
 
   /**
    * Uma nota de manutenção.
@@ -320,11 +341,11 @@ public final class Entities {
       String symptom,
       int priority,
       NoteOrigin origin,
-      String originRef,
+      @Nullable String originRef,
       NoteStatus status,
       boolean requiresShutdown,
       Instant createdAt,
-      Instant closedAt,
+      @Nullable Instant closedAt,
       List<Evidence> evidence) {}
 
   // --------------------------------------------------- escrita de setpoint ----

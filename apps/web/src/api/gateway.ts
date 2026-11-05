@@ -1,12 +1,4 @@
-import type {
-  Alarm,
-  GradeChange,
-  MaintenanceNote,
-  NoteStatus,
-  Round,
-  SetpointChange,
-  WebBreak,
-} from '@mp1/shared';
+import type { NoteStatus } from '@mp1/shared';
 
 import {
   ApiError,
@@ -35,16 +27,23 @@ import {
   writeSetpoint,
   type AlarmList,
   type AlarmQuery,
+  type AlarmResponse,
+  type GradeChangesResponse,
+  type NotesResponse,
   type ProcessValues,
-  type ReelView,
+  type ReelDetail,
+  type ReelsResponse,
+  type RoundsResponse,
   type SetpointAccepted,
+  type SetpointChangesResponse,
   type SetpointRejection,
   type ShiftDetail,
-  type ShiftView,
-  type SteamGroupView,
+  type ShiftsResponse,
+  type SteamGroupsResponse,
   type TagDetail,
   type TagTrend,
   type TrendQuery,
+  type WebBreaksResponse,
 } from './process';
 
 /**
@@ -89,40 +88,40 @@ export interface DataGateway {
   ): Promise<ProcessValues>;
   tag(tag: string, signal?: AbortSignal): Promise<TagDetail>;
   tagTrend(tag: string, options?: TrendQuery, signal?: AbortSignal): Promise<TagTrend>;
-  steamGroups(signal?: AbortSignal): Promise<{ ts: string; groups: readonly SteamGroupView[] }>;
+  steamGroups(signal?: AbortSignal): Promise<SteamGroupsResponse>;
 
   alarms(filter?: AlarmQuery, signal?: AbortSignal): Promise<AlarmList>;
 
   shifts(
-    filter?: { limit?: number },
+    filter?: { from?: string; to?: string; limit?: number },
     signal?: AbortSignal,
-  ): Promise<{ count: number; shifts: readonly ShiftView[] }>;
+  ): Promise<ShiftsResponse>;
   shift(id: string, signal?: AbortSignal): Promise<ShiftDetail>;
   reels(
     filter?: { shiftId?: string; limit?: number },
     signal?: AbortSignal,
-  ): Promise<{ count: number; reels: readonly ReelView[] }>;
-  reel(number: number, signal?: AbortSignal): Promise<{ reel: ReelView }>;
+  ): Promise<ReelsResponse>;
+  reel(number: number, signal?: AbortSignal): Promise<ReelDetail>;
   webBreaks(
     filter?: { shiftId?: string; limit?: number },
     signal?: AbortSignal,
-  ): Promise<{ count: number; webBreaks: readonly WebBreak[] }>;
+  ): Promise<WebBreaksResponse>;
   gradeChanges(
     filter?: { shiftId?: string; limit?: number },
     signal?: AbortSignal,
-  ): Promise<{ count: number; gradeChanges: readonly GradeChange[] }>;
+  ): Promise<GradeChangesResponse>;
   rounds(
     filter?: { shiftId?: string; limit?: number },
     signal?: AbortSignal,
-  ): Promise<{ count: number; rounds: readonly Round[] }>;
+  ): Promise<RoundsResponse>;
   notes(
     filter?: { status?: NoteStatus; assetTag?: string; limit?: number },
     signal?: AbortSignal,
-  ): Promise<{ count: number; notes: readonly MaintenanceNote[] }>;
+  ): Promise<NotesResponse>;
   setpointChanges(
     filter?: { tag?: string; limit?: number },
     signal?: AbortSignal,
-  ): Promise<{ count: number; changes: readonly SetpointChange[] }>;
+  ): Promise<SetpointChangesResponse>;
 
   /** `null` quando a fonte não aceita escrita — é o caso do instantâneo. */
   readonly writeSetpoint:
@@ -137,8 +136,7 @@ export interface DataGateway {
 
   /** `null` quando a fonte não aceita reconhecimento. */
   readonly acknowledgeAlarm:
-    | ((id: string, acknowledgedBy: string, signal?: AbortSignal) => Promise<{ alarm: Alarm }>)
-    | null;
+    ((id: string, acknowledgedBy: string, signal?: AbortSignal) => Promise<AlarmResponse>) | null;
 }
 
 /** O portão que fala com a API. */

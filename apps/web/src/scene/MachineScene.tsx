@@ -153,7 +153,14 @@ export default function MachineScene({ view, state }: MachineSceneProps) {
       }}
     >
       <color attach="background" args={['#17191d']} />
-      <fog attach="fog" args={['#24272d', 35, 120]} />
+      {/*
+        O nevoeiro começa a 60 m e fecha a 220, como no protótipo.
+        A máquina tem cerca de 96 m da caixa de entrada ao jumbo, e a visão
+        geral olha de 80 m de distância: com o alcance anterior, de 35 a 120, a
+        metade seca sumia dentro do nevoeiro na única vista que existe para
+        mostrar a máquina inteira.
+      */}
+      <fog attach="fog" args={['#24272d', 60, 220]} />
 
       <RoomLighting />
       <hemisphereLight args={['#dfe8ff', '#4a4438', 0.55]} />
@@ -186,7 +193,7 @@ export default function MachineScene({ view, state }: MachineSceneProps) {
         dampingFactor={0.08}
         maxPolarAngle={Math.PI * 0.62}
         minDistance={2}
-        maxDistance={120}
+        maxDistance={200}
       />
 
       <EffectComposer>

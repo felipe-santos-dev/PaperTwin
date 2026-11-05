@@ -26,6 +26,7 @@ const KIND_LABEL: Record<MachineAsset['kind'], string> = {
   scanner: 'Scanner',
   nip: 'Nip',
   'reel-drum': 'Tambor de enroladeira',
+  headbox: 'Caixa de entrada',
 };
 
 const SIDE_LABEL = { LA: 'lado acionamento', LC: 'lado comando' } as const;
@@ -60,10 +61,13 @@ export function AssetPanel({ asset, data, onClose }: AssetPanelProps) {
   const [showTable, setShowTable] = useState(false);
   const detail = data.detail;
   const series = data.series;
-  const zone = detail?.status.zone ?? null;
+  const zone = detail?.status?.zone ?? null;
 
   return (
-    <aside className="absolute top-4 right-4 flex max-h-[calc(100%-2rem)] w-80 flex-col overflow-y-auto rounded-xl border border-mill-line bg-mill-panel/92 p-4 backdrop-blur">
+    <aside
+      aria-label="Ativo selecionado"
+      className="absolute top-4 right-4 flex max-h-[calc(100%-2rem)] w-80 flex-col overflow-y-auto rounded-xl border border-mill-line bg-mill-panel/92 p-4 backdrop-blur"
+    >
       <div className="flex items-start gap-3">
         <div className="min-w-0">
           {zone && (
@@ -106,7 +110,7 @@ export function AssetPanel({ asset, data, onClose }: AssetPanelProps) {
         </p>
       )}
 
-      {detail?.status.latest && <Readings detail={detail} series={series} />}
+      {detail?.status?.latest && <Readings detail={detail} series={series} />}
 
       {series && series.buckets.length > 0 && (
         <>
@@ -144,7 +148,12 @@ export function AssetPanel({ asset, data, onClose }: AssetPanelProps) {
 }
 
 function Readings({ detail, series }: { detail: AssetDetail; series: VibrationSeries | null }) {
-  const latest = detail.status.latest;
+  /*
+   * Um ativo sem classe ISO não tem estado, e isso é informação: um nip não
+   * vibra — ele é o ponto de contato entre dois rolos. O contrato diz isso com
+   * `status: Status | null`, e aqui só há o que mostrar quando há medição.
+   */
+  const latest = detail.status?.latest;
   if (!latest) return null;
 
   const days = series?.remainingLife?.daysToZoneD ?? null;

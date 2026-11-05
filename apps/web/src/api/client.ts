@@ -1,32 +1,9 @@
-import type {
-  AssetStatus,
-  HealthResponse,
-  IsoLimits,
-  MachineAsset,
-  RemainingLife,
-  VibrationBucket,
-  VibrationBucketSize,
-} from '@mp1/shared';
+import type { VibrationBucketSize } from '@mp1/shared';
+import type { AssetDetail, HealthResponse, VibrationSeries } from '@mp1/shared/api';
 
 export const API_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:3333';
 
-/** Resposta de `GET /assets/:tag`. */
-export interface AssetDetail {
-  readonly asset: MachineAsset;
-  readonly status: AssetStatus;
-  readonly limits: IsoLimits | null;
-}
-
-/** Resposta de `GET /assets/:tag/vibration`. */
-export interface VibrationSeries {
-  readonly assetTag: string;
-  readonly from: string;
-  readonly to: string;
-  readonly bucket: VibrationBucketSize;
-  readonly limits: IsoLimits | null;
-  readonly buckets: VibrationBucket[];
-  readonly remainingLife: RemainingLife | null;
-}
+export type { AssetDetail, VibrationSeries };
 
 /** Erro de API que carrega o status, para quem chama poder distinguir 404 de queda. */
 export class ApiError extends Error {
@@ -43,10 +20,14 @@ async function request<T>(path: string, signal?: AbortSignal): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, signal ? { signal } : {});
 
   if (!response.ok) {
-    // a API manda `message` nos erros; se não vier, o status já diz o bastante
+    /*
+     * Os erros vêm em Problem Details (RFC 9457), e a mensagem legível está em
+     * `detail`. A versão TypeScript da API mandava `message`; a Java não, e é
+     * esta que responde agora. Se nenhum vier, o status já diz o bastante.
+     */
     const detail = await response
       .json()
-      .then((body: { message?: string }) => body.message)
+      .then((body: { detail?: string }) => body.detail)
       .catch(() => undefined);
     throw new ApiError(response.status, detail ?? `A API respondeu ${String(response.status)}`);
   }

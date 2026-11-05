@@ -1,0 +1,6 @@
+target/
+
+# O wrapper baixa este jar sozinho na primeira execução, junto com o Maven.
+# Fora do repositório porque é binário gerado, e o que define a build é o
+# maven-wrapper.properties ao lado, que está versionado.
+.mvn/wrapper/maven-wrapper.jar

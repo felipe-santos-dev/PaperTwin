@@ -1,16 +1,19 @@
-import {
-  processVariable,
-  type GradeChange,
-  type MaintenanceNote,
-  type Round,
-  type SetpointChange,
-  type WebBreak,
-} from '@mp1/shared';
+import { processVariable } from '@mp1/shared';
 
 import { ApiError } from './client';
 import { fetchDemoAsset, fetchDemoVibration } from './demo';
 import type { DataGateway } from './gateway';
-import type { AlarmList, ProcessValues, ReelView, ShiftView } from './process';
+import type {
+  AlarmList,
+  GradeChangesResponse,
+  NotesResponse,
+  ProcessValues,
+  ReelsResponse,
+  RoundsResponse,
+  SetpointChangesResponse,
+  ShiftsResponse,
+  WebBreaksResponse,
+} from './process';
 
 /**
  * O portão que lê o instantâneo estático.
@@ -172,11 +175,7 @@ export const DEMO_GATEWAY: DataGateway = {
   },
 
   async shifts(filter = {}, signal) {
-    const all = await load<{ count: number; shifts: readonly ShiftView[] }>(
-      '/shifts',
-      ['count', 'shifts'],
-      signal,
-    );
+    const all = await load<ShiftsResponse>('/shifts', ['count', 'shifts'], signal);
     const shifts = capped(all.shifts, filter.limit);
     return { count: shifts.length, shifts };
   },
@@ -184,11 +183,7 @@ export const DEMO_GATEWAY: DataGateway = {
   shift: (id, signal) => load(`/shifts/${encodeURIComponent(id)}`, ['shift', 'reels'], signal),
 
   async reels(filter = {}, signal) {
-    const all = await load<{ count: number; reels: readonly ReelView[] }>(
-      '/reels',
-      ['count', 'reels'],
-      signal,
-    );
+    const all = await load<ReelsResponse>('/reels', ['count', 'reels'], signal);
     const rows = byShift(all.reels, filter.shiftId);
     return { count: rows.length, reels: capped(rows, filter.limit) };
   },
@@ -196,17 +191,13 @@ export const DEMO_GATEWAY: DataGateway = {
   reel: (number, signal) => load(`/reels/${String(number)}`, ['reel'], signal),
 
   async webBreaks(filter = {}, signal) {
-    const all = await load<{ count: number; webBreaks: readonly WebBreak[] }>(
-      '/web-breaks',
-      ['count', 'webBreaks'],
-      signal,
-    );
+    const all = await load<WebBreaksResponse>('/web-breaks', ['count', 'webBreaks'], signal);
     const rows = byShift(all.webBreaks, filter.shiftId);
     return { count: rows.length, webBreaks: capped(rows, filter.limit) };
   },
 
   async gradeChanges(filter = {}, signal) {
-    const all = await load<{ count: number; gradeChanges: readonly GradeChange[] }>(
+    const all = await load<GradeChangesResponse>(
       '/grade-changes',
       ['count', 'gradeChanges'],
       signal,
@@ -216,21 +207,13 @@ export const DEMO_GATEWAY: DataGateway = {
   },
 
   async rounds(filter = {}, signal) {
-    const all = await load<{ count: number; rounds: readonly Round[] }>(
-      '/rounds',
-      ['count', 'rounds'],
-      signal,
-    );
+    const all = await load<RoundsResponse>('/rounds', ['count', 'rounds'], signal);
     const rows = byShift(all.rounds, filter.shiftId);
     return { count: rows.length, rounds: capped(rows, filter.limit) };
   },
 
   async notes(filter = {}, signal) {
-    const all = await load<{ count: number; notes: readonly MaintenanceNote[] }>(
-      '/notes',
-      ['count', 'notes'],
-      signal,
-    );
+    const all = await load<NotesResponse>('/notes', ['count', 'notes'], signal);
 
     const rows = all.notes.filter((note) => {
       if (filter.status !== undefined && note.status !== filter.status) return false;
@@ -242,7 +225,7 @@ export const DEMO_GATEWAY: DataGateway = {
   },
 
   async setpointChanges(filter = {}, signal) {
-    const all = await load<{ count: number; changes: readonly SetpointChange[] }>(
+    const all = await load<SetpointChangesResponse>(
       '/setpoint-changes',
       ['count', 'changes'],
       signal,

@@ -2,6 +2,7 @@ import {
   CALENDER_NIP_Y_M,
   CALENDER_X_M,
   DRY_SECTION_WEB_Y_M,
+  HEADBOX,
   POST_DRYER_HOOD,
   POST_DRYER_PAIRS,
   POST_DRYER_X0_M,
@@ -10,6 +11,7 @@ import {
   PRE_DRYER_HOOD,
   PRE_DRYER_PAIRS,
   PRE_DRYER_X0_M,
+  PRESS_NIPS,
   SCANNER_1_X_M,
   SCANNER_2_X_M,
   SIZER_X_M,
@@ -36,8 +38,52 @@ export const SCENE_VIEWS: readonly SceneView[] = [
     id: 'overview',
     label: 'Visão geral',
     hint: '',
-    position: [PRE_DRYER_HOOD.from - 8, 15, 32],
-    target: [(PRE_DRYER_HOOD.from + POPE_X_M) / 2, 2, 0],
+    /**
+     * De longe e de cima, por dentro da sala.
+     *
+     * É o enquadramento do protótipo: 26 m de altura, 74 de afastamento. Ele só
+     * cabe porque o teto está a 34 m — é a altura que uma sala de máquinas de
+     * papel tem, e é ela que dá à câmera de onde olhar a máquina inteira de uma
+     * vez.
+     */
+    position: [0, 26, 74],
+    target: [32, 2, 0],
+  },
+  {
+    id: 'headbox',
+    label: 'Caixa de entrada',
+    hint: 'jato',
+    /**
+     * Câmera baixa, e de trás da máquina.
+     *
+     * A caixa de entrada fica a 2,2 m do chão e o primeiro piso de operação a
+     * 3,4 m: de qualquer ponto mais alto, o piso de grade fica na frente dela.
+     * Daqui a linha de visada passa por baixo do piso, que começa só depois do
+     * tubulão.
+     */
+    position: [HEADBOX.manifoldX - 4.4, 3.2, 13],
+    target: [HEADBOX.sliceX + 0.8, 2.4, 0],
+  },
+  {
+    id: 'forming',
+    label: 'Formação',
+    hint: 'duas telas',
+    position: [-19, 7, 24],
+    target: [0.6, 5, 0],
+  },
+  {
+    id: 'press',
+    label: 'Prensas',
+    hint: `${String(PRESS_NIPS.length)} nips`,
+    position: [(PRESS_NIPS[0]?.x ?? 0) - 4, 7.5, 16],
+    target: [(PRESS_NIPS[1]?.x ?? 0) + 1, 4.6, 0],
+  },
+  {
+    id: 'wet-to-dry',
+    label: 'Úmida → seca',
+    hint: 'transição',
+    position: [6, 8, 15],
+    target: [13, 5, 0],
   },
   {
     id: 'pre-dryer',
@@ -52,6 +98,20 @@ export const SCENE_VIEWS: readonly SceneView[] = [
     hint: 'lado operação',
     position: [PRE_DRYER_X0_M + 6, 5.5, 11],
     target: [PRE_DRYER_X0_M + 12, 3.8, 3],
+  },
+  {
+    id: 'drive-side',
+    label: 'Lado acionamento',
+    hint: 'motores',
+    /**
+     * A câmera fica **entre** a fileira de motores e a parede do fundo.
+     *
+     * É o enquadramento do protótipo, e ele só cabe porque a parede do fundo
+     * recuou junto: os acionamentos ocupam até cerca de 10 m para fora do
+     * centro, e uma parede logo atrás deles tapa a cena inteira.
+     */
+    position: [2, 9, -21],
+    target: [PRE_DRYER_X0_M + 5, 4.5, -7],
   },
   {
     id: 'pit',

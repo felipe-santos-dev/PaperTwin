@@ -1,0 +1,301 @@
+{
+  "tolerance": 1e-9,
+  "note": "Ajuste linear por mínimos quadrados contra a fronteira C→D. A inclinação só vale como degradação se passar de dois erros padrão dela mesma.",
+  "isoLimits": {
+    "aToB": 1.4,
+    "bToC": 2.8,
+    "cToD": 4.5
+  },
+  "cases": [
+    {
+      "name": "poucos pontos",
+      "buckets": [
+        {
+          "bucketStart": "2026-03-01T00:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 1,
+          "rmsMaxMmS": 1.1,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        },
+        {
+          "bucketStart": "2026-03-01T06:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 1.1,
+          "rmsMaxMmS": 1.2000000000000002,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        }
+      ],
+      "expected": {
+        "trendMmSPerDay": 0,
+        "daysToZoneD": null,
+        "samples": 2
+      }
+    },
+    {
+      "name": "tendência plana",
+      "buckets": [
+        {
+          "bucketStart": "2026-03-01T00:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 1.2,
+          "rmsMaxMmS": 1.3,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        },
+        {
+          "bucketStart": "2026-03-01T06:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 1.2,
+          "rmsMaxMmS": 1.3,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        },
+        {
+          "bucketStart": "2026-03-01T12:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 1.2,
+          "rmsMaxMmS": 1.3,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        },
+        {
+          "bucketStart": "2026-03-01T18:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 1.2,
+          "rmsMaxMmS": 1.3,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        },
+        {
+          "bucketStart": "2026-03-02T00:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 1.2,
+          "rmsMaxMmS": 1.3,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        },
+        {
+          "bucketStart": "2026-03-02T06:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 1.2,
+          "rmsMaxMmS": 1.3,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        }
+      ],
+      "expected": {
+        "trendMmSPerDay": 0,
+        "daysToZoneD": null,
+        "samples": 6
+      }
+    },
+    {
+      "name": "inclinação dentro do ruído do ajuste",
+      "buckets": [
+        {
+          "bucketStart": "2026-03-01T00:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 1.2,
+          "rmsMaxMmS": 1.3,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        },
+        {
+          "bucketStart": "2026-03-01T06:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 1.5,
+          "rmsMaxMmS": 1.6,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        },
+        {
+          "bucketStart": "2026-03-01T12:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 1.1,
+          "rmsMaxMmS": 1.2000000000000002,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        },
+        {
+          "bucketStart": "2026-03-01T18:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 1.6,
+          "rmsMaxMmS": 1.7000000000000002,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        },
+        {
+          "bucketStart": "2026-03-02T00:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 1.2,
+          "rmsMaxMmS": 1.3,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        },
+        {
+          "bucketStart": "2026-03-02T06:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 1.5,
+          "rmsMaxMmS": 1.6,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        },
+        {
+          "bucketStart": "2026-03-02T12:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 1.3,
+          "rmsMaxMmS": 1.4000000000000001,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        },
+        {
+          "bucketStart": "2026-03-02T18:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 1.6,
+          "rmsMaxMmS": 1.7000000000000002,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        }
+      ],
+      "expected": {
+        "trendMmSPerDay": 0.12380952380952384,
+        "daysToZoneD": null,
+        "samples": 8
+      }
+    },
+    {
+      "name": "degradação sustentada",
+      "buckets": [
+        {
+          "bucketStart": "2026-03-01T00:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 1.2,
+          "rmsMaxMmS": 1.3,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        },
+        {
+          "bucketStart": "2026-03-01T06:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 1.5,
+          "rmsMaxMmS": 1.6,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        },
+        {
+          "bucketStart": "2026-03-01T12:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 1.9,
+          "rmsMaxMmS": 2,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        },
+        {
+          "bucketStart": "2026-03-01T18:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 2.3,
+          "rmsMaxMmS": 2.4,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        },
+        {
+          "bucketStart": "2026-03-02T00:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 2.6,
+          "rmsMaxMmS": 2.7,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        },
+        {
+          "bucketStart": "2026-03-02T06:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 3,
+          "rmsMaxMmS": 3.1,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        },
+        {
+          "bucketStart": "2026-03-02T12:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 3.4,
+          "rmsMaxMmS": 3.5,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        },
+        {
+          "bucketStart": "2026-03-02T18:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 3.8,
+          "rmsMaxMmS": 3.9,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        }
+      ],
+      "expected": {
+        "trendMmSPerDay": 1.4904761904761903,
+        "daysToZoneD": 0.4920127795527158,
+        "samples": 8
+      }
+    },
+    {
+      "name": "já passou da fronteira",
+      "buckets": [
+        {
+          "bucketStart": "2026-03-01T00:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 4,
+          "rmsMaxMmS": 4.1,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        },
+        {
+          "bucketStart": "2026-03-01T06:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 4.4,
+          "rmsMaxMmS": 4.5,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        },
+        {
+          "bucketStart": "2026-03-01T12:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 4.8,
+          "rmsMaxMmS": 4.8999999999999995,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        },
+        {
+          "bucketStart": "2026-03-01T18:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 5.2,
+          "rmsMaxMmS": 5.3,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        },
+        {
+          "bucketStart": "2026-03-02T00:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 5.6,
+          "rmsMaxMmS": 5.699999999999999,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        },
+        {
+          "bucketStart": "2026-03-02T06:00:00.000Z",
+          "samples": 24,
+          "rmsAvgMmS": 6,
+          "rmsMaxMmS": 6.1,
+          "tempAvgC": 62,
+          "envelopeMaxGe": 0.4
+        }
+      ],
+      "expected": {
+        "trendMmSPerDay": 1.5999999999999999,
+        "daysToZoneD": 0,
+        "samples": 6
+      }
+    }
+  ]
+}

@@ -374,6 +374,7 @@ describe('Processo · escrita de setpoint', () => {
       unit: 'kPa rel',
       ts: '2026-06-15T17:00:00Z',
       setpoint: null,
+      zone: null,
     },
     writable: true,
     notWritableBecause: null,
@@ -410,6 +411,7 @@ describe('Processo · escrita de setpoint', () => {
           unit: 'kPa rel',
           ts: '2026-06-15T17:00:00Z',
           setpoint: null,
+          zone: null,
         },
       ],
     });
@@ -466,11 +468,13 @@ describe('Processo · escrita de setpoint', () => {
   it('mostra a recusa da API com as palavras dela', async () => {
     const writeSetpoint = vi.fn().mockResolvedValue({
       ok: false,
+      // Problem Details (RFC 9457): a mensagem legível está em `detail`, e a
+      // faixa vem como membro de extensão para a tela corrigir o campo
       rejected: {
-        statusCode: 422,
-        error: 'Unprocessable Entity',
-        message: '400 kPa rel está fora da faixa de operação de PIC-712, que vai de 40 a 250.',
-        rejection: 'fora-dos-limites',
+        type: 'https://papertwin.dev/problems/setpoint-recusado',
+        status: 422,
+        detail: '400 kPa rel está fora da faixa de operação de PIC-712, que vai de 40 a 250.',
+        rejection: 'fora-da-faixa',
         min: 40,
         max: 250,
       },

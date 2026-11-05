@@ -32,32 +32,49 @@ auditoria de setpoint e alarme ISA-18.2.
 
 ### Monorepo
 
-| Pacote            | Papel                                            | Código | Teste |
-| ----------------- | ------------------------------------------------ | -----: | ----: |
-| `packages/shared` | Modelo, catálogo, entidades, historiador, normas |  5.530 | 2.085 |
-| `apps/api`        | Fastify, repositório, migrations, simulação      |  4.194 | 2.162 |
-| `apps/web`        | React + R3F, cena 3D, painéis                    |  3.574 |   684 |
+| Pacote            | Papel                                                    | Código | Teste |
+| ----------------- | -------------------------------------------------------- | -----: | ----: |
+| `apps/api-java`   | Spring Boot: simulação, historiador, rotas, persistência | 13.572 | 5.408 |
+| `apps/web`        | React + R3F, sete telas, cena 3D                         |  8.521 | 2.334 |
+| `packages/shared` | Modelo da máquina, catálogo, geradores                   |  7.724 | 2.388 |
 
-(linhas de `.ts`/`.tsx` em `src/`, teste contado à parte)
+Linhas de `.java` em `src/main` e `src/test`, e de `.ts`/`.tsx` em `src/`, com
+teste contado à parte. O teste da web inclui 620 linhas de ponta a ponta.
+
+Quatro desses arquivos são **gerados e versionados**, e somam ~5.700 linhas:
+`MachineAssets.java` (2.436) sai do modelo em TypeScript, e
+`catalog.generated.ts`, `relations.generated.ts` e `api/generated.ts` (3.244
+juntos) saem dos CSV da pesquisa e do `openapi.json`. Versioná-los é o que
+permite compilar sem rodar gerador nenhum; o CI confere que estão em dia.
 
 ### Dependências diretas de produção
 
+- **`apps/api-java`**: `spring-boot-starter-web`, `spring-boot-starter-jdbc`,
+  `flyway-core`, `springdoc-openapi-starter-webmvc-ui`, `postgresql` (só em
+  execução). Sem JPA: as consultas são SQL escrito à mão sobre `JdbcClient`.
 - **`packages/shared`**: nenhuma. É o que permite a web importar o modelo da
   máquina sem arrastar nada do servidor para o bundle.
-- **`apps/api`**: `fastify`, `@fastify/cors`, `@fastify/swagger`,
-  `@fastify/swagger-ui`, `postgres` (postgres.js), `@electric-sql/pglite`, `zod`.
 - **`apps/web`**: `react`, `react-dom`, `three`, `@react-three/fiber`,
   `@react-three/drei`, `@react-three/postprocessing`, `postprocessing`.
 
 ### A direção das dependências
 
 ```
-          packages/shared  (modelo, catálogo, entidades, normas)
-            ▲                           ▲
-            │                           │
-        apps/api  ──── HTTP / SSE ───► apps/web
-     (Fastify, Postgres)            (React, R3F)
+  packages/shared ──gera──► MachineAssets.java ──► apps/api-java
+  (modelo, catálogo)                                (Spring Boot, Postgres)
+         │                                                   │
+         │ modelo da máquina                                 │ openapi.json
+         ▼                                                   ▼
+      apps/web  ◄───────────── HTTP / SSE ──────────────────┘
+      (React, R3F)             + tipos gerados do contrato
 ```
+
+O modelo da máquina continua em TypeScript porque é dele que a cena 3D é
+montada, e o Java recebe os ativos **gerados** dele. O contrato anda no sentido
+contrário: o `openapi.json` sai da aplicação Java e os tipos do front saem dele.
+Nenhum dos dois lados escreve à mão o que o outro já sabe — e é por isso que
+renomear um campo no Java quebra o `tsc` do front, em vez de quebrar a tela de
+quem abriu.
 
 `shared` não importa nada dos dois lados. Dentro dele, a direção é
 `process → machine` e nunca o contrário: o catálogo de variáveis pergunta ao
@@ -65,20 +82,17 @@ modelo da máquina quantos cilindros existem, e o modelo não sabe que o catálo
 existe. Foi essa regra que obrigou a dividir os grupos de vapor em dois módulos
 (§5.3).
 
-### Um repositório, dois drivers
+### Um repositório, sem abstração de driver
 
-O que varia entre o PGlite (desenvolvimento, teste, geração do instantâneo de
-demonstração) e o postgres.js (produção) são **três operações**, em
-`apps/api/src/db/executor.ts`: consulta com parâmetros, SQL solto para as
-migrations, transação. Em cima delas há um repositório só.
+A versão TypeScript tinha uma interface de repositório com duas implementações
+— PGlite em desenvolvimento, postgres.js em produção — e um executor de três
+operações para o SQL ser escrito uma vez só.
 
-A razão vale no README: a suíte de banco roda contra os dois drivers, mas no
-dia a dia só o PGlite roda (o Postgres fica pulado sem `DATABASE_URL`). Com duas
-classes de repositório, um erro escrito só do lado do Postgres não apareceria em
-teste nenhum — apareceria em produção. Hoje são ~40 métodos; duas listas de 40
-métodos iguais divergem.
-
----
+No lado Java isso **desapareceu**, e por um motivo melhor que preguiça: os
+testes rodam contra um **Postgres de verdade**, embutido no processo pelo
+zonky, na mesma versão 18.6 do Neon. Não há segundo driver para abstrair. O que
+era uma camada existindo para que dois drivers não divergissem virou
+`JdbcClient` direto, e o SQL é conferido pelo mesmo motor que vai executá-lo.
 
 ## 3. Números do modelo da máquina
 
@@ -170,6 +184,111 @@ existe na máquina; a medição não está no catálogo.** Inventar `LIC-731` da
 simulador um número que ninguém mediu, com a mesma cara dos outros quatro.
 
 ---
+
+## 4b. Custo da retomada — medido
+
+Medido em 03/11/2026, na máquina de desenvolvimento (Java 25, Postgres 18.6
+embarcado). É o custo de CPU do motor mais o gravador, sem banco: a escrita é
+proporcional às linhas arquivadas, que a compressão mantém em alguns milhares, e
+por isso não é ela que decide o teto.
+
+| Janela           | Passos  | Tempo  | Linhas arquivadas |
+| ---------------- | ------- | ------ | ----------------- |
+| 1 h              | 3.600   | 0,55 s | 1.415             |
+| **4 h (o teto)** | 14.400  | 1,1 s  | 4.538             |
+| 24 h             | 86.400  | 10,5 s | 24.959            |
+| 72 h             | 259.200 | 32,8 s | 73.802            |
+
+### Os quatro números da janela de 4 h, e por que são quatro
+
+A mesma janela aparece com custos diferentes neste documento, e a diferença entre
+eles é o que se está medindo. Os números abaixo foram refeitos em 05/11/2026,
+depois de a **colheita de entidades** entrar na retomada — ela não existia quando
+a primeira medição foi feita, e muda a conta pela metade.
+
+| Medida                              | Tempo      | O que inclui                             |
+| ----------------------------------- | ---------- | ---------------------------------------- |
+| Motor + gravador, JIT aquecido      | **1,0 s**  | só CPU de simulação; sem banco           |
+| Retomada sem colheita, JIT aquecido | **5,6 s**  | + escrita no banco, alarmes, poda        |
+| Retomada completa, JIT aquecido     | **13,5 s** | + colheita de entidades (7,9 s)          |
+| **Retomada completa, JVM fria**     | **13,5 s** | + JIT interpretando e classes carregando |
+| Retomada seguinte, sem colheita     | **~5 ms**  | nada novo para colher — ver §11b         |
+
+A JVM fria usa mais memória: **165 MB** de heap contra ~45 MB em regime.
+
+A última linha é a que decide se a aplicação é usável: a primeira requisição do
+dia paga a janela inteira, e as seguintes não pagam quase nada. Foi preciso
+corrigir um defeito para isso ser verdade — a colheita rodava em **toda**
+retomada, e cada requisição custava 11 s. Está em §11b.
+
+**A colheita é mais da metade do custo**, e isso é informação de desenho, não
+defeito: a gramatura média de uma bobina é uma **consulta ao historiador**, não
+um acumulador em memória, e é por isso que ela existe — o número que a tela
+mostra é o que ficou gravado, e não o que alguém somou de passagem. O preço é
+uma ida ao banco por série.
+
+Duas coisas já foram feitas para ele não ser pior:
+
+- **Uma leitura por tag, e não uma por pergunta.** A primeira versão consultava a
+  média de cada bobina separadamente: são seis séries por bobina, e uma janela de
+  72 h fechava dezenas de bobinas. Num `DataSource` sem pool — o dos testes —
+  cada consulta é uma conexão nova, e o servidor recusou antes de o cálculo
+  acabar. Agora cada série é lida uma vez pela janela inteira e as médias saem da
+  mesma lista; o resultado é idêntico, porque a média no tempo recebe o recorte e
+  as amostras de fora dele só ancoram as pontas.
+- **Uma transação para toda a colheita**, em vez de uma por entidade. Também a
+  torna atómica: uma retomada interrompida no meio não deixa um turno com metade
+  das bobinas dele.
+
+**O número que vale para produção é o de JVM fria**, porque é exatamente a
+situação do Render Free: o host dorme sem tráfego, a instância é derrubada, e a
+primeira retomada do dia roda com a JVM recém-iniciada. Os outros são úteis para
+saber onde o tempo vai — e mostram que a simulação em si é a parte barata.
+
+**Aviso importante, e mais forte agora**: estes 13,5 s foram medidos num desktop,
+contra um Postgres **embarcado, no mesmo processo**. O Render Free dá uma fração
+de vCPU e o Neon fica do outro lado da rede — e a colheita é justamente a parte
+que paga latência de rede. Lá o número será **várias vezes maior**, e o padrão de
+quatro horas provavelmente será alto demais.
+
+É por isso que o teto é **configurável** por `RESUME_MAX_HOURS` (padrão 4) e que
+toda retomada registra no log as horas recuperadas, a duração, **a parcela da
+colheita** e o heap em uso:
+
+```
+retomada: 4,00 h recuperadas em 13464 ms (7937 ms de colheita), heap 165 MB, 4538 linhas arquivadas, compressão 200:1
+```
+
+A parcela sai separada porque as duas metades se ajustam de maneiras diferentes:
+
+- tempo **no motor** → baixar `RESUME_MAX_HOURS` resolve: menos passos, menos
+  tempo;
+- tempo **na colheita** → baixar o teto ajuda pouco. Ela paga por turno e por
+  bobina, e um turno fecha dez bobinas qualquer que seja o tamanho da janela que
+  o alcançou. O que ajudaria ali é outra coisa — colher fora da requisição, ou
+  só para o turno corrente — e é decisão de produto, não de configuração.
+
+Depois do primeiro deploy é só ler esse log e ajustar. Está no checklist.
+
+### Por que o teto existe
+
+**É daqui que sai o teto de quatro horas.** A retomada roda dentro de uma
+requisição HTTP, porque não há processo de fundo — quem acorda a API é quem
+abriu a tela. Trinta e três segundos de simulação — mais a colheita — passam de qualquer tempo
+limite razoável de requisição, então 72 h não cabem. Quatro horas cabem num
+desktop; num host com uma fração de vCPU, é o log do primeiro deploy que diz.
+
+A consequência é dita e não escondida: acima do teto a retomada **reancora**, o
+relatório diz que reancorou, e o intervalo que não rodou fica como buraco no
+histórico. Se ninguém abrir a tela por um dia, não houve quem rodasse a
+simulação daquele dia. Quem quiser histórico contínuo precisa de alguém batendo
+na API de tempos em tempos — é decisão de deploy, e está no checklist.
+
+Sobre memória: o número de heap foi medido e **não** virou asserção de teste. O
+delta entre dois instantes é dominado por quando o coletor resolveu rodar, não
+pelo tamanho da janela — na mesma execução, 1 h mediu +33 MB e 24 h mediu +17 MB.
+O que limita a memória está no desenho e é verificável sem medir: o gravador é
+esvaziado a cada varredura e o motor guarda um estado de tamanho fixo.
 
 ## 5. Decisões que valem no texto
 
@@ -430,66 +549,105 @@ não rodaria de novo, e a coluna sumiria para esse banco.
 
 ## 9. Testes
 
-| Workspace         | Arquivos | Passando | Pulados |
-| ----------------- | -------: | -------: | ------: |
-| `packages/shared` |       10 |      203 |       0 |
-| `apps/api`        |        7 |      168 |      97 |
-| `apps/web`        |        6 |       46 |       0 |
-| **Total**         |   **23** |  **417** |  **97** |
+| Suíte                      | Arquivos | Passando | Pulados |
+| -------------------------- | -------: | -------: | ------: |
+| `apps/api-java` (JUnit)    |       27 |      259 |       2 |
+| `packages/shared` (Vitest) |       12 |      234 |       0 |
+| `apps/web` (Vitest)        |       10 |      102 |       0 |
+| **Total**                  |   **49** |  **595** |   **2** |
 
-Mais `apps/web/e2e/scene.spec.ts`, de ponta a ponta no Playwright.
+Mais **30 testes de ponta a ponta** no Playwright (`apps/web/e2e/`): as sete
+telas contra a API Java, o modo de demonstração com a API bloqueada,
+acessibilidade por varredura, o orçamento de bytes e de quadros, e a cena 3D.
 
-Os 97 pulados são a mesma suíte de banco rodando contra um **Postgres de
-verdade**: ela só executa com `DATABASE_URL` definido, e fica pulada em vez de
-falhar — o teste não pode exigir um banco que a máquina não tem. Rodar com
-Postgres apaga as tabelas do banco apontado; é para banco de teste.
+Os **dois pulados** são ferramentas, não verificações: `FootprintTest` mede uma
+retomada de 24 h (que o teto padrão não deixa acontecer) e `DemoSnapshotTest`
+grava os 954 arquivos do modo de demonstração. Ficam desligados na classe, para
+o JUnit não subir um contexto do Spring e um Postgres só para decidir não fazer
+nada. Cada um diz no Javadoc como rodá-lo.
+
+### Como os testes do lado Java estão organizados
+
+- **Contra o gabarito** (`*GoldenTest`): FOPDT, perfil CD, motor de processo,
+  compressão, interpolação, vibração, alarmes, cenários, vida útil restante e
+  as 14 rotas. Comparam com `reference/golden/`, que é o que a implementação
+  TypeScript produzia. Tolerância de 1e-9, e exata nos valores arredondados.
+- **Contra um Postgres de verdade**: o zonky sobe um Postgres **18.6** — a
+  mesma versão do Neon — dentro do processo. Não há mock de banco em lugar
+  nenhum, e não há segunda implementação de repositório para divergir.
+- **Contra o relógio**: o `Clock` é um bean, e os testes de rota o fixam no
+  instante do gabarito. Sem isso cada execução simularia até um instante
+  diferente e não haveria o que comparar.
 
 ### Testes que valem menção no README
 
-- **A mesma suíte contra dois drivers.** É o que garante que o SQL é mesmo o
-  mesmo.
+- **As 14 rotas contra o gabarito da outra implementação.** É o teste que
+  encontrou quatro defeitos nesta — entre eles um módulo do Jackson que sumia e
+  derrubava só a rota de turnos, e uma tabela que nunca era semeada.
+- **O contrato versionado.** `OpenApiContractTest` **compara** o
+  `openapi.json` com o que a aplicação publica, e só regrava quando pedido.
+  Regravar sozinho faria o arquivo seguir o código em silêncio, e o diff — que
+  é o ponto — nunca chamaria a atenção de ninguém.
+- **Os tipos do front conferidos no CI.** `npm run check:api-types` refaz os
+  tipos gerados e falha com o diff se o contrato mudou sem eles.
+- **O relógio para trás.** Uma correção de NTP faz o host andar para trás, e
+  dois defeitos reais saíram daí: o motor recebendo estado de outro passo, e um
+  alarme sendo normalizado antes de ter sido disparado — que o banco recusa.
+- **O lock de aviso numa conexão só.** `pg_advisory_lock` é por sessão: pedir
+  numa conexão do pool e liberar noutra não libera nada, e a retomada seguinte
+  esperaria para sempre. Dez requisições simultâneas cobram isso.
 - **O catálogo contra o CSV.** O teste lê `catalogo-base.csv` e exige que o
   gerado bata, linha por linha. Um número editado no TypeScript quebra o teste.
 - **A lista de laboratório contra a pesquisa.** O teste lê a coluna de TAG da
   §12.2 da pesquisa B e exige que as duas listas coincidam.
-- **As enumerações do SQL contra as do TypeScript.** O teste lê a migration e
-  compara com as constantes.
+- **As enumerações do SQL contra as do Java.** O teste lê a migration e compara
+  com as constantes.
 - **A ordem das colunas do historiador.** O teste lê a migration e cobra
   `ts, value, point_id`, porque a razão da ordem é alinhamento e não estética.
 - **Cobertura da proveniência.** O teste compara os exports de `geometry.ts` com
   o registro de proveniência: uma constante nova sem origem quebra o teste, em
-  vez de passar despercebida. Também cobra o número (29), porque os dois testes
-  anteriores continuariam passando de mãos vazias se metade do arquivo
-  desaparecesse.
+  vez de passar despercebida.
 - **Reconstrução dentro de 2 · `compDev`.** Sobre um sinal com ruído e
   curvatura, ponto a ponto.
-- **Rollback por inteiro.** `replaceAssets` apaga antes de inserir; sem
-  transação, uma lista com um ativo inválido no meio deixaria o banco com menos
-  ativos do que tinha.
 
 ---
 
 ## 10. Comandos
 
 ```bash
-npm install                     # instala o monorepo (npm workspaces)
-npm run dev                     # API e web juntas
-npm run dev:api                 # só a API
-npm run dev:web                 # só a web
-npm test                        # vitest em todos os workspaces
-npm run typecheck               # tsc em todos
-npm run lint                    # eslint
-npm run format:check            # prettier, só verificação
-npm run build                   # build de todos
-npm run db:up                   # Postgres do docker-compose
+npm install                      # instala o monorepo (npm workspaces)
+npm run dev                      # a web (a API é Maven, abaixo)
+npm test                         # vitest em todos os workspaces
+npm run typecheck                # tsc em todos
+npm run lint                     # eslint
+npm run format:check             # prettier, só verificação
+npm run build                    # build de todos
+npm run db:up                    # Postgres do docker-compose
 npm run db:down
-npm run generate -w @mp1/shared # regenera catálogo e relações a partir dos CSVs
+npm run generate -w @mp1/shared  # regenera catálogo e relações a partir dos CSVs
+npm run generate:java -w @mp1/shared      # regenera MachineAssets.java do modelo
+npm run generate:api-types -w @mp1/shared # regenera os tipos do front do contrato
+npm run check:api-types -w @mp1/shared    # confere os tipos sem regravar
+npm run demo:data:force -w @mp1/shared    # refaz o instantâneo de demonstração
+npm run test:e2e -w @mp1/web              # Playwright: sobe a API Java e a web
 ```
 
-Rodar a suíte de banco contra um Postgres de verdade:
+A API é um módulo Maven, e os comandos dela saem de `apps/api-java`:
 
 ```bash
-DATABASE_URL=postgres://... npm test --workspace @mp1/api
+./mvnw verify                    # compila, roda os 252 testes e empacota
+./mvnw spring-boot:run           # sobe contra o DATABASE_URL configurado
+
+# sobe contra o Postgres embutido, sem Docker e sem banco nenhum, na porta 3333
+./mvnw -q test-compile
+./mvnw -q org.apache.maven.plugins:maven-dependency-plugin:3.8.1:build-classpath \
+    -Dmdep.outputFile=target/cp.txt -DincludeScope=test
+java -cp "target/test-classes:target/classes:$(cat target/cp.txt)" \
+    dev.felipesantos.papertwin.DevServer
+
+# as ferramentas que ficam desligadas na suíte
+./mvnw test -Dtest=ColdStartTest -DreuseForks=false   # o custo da JVM fria
+./mvnw test -Dtest=OpenApiContractTest -Dopenapi.write=true   # regrava o contrato
 ```
 
 ---
@@ -519,6 +677,201 @@ Nada aqui foi executado; o passo a passo fica em `docs/deploy-checklist.md`.
   sobe contra o PGlite e as respostas dela viram arquivos em `public/demo`,
   espelhando as rotas. Uma reimplementação da agregação em TypeScript divergiria
   na primeira mudança de regra.
+
+---
+
+## 11b. A imagem e os 512 MB — medido
+
+Medido em 05/11/2026 num desktop (JDK 25, jar empacotado, **sem banco** — a
+aplicação sobe sem ele porque nada consulta no boot e a migration está
+desligada). O container ainda não foi construído: não há Docker nesta máquina, e
+o Dockerfile está escrito e não executado, como o resto do deploy.
+
+### Em repouso
+
+| Grandeza                   | Medido     |
+| -------------------------- | ---------- |
+| Jar empacotado             | 29 MB      |
+| Subir o contexto do Spring | 2,5 s      |
+| **Memória comprometida**   | **220 MB** |
+|  heap                      | 45 MB      |
+|  metaspace                 | 33 MB      |
+|  cache de código           | 21 MB      |
+|  metadados de classe       | 6 MB       |
+|  pilhas de thread          | 2,5 MB     |
+
+Os números saem do `NativeMemoryTracking` com a aplicação de pé. **Comprometida**,
+e não RSS: são as páginas que a JVM pediu ao sistema, o que é um teto para o RSS
+e não o RSS. O RSS de verdade depende do sistema, e este é o Windows enquanto o
+Render é Linux — medir aqui e chamar de RSS seria dar precisão a um número que
+não a tem. **O RSS real se mede no primeiro deploy**, e está no checklist.
+
+O que importa: **70 % de 512 MB dá 358 MB de heap máximo**, e fora do heap a JVM
+usa ~175 MB. É por isso que `MaxRAMPercentage` é 70 e não mais: a conta tem de
+fechar com o que não é heap.
+
+### Durante uma retomada
+
+| Janela                  | Tempo  | Pico de heap | Cabe nos 512 MB?            |
+| ----------------------- | ------ | ------------ | --------------------------- |
+| **4 h (o teto padrão)** | 13,5 s | 165 MB       | sim, com folga              |
+| 24 h (teto levantado)   | 26,3 s | 231 MB       | cabe, e **estoura o tempo** |
+
+A de 24 h foi medida com o teto subido de propósito, por
+`FootprintTest` — que fica **desligado**, porque isso não acontece com a
+configuração padrão. O número existe para a decisão de subir o teto ser tomada
+com ele: 231 MB de pico mais ~175 MB fora do heap dá ~406 MB num container de
+512 MB, e 26 s passam de qualquer tempo limite de requisição. O limite de 24 h
+não é a memória; é o relógio.
+
+### A colheita não roda em toda retomada — e por que isso foi um defeito
+
+Medido com a aplicação de pé, depois de a simulação já ter acordado:
+
+| Rota                          | Antes      | Depois   |
+| ----------------------------- | ---------- | -------- |
+| `/assets/MP1-SEC-G4-CS23-MLA` | **11,3 s** | **5 ms** |
+| `/assets/…/vibration`         | **11,1 s** | **9 ms** |
+
+O defeito não estava nas rotas: estava em elas chamarem `ensureCurrent()`, que
+rodava a **colheita** toda vez. A janela de frescor é de cinco segundos, então
+duas telas abertas com seis segundos de intervalo colhiam duas vezes a mesma
+coisa — e colher significa ler o arquivo de ~20 tags pela janela do turno (até
+oito horas) e reescrever as entidades dele.
+
+A correção não foi um cache: foi **decidir quando há o que colher**, por
+aritmética pura, sem tocar no banco. Uma entidade muda em dois casos:
+
+1. **Uma fronteira caiu na janela** — uma bobina fechou, um turno virou, uma
+   ronda terminou, uma quebra começou ou acabou, uma troca de gramatura
+   começou. São instantes que saem do plano do turno, que é função de (semente,
+   tempo).
+2. **A janela cruzou a grade de cinco minutos** — é o que atualiza o que muda
+   continuamente: a produção acumulada e a eficiência do turno.
+
+A grade é **absoluta**, e não contada a partir da última colheita, pelo mesmo
+motivo que a varredura do historiador é: duas retomadas que começassem em
+passos diferentes colheriam em instantes diferentes, e a idempotência —
+reexecutar um trecho e chegar ao mesmo banco — se perderia.
+
+O que se perde: a produção do turno pode estar até cinco minutos atrasada. Uma
+bobina que fecha aparece na hora, porque fechar é fronteira.
+
+**Como isto apareceu**: o teste de ponta a ponta do painel de mancal ficava em
+"Consultando a API…" por noventa segundos. O painel faz duas chamadas em
+sequência, e as duas pagavam a colheita — vinte e dois segundos, mais as
+retomadas que as telas vizinhas disparavam no meio. Nenhum teste de unidade
+veria isso: cada rota, isolada, responde certo.
+
+### AppCDS — medido, deixado pronto, não ligado
+
+| Subir o contexto | Média de 4 execuções |
+| ---------------- | -------------------- |
+| Sem AppCDS       | 2,49 s               |
+| **Com AppCDS**   | **1,83 s**           |
+
+**26 % a menos, ~0,65 s.** O ganho é real e pequeno diante do que domina este
+serviço: a retomada, com 13,5 s. São 5 % do tempo até a primeira tela, em troca
+de 42 MB a mais na imagem e de uma execução de treino na build. O Dockerfile tem
+as linhas prontas e comentadas, com este número ao lado.
+
+O que fez a medição ser possível: `-Dspring.context.exit=onRefresh` sobe o
+contexto inteiro — Tomcat incluso — e sai limpo, que é quando a JVM grava o
+arquivo. E o jar precisa ser **extraído** antes
+(`-Djarmode=tools ... extract`): classes dentro de um jar aninhado não entram no
+arquivo compartilhado.
+
+### As opções da JVM, e por que cada uma
+
+```
+-XX:MaxRAMPercentage=70      358 MB de heap; o resto é metaspace, código e pilhas
+-XX:+UseSerialGC             uma fração de vCPU não tem onde rodar as threads do G1
+-Xss512k                     pilha de 1 MB × threads do Tomcat são dezenas de MB
+-XX:+ExitOnOutOfMemoryError  morrer e reiniciar é melhor que ficar vivo e inútil
+```
+
+Sem o `MaxRAMPercentage`, a JVM usaria 25 % — 128 MB — e o pico de 165 MB da
+retomada padrão bateria no teto.
+
+---
+
+## 11c. Acabamento — CI, ponta a ponta, orçamento
+
+### CI, três jobs, nenhum publica
+
+| Job      | O que roda                                                   |
+| -------- | ------------------------------------------------------------ |
+| `java`   | `./mvnw verify` e a conferência do `openapi.json` versionado |
+| `verify` | formatação, lint, tipos, testes, build e `check:api-types`   |
+| `e2e`    | Playwright contra a API Java com Postgres embutido           |
+
+Os três precisam de **JDK**, inclusive os de Node: o build da web gera o
+instantâneo do modo de demonstração chamando a API Java. O workflow do Pages
+também.
+
+Duas conferências que existem para os lados não se afastarem em silêncio:
+
+- **`openapi.json` versionado**: o job Java roda a aplicação, regrava o
+  contrato e falha se o `git diff` não estiver vazio.
+- **`check:api-types`**: refaz os tipos do front a partir do contrato e falha
+  com o diff.
+
+Elas pegam a mesma classe de problema em dois pontos: alguém mexe numa rota e
+esquece de regerar. Sem a primeira, o contrato versionado envelhece; sem a
+segunda, o front compila contra um contrato que não existe mais.
+
+### Ponta a ponta
+
+`apps/web/e2e/`, contra a API Java de verdade — o Playwright sobe o `DevServer`
+antes de servir o build de produção da web.
+
+- **as sete telas**: carregam com dados da API, console limpo, nenhuma
+  requisição falha, nenhum estado de carregamento deixado para trás; e as
+  teclas 1–7 trocam de tela.
+- **a colheita chegou à tela**: bobina fechada com gramatura medida, e o
+  mancal que degrada em zona D.
+- **o modo de demonstração**: com a API bloqueada, a tela abre com o
+  instantâneo e a faixa diz que é dele. É o que o GitHub Pages serve.
+- **acessibilidade**: varredura do axe (WCAG 2.1 A e AA) em seis telas,
+  cortando em sério e crítico.
+- **orçamento**: bytes e quadros por segundo.
+- **a cena**: o que já havia desde a Fase 3.
+
+### O orçamento, e por que os tetos são folgados
+
+| Medida                         | Teto   | Medido     |
+| ------------------------------ | ------ | ---------- |
+| Chunk de entrada               | 400 kB | **115 kB** |
+| JavaScript até a primeira tela | 600 kB | ~335 kB    |
+| three.js na primeira tela      | zero   | zero       |
+| Quadros por segundo da cena    | > 4    | **8,7**    |
+
+O three.js tem **964 kB** e é carregado só quando a tela de Máquina entra. É o
+teto que mais importa: quem abre a tela de Turno não deve pagar pela cena 3D.
+
+**O piso de quadros é 4, e não 30.** Trinta é o limiar em que o giro da câmera
+deixa de parecer contínuo, e é o alvo num desktop com GPU — mas o Chromium sem
+cabeça desenha por software, no mesmo processador que roda o teste, e entrega
+8,7. Um piso de trinta seria um teste vermelho de nascença, e teste vermelho de
+nascença se desliga na primeira semana. O que este piso pega é regressão de
+**ordem de grandeza**: uma cena que passou a recriar geometria a cada quadro cai
+para menos de um, não para oito.
+
+### Acessibilidade — o que a varredura alcança, e o que não
+
+A varredura não diz que a aplicação é acessível; nenhuma diz. O que ela pega é
+a classe de defeito que passa despercebida e custa barato arrumar: contraste
+insuficiente, botão sem nome, campo sem rótulo, tabela sem cabeçalho.
+
+O que ela **não** cobre e esta aplicação precisa ter: navegação por teclado de
+ponta a ponta (as teclas 1–7 têm teste próprio), leitura por leitor de tela, e
+a cena 3D — um `canvas` de WebGL é opaco para o axe, e a resposta certa para
+ele é a tabela equivalente ao lado, que existe.
+
+Um defeito real saiu daí: a tela de Máquina tinha **dois marcos
+complementares**, um dentro do outro — a coluna que segura o painel e o painel.
+Quem navega por marcos entrava no de fora e encontrava o de dentro vazio de
+significado. O de fora virou um `div`; o de dentro ganhou nome.
 
 ---
 
@@ -552,6 +905,21 @@ sai a lista do README automaticamente):
 - escalas de ruído e vazamento da ronda, três níveis cada;
 - nomes das quatro prioridades de alarme, banda morta de 1 % e teto de um turno
   para o engavetamento.
+
+**Contrato e nulabilidade:**
+
+- o contrato diz **obrigatório por padrão**, e nulo só onde um componente está
+  marcado `@Nullable` no registro Java. Esquecer a anotação faz o contrato
+  mentir — o front deixa de tratar um nulo que acontece. Vale conferir a lista
+  quando uma rota nova entrar.
+
+**Semeadura de ativos:**
+
+- a tabela `asset` é preenchida com **upsert sem apagar**, contra o
+  `delete from asset` da versão TypeScript. Aquilo falha num banco gerenciado
+  assim que existe uma ronda ou nota apontando para o ativo. O custo de não
+  apagar é uma tag removida do modelo ficar para trás; a alternativa seria
+  apagar só o que nada referencia.
 
 **Historiador:**
 

@@ -1,0 +1,299 @@
+{
+  "tolerance": 1e-9,
+  "note": "Os ids são determinísticos: AL-<instante em segundos>-<tag>-<limite>. O pico guardado é o pior valor desde o disparo, não o último.",
+  "tag": "VI-5123A",
+  "thresholds": {
+    "H": 2.8,
+    "HH": 4.5
+  },
+  "epochMs": 1767268800000,
+  "steps": [
+    {
+      "minutes": 0,
+      "action": "scan",
+      "value": 1.0999999999999996,
+      "note": "em regime, abaixo do H",
+      "raised": [],
+      "cleared": [],
+      "updated": [],
+      "floodCount": 0
+    },
+    {
+      "minutes": 1,
+      "action": "scan",
+      "value": 3.1399999999999997,
+      "note": "estoura o H",
+      "raised": [
+        {
+          "id": "AL-1767268860-VI-5123A-H",
+          "tag": "VI-5123A",
+          "limit": "H",
+          "threshold": 2.8,
+          "priority": "média",
+          "state": "ativo",
+          "raisedAt": "2026-01-01T12:01:00.000Z",
+          "peakValue": 3.1399999999999997,
+          "acknowledgedAt": null,
+          "acknowledgedBy": null,
+          "clearedAt": null,
+          "shelvedUntil": null,
+          "shelvedBy": null
+        }
+      ],
+      "cleared": [],
+      "updated": [],
+      "floodCount": 1
+    },
+    {
+      "minutes": 2,
+      "action": "scan",
+      "value": 3.9899999999999998,
+      "note": "piora: o pico sobe, o estado não muda",
+      "raised": [],
+      "cleared": [],
+      "updated": [
+        {
+          "id": "AL-1767268860-VI-5123A-H",
+          "tag": "VI-5123A",
+          "limit": "H",
+          "threshold": 2.8,
+          "priority": "média",
+          "state": "ativo",
+          "raisedAt": "2026-01-01T12:01:00.000Z",
+          "peakValue": 3.9899999999999998,
+          "acknowledgedAt": null,
+          "acknowledgedBy": null,
+          "clearedAt": null,
+          "shelvedUntil": null,
+          "shelvedBy": null
+        }
+      ],
+      "floodCount": 1
+    },
+    {
+      "minutes": 3,
+      "action": "scan",
+      "value": 3.3099999999999996,
+      "note": "ainda alto, mas o pico guardado é o pior",
+      "raised": [],
+      "cleared": [],
+      "updated": [],
+      "floodCount": 1
+    },
+    {
+      "minutes": 4,
+      "action": "acknowledge",
+      "by": "operador-turno-B",
+      "alarm": {
+        "id": "AL-1767268860-VI-5123A-H",
+        "tag": "VI-5123A",
+        "limit": "H",
+        "threshold": 2.8,
+        "priority": "média",
+        "state": "reconhecido",
+        "raisedAt": "2026-01-01T12:01:00.000Z",
+        "peakValue": 3.9899999999999998,
+        "acknowledgedAt": "2026-01-01T12:04:00.000Z",
+        "acknowledgedBy": "operador-turno-B",
+        "clearedAt": null,
+        "shelvedUntil": null,
+        "shelvedBy": null
+      }
+    },
+    {
+      "minutes": 5,
+      "action": "scan",
+      "value": 2.63,
+      "note": "normaliza: reconhecido e normalizado sai da lista de ação",
+      "raised": [],
+      "cleared": [
+        {
+          "id": "AL-1767268860-VI-5123A-H",
+          "tag": "VI-5123A",
+          "limit": "H",
+          "threshold": 2.8,
+          "priority": "média",
+          "state": "normalizado",
+          "raisedAt": "2026-01-01T12:01:00.000Z",
+          "peakValue": 3.9899999999999998,
+          "acknowledgedAt": "2026-01-01T12:04:00.000Z",
+          "acknowledgedBy": "operador-turno-B",
+          "clearedAt": "2026-01-01T12:05:00.000Z",
+          "shelvedUntil": null,
+          "shelvedBy": null
+        }
+      ],
+      "updated": [],
+      "floodCount": 1
+    },
+    {
+      "minutes": 10,
+      "action": "scan",
+      "value": 5.01,
+      "note": "estoura o HH",
+      "raised": [
+        {
+          "id": "AL-1767269400-VI-5123A-H",
+          "tag": "VI-5123A",
+          "limit": "H",
+          "threshold": 2.8,
+          "priority": "média",
+          "state": "ativo",
+          "raisedAt": "2026-01-01T12:10:00.000Z",
+          "peakValue": 5.01,
+          "acknowledgedAt": null,
+          "acknowledgedBy": null,
+          "clearedAt": null,
+          "shelvedUntil": null,
+          "shelvedBy": null
+        },
+        {
+          "id": "AL-1767269400-VI-5123A-HH",
+          "tag": "VI-5123A",
+          "limit": "HH",
+          "threshold": 4.5,
+          "priority": "alta",
+          "state": "ativo",
+          "raisedAt": "2026-01-01T12:10:00.000Z",
+          "peakValue": 5.01,
+          "acknowledgedAt": null,
+          "acknowledgedBy": null,
+          "clearedAt": null,
+          "shelvedUntil": null,
+          "shelvedBy": null
+        }
+      ],
+      "cleared": [],
+      "updated": [],
+      "floodCount": 3
+    },
+    {
+      "minutes": 11,
+      "action": "shelve",
+      "by": "operador-turno-B",
+      "untilMinutes": 130,
+      "alarm": {
+        "id": "AL-1767269400-VI-5123A-HH",
+        "tag": "VI-5123A",
+        "limit": "HH",
+        "threshold": 4.5,
+        "priority": "alta",
+        "state": "ativo",
+        "raisedAt": "2026-01-01T12:10:00.000Z",
+        "peakValue": 5.01,
+        "acknowledgedAt": null,
+        "acknowledgedBy": null,
+        "clearedAt": null,
+        "shelvedUntil": "2026-01-01T14:10:00.000Z",
+        "shelvedBy": "operador-turno-B"
+      }
+    },
+    {
+      "minutes": 12,
+      "action": "unshelve",
+      "alarm": {
+        "id": "AL-1767269400-VI-5123A-HH",
+        "tag": "VI-5123A",
+        "limit": "HH",
+        "threshold": 4.5,
+        "priority": "alta",
+        "state": "ativo",
+        "raisedAt": "2026-01-01T12:10:00.000Z",
+        "peakValue": 5.01,
+        "acknowledgedAt": null,
+        "acknowledgedBy": null,
+        "clearedAt": null,
+        "shelvedUntil": null,
+        "shelvedBy": null
+      }
+    },
+    {
+      "minutes": 13,
+      "action": "scan",
+      "value": 1.0999999999999996,
+      "note": "tudo normaliza",
+      "raised": [],
+      "cleared": [
+        {
+          "id": "AL-1767269400-VI-5123A-H",
+          "tag": "VI-5123A",
+          "limit": "H",
+          "threshold": 2.8,
+          "priority": "média",
+          "state": "normalizado",
+          "raisedAt": "2026-01-01T12:10:00.000Z",
+          "peakValue": 5.01,
+          "acknowledgedAt": null,
+          "acknowledgedBy": null,
+          "clearedAt": "2026-01-01T12:13:00.000Z",
+          "shelvedUntil": null,
+          "shelvedBy": null
+        },
+        {
+          "id": "AL-1767269400-VI-5123A-HH",
+          "tag": "VI-5123A",
+          "limit": "HH",
+          "threshold": 4.5,
+          "priority": "alta",
+          "state": "normalizado",
+          "raisedAt": "2026-01-01T12:10:00.000Z",
+          "peakValue": 5.01,
+          "acknowledgedAt": null,
+          "acknowledgedBy": null,
+          "clearedAt": "2026-01-01T12:13:00.000Z",
+          "shelvedUntil": null,
+          "shelvedBy": null
+        }
+      ],
+      "updated": [],
+      "floodCount": 2
+    }
+  ],
+  "finalState": [
+    {
+      "id": "AL-1767269400-VI-5123A-H",
+      "tag": "VI-5123A",
+      "limit": "H",
+      "threshold": 2.8,
+      "priority": "média",
+      "state": "normalizado",
+      "raisedAt": "2026-01-01T12:10:00.000Z",
+      "peakValue": 5.01,
+      "acknowledgedAt": null,
+      "acknowledgedBy": null,
+      "clearedAt": "2026-01-01T12:13:00.000Z",
+      "shelvedUntil": null,
+      "shelvedBy": null
+    },
+    {
+      "id": "AL-1767269400-VI-5123A-HH",
+      "tag": "VI-5123A",
+      "limit": "HH",
+      "threshold": 4.5,
+      "priority": "alta",
+      "state": "normalizado",
+      "raisedAt": "2026-01-01T12:10:00.000Z",
+      "peakValue": 5.01,
+      "acknowledgedAt": null,
+      "acknowledgedBy": null,
+      "clearedAt": "2026-01-01T12:13:00.000Z",
+      "shelvedUntil": null,
+      "shelvedBy": null
+    },
+    {
+      "id": "AL-1767268860-VI-5123A-H",
+      "tag": "VI-5123A",
+      "limit": "H",
+      "threshold": 2.8,
+      "priority": "média",
+      "state": "normalizado",
+      "raisedAt": "2026-01-01T12:01:00.000Z",
+      "peakValue": 3.9899999999999998,
+      "acknowledgedAt": "2026-01-01T12:04:00.000Z",
+      "acknowledgedBy": "operador-turno-B",
+      "clearedAt": "2026-01-01T12:05:00.000Z",
+      "shelvedUntil": null,
+      "shelvedBy": null
+    }
+  ]
+}

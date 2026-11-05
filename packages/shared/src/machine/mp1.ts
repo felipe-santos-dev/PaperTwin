@@ -10,6 +10,9 @@ import {
   DRYER_RADIUS_M,
   DRYER_TOP_Y_M,
   dryerPairX,
+  FORMING_ROLLS,
+  FORMING_TRANSFER_INDEX,
+  HEADBOX,
   POPE_DRUM_RADIUS_M,
   POPE_DRUM_Y_M,
   POPE_X_M,
@@ -17,10 +20,8 @@ import {
   POST_DRYER_X0_M,
   PRE_DRYER_PAIRS,
   PRE_DRYER_X0_M,
-  PRESS_BOTTOM_Y_M,
-  PRESS_ROLL_RADIUS_M,
-  PRESS_TOP_Y_M,
-  PRESS_X_M,
+  PRESS_NIPS,
+  pressRollsOf,
   SCANNER_1_X_M,
   SCANNER_2_X_M,
   SCANNER_2_Y_M,
@@ -188,38 +189,110 @@ function dryerCylinders(
   return cylinders;
 }
 
+/**
+ * Caixa de entrada.
+ *
+ * Um ativo só, e sem mancal: o corpo pressurizado, o lábio e o tubulão de
+ * distribuição são uma peça para quem opera, e nenhum deles gira. O que se
+ * mede nela — pressão, consistência, abertura do lábio — está no catálogo de
+ * processo, não aqui.
+ */
+const headboxSection: MachineSection = {
+  id: 'headbox',
+  label: 'Caixa de entrada',
+  order: 1,
+  assets: [
+    {
+      tag: 'MP1-CXE-CE',
+      kind: 'headbox',
+      label: 'Caixa de entrada',
+      section: 'headbox',
+      position: [HEADBOX.x, HEADBOX.y, 0],
+      radius: null,
+      lengthM: WEB_WIDTH_M + 0.8,
+      side: null,
+      parentTag: null,
+      steamGroup: null,
+      iso: null,
+      source: 'assumed',
+    },
+  ],
+};
+
+/**
+ * Formador de duas telas.
+ *
+ * As tags vão numeradas por tela — `MP1-FOR-T1-R3` é o terceiro rolo da tela
+ * inferior — porque é assim que a folha se forma: entre as duas telas, drenando
+ * pelos dois lados. Dois rolos ganham nome de função: o de peito, onde o jato
+ * toca a tela, e o de transferência, de onde a folha sai para a primeira prensa.
+ */
+const formingSection: MachineSection = {
+  id: 'forming',
+  label: 'Formação',
+  order: 2,
+  assets: withBearings(
+    FORMING_ROLLS.map((roll, index) => {
+      const onWire = FORMING_ROLLS.filter((r) => r.wire === roll.wire).indexOf(roll) + 1;
+
+      return body({
+        tag: `MP1-FOR-T${String(roll.wire)}-R${String(onWire)}`,
+        kind: 'roll',
+        label:
+          index === 0
+            ? 'Rolo de peito'
+            : index === FORMING_TRANSFER_INDEX
+              ? 'Rolo de transferência'
+              : `Rolo da tela ${roll.wire === 1 ? 'inferior' : 'superior'} ${String(onWire)}`,
+        section: 'forming',
+        position: [roll.x, roll.y, 0],
+        radius: roll.radiusM,
+        source: 'assumed',
+      });
+    }),
+  ),
+};
+
+/**
+ * Prensas: três nips, seis rolos.
+ *
+ * Cada nip carrega a sua tag própria em vez de haver um nip só para a seção —
+ * uma nota de manutenção, um alarme de carga ou uma troca de feltro são sempre
+ * de *uma* prensa, e "nip de prensa" não diria qual.
+ */
 const pressSection: MachineSection = {
   id: 'press',
   label: 'Prensas',
   order: 3,
-  assets: withBearings([
-    body({
-      tag: 'MP1-PRE-R1',
-      kind: 'roll',
-      label: 'Rolo de prensa inferior',
-      section: 'press',
-      position: [PRESS_X_M, PRESS_BOTTOM_Y_M, 0],
-      radius: PRESS_ROLL_RADIUS_M,
-      source: 'assumed',
-    }),
-    body({
-      tag: 'MP1-PRE-R2',
-      kind: 'roll',
-      label: 'Rolo de prensa superior',
-      section: 'press',
-      position: [PRESS_X_M, PRESS_TOP_Y_M, 0],
-      radius: PRESS_ROLL_RADIUS_M,
-      source: 'assumed',
-    }),
-  ]).concat(
-    nip(
-      'MP1-PRE-NIP',
-      'Nip de prensa',
-      'press',
-      [PRESS_X_M, (PRESS_BOTTOM_Y_M + PRESS_TOP_Y_M) / 2, 0],
-      'assumed',
-    ),
-  ),
+  assets: PRESS_NIPS.flatMap((press, index) => {
+    const number = index + 1;
+    const prefix = `MP1-PRE-P${String(number)}`;
+    const rolls = pressRollsOf(press);
+
+    return [
+      ...withBearings([
+        body({
+          tag: `${prefix}-RI`,
+          kind: 'roll',
+          label: `Rolo inferior · ${press.label}`,
+          section: 'press',
+          position: [rolls.bottom.x, rolls.bottom.y, 0],
+          radius: rolls.bottom.radiusM,
+          source: 'assumed',
+        }),
+        body({
+          tag: `${prefix}-RS`,
+          kind: 'roll',
+          label: `Rolo superior · ${press.label}`,
+          section: 'press',
+          position: [rolls.top.x, rolls.top.y, 0],
+          radius: rolls.top.radiusM,
+          source: 'assumed',
+        }),
+      ]),
+      nip(`${prefix}-NIP`, `Nip da ${press.label}`, 'press', [press.x, press.nipY, 0], 'assumed'),
+    ];
+  }),
 };
 
 const sizerSection: MachineSection = {
@@ -294,16 +367,17 @@ const calenderSection: MachineSection = {
 /**
  * A MP1, na ordem do processo.
  *
- * A caixa de entrada e a formação ainda não têm ativos: o protótipo da parte
- * úmida usa um referencial próprio, e amarrar os dois depende do mapa de rolos.
+ * Da caixa de entrada à enroladeira. A parte úmida é a que tem menos
+ * sustentação documental — o arranjo todo saiu do protótipo navegável — e por
+ * isso cada ativo dela está marcado como suposto.
  */
 export const MP1: MachineModel = {
   id: 'MP1',
   label: 'Máquina de papel MP1',
   webWidthM: WEB_WIDTH_M,
   sections: [
-    { id: 'headbox', label: 'Caixa de entrada', order: 1, assets: [] },
-    { id: 'forming', label: 'Formação', order: 2, assets: [] },
+    headboxSection,
+    formingSection,
     pressSection,
     {
       id: 'pre-dryer',

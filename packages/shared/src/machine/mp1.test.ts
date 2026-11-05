@@ -2,12 +2,17 @@ import { describe, expect, it } from 'vitest';
 import { SECTION_IDS } from '../asset';
 import {
   BEARING_Z_M,
+  DRIVEN_ROLL_MIN_RADIUS_M,
   DRY_SECTION_WEB_Y_M,
   DRYER_BOTTOM_Y_M,
   DRYER_RADIUS_M,
   DRYER_TOP_Y_M,
+  FELT_ROLLS,
+  FORMING_ROLLS,
+  HEADBOX,
   POST_DRYER_PAIRS,
   PRE_DRYER_PAIRS,
+  PRESS_NIPS,
   SCANNER_1_X_M,
   SIZER_ROLL_RADIUS_M,
   SIZER_X_M,
@@ -150,7 +155,9 @@ describe('geometria', () => {
 
   it('encosta os dois rolos de cada nip, sem afastar nem penetrar', () => {
     for (const [tagA, tagB] of [
-      ['MP1-PRE-R1', 'MP1-PRE-R2'],
+      ['MP1-PRE-P1-RI', 'MP1-PRE-P1-RS'],
+      ['MP1-PRE-P2-RI', 'MP1-PRE-P2-RS'],
+      ['MP1-PRE-P3-RI', 'MP1-PRE-P3-RS'],
       ['MP1-SZR-RS', 'MP1-SZR-RI'],
       ['MP1-CAL-RT', 'MP1-CAL-RR'],
     ] as const) {
@@ -255,5 +262,74 @@ describe('ativos monitorados', () => {
     for (const bearing of bearings) {
       expect(bearing.iso).toEqual({ group: 'group2', support: 'rigid' });
     }
+  });
+});
+
+describe('parte úmida', () => {
+  it('põe a caixa de entrada antes de tudo, sem mancal e sem medição de vibração', () => {
+    const caixa = assetByTag(MP1, 'MP1-CXE-CE');
+
+    expect(caixa?.kind).toBe('headbox');
+    expect(caixa?.radius).toBeNull();
+    expect(caixa?.iso).toBeNull();
+    expect(bearings.some((b) => b.parentTag === 'MP1-CXE-CE')).toBe(false);
+    expect(caixa?.position[0]).toBeLessThan(
+      Math.min(...FORMING_ROLLS.map((roll) => roll.x)) - HEADBOX.manifoldRadiusM,
+    );
+  });
+
+  it('numera os rolos do formador de 1 a 5 em cada tela', () => {
+    for (const wire of [1, 2] as const) {
+      const naTela = assets
+        .filter((a) => a.kind === 'roll' && a.tag.startsWith(`MP1-FOR-T${String(wire)}-R`))
+        .map((a) => Number(a.tag.slice(-1)))
+        .sort((a, b) => a - b);
+
+      expect(naTela).toEqual([1, 2, 3, 4, 5]);
+    }
+  });
+
+  it('dá uma tag por prensa, e não uma tag para as três', () => {
+    const nips = assetsOfKind(MP1, 'nip')
+      .filter((a) => a.section === 'press')
+      .map((a) => a.tag);
+
+    expect(nips).toEqual(['MP1-PRE-P1-NIP', 'MP1-PRE-P2-NIP', 'MP1-PRE-P3-NIP']);
+    expect(nips).toHaveLength(PRESS_NIPS.length);
+  });
+
+  it('põe cada nip de prensa no meio exato dos seus dois rolos', () => {
+    PRESS_NIPS.forEach((press, index) => {
+      const prefix = `MP1-PRE-P${String(index + 1)}`;
+      const inferior = assetByTag(MP1, `${prefix}-RI`);
+      const superior = assetByTag(MP1, `${prefix}-RS`);
+      const centro = assetByTag(MP1, `${prefix}-NIP`);
+
+      expect(centro?.position[1]).toBeCloseTo(press.nipY, 9);
+      expect(inferior?.position[1]).toBeCloseTo(press.nipY - press.radiusM, 9);
+      expect(superior?.position[1]).toBeCloseTo(press.nipY + press.radiusM, 9);
+      expect(centro?.position[0]).toBe(press.x);
+    });
+  });
+
+  it('deixa os rolos guia de feltro fora do modelo de ativos', () => {
+    // A decisão está em `FELT_ROLLS_NOT_ASSETS`: eles aparecem na cena, mas não
+    // ganham tag nem mancal monitorado. Se alguém promovê-los a ativo, a tela de
+    // Mancais cresce 28 pontos que ninguém mede — então o teste cobra a decisão.
+    for (const guia of FELT_ROLLS) {
+      const noMesmoPonto = bodies.filter(
+        (a) => Math.abs(a.position[0] - guia.x) < 0.2 && Math.abs(a.position[1] - guia.y) < 0.2,
+      );
+      expect(noMesmoPonto.map((a) => a.tag)).toEqual([]);
+    }
+  });
+
+  it('deixa um único rolo do formador sem acionamento próprio', () => {
+    // O corte de raio é o do protótipo. Se ele mudar, muda o nº de motores
+    // desenhados no lado acionamento — e esta conta é a que diz quantos.
+    const semMotor = FORMING_ROLLS.filter((roll) => roll.radiusM < DRIVEN_ROLL_MIN_RADIUS_M);
+
+    expect(semMotor).toHaveLength(1);
+    expect(semMotor[0]?.radiusM).toBe(0.35);
   });
 });

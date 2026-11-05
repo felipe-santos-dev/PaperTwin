@@ -17,8 +17,29 @@ Branch: `dev/fases-4-7`. Nada de push na main, nada de PR, nada de deploy.
 - [x] **4.4** Entidades de operação + historiador estilo PI
 - [x] **4.5** `docs/notas-para-readme.md`
 - [x] **5** Motor de simulação e API
-- [ ] **6** As 7 telas
-- [ ] **7** Acabamento: Playwright, performance, acessibilidade, CI, checklist de deploy
+- [x] **6** As 7 telas (6.1 a 6.6)
+- [x] **J0** Gabarito da API TypeScript em `reference/golden/`
+- [x] **J1** `apps/api-java`: catálogo e relações
+- [x] **J2** núcleo: FOPDT, CD, ruído, PI, rede, alarmes, mancais, cenários
+- [x] **J3** persistência: migrations, historiador, entidades, estado da rede
+- [x] **J4** retomada e concorrência
+- [x] **J5** API — 14 rotas contra o gabarito, `openapi.json` versionado
+- [x] **J6** Contrato com o front via `openapi.json`
+- [x] **J7** Dockerfile e ajuste para 512 MB (escrito, não executado)
+- [x] **J8** Remover `apps/api`
+- [x] **7** Acabamento: Playwright, performance, acessibilidade, CI, checklist de deploy
+
+## Mudança de rumo — back-end em Java
+
+A partir de 31/10/2026 o back-end passa a ser **Java 21 + Spring Boot 3.x**, em
+`apps/api-java`. O front continua React + TypeScript. A razão é de
+posicionamento: o portfólio é de back-end Java/Spring, e este é o projeto
+principal.
+
+A API TypeScript **não** é apagada antes da hora: ela vira o gabarito. As saídas
+dela para entradas fixas são gravadas em `reference/golden/` (fase J0) e a
+implementação Java tem de reproduzi-las. Só quando todos esses testes passarem e
+o front rodar contra a Java é que `apps/api` sai, num commit próprio.
 
 ## O que foi feito
 
@@ -253,6 +274,366 @@ inclinação com o erro padrão dela mesma; e a lista de bobinas afetadas por um
 troca comparava passo com milissegundo — unidade errada numa comparação, que não
 quebra nada e responde errado para sempre.
 
+### 6.5 — a parte úmida, no modelo antes da cena
+
+A cena 3D não podia ser portada direto: o protótipo desenha caixa de entrada,
+formador e três prensas, e o `mp1.ts` tinha `headbox` e `forming` como seções
+**vazias** e uma prensa inventada de um par só. Como a regra do projeto é que a
+cena sai do modelo e uma tag só existe se existir no modelo, a 6.5 começou pelo
+modelo.
+
+No modelo (`geometry.ts` e `mp1.ts`):
+
+- Caixa de entrada: um ativo, `MP1-CXE-CE`, sem mancal. Não gira nada nela.
+  Entrou um `kind` novo, `headbox`, e a coluna `kind` do banco é texto livre,
+  então não precisou de migration.
+- Formador de duas telas: 10 rolos, `MP1-FOR-T1-R1` a `T2-R5`. Dois ganham nome
+  de função — rolo de peito e rolo de transferência.
+- Prensas: 3 nips, 6 rolos, `MP1-PRE-P1-RI`/`RS`/`NIP` e seguintes. Cada nip tem
+  tag própria, porque uma nota ou um alarme são sempre de _uma_ prensa.
+- O modelo foi de 134 para **179 ativos** (57 corpos, 114 mancais, 5 nips,
+  2 scanners, 1 caixa de entrada) e a geometria de 29 para **36 medidas**.
+
+Três decisões que ficam registradas:
+
+1. **Correção no protótipo.** Lá os dois rolos de cada prensa ficam 10 cm
+   afastados. Um nip é o ponto de contato: aqui eles encostam, e as duas alturas
+   saem do nip e do raio. O X, o raio e a altura média do par são os do
+   protótipo.
+2. **Os 14 rolos guia de feltro e tela ficam fora do modelo de ativos.** Eles
+   aparecem na cena, com geometria e proveniência, mas sem tag e sem mancal
+   monitorado: giram puxados pelo feltro e nenhuma fonte os nomeia. Promovê-los
+   encheria a tela de Mancais com 28 pontos que ninguém mede. Há teste cobrando
+   a decisão.
+3. **Quem tem motor sai do raio.** O protótipo põe cardã, redutor e motor em
+   todo rolo de raio ≥ 0,38 m. Virou `DRIVEN_ROLL_MIN_RADIUS_M`, e o lado
+   acionamento é gerado daí — acrescentar um par de cilindros no modelo
+   acrescenta dois acionamentos na cena, sem lista escrita à mão.
+
+Na cena: `Headbox`, `FormingSection`, `PressSection` reescrita, `WetEndStructure`
+e `DriveSide`. Duas coisas valem nota:
+
+- **Telas e feltros são a envoltória convexa dos rolos que abraçam.** Um tecido
+  esticado em volta de vários rolos assume exatamente isso: corre reto entre dois
+  e se enrola no contorno de cada um. Mover um rolo guia reacomoda o circuito
+  inteiro sozinho, sem ninguém reescrever caminho nenhum.
+- **O lado acionamento é malha instanciada**, com as fileiras decididas pela
+  geometria: um rolo vai para a fileira seguinte quando a sua já tem vizinho a
+  menos de 1 m. São ~700 peças em 16 chamadas de desenho.
+
+Três ajustes de cena que a conferência contra o protótipo pediu:
+
+- A parede do fundo foi de −16 para −24 m. Com os motores na cena, 6 m de
+  corredor atrás deles não davam espaço para olhar a fileira de frente — a
+  primeira tentativa de enquadramento ficou preta.
+- O nevoeiro foi de 35–120 para 60–220 m, como no protótipo. A máquina agora tem
+  ~96 m e a visão geral olha de 80: com o alcance antigo a metade seca sumia.
+- A visão geral ficou a 16 m de altura, não aos 26 do protótipo. **O teto aqui
+  está a 19 m e lá a 34** — é uma divergência conhecida contra o protótipo, e a
+  câmera alta só não mostrava o telhado por fora porque o plano do teto tem uma
+  face só. Depender disso seria depender de um descuido.
+
+Conferido contra `mp1-parte-seca-3d.html` aberto lado a lado, nas quatro vistas:
+visão geral, parte úmida, úmida → seca e lado acionamento. Os enquadramentos das
+vistas novas são os do protótipo, com as exceções acima.
+
+### J0 — o gabarito da API TypeScript
+
+`reference/golden/`, sete arquivos, 275 kB, gerados por
+`npm run golden --workspace @mp1/api`. Cada um guarda **entrada e saída** da
+implementação atual; os testes da Java leem os mesmos arquivos, alimentam a
+mesma entrada e comparam com tolerância de 1e-9 relativo.
+
+Entrada e saída juntas porque um gabarito que guardasse só a saída obrigaria a
+reconstruir a entrada dos dois lados — e aí o teste compararia duas
+reconstruções, não duas implementações. Sem `Infinity`, `NaN` nem `undefined`,
+que o JSON não tem e cada linguagem inventa o seu. Instantes em milissegundos do
+epoch, não em texto ISO, que é onde duas plataformas divergem em silêncio.
+
+Os casos foram escolhidos por onde uma reimplementação erra, não por cobertura:
+
+- **FOPDT com `dt > τ`** (relação 14, τ = 4,5 s, passo de 10 s). É o único caso
+  em que o retentor de ordem zero se separa de Euler: Euler daria fator
+  `1 − dt/τ = −1,22` e a resposta oscilaria de sinal a cada passo; a exata dá
+  `exp(−10/4,5) = 0,1084`. Quem implementar com Euler falha neste e passa nos
+  outros três.
+- **Bordas do espalhamento CD**: as zonas 1 e 139 truncam, e o que vazaria para
+  fora da folha some em vez de ser redistribuído.
+- **O meio da compressão**, e não só o fim: `afterException` separado de
+  `archived`, para o arquivo dizer _qual_ das duas etapas divergiu.
+- **Média no tempo numa série desigual**, onde a média dos pontos dá outra
+  resposta — e a errada.
+- **Pico e id do alarme**: o pico é o pior valor desde o disparo, não o último;
+  o id é determinístico, e é ele que impede dois cliques de gravarem dois
+  reconhecimentos.
+- **Dormir e acordar**: 0 → 3600 de uma vez contra 0 → 1500, serializar,
+  restaurar e ir até 3600.
+
+#### Um erro que o gabarito achou na versão TypeScript
+
+`noteNumberFor` deriva o número da nota de manutenção do minuto contado a partir
+da época da simulação. O resto usado era o `%` de JavaScript, que **devolve o
+sinal do dividendo** — então para qualquer alarme anterior à época o número saía
+negativo e `maintenanceNoteNumber` recusava, derrubando a retomada inteira.
+
+Esses alarmes existem por construção: a semente grava 72 h de histórico de
+mancal terminando _agora_, e com "agora" nos três primeiros dias de 2026 parte
+desse histórico cai antes da época. Em produção o relógio está meses à frente e
+nunca acontecia, que é o que torna o caso fácil de não ver.
+
+Decisão: **resto euclidiano**. Para todo instante a partir da época os dois
+restos são iguais, então nenhum número já gerado muda — o instantâneo de
+demonstração e os testes continuam idênticos. Há teste de regressão em
+`entities.test.ts`.
+
+### J1 — catálogo e relações em Java
+
+`apps/api-java`, Java 21 (compilado com `release`, não com a versão da máquina),
+Spring Boot 3.5.16, Maven pelo wrapper. **66 testes verdes.**
+
+Paridade com a implementação TypeScript, e os números estão nos testes em vez de
+numa asserção de "não vazio": **320 variáveis** (68 de tag própria + 7 padrões ×
+36 cilindros), **55 malhas**, **183 pendências**, **24 relações** contando a
+herdada, **13 ensaios** de laboratório. Uma expansão que ganhasse ou perdesse uma
+variável passaria despercebida de outro jeito.
+
+Três decisões:
+
+1. **O CSV entra no jar.** A leitura é do classpath, e não de um caminho
+   relativo ao processo: a imagem de produção tem só o jar e uma JRE, e
+   `../../reference` não existe lá dentro. O `pom.xml` declara
+   `reference/research/` como diretório de recurso, então continua havendo uma
+   cópia só no repositório — a fonte.
+2. **Tudo é verificado na carga da classe.** Um CSV inválido derruba a aplicação
+   ao subir, em vez de virar um catálogo pela metade que só se revela quando
+   alguém abre uma tela. O teste do contexto Spring é o que transforma isso em
+   falha de build: ele sobe o contexto, que toca o catálogo, que lê o CSV.
+3. **Cada forma de errar a edição tem um teste.** Cabeçalho, nº de colunas, tag
+   repetida, min acima de max, alvo fora da faixa, limites fora de ordem, fonte e
+   confiança fora do vocabulário, aspas, `nn` em uma ponta só, ganho zero,
+   unidade divergente, τ não positivo, tempo morto negativo, ponta que não
+   resolve. Em cada grupo há também o caso válido, senão os outros não provariam
+   nada.
+
+A gramática do `nn` foi portada com a armadilha junto: **"scanner" contém
+"nn"**. Um `contains("nn")` classificaria a `AIC-901` como padrão por cilindro e
+um `replace` escreveria "sca7er" no nome dela. Daí a tag ser casada com âncora e
+o nome com ``.
+
+#### Banco nos testes: Postgres embarcado, sem Docker
+
+**Não há Docker nesta máquina** (nem Docker Desktop, nem WSL, nem Postgres
+local), então Testcontainers deixaria J3 a J5 verdes só no CI — que é onde menos
+adianta, porque é durante a escrita que o teste serve.
+
+Decisão do Felipe, de 02/11/2026: **zonky embedded-postgres em todos os testes
+de banco, local e no CI**. Uma infraestrutura só. O `docker-compose.yml` fica
+como opção de desenvolvimento, não como requisito.
+
+O zonky baixa um binário do Postgres e o sobe como processo filho. Vale o
+Postgres de verdade, e não um H2 em modo de compatibilidade: o historiador
+depende de `date_bin`, BRIN, `jsonb` e `pg_advisory_lock`, que é exatamente onde
+um banco "compatível" mentiria.
+
+Arranjo: **um servidor por JVM, um banco por chamada**. Subir o Postgres custa
+uns 10 s e fazer isso por classe somaria minutos; `CREATE DATABASE` é
+instantâneo e isola igual. O servidor não é desligado no fim — morre com a JVM, e
+um `shutdown hook` só criaria corrida com os testes que ainda terminam.
+
+**Versão 18.6, a mesma do Neon** — conferida pelo Felipe com `select version()`
+no console do projeto, em 03/11/2026. Não é mais suposição. O zonky tem binário
+de 18.6 para `windows-amd64` (esta máquina) e `linux-amd64` (o `ubuntu-latest`
+do CI), então as duas rodam a mesma major e a mesma minor que produção.
+
+Um achado do caminho: os testes rodam com `-Duser.timezone=UTC`, fixado no
+surefire. O driver do Postgres manda o fuso da JVM como parâmetro de conexão e
+ele vence qualquer `options` ou `ALTER DATABASE`, então a JVM é o único lugar
+onde dá para fixá-lo. Sem isso, esta máquina (−03:00) e o runner do CI (UTC)
+renderizam o mesmo instante de duas formas, e um teste de data passa num lugar e
+falha no outro. O primeiro teste de `date_bin` que escrevi caiu exatamente
+nisso.
+
+### J2 — o núcleo em Java, conferido contra o gabarito
+
+**148 testes verdes.** O que vale não é a contagem: é que os números batem com a
+implementação TypeScript a 1e-9, e em alguns casos exatamente.
+
+Coberto pelo gabarito: FOPDT (4 casos), espalhamento CD (3 zonas, bordas
+incluídas), a rede de processo (21 tags × 3 instantes + retomada), o motor de
+alarmes (cenário ISA-18.2 inteiro, varredura a varredura), os mancais (3 tags ×
+8 passos, com arredondamento) e o plano de turno (4 instantes).
+
+O caso mais forte é a rede: vinte e quatro relações, seis cascatas com trava de
+integral, ruído correlacionado por tag e trinta e seis cilindros seguindo a
+saturação do vapor do seu grupo, reproduzindo o gabarito depois de milhares de
+passos. Não é uma fórmula batendo — é um sistema com estado chegando ao mesmo
+lugar.
+
+#### Três armadilhas de porte JavaScript → Java
+
+1. **A aritmética do ruído é `int`.** `Math.imul` e `>>>` do JS são exatamente o
+   que o `int` do Java faz. Usar `long` em qualquer ponto mudaria os bits e,
+   com eles, toda série do simulador.
+2. **`>>` do JS converte para inteiro com sinal; `%` sobre número não.** Na
+   assinatura do mancal, `hash % 1000` operava no valor sem sinal e
+   `(hash >> 10) % 100` no valor com sinal. Portar as três contas do mesmo jeito
+   dava temperatura de base 10 °C acima em metade dos mancais. **Corrigido nos
+   dois lados em 03/11/2026** — veja a entrada própria abaixo.
+3. **`toFixed` arredonda sobre o valor exato do double**, não sobre a
+   representação decimal curta. `BigDecimal` com o construtor de `double` e
+   `HALF_UP` é o equivalente; `Math.round(x * 1000) / 1000.0` divergiria na
+   terceira casa em alguns valores, e a terceira casa é a que a tela mostra.
+
+#### E uma falha de teste que valia mais que o teste
+
+O caso dos mancais comparava `progress` do cenário em vez do progresso
+**aplicado àquela tag** — que é zero quando o cenário é de outro mancal. Os
+valores batiam; a asserção é que estava perguntando outra coisa.
+
+### Correção: assinatura do mancal com resto sem sinal
+
+A esquisitice herdada do JavaScript foi **corrigida**, e não preservada.
+
+`streamOf` devolve o hash sem sinal, mas `>>` converte para inteiro de 32 bits
+**com** sinal antes de deslocar. Em metade das tags o resto saía negativo, e a
+linha de base do mancal caía para 48 °C de temperatura e 0,05 gE de envelope —
+quando a fórmula promete 58 a 68 °C e 0,3 a 0,55 gE.
+
+Agora é `>>>` no TypeScript e `Integer.toUnsignedLong` uma vez no Java, com os
+deslocamentos sobre o `long` sem sinal (o que dispensa `Math.floorMod` em cada
+linha, já que tudo fica não negativo).
+
+O que mudou de verdade: a assinatura dos 114 mancais. O gabarito foi regerado, a
+paridade Java confirmada a 1e-9 e o instantâneo de demonstração regerado.
+
+O teste que impede a volta disso cobre **os 114 mancais**, e não as três tags do
+gabarito: com três dava para passar sem notar, com 114 não dá.
+
+### J4 — retomada e concorrência
+
+**217 testes.** A retomada roda dentro da requisição que acorda a API, com duas
+camadas de coordenação e duas correções que os testes acharam.
+
+**O lock.** Quando o host dorme a noite e alguém abre a tela de manhã, o
+navegador dispara as quinze buscas das sete telas ao mesmo tempo. Sem
+coordenação, quinze requisições reexecutariam as mesmas quatro horas em
+paralelo. Dentro do processo, um bloqueio comum basta; entre processos — e o
+Render pode subir duas instâncias num deploy — é `pg_advisory_lock`. A segunda
+requisição **espera e lê o resultado**, em vez de retomar a mesma janela:
+esperar é melhor que falhar, porque quem abriu a tela quer o dado, não um 409.
+Há teste com dez chamadas simultâneas: **uma retomada só**.
+
+O lock é liberado num `finally`, e se o processo morrer no meio o Postgres o
+libera ao fechar a conexão — que é a razão de ser lock de aviso e não uma linha
+numa tabela de controle, que ficaria travada para sempre. Há teste para a falha.
+
+**Os números**, medidos e registrados em `notas-para-readme.md`: 1 h em 0,55 s,
+4 h em 1,1 s, 24 h em 10,5 s, **72 h em 32,8 s**. Como 72 h não cabem nos ~20 s
+de uma requisição, o teto de quatro horas se confirma pela medida e não por
+gosto. Com banco, a janela do teto custa ~4,5 s e comprime ~200:1.
+
+#### Duas correções que os testes acharam
+
+As duas têm a mesma causa: **o relógio do host pode andar para trás**, que é o
+que uma correção de NTP faz.
+
+1. **`valuesAt` crashava.** Ela passava o estado gravado para o motor sem
+   conferir o passo, e o motor recusa estado de outro passo — com razão.
+   Numa rota de leitura isso derrubaria a requisição. Agora o estado só é usado
+   quando o passo bate; senão a rede monta em regime e responde.
+2. **O motor de alarmes normalizaria um alarme antes de ele ter disparado.**
+   Um alarme carregado do banco com `raisedAt` depois do fim da janela sendo
+   simulada recebia `clearedAt` anterior ao disparo. O banco pegou, pela
+   restrição `alarm_cleared_after_raised`. Agora o motor só recebe o que já
+   existia quando a janela terminou.
+
+A segunda é um bom argumento para as restrições do banco existirem: ela virou
+uma exceção clara em vez de uma linha incoerente gravada em silêncio.
+
+### J3 — entidades e estado da rede (terceira parte, fase fechada)
+
+**205 testes.** Fecha a J3.
+
+As oito entidades de operação com as tabelas filhas, e o estado da rede em
+`jsonb`. Três coisas valem registro:
+
+1. **Toda escrita é upsert com `do update`.** A retomada reexecuta trechos, e
+   reexecutar tem de produzir o mesmo banco. `insert` puro quebraria na segunda
+   passagem; `do nothing` deixaria a entidade com os valores da primeira, que
+   podem estar incompletos. O `do update` é o único que converge.
+2. **Os filhos são apagados e reinseridos** na mesma transação do pai.
+   Reconciliar linha a linha custaria mais do que vale para listas de meia
+   dúzia, e deixaria órfãos quando a lista encolhesse.
+3. **Reconhecer alarme é um comando só**, com `returning`. A leitura e a escrita
+   na mesma instrução é o que impede dois cliques simultâneos de gravarem dois
+   reconhecimentos — o segundo não encontra linha com `acknowledged_at is null`.
+   Há teste para isso.
+
+As restrições do banco são exercitadas, e não só as felizes: eficiência fora de
+0–100, perfil CD pela metade, bobina rebaixada sem motivo, sinal de quebra fora
+da janela de dez minutos, nota encerrada sem data, motivo de setpoint em branco.
+
+O estado da rede faz a volta pelo `jsonb` e **retoma idêntico**: há um caso que
+roda 0→400 de uma vez e 0→200, grava, lê do banco, restaura e vai até 400 — os
+dois têm de dar o mesmo valor, bit a bit.
+
+Uma asserção minha estava errada: `listShifts` contava os turnos de toda a
+classe, não os do caso. Passou a contar por id, que é o que ela queria dizer.
+
+O JSON vai para o banco como texto com `cast(? as jsonb)`, e não por `PGobject`:
+o driver está no escopo de execução, não no de compilação, e nada no código
+precisa conhecer a API dele.
+
+### J3 — historiador (segunda parte)
+
+**186 testes.** O historiador portado e conferido: compressão e interpolação
+contra o gabarito, repositório contra o Postgres embarcado.
+
+- **Compressão**: filtro de exceção e porta oscilante, com os três casos do
+  gabarito comparados **etapa por etapa**. Guardar o meio (`afterException`
+  separado de `archived`) é o que faz o teste dizer _qual_ das duas divergiu.
+- **Interpolação**: `readAt` com o tipo da leitura — exata, interpolada,
+  extrapolada — e a média no tempo pela regra do trapézio. Há um caso que mostra
+  que ela **não** é a média dos pontos, que é a razão de ela existir.
+- **Repositório**: inserção em lote (5.000 linhas num caso), `date_bin` para as
+  colunas do gráfico com mínimo/máximo/primeiro/último, âncoras dos dois lados
+  da janela, `valueAt` interpolado, média no tempo e poda com as duas retenções.
+
+Reinserir o mesmo trecho não quebra: `on conflict do nothing`, porque a retomada
+é idempotente por desenho e a segunda passagem não tem o que acrescentar.
+
+#### Uma imprecisão de documentação, nos dois lados
+
+O comentário dizia "com `compDev` zero nada é descartado". Quase: numa rampa
+**exata** o corredor degenera numa inclinação só e nunca fecha, então ela sai em
+dois pontos mesmo com desvio zero. Com qualquer dado de processo — que tem ruído
+de instrumento e nunca é colinear — a porta fecha na primeira amostra fora da
+reta. O comentário foi corrigido e os dois comportamentos viraram caso de teste.
+
+### J3 — migrations (primeira parte)
+
+Flyway com **o mesmo SQL** da implementação TypeScript, migration por migration:
+`V1` a `V5`, inclusive a V2, que renomeia uma coluna que a V1 acabou de criar.
+Num banco novo essa V2 parece inútil, e é — menos pelo que importa: com o
+histórico idêntico, ninguém precisa provar que as duas sequências chegam ao
+mesmo lugar. O esquema que a Java cria é o mesmo contra o qual o gabarito das
+rotas foi gravado.
+
+**`RUN_MIGRATIONS` vem desligado.** Num host que dorme e acorda, o boot acontece
+quando o primeiro visitante abre a tela — migration que roda no boot é migration
+que roda numa hora que ninguém escolheu. Quem as aplica é o checklist de deploy,
+uma vez.
+
+O teste cobra a lista **exata** de dezenove tabelas, e não "contém": uma tabela
+a mais ou a menos é divergência de esquema, mesmo que nada quebre hoje. Ele
+também achou dois chutes meus — as tabelas são `jumbo_reel` e `inspection_round`,
+não `reel` e `round`.
+
+Sem JPA, como combinado: `spring-boot-starter-jdbc` e `JdbcClient`. O historiador
+escreve milhares de linhas por retomada, e o lote de inserção — que é o que
+decide se a retomada cabe numa requisição — não pode ficar escondido atrás de um
+`saveAll`.
+
 ## Suposições para o Felipe revisar
 
 1. **`CD_ZONE_COUNT = 140`** (`process/relations.ts`). O catálogo diz
@@ -318,23 +699,431 @@ quebra nada e responde errado para sempre.
     would be overwritten", apaga as cópias locais antes do merge — elas passam a
     vir do repositório.
 
+21. **Arranjo inteiro da parte úmida** (`WET_END_LAYOUT`): caixa de entrada,
+    formador de duas telas e três prensas saíram do protótipo navegável, não de
+    documento. A MP1 real pode ter mesa plana, outro nº de prensas e outra
+    sequência de telas. Tudo marcado `assumed`.
+22. **Rolos guia de feltro fora do modelo de ativos** (`FELT_ROLLS_NOT_ASSETS`).
+    Se o mapa de rolos der tag a eles, entram — e a tela de Mancais cresce 28
+    pontos.
+23. **Corte de 0,38 m para acionamento próprio** (`DRIVEN_ROLLS`). É o corte do
+    protótipo. A lista de acionamentos da MP1 é documento interno.
+24. **Nips de prensa com os rolos encostados**, contra os 10 cm de folga do
+    protótipo. Vale conferir a carga de nip real.
+25. ~~**Postgres 17.11 nos testes**~~ — **resolvido em 03/11/2026**. O Neon do
+    projeto roda 18.6, e os testes passaram a rodar 18.6 também. Deixa de ser
+    suposição.
+26. **A semeadura de ativos no Java faz upsert sem apagar**, contra o `delete
+from asset` da versão TypeScript. Aquilo funciona num banco em memória que
+    nasce vazio e falha num banco gerenciado: assim que existe uma ronda ou uma
+    nota apontando para o ativo, o `delete` bate na chave estrangeira e o
+    arranque inteiro cai. O custo de não apagar é uma tag removida do modelo
+    ficar para trás na tabela; o custo de apagar é a API não subir. Vale
+    confirmar se é o que o Felipe quer — a alternativa seria apagar só o que
+    nada referencia.
+27. **A nulabilidade do contrato é declarada à mão**, com `@Nullable` nos
+    componentes de registro; tudo o mais sai como obrigatório. Está conferida
+    contra o que o código de fato produz hoje, mas é uma afirmação que nada
+    verifica em tempo de compilação: uma rota nova que devolva nulo num campo
+    não marcado faria o contrato mentir, e o front não trataria. Vale uma
+    passada de olho a cada rota nova.
+28. **O piso de quadros por segundo da cena é 4**, e não 30. O alvo de verdade
+    é 30 num desktop com GPU; 4 é o que distingue "a cena desenha" de "a cena
+    parou" num Chromium sem cabeça que entrega 8,7. Se o CI ganhar GPU, vale
+    subir.
+
 ## Próximo passo exato
 
-Fase 6: as 7 telas de `reference/prototypes/papertwin-telas.html` em `apps/web`,
-com dados reais da API e o instantâneo do modo de demonstração regenerado.
+**Todas as fases do plano estão fechadas.** O que falta é do Felipe:
 
-Ordem planejada:
+1. **Revisar e mesclar na `main`.** O ramo é `dev/fases-4-7`; nenhum PR foi
+   aberto e nada foi empurrado para a `main`, pela regra.
+2. **Reescrever o `README.md`.** Ele ainda descreve `apps/api` e a pilha
+   Fastify, que saíram na J8. Não foi tocado, pela regra de que ele é seu — e
+   `docs/notas-para-readme.md` tem o material atualizado, inclusive a tabela de
+   módulos, os números medidos e os avisos.
+3. **Conferir as suposições** da seção "Suposições para o Felipe revisar", que
+   ganhou duas na reescrita: a nulabilidade declarada no contrato e a semeadura
+   de ativos por upsert sem apagar.
+4. **Executar o deploy**, se for a hora: `docs/deploy-checklist.md` tem o passo
+   a passo, a ordem das três peças e o que medir no primeiro arranque.
 
-1. **6.1 — fundação**: cliente da API para as rotas novas, navegação por teclas
-   1–7 como no protótipo, moldura das telas (cabeçalho, estados vazio, carregando
-   e erro), e os gráficos. Sem biblioteca pesada se der; se usar, uma só.
-2. **6.2 — Turno, Bobinas, Notas**: as três de tabela, que exercem o cliente e
-   os estados.
-3. **6.3 — Processo e Mancais**: as duas de gráfico, com tendência por `plot
-values`, limites de alarme desenhados e escrita de setpoint.
-4. **6.4 — Rondas**: campo ao lado do online.
-5. **6.5 — Máquina**: a cena 3D portada de `mp1-parte-seca-3d.html` para R3F
-   gerada do `mp1.ts` (parte úmida, seções, cilindros, motores do lado
-   acionamento, papel), com clique em mancal abrindo o painel de vibração.
-6. **6.6 — instantâneo de demonstração** regenerado cobrindo as rotas novas,
-   com instante fixo (o relógio da aplicação já é injetável).
+### O que ficou medido e não resolvido
+
+- **A colheita é mais da metade do custo da retomada** (7,9 s de 13,5 s numa
+  janela de 4 h). Ela paga por turno e por bobina, então baixar
+  `RESUME_MAX_HOURS` ajuda pouco nessa metade. As saídas seriam colher fora da
+  requisição ou só para o turno corrente — as duas são decisão de produto, e
+  por isso não foram tomadas aqui.
+- **O CI gera o instantâneo três vezes** (nos jobs `verify`, `e2e` e no do
+  Pages), e cada vez leva ~4 min. Dava para gerar uma vez e passar como
+  artefato entre os jobs; não foi feito para não acoplar os jobs antes de
+  alguém reclamar do tempo.
+- **O RSS real nunca foi medido**, porque não há Docker nesta máquina e porque
+  medir no Windows e chamar de RSS seria dar precisão a um número que não a
+  tem. Está no checklist, no primeiro deploy.
+
+---
+
+## Histórico das fases
+
+### Fase 6 — as 7 telas
+
+Fechada. As sete telas de `reference/prototypes/papertwin-telas.html` em
+`apps/web`, com dados da API e a cena 3D gerada do `mp1.ts`. O instantâneo foi
+regenerado com o modelo novo: **954 arquivos, 179 ativos**, compressão 203:1.
+
+### J4b — teto configurável e o número da JVM fria
+
+Ajuste pedido em 04/11/2026, antes de seguir a J5.
+
+As medições da J4 foram feitas num desktop, e o Render Free dá uma fração de
+vCPU com a JVM acordando fria. Três mudanças:
+
+1. **`RESUME_MAX_HOURS`** (padrão 4) — o teto deixou de ser constante e virou
+   configuração. Quem opera baixa sem recompilar. Teto menor que uma hora é
+   recusado na montagem: meia hora não dá tempo de a rede sair do transiente.
+2. **O log de cada retomada** traz as três grandezas que decidem o ajuste:
+   horas recuperadas, duração e heap em uso.
+3. **O número de JVM fria foi medido**: 4 h em **6,2 s** com **153 MB** de heap,
+   contra 4,5 s e ~44 MB em regime. Há uma classe de teste só para isso
+   (`ColdStartTest`), que roda uma retomada e nada mais — dentro da suíte o
+   número sai aquecido, então ela documenta como rodá-la isolada.
+
+As notas do README ganharam a tabela com os **três** custos da mesma janela —
+1,1 s (motor, aquecido), 4,5 s (completa, aquecida), 6,2 s (completa, fria) — e
+a explicação de por que são três.
+
+**Para a Fase 7**: o `deploy-checklist.md` tem de incluir "depois do primeiro
+deploy, ler o log da retomada e ajustar `RESUME_MAX_HOURS` se passar de ~15 s".
+
+### Fase 7 — CI, ponta a ponta, orçamento e checklist
+
+**CI com três jobs**, e nenhum publica nada:
+
+- `java` — `./mvnw verify` (compila, roda os 252 testes, empacota o jar) e
+  confere que o `openapi.json` versionado está em dia;
+- `verify` — formatação, lint, tipos, testes e build de todos os workspaces,
+  mais `check:api-types`, que refaz os tipos gerados e falha com o diff;
+- `e2e` — Playwright contra a API Java de verdade.
+
+Os três jobs de Node agora precisam de **JDK**: o build da web gera o
+instantâneo do modo de demonstração chamando a API Java. O workflow do Pages
+também.
+
+**Ponta a ponta** (`apps/web/e2e/`), contra a API Java com Postgres embutido:
+
+- `telas.spec.ts` — as sete telas carregam com dados da API, console limpo e
+  nenhuma requisição falha; as teclas 1–7; a colheita chegou à tela (bobina
+  fechada com gramatura, CS23 em zona D); e o **modo de demonstração com a API
+  bloqueada**, que é o que o GitHub Pages serve.
+- `acessibilidade.spec.ts` — varredura do axe (WCAG 2.1 A e AA) em seis telas,
+  cortando em **sério e crítico**. A cena fica de fora porque um `canvas` é
+  opaco para o axe, e tem um teste próprio: as seções são botões nomeados.
+- `orcamento.spec.ts` — chunk de entrada abaixo de 400 kB (está em **115 kB**),
+  primeira tela abaixo de 600 kB e sem three.js (ele tem 964 kB e é carregado
+  só na tela de Máquina), e quadros por segundo da cena.
+- `scene.spec.ts` — o que já havia.
+
+**O piso de quadros por segundo é 4, e não 30.** Medido nesta máquina: **8,7**,
+porque o Chromium sem cabeça desenha por software no mesmo processador que roda
+o teste. Trinta seria um teste vermelho de nascença, e teste vermelho de
+nascença se desliga. O piso pega regressão de ordem de grandeza — uma cena que
+recria geometria a cada quadro cai para menos de um, não para oito.
+
+Três defeitos que o ponta a ponta encontrou, nenhum deles visível em teste de
+unidade:
+
+- **Dois marcos complementares, um dentro do outro**, na tela de Máquina: a
+  coluna que segura o painel e o painel. Quem navega por marcos entrava no de
+  fora e encontrava o de dentro vazio de significado. O de fora virou `div`; o
+  de dentro ganhou nome.
+- **As linhas das tabelas são botões**, porque são clicáveis — e um seletor por
+  `row` encontrava só o cabeçalho, contando zero bobinas para sempre.
+- **O prazo de vinte segundos do painel de mancal não basta mais.** A primeira
+  chamada da sessão paga a retomada, e com a colheita de entidades ela passou
+  de poucos segundos a treze. Encurtar o teste seria esconder isso — então o
+  prazo subiu, e a suíte passou a **acordar a simulação antes do primeiro
+  teste** (`e2e/global-setup.ts`). Sem isso o custo cai sobre o teste que
+  calhar de ser o primeiro, que falha por capacidade e não por defeito — e
+  muda a cada reordenação da suíte. O custo da JVM fria continua medido onde dá
+  para medi-lo sem um navegador no meio: `ColdStartTest`, no lado Java.
+
+#### O defeito que o ponta a ponta encontrou, e que nenhum teste de unidade veria
+
+O painel de mancal ficava em "Consultando a API…" por noventa segundos. A causa
+não estava na rota: estava em **a colheita rodar em toda retomada**. A janela
+de frescor é de cinco segundos, então duas telas abertas com seis segundos de
+intervalo colhiam duas vezes a mesma coisa — e colher é ler o arquivo de ~20
+tags pela janela do turno (até oito horas) e reescrever as entidades dele.
+
+Medido com a aplicação já acordada: `/assets/{tag}` levava **11,3 s** e
+`/assets/{tag}/vibration` **11,1 s**. Agora levam **5 ms** e **9 ms**.
+
+A regra tem teste próprio (`HarvestCadenceTest`), e ele não toca no banco — o
+que é a propriedade que torna a decisão barata. Ele cobra os dois lados: que
+uma janela de cinco segundos em turno calmo **não** colhe, e que uma bobina
+fechando, uma ronda terminando ou o cruzamento da grade **colhem**. O instante
+"calmo" é procurado, e não escrito à mão: um número fixo deixaria de valer em
+silêncio quando o plano do turno mudasse.
+
+A correção não foi um cache. `Harvest.dueIn` decide se há o que colher por
+aritmética pura, sem tocar no banco: colhe quando uma **fronteira de entidade**
+cai na janela (bobina fecha, turno vira, ronda termina, quebra começa ou acaba,
+troca de gramatura começa — todas saem do plano, que é função de semente e
+tempo) ou quando a janela cruza a **grade absoluta de cinco minutos**, que
+atualiza o que muda continuamente: a produção e a eficiência do turno.
+
+A grade é absoluta pelo mesmo motivo que a varredura do historiador é: duas
+retomadas que começassem em passos diferentes colheriam em instantes
+diferentes, e a idempotência se perderia. O que se perde é até cinco minutos de
+atraso na produção acumulada; uma bobina que fecha aparece na hora.
+
+**`docs/deploy-checklist.md`** escrito, com a ordem das três peças (Neon →
+Render → Pages), a migration rodada à mão, e a linha que a J4b pedia: _depois do
+primeiro deploy, ler o log da retomada e ajustar `RESUME_MAX_HOURS` se passar de
+~15 s_ — com a explicação de que a parcela da colheita não se ajusta pelo teto.
+
+Uma coisa que a Fase 7 obrigou: o `build` da web regenerava os 954 arquivos do
+instantâneo a cada vez, e isso passou de segundos (TypeScript) a **quatro
+minutos** (contexto do Spring + Postgres embutido). O `demo:data` passou a
+**pular quando o instantâneo já existe**, com `--force` para refazer. Em CI ele
+nunca existe, porque a pasta é ignorada pelo git e o checkout é limpo — que é
+onde refazer importa.
+
+### J8 — `apps/api` saiu
+
+As duas condições do plano foram cumpridas antes de apagar:
+
+1. **Os testes de gabarito passam em Java** — 251 verdes, as 14 rotas do
+   gabarito entre eles.
+2. **O front roda contra a API Java** — conferido no navegador, com a faixa
+   dizendo "Dados vindo da API" e dados do instante ao vivo (turno C de
+   05/11, bobina 8.344) em vez do instantâneo (turno B de 15/06). As sete telas
+   carregaram: turno, bobinas com gramatura e destino, processo com as 320
+   tags, mancais com o MLA do CS23 em zona D, rondas, notas e a cena 3D.
+
+Para isso dar certo, três coisas que faltavam apareceram:
+
+- **Não havia CORS.** A API respondia a `curl` e não ao navegador, que bloqueia
+  a resposta antes de ela chegar ao JavaScript. `CorsConfig` lê `CORS_ORIGINS` e
+  libera tudo quando ela está vazia — a API não tem autenticação nem dado de
+  ninguém, e fechar a origem daria aparência de proteção que não existe.
+- **O `/health` rodava a retomada.** A sonda mais barata da API era a mais cara,
+  e o efeito era visível: o front sonda com prazo de quatro segundos antes de
+  escolher entre API e instantâneo, a primeira sonda estourava o prazo e a tela
+  caía para o instantâneo **com a API no ar**. Agora ele lê o marcador, que é o
+  que a versão TypeScript já fazia e estava escrito nas notas. Quando a
+  simulação nunca rodou, `simulation` vem nulo em vez de zeros.
+- **Não havia como subir a API sem Docker.** `DevServer` (em `src/test`) sobe a
+  aplicação de verdade contra o mesmo Postgres embutido dos testes, na porta 3333. Desenvolver deixou de exigir Docker.
+
+O instantâneo do modo de demonstração passou a sair da API Java
+(`DemoSnapshotTest`, ligado por `-Ddemo.write=true`): **954 arquivos, 1,9 MB**,
+no mesmo instante escolhido de antes — turno B de 15/06/2026, quatro horas
+adentro, que é quando a janela contém a troca de gramatura inteira.
+`npm run demo:data` continua sendo o comando; o que mudou é quem ele chama.
+
+**O `README.md` ainda descreve `apps/api`** e a pilha Fastify. Não foi tocado,
+pela regra de que ele é do Felipe.
+
+### J7 — a imagem, escrita e medida
+
+`apps/api-java/Dockerfile` em duas etapas (JDK compila, JRE roda), usuário sem
+privilégios, `.dockerignore` na raiz e o serviço `api` no `docker-compose.yml`
+com `mem_limit: 512m` — para a imagem ser conferida contra a restrição que ela
+vai encontrar, e não contra a memória do desktop. O Postgres do compose subiu de
+17 para **18**, a mesma versão do Neon.
+
+**Não executado**: não há Docker nesta máquina. A imagem não foi construída nem
+rodada, e isso está dito no próprio Dockerfile e nas notas.
+
+O que **foi** medido, com o jar empacotado e as mesmas opções de produção (a
+aplicação sobe sem banco porque nada consulta no boot e a migration está
+desligada):
+
+- **220 MB comprometidos em repouso** — 45 de heap, 33 de metaspace, 21 de cache
+  de código, 6 de metadados de classe, 2,5 de pilhas. É **comprometido**, não
+  RSS: são as páginas que a JVM pediu, o que é um teto para o RSS. O RSS depende
+  do sistema, e este é Windows enquanto o Render é Linux — medir aqui e chamar
+  de RSS seria dar precisão a um número que não a tem. Fica no checklist.
+- **2,5 s para subir o contexto**; jar de 29 MB.
+- **Pico de heap**: 165 MB na retomada de 4 h (o teto padrão) e 231 MB numa de
+  24 h com o teto levantado, por `FootprintTest`, que fica **desligado** porque
+  24 h não acontece com a configuração padrão. O número existe para a decisão de
+  subir o teto ser tomada com ele — e o que impede as 24 h não é a memória
+  (~406 MB de 512), são os 26 s.
+- **AppCDS: 2,49 s → 1,83 s**, 26 % a menos. Deixado **pronto e comentado** no
+  Dockerfile em vez de ligado: 0,65 s são 5 % do tempo até a primeira tela, que
+  a retomada domina, em troca de 42 MB na imagem. O número está ao lado das
+  linhas para a decisão ser do Felipe.
+
+### J6 — o front consome o contrato
+
+Os tipos de resposta do front **saem do `openapi.json`**, por
+`packages/shared/src/api/generated.ts` (gerado por `openapi-typescript`) e
+apelidados em `packages/shared/src/api/index.ts` com os nomes que as telas usam.
+Nenhuma forma de resposta é mais escrita à mão no front.
+
+`npm run generate:api-types --workspace @mp1/shared` regrava;
+`npm run check:api-types` **confere** e falha com o diff, e é o que o CI roda.
+
+O ponto todo era este: enquanto os dois lados eram TypeScript e importavam o
+mesmo arquivo, o compilador cobrava. Com o back-end em Java, nada cobrava — uma
+rota podia mudar de forma e o front continuar compilando, para quebrar na
+primeira requisição de quem estivesse olhando a tela. Na primeira
+compilação contra o contrato apareceram **46 erros**, e dentro deles cinco
+divergências reais entre as duas APIs (listadas na J5, mais a mensagem de erro,
+que estava em `message` e passou a `detail` da RFC 9457).
+
+Duas decisões de contrato que saíram disto:
+
+1. **Obrigatório por padrão, nulo por anotação.** `@Nullable` nos componentes de
+   registro e um `ModelConverter` que marca o resto. O padrão é obrigatório
+   porque esquecer a anotação faria o contrato **mentir** — o front deixaria de
+   tratar um nulo que acontece — enquanto esquecer na outra direção só o deixa
+   pessimista, e o `tsc` cobra na hora.
+2. **Chave sempre presente, valor talvez nulo.** No OpenAPI "obrigatório" diz
+   que a chave existe e o tipo diz o que o valor pode ser. O Jackson escreve
+   `"endedAt": null` e nunca omite a chave, então o contrato diz
+   `endedAt: string | null` e não `endedAt?: string`. Com
+   `exactOptionalPropertyTypes` ligado, a diferença é entre o front tratar dois
+   casos ou três.
+   No 3.1 nulo é um **tipo**, e o `setNullable` do swagger não aparece na saída
+   — some em silêncio. O conversor envolve o esquema num `anyOf` com
+   `{"type":"null"}`, o que preserva formato e enumeração.
+
+Três campos passaram a sair como enumeração em vez de texto livre, porque no
+contrato isso é a diferença entre `string` e uma união que o compilador confere:
+a zona ISO, a severidade e o tamanho de janela da vibração (agora
+`Bearings.BucketSize`). E o `bucketStart` de uma coluna do gráfico passou de
+milissegundos crus a instante.
+
+**O que a J8 ainda vai limpar**: `packages/shared` continua com as entidades
+escritas à mão (`operations/*`, `health.ts`, partes de `vibration.ts`) porque a
+API TypeScript ainda as usa. São elas que saem junto com `apps/api`.
+
+### J5 — fechada
+
+As 14 rotas do gabarito respondem igual à implementação TypeScript, com o mesmo
+roteiro: banco limpo, migrations, semeadura, uma retomada até o instante fixo e
+comparação campo a campo.
+
+O que entrou depois do começo descrito abaixo:
+
+- **`runtime/Harvest`** — a colheita das entidades. É o que faltava para
+  `/shifts`, `/reels`, `/rounds` e `/notes` terem conteúdo: as médias de uma
+  bobina são **consulta ao historiador**, não acumulador em memória, e por isso
+  a colheita roda depois de o arquivo estar gravado e antes da poda. Os ids saem
+  do passo, e não de sequência: reexecutar um trecho reencontra a mesma linha.
+- **`AssetController`, `OperationController`, `HealthController`,
+  `StreamController`** — ativos, entidades, alarmes com reconhecer e engavetar,
+  escrita de setpoint com auditoria (o valor anterior é lido no servidor), SSE
+  com `SseEmitter`, `/health`.
+- **`openapi.json` versionado** em `apps/api-java/`, conferido por
+  `OpenApiContractTest`: ele **compara** por padrão e só regrava com
+  `-Dopenapi.write=true`. Regravar sozinho faria o arquivo seguir o código em
+  silêncio, e o diff — que é o ponto — nunca chamaria a atenção de ninguém.
+
+#### Quatro defeitos que o gabarito encontrou
+
+1. **`JacksonConfig` usava `builder.modules(...)`, que SUBSTITUI a lista** que o
+   Boot montou — e dentro dela estava o `JavaTimeModule`. `Instant` continuava
+   funcionando, porque o módulo próprio o cobre; `LocalDate` passou a estourar
+   na serialização. Resultado: a data de operação do turno derrubava `/shifts` e
+   nada mais. Trocado por `modulesToInstall`.
+2. **Erro sem corpo.** Uma `ErrorResponseException` lançada por um controlador
+   virava status sem corpo: o resolvedor padrão chama `sendError` e o
+   `ProblemDetail` se perde. Resolvido com
+   `spring.mvc.problemdetails.enabled: true`. Os dois `@ExceptionHandler` que
+   **devolviam** a exceção também estavam errados — ela seria serializada como
+   objeto Java; passam a devolver o `ProblemDetail` com
+   `application/problem+json`.
+3. **A tabela `asset` nunca era semeada no lado Java.** O primeiro ponto de
+   ronda batia na chave estrangeira, a retomada morria antes de salvar o estado,
+   e a requisição seguinte refazia as 4 h inteiras para morrer igual — 14 rotas
+   quebradas e 11 min de suite. A semeadura entrou no mesmo lugar onde os pontos
+   do historiador já se auto-curavam.
+4. **Enums sem `@JsonValue`** saíam como `"APROVADA"` em vez de `"aprovada"`.
+
+#### Duas formas corrigidas no modelo
+
+- **`Reel.cdSpread`** deixou de ser três campos opcionais soltos e passou a ser
+  um registro de três `double` primitivos. O gabarito publica aninhado, e a
+  regra "ou os três ou nenhum" — que a restrição `reel_cd_spread_complete` já
+  guardava no banco — agora está **no tipo**: meio perfil deixou de ser
+  representável. O teste que escrevia meio perfil passou a escrevê-lo por SQL
+  direto, que é o único caminho que sobrou.
+- **`RoundPoint` e `Evidence` perderam o campo `sequence`.** A ordem é a
+  posição na lista; o repositório grava a coluna a partir do índice. Guardar o
+  número no registro dava duas verdades para a mesma coisa, e uma lista
+  reordenada passaria a mentir sem nada reclamar.
+
+### J5 — o começo (parado por limite de uso em 03/11/2026)
+
+O que **já está** no repositório e compila, com os 217 testes da J4 verdes:
+
+- `config/JacksonConfig` — instantes sempre com três casas e em UTC. O padrão do
+  Jackson omite os milissegundos quando são zero, e o gabarito usa o formato do
+  `toISOString()` do JavaScript, que sempre os escreve.
+- `config/AppConfig` — os beans. O relógio é bean de propósito: a geração do
+  instantâneo e os testes de rota precisam de instante fixo.
+- `api/ApiErrors` — RFC 9457, com `type` para o cliente decidir sem casar texto
+  em português.
+- `api/ProcessController` — `/process/values`, `/process/tags/{tag}`,
+  `/process/tags/{tag}/trend`, `/process/steam-groups`.
+
+Os registros de domínio serializam direto, sem camada de DTO: as formas já
+batem com o gabarito. Os enums ganharam `@JsonValue` no `label()`, para o JSON
+falar o vocabulário do domínio (`"média"`, `"normalizado"`) e não o do Java.
+
+**O que falta na J5**: `/health`, `/assets` e `/assets/{tag}`, `/alarms` com
+reconhecer/engavetar, as rotas das entidades, a escrita de setpoint com
+auditoria, o SSE com `SseEmitter`, o `openapi.json` gerado na build, e os testes
+de rota comparando com `reference/golden/api/routes.json` (as 14 rotas já estão
+gravadas lá).
+
+### Como era o plano da J5
+
+As mesmas rotas e formatos da API TypeScript: valores atuais, histórico, alarmes
+(listar e reconhecer), setpoint com auditoria e limites do catálogo, entidades,
+SSE com `SseEmitter`, `/health`. Erros em Problem Details (RFC 9457). Testes de
+rota comparando com `reference/golden/api/routes.json`. O `openapi.json` é
+gerado na build e versionado.
+
+### Como era J2 (feito)
+
+FOPDT com ZOH exata, kernel CD pelo pico com corte 3σ, rede de processo, PI das
+malhas, ruído determinístico por `hash(seed, passo)`, vibração ISO 20816-3 e
+cenários de turno. Testado contra `reference/golden/` — é tudo função pura, então
+roda inteiro sem banco e sem Docker.
+
+### Como era J1 (feito)
+
+`apps/api-java`, Java 21 + Spring Boot 3.x, Maven com wrapper, pacote base
+`dev.felipesantos.papertwin`, organizado por domínio.
+
+J1 lê `reference/research/catalogo-base.csv` e `relacoes-fopdt.csv` com as
+mesmas validações da 4.1/4.2 — cabeçalho, colunas, unicidade, faixas,
+equivalências de unidade explícitas, pontas resolvidas, regra do `[k]` — mais a
+expansão por cilindro, os grupos de vapor com os invariantes, LAB-1201…1212 +
+LAB-1206R e a PIC-712 derivada da relação 5. CSV inválido quebra o **build**, em
+teste, e não o runtime.
+
+### Como era J0 (feito)
+
+Gravar em `reference/golden/` (JSON, versionado) as saídas da implementação
+atual que a Java tem de reproduzir:
+
+1. **FOPDT**: séries de degrau de 3 relações, incluindo a de τ = 4,5 s com
+   dt = 10 s, e o espalhamento CD da ZIC-205[70].
+2. **Historiador**: entrada bruta + saída depois do filtro de exceção + swinging
+   door para 3 tags com `excDev`/`compDev` diferentes; interpolação e plot
+   values.
+3. **Alarmes**: a sequência ISA-18.2 de um cenário — ativo → reconhecido →
+   normalizado, engavetamento, inundação.
+4. **Simulação**: valores de ~20 tags para semente fixa em 3 intervalos,
+   incluindo retomada depois de "dormir".
+5. **Respostas de cada rota da API** para um estado fixo.
+
+Commit: "gabarito da API TypeScript".

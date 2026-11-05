@@ -1,0 +1,307 @@
+{
+  "tolerance": 1e-9,
+  "note": "A amostra é função pura de (semente, passo, tag, cenário). Os valores saem arredondados: 3 casas em mm/s e gE, 2 em °C.",
+  "seed": 20260101,
+  "scenario": {
+    "assetTag": "MP1-SEC-G4-CS23-MLA",
+    "fromTick": 0,
+    "toTick": 259200
+  },
+  "isoLimits": {
+    "aToB": 1.4,
+    "bToC": 2.8,
+    "cToD": 4.5
+  },
+  "signatures": [
+    {
+      "tag": "MP1-SEC-G4-CS23-MLA",
+      "expected": {
+        "rmsBase": 1.1888,
+        "tempBase": 66,
+        "envelopeBase": 0.5375
+      }
+    },
+    {
+      "tag": "MP1-SEC-G1-CS01-MLC",
+      "expected": {
+        "rmsBase": 0.8468,
+        "tempBase": 63.4,
+        "envelopeBase": 0.3125
+      }
+    },
+    {
+      "tag": "MP1-POP-TBR-MLA",
+      "expected": {
+        "rmsBase": 1.8092,
+        "tempBase": 67.4,
+        "envelopeBase": 0.415
+      }
+    }
+  ],
+  "samples": [
+    {
+      "tag": "MP1-SEC-G4-CS23-MLA",
+      "tick": -3600,
+      "progress": 0,
+      "expected": {
+        "rmsMmS": 1.173,
+        "tempC": 66.06,
+        "envelopeGe": 0.533,
+        "zone": "A"
+      }
+    },
+    {
+      "tag": "MP1-SEC-G4-CS23-MLA",
+      "tick": 0,
+      "progress": 0,
+      "expected": {
+        "rmsMmS": 1.167,
+        "tempC": 65.57,
+        "envelopeGe": 0.525,
+        "zone": "A"
+      }
+    },
+    {
+      "tag": "MP1-SEC-G4-CS23-MLA",
+      "tick": 32400,
+      "progress": 0.125,
+      "expected": {
+        "rmsMmS": 1.239,
+        "tempC": 66.1,
+        "envelopeGe": 0.77,
+        "zone": "A"
+      }
+    },
+    {
+      "tag": "MP1-SEC-G4-CS23-MLA",
+      "tick": 129600,
+      "progress": 0.5,
+      "expected": {
+        "rmsMmS": 2.176,
+        "tempC": 70.94,
+        "envelopeGe": 2.123,
+        "zone": "B"
+      }
+    },
+    {
+      "tag": "MP1-SEC-G4-CS23-MLA",
+      "tick": 216000,
+      "progress": 0.8333333333333334,
+      "expected": {
+        "rmsMmS": 4.28,
+        "tempC": 80.09,
+        "envelopeGe": 3.791,
+        "zone": "C"
+      }
+    },
+    {
+      "tag": "MP1-SEC-G4-CS23-MLA",
+      "tick": 255600,
+      "progress": 0.9861111111111112,
+      "expected": {
+        "rmsMmS": 5.667,
+        "tempC": 86,
+        "envelopeGe": 4.657,
+        "zone": "D"
+      }
+    },
+    {
+      "tag": "MP1-SEC-G4-CS23-MLA",
+      "tick": 259200,
+      "progress": 1,
+      "expected": {
+        "rmsMmS": 5.814,
+        "tempC": 86.73,
+        "envelopeGe": 4.738,
+        "zone": "D"
+      }
+    },
+    {
+      "tag": "MP1-SEC-G4-CS23-MLA",
+      "tick": 288000,
+      "progress": 1,
+      "expected": {
+        "rmsMmS": 5.811,
+        "tempC": 86.83,
+        "envelopeGe": 4.753,
+        "zone": "D"
+      }
+    },
+    {
+      "tag": "MP1-SEC-G1-CS01-MLC",
+      "tick": -3600,
+      "progress": 0,
+      "expected": {
+        "rmsMmS": 0.826,
+        "tempC": 63.6,
+        "envelopeGe": 0.294,
+        "zone": "A"
+      }
+    },
+    {
+      "tag": "MP1-SEC-G1-CS01-MLC",
+      "tick": 0,
+      "progress": 0,
+      "expected": {
+        "rmsMmS": 0.857,
+        "tempC": 63.04,
+        "envelopeGe": 0.324,
+        "zone": "A"
+      }
+    },
+    {
+      "tag": "MP1-SEC-G1-CS01-MLC",
+      "tick": 32400,
+      "progress": 0,
+      "expected": {
+        "rmsMmS": 0.857,
+        "tempC": 63.26,
+        "envelopeGe": 0.323,
+        "zone": "A"
+      }
+    },
+    {
+      "tag": "MP1-SEC-G1-CS01-MLC",
+      "tick": 129600,
+      "progress": 0,
+      "expected": {
+        "rmsMmS": 0.85,
+        "tempC": 63.33,
+        "envelopeGe": 0.324,
+        "zone": "A"
+      }
+    },
+    {
+      "tag": "MP1-SEC-G1-CS01-MLC",
+      "tick": 216000,
+      "progress": 0,
+      "expected": {
+        "rmsMmS": 0.865,
+        "tempC": 63.41,
+        "envelopeGe": 0.325,
+        "zone": "A"
+      }
+    },
+    {
+      "tag": "MP1-SEC-G1-CS01-MLC",
+      "tick": 255600,
+      "progress": 0,
+      "expected": {
+        "rmsMmS": 0.881,
+        "tempC": 63.65,
+        "envelopeGe": 0.318,
+        "zone": "A"
+      }
+    },
+    {
+      "tag": "MP1-SEC-G1-CS01-MLC",
+      "tick": 259200,
+      "progress": 0,
+      "expected": {
+        "rmsMmS": 0.824,
+        "tempC": 63.18,
+        "envelopeGe": 0.298,
+        "zone": "A"
+      }
+    },
+    {
+      "tag": "MP1-SEC-G1-CS01-MLC",
+      "tick": 288000,
+      "progress": 0,
+      "expected": {
+        "rmsMmS": 0.862,
+        "tempC": 63.34,
+        "envelopeGe": 0.326,
+        "zone": "A"
+      }
+    },
+    {
+      "tag": "MP1-POP-TBR-MLA",
+      "tick": -3600,
+      "progress": 0,
+      "expected": {
+        "rmsMmS": 1.787,
+        "tempC": 67.27,
+        "envelopeGe": 0.435,
+        "zone": "B"
+      }
+    },
+    {
+      "tag": "MP1-POP-TBR-MLA",
+      "tick": 0,
+      "progress": 0,
+      "expected": {
+        "rmsMmS": 1.823,
+        "tempC": 67.28,
+        "envelopeGe": 0.412,
+        "zone": "B"
+      }
+    },
+    {
+      "tag": "MP1-POP-TBR-MLA",
+      "tick": 32400,
+      "progress": 0,
+      "expected": {
+        "rmsMmS": 1.786,
+        "tempC": 67.39,
+        "envelopeGe": 0.394,
+        "zone": "B"
+      }
+    },
+    {
+      "tag": "MP1-POP-TBR-MLA",
+      "tick": 129600,
+      "progress": 0,
+      "expected": {
+        "rmsMmS": 1.836,
+        "tempC": 67.4,
+        "envelopeGe": 0.405,
+        "zone": "B"
+      }
+    },
+    {
+      "tag": "MP1-POP-TBR-MLA",
+      "tick": 216000,
+      "progress": 0,
+      "expected": {
+        "rmsMmS": 1.809,
+        "tempC": 67.46,
+        "envelopeGe": 0.414,
+        "zone": "B"
+      }
+    },
+    {
+      "tag": "MP1-POP-TBR-MLA",
+      "tick": 255600,
+      "progress": 0,
+      "expected": {
+        "rmsMmS": 1.798,
+        "tempC": 67.33,
+        "envelopeGe": 0.425,
+        "zone": "B"
+      }
+    },
+    {
+      "tag": "MP1-POP-TBR-MLA",
+      "tick": 259200,
+      "progress": 0,
+      "expected": {
+        "rmsMmS": 1.797,
+        "tempC": 67.49,
+        "envelopeGe": 0.411,
+        "zone": "B"
+      }
+    },
+    {
+      "tag": "MP1-POP-TBR-MLA",
+      "tick": 288000,
+      "progress": 0,
+      "expected": {
+        "rmsMmS": 1.788,
+        "tempC": 67.46,
+        "envelopeGe": 0.429,
+        "zone": "B"
+      }
+    }
+  ]
+}

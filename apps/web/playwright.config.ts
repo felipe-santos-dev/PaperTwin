@@ -16,6 +16,15 @@ const baseURL = `http://localhost:${String(PORT)}`;
  */
 export default defineConfig({
   testDir: './e2e',
+
+  /**
+   * Acorda a simulação antes do primeiro teste.
+   *
+   * Sem isto, a retomada cai sobre o teste que calhar de ser o primeiro, que
+   * passa a falhar por capacidade e não por defeito — e muda a cada
+   * reordenação da suíte.
+   */
+  globalSetup: './e2e/global-setup.ts',
   forbidOnly: Boolean(process.env['CI']),
   retries: process.env['CI'] ? 2 : 0,
   reporter: process.env['CI'] ? [['github'], ['list']] : [['list']],
@@ -52,11 +61,21 @@ export default defineConfig({
    */
   webServer: [
     {
-      command: 'npm run dev:api',
-      cwd: '../..',
+      /**
+       * A API Java, contra o Postgres embutido dos testes.
+       *
+       * É a aplicação de verdade — mesmas rotas, mesma simulação, mesmo
+       * historiador — só que sem exigir Docker nem um banco gerenciado para
+       * rodar o e2e. O `DevServer` vive em `src/test` justamente porque o
+       * Postgres embutido é dependência de teste e não entra no jar.
+       *
+       * O prazo é largo: a primeira requisição paga a retomada inteira, e numa
+       * máquina de CI sem cache do Maven a compilação vem antes dela.
+       */
+      command: 'node scripts/start-api.mjs',
       url: 'http://127.0.0.1:3333/health',
       reuseExistingServer: !process.env['CI'],
-      timeout: 120_000,
+      timeout: 300_000,
     },
     {
       /**

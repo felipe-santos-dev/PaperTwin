@@ -7,6 +7,9 @@ import {
   DRYER_RADIUS_M,
   DRYER_TOP_Y_M,
   dryerPairX,
+  FORMING_ROLLS,
+  FORMING_TRANSFER_INDEX,
+  HEADBOX,
   POPE_DRUM_RADIUS_M,
   POPE_DRUM_Y_M,
   POPE_X_M,
@@ -16,9 +19,10 @@ import {
   PRE_DRYER_HOOD,
   PRE_DRYER_PAIRS,
   PRE_DRYER_X0_M,
-  PRESS_X_M,
+  PRESS_NIPS,
   SCANNER_2_X_M,
   SIZER_X_M,
+  type WetRoll,
 } from '@mp1/shared';
 import { BufferGeometry, Float32BufferAttribute, Vector2 } from 'three';
 
@@ -47,6 +51,15 @@ const CALENDER_GUIDE = {
 
 /** Folga entre a superfície do cilindro e a folha, para ela não entrar no metal. */
 const WEB_CLEARANCE_M = 0.02;
+
+/** Passos do arco em volta do rolo de transferência, no formador. */
+const WET_ARC_STEPS = 11;
+
+/** Folga entre o rolo e o tecido que o abraça — feltro e tela correm por fora. */
+const FABRIC_CLEARANCE_M = 0.03;
+
+/** Pontos amostrados no contorno de cada rolo, ao montar a envoltória de um tecido. */
+const HULL_SAMPLES = 64;
 
 function arc(
   into: Vector2[],
@@ -83,15 +96,34 @@ function serpentine(
 }
 
 /**
- * O caminho completo da folha, da saída das prensas até o jumbo na enroladeira.
+ * O caminho completo da folha, do jato na tela até o jumbo na enroladeira.
+ *
+ * É uma polilinha só, de ponta a ponta, e isso é de propósito: a folha é uma
+ * folha. Cortá-la em "parte úmida" e "parte seca" daria duas fitas com uma
+ * emenda visível e duas texturas correndo fora de fase.
  */
-export function dryWebPath(): Vector2[] {
+export function webPath(): Vector2[] {
   const path: Vector2[] = [];
   const at = (x: number, y: number) => path.push(new Vector2(x, y));
 
-  // saída das prensas
-  at(PRESS_X_M - 4, 5.0);
-  at(PRESS_X_M, 5.15);
+  // jato da caixa de entrada até o rolo de peito
+  const breast = FORMING_ROLLS[0];
+  const transfer = FORMING_ROLLS[FORMING_TRANSFER_INDEX];
+  const second = FORMING_ROLLS[1];
+  if (!breast || !transfer || !second) throw new Error('formador sem rolos no modelo');
+
+  at(HEADBOX.jet.x, HEADBOX.jet.y);
+
+  // entre as duas telas: a folha corre encostada na tela inferior
+  at(breast.x, breast.y + breast.radiusM + WEB_CLEARANCE_M);
+  at(second.x, second.y + second.radiusM + WEB_CLEARANCE_M);
+
+  // abraça o rolo de transferência e sai para as prensas
+  arc(path, transfer.x, transfer.y, transfer.radiusM + WEB_CLEARANCE_M, 270, 410, WET_ARC_STEPS);
+
+  // pelos três nips de prensa, que é onde a água sai por compressão
+  for (const press of PRESS_NIPS) at(press.x, press.nipY);
+  at(PRE_DRYER_HOOD.from - 1.2, PRESS_NIPS[PRESS_NIPS.length - 1]?.nipY ?? 5.4);
 
   // pré-secagem: sai do último cilindro superior subindo, para cair no rolo guia
   serpentine(path, PRE_DRYER_X0_M, PRE_DRYER_PAIRS, { lastTopExitDeg: 15 });
@@ -148,6 +180,62 @@ export function dryerFabricPaths(
   }
 
   return { upper, lower };
+}
+
+/**
+ * O laço fechado que um tecido esticado descreve em volta de um grupo de rolos.
+ *
+ * Um feltro ou uma tela não é uma curva arbitrária: ele é puxado, e um tecido
+ * puxado em volta de vários rolos assume exatamente a **envoltória convexa**
+ * deles — corre reto entre dois rolos e se enrola no contorno de cada um. Então
+ * em vez de desenhar o circuito à mão, rolo por rolo, basta amostrar o contorno
+ * de cada um e ficar com a casca convexa de todos os pontos.
+ *
+ * A vantagem prática aparece ao mudar o modelo: mover um rolo guia reacomoda o
+ * tecido inteiro sozinho, sem ninguém reescrever o caminho dele.
+ */
+export function fabricLoop(rolls: readonly WetRoll[], clearanceM = FABRIC_CLEARANCE_M): Vector2[] {
+  const points: [number, number][] = [];
+
+  for (const roll of rolls) {
+    for (let i = 0; i < HULL_SAMPLES; i += 1) {
+      const angle = (i / HULL_SAMPLES) * Math.PI * 2;
+      points.push([
+        roll.x + Math.cos(angle) * (roll.radiusM + clearanceM),
+        roll.y + Math.sin(angle) * (roll.radiusM + clearanceM),
+      ]);
+    }
+  }
+
+  // varredura de Andrew: ordena por x e monta as duas cascas
+  points.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+
+  const cross = (o: [number, number], a: [number, number], b: [number, number]): number =>
+    (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+
+  const half = (ordered: [number, number][]): [number, number][] => {
+    const chain: [number, number][] = [];
+    for (const point of ordered) {
+      while (chain.length > 1) {
+        const last = chain[chain.length - 1];
+        const previous = chain[chain.length - 2];
+        if (!last || !previous || cross(previous, last, point) > 0) break;
+        chain.pop();
+      }
+      chain.push(point);
+    }
+    return chain;
+  };
+
+  const lower = half(points);
+  const upper = half([...points].reverse());
+  const loop = [...lower.slice(0, -1), ...upper.slice(0, -1)];
+
+  const first = loop[0];
+  if (!first) return [];
+
+  // fecha o laço: o tecido é um circuito, não uma tira com duas pontas
+  return [...loop, first].map(([x, y]) => new Vector2(x, y));
 }
 
 /**

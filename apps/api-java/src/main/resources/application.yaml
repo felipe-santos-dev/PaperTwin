@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: papertwin-api
+
+  datasource:
+    # JDBC do Neon em produção; em desenvolvimento, o Postgres do docker-compose
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/papertwin}
+    username: ${DATABASE_USER:papertwin}
+    password: ${DATABASE_PASSWORD:papertwin}
+    hikari:
+      # Pool pequeno de propósito: o Neon Free é acessado por um pooler, e cada
+      # conexão ociosa custa memória de um processo que tem 512 MB no total.
+      maximum-pool-size: ${DB_POOL_SIZE:3}
+      minimum-idle: 1
+
+  mvc:
+    problemdetails:
+      # Liga o tratamento padrão da RFC 9457. Sem isto, uma
+      # `ErrorResponseException` lançada por um controlador vira status sem
+      # corpo — o resolvedor padrão chama `sendError`, e o `ProblemDetail`
+      # que explicava o que houve se perde no caminho.
+      enabled: true
+
+  flyway:
+    # Desligado por padrão, e isto é deliberado.
+    #
+    # Em produção, migration que roda sozinha no boot é migration que roda numa
+    # hora que ninguém escolheu — e num host que dorme e acorda, o boot acontece
+    # quando o primeiro visitante abre a tela. A migration é rodada uma vez, à
+    # mão, pelo checklist de deploy.
+    enabled: ${RUN_MIGRATIONS:false}
+    locations: classpath:db/migration
+
+server:
+  port: ${PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # só o essencial: no Render Free cada endpoint a mais é memória a mais
+        include: health

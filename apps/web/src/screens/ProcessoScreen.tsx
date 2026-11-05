@@ -355,7 +355,7 @@ function SetpointForm({
           setResult({
             kind: 'erro',
             rejected: response.rejected,
-            message: response.rejected.message,
+            message: response.rejected.detail,
           });
         }
       })

@@ -1,16 +1,25 @@
-# OPCIONAL. O caminho padrão de desenvolvimento é o PGlite embutido (sem Docker)
-# e, em prod/demo, um Postgres gerenciado via DATABASE_URL.
+# OPCIONAL. Em produção a API sobe no Render com um Postgres gerenciado (o Neon)
+# via DATABASE_URL; nos testes, com um Postgres embutido no próprio processo.
 #
-# Este compose existe para quem quiser um Postgres local de verdade. A imagem traz
-# o TimescaleDB, mas o schema não depende dele: as migrations usam só Postgres puro
-# (particionamento nativo, índice BRIN em ts e agregação com date_bin()).
+# Este compose existe para dois casos:
 #
-#   npm run db:up
-#   DATABASE_URL=postgres://mp1:mp1@127.0.0.1:5432/mp1_twin npm run dev
+#   1. Um Postgres local de verdade, sem subir a API:
+#
+#        docker compose up -d postgres
+#        DATABASE_URL=jdbc:postgresql://127.0.0.1:5432/mp1_twin ./mvnw spring-boot:run
+#
+#   2. Os dois juntos, para conferir a imagem antes de empurrar:
+#
+#        docker compose up --build
+#
+# A imagem do Postgres traz o TimescaleDB, mas o schema não depende dele: as
+# migrations usam só Postgres puro (particionamento nativo, índice BRIN em ts e
+# agregação com date_bin()). A versão é a **18**, a mesma do Neon do projeto —
+# conferir contra outra maior seria conferir contra o que não está em produção.
 
 services:
   postgres:
-    image: timescale/timescaledb:2.17.2-pg17
+    image: timescale/timescaledb:2.22.1-pg18
     container_name: mp1-twin-postgres
     restart: unless-stopped
     environment:
@@ -26,6 +35,34 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  api:
+    # O contexto é a raiz do repositório porque o pom lê os CSV da pesquisa de
+    # `reference/research` — ver o Dockerfile.
+    build:
+      context: .
+      dockerfile: apps/api-java/Dockerfile
+    container_name: mp1-twin-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/mp1_twin
+      DATABASE_USER: mp1
+      DATABASE_PASSWORD: mp1
+      # Ligado AQUI, e só aqui: num banco local descartado a cada `down -v`,
+      # rodar a migration no boot é conveniência. Em produção ela é rodada uma
+      # vez, à mão, pelo checklist de deploy — o padrão da imagem é `false`.
+      RUN_MIGRATIONS: 'true'
+    ports:
+      - '8080:8080'
+    # O mesmo limite do Render Free, para a imagem ser conferida contra a
+    # restrição que ela vai encontrar, e não contra a memória do desktop.
+    mem_limit: 512m
+    # Sem healthcheck de propósito: a imagem do JRE não traz `curl` nem `wget`, e
+    # pôr um deles só para o compose local custaria tamanho na imagem que vai
+    # para produção. Quem quiser conferir se subiu abre `/health` no navegador —
+    # é a rota que existe para isso, e ela diz se o banco respondeu.
 
 volumes:
   mp1-twin-pgdata:

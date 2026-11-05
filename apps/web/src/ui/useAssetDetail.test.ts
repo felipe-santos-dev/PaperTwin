@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { assetByTag, MP1, type MachineAsset } from '@mp1/shared';
+import type { AssetView } from '@mp1/shared/api';
 import type { AssetDetail, VibrationSeries } from '../api/client';
 import { useAssetDetail, type AssetFetchers } from './useAssetDetail';
 
@@ -13,9 +14,25 @@ function asset(tag: string): MachineAsset {
 const bearing = asset('MP1-SEC-G4-CS23-MLA');
 const scanner = asset('MP1-QCS-SC1');
 
+/**
+ * O ativo como a API o publica.
+ *
+ * O modelo guarda a posição como tripla e o contrato como vetor de três, e é a
+ * única diferença entre os dois — por isso a conversão é este espalhamento, e
+ * não um `as` que calaria o compilador sem explicar nada.
+ */
+const viewOf = (asset: MachineAsset): AssetView => ({ ...asset, position: [...asset.position] });
+
+/**
+ * Um ativo sem medição tem `status` nulo, e não um status de campos nulos.
+ *
+ * Era assim que o teste escrevia antes, e o contrato não permite mais: ou o
+ * ativo tem classe ISO e então tem zona, severidade e leitura, ou não tem nada
+ * do que medir. Um nip não vibra — ele é o ponto de contato entre dois rolos.
+ */
 const detailOf = (asset: MachineAsset): AssetDetail => ({
-  asset,
-  status: { assetTag: asset.tag, zone: null, health: null, latest: null },
+  asset: viewOf(asset),
+  status: null,
   limits: null,
 });
 

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
-import type { HealthResponse } from '@mp1/shared';
+import type { HealthResponse } from '@mp1/shared/api';
 import {
   PROBE_TIMEOUT_MS,
   RETRY_INTERVAL_MS,
@@ -15,6 +15,13 @@ const ok: HealthResponse = {
   uptimeS: 3,
   database: 'pglite',
   databaseUp: true,
+  simulation: {
+    seed: 20260101,
+    lastTick: 5216400,
+    lastRunAt: '2026-03-02T09:00:00.000Z',
+    behindS: 0,
+    maxHours: 4,
+  },
 };
 
 const caiu = () => Promise.reject(new Error('conexão recusada'));

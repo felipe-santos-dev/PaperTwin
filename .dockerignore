@@ -1,0 +1,23 @@
+# O contexto é a raiz do repositório, então vale cortar o que é grande e não
+# entra na imagem. Sem isto, o `docker build` envia o `node_modules` e os
+# `target/` inteiros ao daemon antes de executar a primeira linha.
+
+node_modules/
+**/node_modules/
+**/target/
+**/dist/
+.git/
+.claude/
+
+# O gabarito e os protótipos são material de comparação e de projeto, não
+# entram no jar.
+reference/golden/
+reference/prototypes/
+
+# O instantâneo do modo de demonstração é servido pelo front, não pela API.
+apps/web/public/demo/
+
+# Ferramentas e saídas locais
+.vscode/
+.idea/
+*.log

@@ -1,0 +1,126 @@
+{
+ "schema": 1,
+ "zones": [
+  {
+   "id": "umida-formacao",
+   "label": "Caixa de entrada e formação",
+   "group": "machine",
+   "lightmap": "lm_umida-formacao.webp",
+   "scale": 4.1756,
+   "ref": 0.38282,
+   "coverage": 0.768,
+   "size": 2048
+  },
+  {
+   "id": "umida-prensas",
+   "label": "Prensas",
+   "group": "machine",
+   "lightmap": "lm_umida-prensas.webp",
+   "scale": 3.92833,
+   "ref": 0.43822,
+   "coverage": 0.664,
+   "size": 2048
+  },
+  {
+   "id": "g1",
+   "label": "Grupo de vapor G1",
+   "group": "machine",
+   "lightmap": "lm_g1.webp",
+   "scale": 3.61521,
+   "ref": 0.30571,
+   "coverage": 0.441,
+   "size": 2048
+  },
+  {
+   "id": "g2",
+   "label": "Grupo de vapor G2",
+   "group": "machine",
+   "lightmap": "lm_g2.webp",
+   "scale": 6.17312,
+   "ref": 0.26718,
+   "coverage": 0.366,
+   "size": 2048
+  },
+  {
+   "id": "g3",
+   "label": "Grupo de vapor G3",
+   "group": "machine",
+   "lightmap": "lm_g3.webp",
+   "scale": 10.38096,
+   "ref": 0.34195,
+   "coverage": 0.421,
+   "size": 2048
+  },
+  {
+   "id": "g4",
+   "label": "Grupo de vapor G4",
+   "group": "machine",
+   "lightmap": "lm_g4.webp",
+   "scale": 4.52332,
+   "ref": 0.31479,
+   "coverage": 0.393,
+   "size": 2048
+  },
+  {
+   "id": "scanner-sizer",
+   "label": "Scanner 1 e Speed Sizer",
+   "group": "machine",
+   "lightmap": "lm_scanner-sizer.webp",
+   "scale": 3.5113,
+   "ref": 0.64306,
+   "coverage": 0.688,
+   "size": 2048
+  },
+  {
+   "id": "g5",
+   "label": "Grupo de vapor G5",
+   "group": "machine",
+   "lightmap": "lm_g5.webp",
+   "scale": 7.72963,
+   "ref": 0.33555,
+   "coverage": 0.453,
+   "size": 2048
+  },
+  {
+   "id": "g6",
+   "label": "Grupo de vapor G6",
+   "group": "machine",
+   "lightmap": "lm_g6.webp",
+   "scale": 3.79623,
+   "ref": 0.33989,
+   "coverage": 0.445,
+   "size": 2048
+  },
+  {
+   "id": "acabamento",
+   "label": "Calandra, scanner final e Pope",
+   "group": "machine",
+   "lightmap": "lm_acabamento.webp",
+   "scale": 3.02025,
+   "ref": 0.7249,
+   "coverage": 0.759,
+   "size": 2048
+  },
+  {
+   "id": "predio",
+   "label": "Prédio",
+   "group": "building",
+   "lightmap": "lm_predio.webp",
+   "scale": 22.19329,
+   "ref": 0.56755,
+   "coverage": 0.633,
+   "size": 2048
+  }
+ ],
+ "sun": [
+  0.2505,
+  -0.8718,
+  -0.4209
+ ],
+ "hoodDoorHinge": {
+  "y": 10.37,
+  "z": 4.25
+ },
+ "hoodTop": 10.4,
+ "exposure": 0.82
+}

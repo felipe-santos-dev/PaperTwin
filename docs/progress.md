@@ -435,14 +435,56 @@ bordas entram na zona do prédio. No térreo só o que pertence à máquina —
 preparo de massa fica fora. `views.ts` ganhou a vista `ground`, além da `pit`
 que já existia.
 
+### Fase (b) — bake e arquivos em public/scene
+
+Corte lateral aprovado. As 11 zonas foram assadas a 2048² e 128 amostras em
+CPU, com denoise por OIDN em todas.
+
+`apps/web/public/scene/`: **3,87 MB** no total — `mp1.glb` com 1,74 MB e 11
+WebP somando 2,13 MB. Bem abaixo dos 8–12 MB estimados, então a resolução
+ficou como estava.
+
+**Malhas e chamadas de desenho:** 188 malhas, 188 primitivas, 188 nós — uma
+por `zona__material`, que é o alvo. O `join` + `separate` por material do
+`build.py` já entrega assim; não há nada a unir depois.
+
+Três coisas que a fase pediu:
+
+1. **Material por zona**, em `publish.py`. O `gltfpack` funde malhas que
+   compartilham material para baixar chamadas de desenho, e funde **entre
+   zonas** — o que aplicaria o lightmap errado em metade da malha. Cada zona
+   ganha a sua cópia do material (`g4__cil_ferro`, 188 no total), e aí a fusão
+   só acontece dentro da zona. O nome do material segue sendo o contrato com a
+   página, agora com a zona na frente.
+2. **`-vpf` em vez da quantização inteira.** Com 14 bits o `gltfpack` errava 5%
+   nas posições, porque o prédio tem 116 m. Posição em ponto flutuante não erra
+   e ainda ficou menor que `-vp 16`. `-vt 16` mantém a precisão do UV para
+   2048², e `-kn -km` preservam os nomes.
+3. **Luz no térreo.** A primeira versão tinha uma luminária só para 116 m e
+   deixava metade do nível de baixo em preto; com a escala do lightmap puxada
+   pelo telhado, o porão caía em menos de 20 dos 255 níveis do WebP. Entraram
+   duas fileiras de luminárias sob a laje, de 6 em 6 m, e o térreo foi assado
+   de novo.
+
+Custo do bake: ~2 h 10 no segundo passe. A zona `scanner-sizer` é a cara —
+555 s antes das luminárias do térreo, 4974 s depois, porque é um vão alto e
+aberto que enxerga muita fonte de luz. As zonas de secagem ficam em 150–210 s
+cada e o `predio` em 83 s. Para reassar uma zona só:
+`ZONES=scanner-sizer python tools/scene-bake/build.py bake`.
+
+Uma folga conhecida: a escala do `predio` (S = 22,2) é puxada pelos próprios
+corpos de luminária, que são emissivos e tiram o brilho do material TSL, não
+do lightmap. Sobra faixa de bits sem uso. Dá para melhorar excluindo os texels
+de `lampada` e `claraboia` do percentil, mas custa outro bake inteiro e o
+porão já está legível.
+
 ## Próximo passo exato
 
-Fase (a) entregue, à espera da revisão do corte lateral em
-`tools/scene-bake/out/secao{1,2,3}.png` e `secao_detalhe.png`. Com o aceite,
-segue a fase (b): assar as 11 zonas, rodar o `encode.py` por zona e gravar
-`apps/web/public/scene/` (1 GLB meshopt, 11 WebP e o `scene.json` com as
-escalas). Depois (c) a cena nova no R3F e (d) os testes.
+Fase (c): a cena nova no R3F — `WebGPURenderer` dentro do `Canvas`, GLB e
+materiais TSL resolvidos por `zona__material`, `RenderPipeline` com TRAA e
+bloom só em emissivo, mancais vivos coloridos pela zona ISO e as portas no
+`positionNode`. A linha de dobradiça e as escalas `S`/`ref` de cada zona estão
+em `apps/web/public/scene/scene.json`.
 
-Nada da cena antiga foi removido ainda: `apps/web/src/scene/machine/`,
-`materials.ts` e `@react-three/postprocessing` saem na fase (c), junto com a
-subida do three de 0.180 para 0.187.
+No fim da fase (c): fps e chamadas de desenho medidos por `renderer.info` na
+vista geral e na pré-secagem, e uma captura de cada vista de `views.ts`.

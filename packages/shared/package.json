@@ -10,7 +10,8 @@
   "scripts": {
     "generate": "tsx scripts/generate-process-catalog.ts && tsx scripts/generate-process-relations.ts",
     "typecheck": "tsc -p tsconfig.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "export:machine": "tsx scripts/export-machine-model.ts"
   },
   "devDependencies": {
     "@types/node": "^24.6.2",

@@ -1,0 +1,8 @@
+# Ambiente do gerador e do bake. Exige Python 3.13: o bpy só publica wheel cp313.
+#
+#   uv python install 3.13
+#   uv venv --python 3.13 tools/scene-bake/.venv
+#   uv pip install --python tools/scene-bake/.venv -r tools/scene-bake/requirements.txt
+bpy==5.2.3
+numpy>=2.1
+pillow>=11.0

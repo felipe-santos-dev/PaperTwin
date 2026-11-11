@@ -318,23 +318,131 @@ quebra nada e responde errado para sempre.
     would be overwritten", apaga as cópias locais antes do merge — elas passam a
     vir do repositório.
 
+## Cena 3D — migração para o pipeline do Blender
+
+Troca do protótipo procedural em R3F pelo pipeline testado em
+`reference/prototypes/secagem-teste/`: geometria gerada por script no Blender,
+luz assada em lightmap, materiais TSL e WebGPU com queda para WebGL2. Escopo: a
+máquina inteira, da caixa de entrada à enroladeira.
+
+Fases, cada uma com revisão do Felipe: **(a)** exportador + gerador + corte
+lateral · **(b)** bake e arquivos em `public/scene` · **(c)** cena nova no R3F
+com mancais e portas · **(d)** testes, lint, typecheck e build verdes.
+
+### Ambiente
+
+O `bpy` só publica wheel `cp313` (`requires_python == 3.13.*`) e a máquina só
+tinha Python 3.14. Resolvido sem trocar de abordagem, com o `uv` que já estava
+instalado:
+
+```
+uv python install 3.13
+uv venv --python 3.13 tools/scene-bake/.venv
+uv pip install --python tools/scene-bake/.venv -r tools/scene-bake/requirements.txt
+```
+
+`tools/scene-bake/.venv/` está no `.gitignore`; o `requirements.txt` refaz o
+ambiente (bpy 5.2.3, numpy, pillow).
+
+**Armadilha do worktree:** o worktree não tinha os links de workspace em
+`node_modules/@mp1`, então `tsc` resolvia `@mp1/shared` para o checkout
+principal e não enxergava as constantes novas. `npm install` dentro do worktree
+resolve.
+
+### Comandos
+
+```
+npm run export:machine --workspace @mp1/shared     # modelo -> tools/scene-bake/machine.json
+tools/scene-bake/.venv/Scripts/python tools/scene-bake/build.py secao     # corte lateral
+tools/scene-bake/.venv/Scripts/python tools/scene-bake/build.py preview   # render de câmera
+tools/scene-bake/.venv/Scripts/python tools/scene-bake/build.py bake      # assa e exporta
+```
+
+O `bake` aceita `LM` (lado do lightmap), `BSPP` (amostras) e `ZONES` (lista de
+zonas, para reassar só uma) por variável de ambiente.
+
+### Como está organizado
+
+- `packages/shared/scripts/export-machine-model.ts` grava `machine.json`: o
+  modelo inteiro, **todas** as constantes de `geometry.ts` (sem lista à mão: o
+  que o módulo exporta como dado vai junto) e as zonas de bake.
+- `tools/scene-bake/geom.py` — a matemática de telas, feltros e folha, sem
+  Blender. Roda sozinha (`python geom.py`) e imprime folga e abraço.
+- `tools/scene-bake/parts.py` — primitivas, paleta de materiais e as zonas.
+- `tools/scene-bake/machine.py` — secagem, capota, estrutura, passarela,
+  tubulação e a folha.
+- `tools/scene-bake/stations.py` — parte úmida, scanners, Speed Sizer, calandra
+  e Pope.
+- `tools/scene-bake/building.py` — o prédio em dois níveis.
+
+Nenhuma posição de ativo é escrita no Python. O nome do material é o contrato
+com a página, que troca cada um por um material TSL.
+
+### Zonas de bake
+
+Onze, uma por lightmap, partindo o eixo X sem buraco nem sobreposição: duas na
+parte úmida (`umida-formacao`, `umida-prensas`), uma por grupo de vapor
+(`g1`…`g6`), `scanner-sizer`, `acabamento` (calandra + scanner final + Pope) e
+`predio`. As fronteiras entre grupos caem no meio do caminho entre o último
+cilindro de um e o primeiro do outro, então mover um grupo move a fronteira
+junto. Telas e folha são cortadas nas fronteiras para não perder densidade.
+
+### Decisões de geometria desta fase
+
+1. **Percurso das telas.** Com raio 1,05 e passo 2,2 sobram **0,10 m** entre dois
+   cilindros do mesmo nível: não cabe rolo no vão. O rolo de retorno sai do vão e
+   vai para fora da fileira — 0,62 m acima da linha de centro no nível superior,
+   o mesmo abaixo no inferior, a meio vão, raio 0,15 m. Dá **90° de abraço em
+   todos os cilindros** com 4,7 cm de folga (o protótipo de teste conseguia 98°,
+   com passo maior). Os rolos de entrada e de saída de cada grupo ficam na mesma
+   altura dos de meio vão: mais alto, a tela desceria em cima do cilindro e o
+   abraçaria mal (17°, que foi a primeira tentativa).
+2. **Uma tela por fileira e por grupo de vapor**, não uma por secagem inteira —
+   é a unidade em que a secagem é operada e também a unidade do lightmap.
+3. **Sentido da serpentina.** `DRY_SECTION_WEB_Y_M` é medida validada e diz que
+   a folha _sai do último cilindro superior_ da pré-secagem. Com 13 pares (26
+   cilindros, número par), um percurso que comece em cima termina embaixo —
+   então a pré-secagem é percorrida **começando pela fileira inferior**: entra em
+   CS02 e sai de CS25, a 6,10 m, descendo para os 4,80 m do trecho horizontal. A
+   pós-secagem começa em cima e sai embaixo, em direção à calandra.
+4. **Mancais fora do bake.** A carcaça do mancal vira malha viva na cena, uma por
+   ativo `bearing`, colorida pela zona da ISO 20816-3. No Blender ficam só o
+   pedestal, a proteção, a junta de vapor, a mangueira e a caixa de junção.
+5. **Portas da capota.** Desenhadas fechadas e numa linha de dobradiça única, a
+   mesma nas duas capotas, para a cena abri-las no shader com um uniform de
+   ângulo. O bake é com as portas fechadas e as lâmpadas de dentro acesas, então
+   o interior aparece iluminado quando elas abrem, não preto.
+6. **Prensa de sapata** entra só como forma, sem tag e sem linha nova na tabela
+   `asset`: o rolo de cima do par de `PRESS_X_M` ganha a correia e o nip
+   estendido, e a primeira prensa fica antes dela, também sem ativo.
+
+### Medidas novas em `geometry.ts`
+
+De 29 para 63, **todas `assumed`** e nenhuma existente alterada: telas (raio e
+altura do rolo de retorno, folgas de desenho), parte úmida (caixa de entrada,
+formador, primeira prensa, nip da sapata, plataformas em três níveis) e prédio
+(térreo a −6,0 m, laje do piso de operação, vãos abertos, paredes, telhado,
+claraboias, mezanino, escada, passarela).
+
+### Prédio em níveis
+
+A máquina fica num piso de operação elevado, que continua sendo o `Y = 0` de
+todas as medidas. O térreo fica 6 m abaixo. Sob a secagem, a pós-secagem e a
+Pope o piso é **aberto** até o térreo, com refugo, pilares e tubulação de vapor
+e condensado; sob a parte úmida é fechado, com as plataformas de três níveis
+acima. Pilares e vigas do mezanino, escada entre os níveis e guarda-corpo das
+bordas entram na zona do prédio. No térreo só o que pertence à máquina —
+preparo de massa fica fora. `views.ts` ganhou a vista `ground`, além da `pit`
+que já existia.
+
 ## Próximo passo exato
 
-Fase 6: as 7 telas de `reference/prototypes/papertwin-telas.html` em `apps/web`,
-com dados reais da API e o instantâneo do modo de demonstração regenerado.
+Fase (a) entregue, à espera da revisão do corte lateral em
+`tools/scene-bake/out/secao{1,2,3}.png` e `secao_detalhe.png`. Com o aceite,
+segue a fase (b): assar as 11 zonas, rodar o `encode.py` por zona e gravar
+`apps/web/public/scene/` (1 GLB meshopt, 11 WebP e o `scene.json` com as
+escalas). Depois (c) a cena nova no R3F e (d) os testes.
 
-Ordem planejada:
-
-1. **6.1 — fundação**: cliente da API para as rotas novas, navegação por teclas
-   1–7 como no protótipo, moldura das telas (cabeçalho, estados vazio, carregando
-   e erro), e os gráficos. Sem biblioteca pesada se der; se usar, uma só.
-2. **6.2 — Turno, Bobinas, Notas**: as três de tabela, que exercem o cliente e
-   os estados.
-3. **6.3 — Processo e Mancais**: as duas de gráfico, com tendência por `plot
-values`, limites de alarme desenhados e escrita de setpoint.
-4. **6.4 — Rondas**: campo ao lado do online.
-5. **6.5 — Máquina**: a cena 3D portada de `mp1-parte-seca-3d.html` para R3F
-   gerada do `mp1.ts` (parte úmida, seções, cilindros, motores do lado
-   acionamento, papel), com clique em mancal abrindo o painel de vibração.
-6. **6.6 — instantâneo de demonstração** regenerado cobrindo as rotas novas,
-   com instante fixo (o relógio da aplicação já é injetável).
+Nada da cena antiga foi removido ainda: `apps/web/src/scene/machine/`,
+`materials.ts` e `@react-three/postprocessing` saem na fase (c), junto com a
+subida do three de 0.180 para 0.187.

@@ -37,6 +37,11 @@ const validated = (label: string, note: string): Provenance => ({
 const assumed = (label: string, note: string): Provenance => ({ source: 'assumed', label, note });
 
 const FROM_PROTOTYPE = 'Tirado do protótipo navegável; falta conferir no mapa de rolos.';
+const WET_PROTOTYPE =
+  'Tirado de reference/prototypes/mp1-parte-umida.html, que serve de referência de forma; a parte úmida entra só como geometria, sem ativo.';
+const BUILDING_LAYOUT =
+  'Prédio em níveis decidido para a cena: piso de operação elevado, térreo 6 m abaixo. Não reproduz o layout da planta além disso.';
+const WALKWAY_NOTE = 'O nível que o protótipo de teste já usa, mantido de propósito.';
 const CONFIRMED = 'Conferido em campo contra a máquina.';
 
 /**
@@ -100,6 +105,66 @@ export const MEASUREMENTS = {
   PRESS_ROLL_RADIUS_M: assumed('Raio dos rolos de prensa (0,95 m)', FROM_PROTOTYPE),
   PRESS_BOTTOM_Y_M: assumed('Altura do rolo de prensa inferior', FROM_PROTOTYPE),
   PRESS_TOP_Y_M: assumed('Altura do rolo de prensa superior', FROM_PROTOTYPE),
+  // --- suposto: telas da secagem ---
+  FELT_ROLL_RADIUS_M: assumed(
+    'Raio do rolo de retorno das telas (0,15 m)',
+    'Escolhido para caber: com passo 2,2 e raio 1,05 o rolo não entra no vão entre cilindros do mesmo nível e sobe para fora dele.',
+  ),
+  FELT_ROLL_RISE_M: assumed(
+    'Altura do rolo de retorno acima da linha de centro do nível (0,62 m)',
+    'Mínimo geométrico para o rolo não tocar os dois cilindros vizinhos, com 4,7 cm de folga; dá 90° de abraço por cilindro.',
+  ),
+  FELT_CLEARANCE_M: assumed(
+    'Folga da tela sobre o cilindro',
+    'Afastamento de desenho para a tela não coincidir com a face do cilindro; não é medida de projeto.',
+  ),
+  PAPER_CLEARANCE_M: assumed(
+    'Folga da folha sobre o cilindro',
+    'Afastamento de desenho para a folha ficar entre o cilindro e a tela; não é medida de projeto.',
+  ),
+
+  // --- suposto: parte úmida (só geometria, sem ativo) ---
+  HEADBOX_X_M: assumed('X da caixa de entrada', WET_PROTOTYPE),
+  HEADBOX_Y_M: assumed('Altura da caixa de entrada', WET_PROTOTYPE),
+  FORMING_X0_M: assumed('X do rolo de peito do gap former', WET_PROTOTYPE),
+  FORMING_LENGTH_M: assumed('Comprimento do formador de duas telas', WET_PROTOTYPE),
+  FORMING_ROLL_RADIUS_M: assumed('Raio dos rolos do formador (0,55 m)', WET_PROTOTYPE),
+  FORMING_WIRE_Y_M: assumed('Altura da tela de formação', WET_PROTOTYPE),
+  FIRST_PRESS_X_M: assumed('X da primeira prensa', WET_PROTOTYPE),
+  FIRST_PRESS_ROLL_RADIUS_M: assumed('Raio dos rolos da primeira prensa (0,9 m)', WET_PROTOTYPE),
+  SHOE_PRESS_NIP_LENGTH_M: assumed(
+    'Comprimento do nip da prensa de sapata (0,25 m)',
+    'Desenhado como prensa de sapata no par de PRESS_X_M, a pedido; o comprimento real do nip falta.',
+  ),
+  WET_PLATFORM_Y_M: assumed('Os três níveis de plataforma da parte úmida', WET_PROTOTYPE),
+  WET_PLATFORM_Z0_M: assumed('Borda interna das plataformas da parte úmida', WET_PROTOTYPE),
+  WET_PLATFORM_Z1_M: assumed('Borda externa das plataformas da parte úmida', WET_PROTOTYPE),
+
+  // --- suposto: prédio em níveis ---
+  GROUND_FLOOR_Y_M: assumed(
+    'Altura do térreo abaixo do piso de operação (−6,0 m)',
+    BUILDING_LAYOUT,
+  ),
+  OPERATING_FLOOR_THICKNESS_M: assumed('Espessura da laje do piso de operação', BUILDING_LAYOUT),
+  FLOOR_OPENING_MARGIN_M: assumed('Avanço da borda do vão além da capota', BUILDING_LAYOUT),
+  POPE_PIT_HALF_M: assumed('Meio comprimento do vão sob a enroladeira', BUILDING_LAYOUT),
+  OPERATING_FLOOR_OPENINGS: assumed(
+    'Onde o piso de operação é aberto até o térreo',
+    'Decidido assim: aberto sob a secagem, a pós-secagem e a Pope; fechado sob a parte úmida. Derivado das capotas e da Pope, não escrito à mão.',
+  ),
+  BUILDING_X0_M: assumed('Parede do prédio antes da caixa de entrada', BUILDING_LAYOUT),
+  BUILDING_X1_M: assumed('Parede do prédio depois da enroladeira', BUILDING_LAYOUT),
+  BUILDING_Z_LA_M: assumed('Parede do prédio no lado acionamento', BUILDING_LAYOUT),
+  BUILDING_Z_LC_M: assumed('Parede do prédio no lado comando', BUILDING_LAYOUT),
+  BUILDING_ROOF_Y_M: assumed('Altura do telhado (15 m)', BUILDING_LAYOUT),
+  MEZZANINE_COLUMN_PITCH_M: assumed('Passo dos pilares do mezanino', BUILDING_LAYOUT),
+  GROUND_STAIR_X_M: assumed('X da escada entre o térreo e o piso de operação', BUILDING_LAYOUT),
+  WALKWAY_Y_M: assumed('Altura da passarela de operação da secagem', WALKWAY_NOTE),
+  WALKWAY_Z0_M: assumed('Borda interna da passarela da secagem', WALKWAY_NOTE),
+  WALKWAY_Z1_M: assumed('Borda externa da passarela da secagem', WALKWAY_NOTE),
+  SKYLIGHT_BANDS: assumed('Faixas de claraboia no telhado', BUILDING_LAYOUT),
+  SKYLIGHT_PITCH_M: assumed('Passo das claraboias no sentido da máquina', BUILDING_LAYOUT),
+  SKYLIGHT_PANEL_M: assumed('Comprimento de um painel de claraboia', BUILDING_LAYOUT),
 } as const satisfies Record<string, Provenance>;
 
 export type MeasurementId = keyof typeof MEASUREMENTS;

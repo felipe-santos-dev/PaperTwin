@@ -2,6 +2,7 @@ import {
   CALENDER_NIP_Y_M,
   CALENDER_X_M,
   DRY_SECTION_WEB_Y_M,
+  GROUND_FLOOR_Y_M,
   POST_DRYER_HOOD,
   POST_DRYER_PAIRS,
   POST_DRYER_X0_M,
@@ -59,6 +60,21 @@ export const SCENE_VIEWS: readonly SceneView[] = [
     hint: 'refugo',
     position: [PRE_DRYER_HOOD.from + 0.5, -3, 0.5],
     target: [PRE_DRYER_HOOD.from + 17, -3.2, -1],
+  },
+  /**
+   * O térreo, à altura dos olhos de quem anda nele.
+   *
+   * A máquina fica num piso de operação elevado e o térreo corre 6 m abaixo. A
+   * vista do porão olha o vão de meia altura; esta fica no nível de baixo, de
+   * onde se vê a tubulação de vapor, os pilares do mezanino e o vão aberto por
+   * onde a secagem aparece de baixo.
+   */
+  {
+    id: 'ground',
+    label: 'Térreo',
+    hint: 'nível de baixo',
+    position: [PRE_DRYER_HOOD.from - 2, GROUND_FLOOR_Y_M + 1.7, 7],
+    target: [PRE_DRYER_HOOD.from + 20, GROUND_FLOOR_Y_M + 2.4, 0],
   },
   {
     id: 'scanner-1',

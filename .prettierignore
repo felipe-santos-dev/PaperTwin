@@ -3,3 +3,6 @@ dist
 coverage
 reference
 package-lock.json
+
+# Gerado pelo exportador e ambiente do Blender.
+tools/scene-bake/

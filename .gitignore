@@ -32,3 +32,16 @@ playwright/.cache/
 
 # Instantaneo da API gerado no build (apps/web/package.json -> demo:data)
 apps/web/public/demo/
+
+# Ambiente do gerador/bake: o bpy sozinho passa de 300 MB (tools/scene-bake/requirements.txt refaz).
+tools/scene-bake/.venv/
+# Saídas intermediárias do bake; o que entra no repo é apps/web/public/scene/.
+tools/scene-bake/out/
+
+# Do protótipo de referência versionamos só a fonte.
+reference/prototypes/secagem-teste/**/node_modules/
+reference/prototypes/secagem-teste/**/dist/
+reference/prototypes/secagem-teste/**/publish/
+reference/prototypes/secagem-teste/blender/out/
+reference/prototypes/secagem-teste/web/public/
+reference/prototypes/secagem-teste/web/package-lock.json

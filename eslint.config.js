@@ -6,7 +6,8 @@ import globals from 'globals';
 
 export default tseslint.config(
   {
-    ignores: ['**/dist/**', '**/coverage/**', 'reference/**'],
+    // `tools/scene-bake` é Python; o que há de .js lá dentro é do ambiente virtual.
+    ignores: ['**/dist/**', '**/coverage/**', 'reference/**', 'tools/scene-bake/**'],
   },
   js.configs.recommended,
   tseslint.configs.recommended,

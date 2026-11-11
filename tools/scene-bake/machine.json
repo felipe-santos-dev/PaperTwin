@@ -1,0 +1,2993 @@
+{
+ "schema": 1,
+ "generatedBy": "packages/shared/scripts/export-machine-model.ts",
+ "model": {
+  "id": "MP1",
+  "label": "Máquina de papel MP1",
+  "webWidthM": 8,
+  "sections": [
+   {
+    "id": "headbox",
+    "label": "Caixa de entrada",
+    "order": 1,
+    "assets": []
+   },
+   {
+    "id": "forming",
+    "label": "Formação",
+    "order": 2,
+    "assets": []
+   },
+   {
+    "id": "press",
+    "label": "Prensas",
+    "order": 3,
+    "assets": [
+     {
+      "tag": "MP1-PRE-R1",
+      "kind": "roll",
+      "label": "Rolo de prensa inferior",
+      "section": "press",
+      "position": [
+       8,
+       4.2,
+       0
+      ],
+      "radius": 0.95,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": null,
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-PRE-R1-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Rolo de prensa inferior",
+      "section": "press",
+      "position": [
+       8,
+       4.2,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-PRE-R1",
+      "steamGroup": null,
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-PRE-R1-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Rolo de prensa inferior",
+      "section": "press",
+      "position": [
+       8,
+       4.2,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-PRE-R1",
+      "steamGroup": null,
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-PRE-R2",
+      "kind": "roll",
+      "label": "Rolo de prensa superior",
+      "section": "press",
+      "position": [
+       8,
+       6.1,
+       0
+      ],
+      "radius": 0.95,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": null,
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-PRE-R2-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Rolo de prensa superior",
+      "section": "press",
+      "position": [
+       8,
+       6.1,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-PRE-R2",
+      "steamGroup": null,
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-PRE-R2-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Rolo de prensa superior",
+      "section": "press",
+      "position": [
+       8,
+       6.1,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-PRE-R2",
+      "steamGroup": null,
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-PRE-NIP",
+      "kind": "nip",
+      "label": "Nip de prensa",
+      "section": "press",
+      "position": [
+       8,
+       5.15,
+       0
+      ],
+      "radius": null,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": null,
+      "iso": null,
+      "source": "assumed"
+     }
+    ]
+   },
+   {
+    "id": "pre-dryer",
+    "label": "Pré-secagem",
+    "order": 4,
+    "assets": [
+     {
+      "tag": "MP1-SEC-G1-CS01",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 1",
+      "section": "pre-dryer",
+      "position": [
+       15,
+       6.1,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G1",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G1-CS01-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 1",
+      "section": "pre-dryer",
+      "position": [
+       15,
+       6.1,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G1-CS01",
+      "steamGroup": "G1",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G1-CS01-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 1",
+      "section": "pre-dryer",
+      "position": [
+       15,
+       6.1,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G1-CS01",
+      "steamGroup": "G1",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G1-CS02",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 2",
+      "section": "pre-dryer",
+      "position": [
+       16.1,
+       3,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G1",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G1-CS02-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 2",
+      "section": "pre-dryer",
+      "position": [
+       16.1,
+       3,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G1-CS02",
+      "steamGroup": "G1",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G1-CS02-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 2",
+      "section": "pre-dryer",
+      "position": [
+       16.1,
+       3,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G1-CS02",
+      "steamGroup": "G1",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G1-CS03",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 3",
+      "section": "pre-dryer",
+      "position": [
+       17.2,
+       6.1,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G1",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G1-CS03-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 3",
+      "section": "pre-dryer",
+      "position": [
+       17.2,
+       6.1,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G1-CS03",
+      "steamGroup": "G1",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G1-CS03-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 3",
+      "section": "pre-dryer",
+      "position": [
+       17.2,
+       6.1,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G1-CS03",
+      "steamGroup": "G1",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G1-CS04",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 4",
+      "section": "pre-dryer",
+      "position": [
+       18.3,
+       3,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G1",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G1-CS04-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 4",
+      "section": "pre-dryer",
+      "position": [
+       18.3,
+       3,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G1-CS04",
+      "steamGroup": "G1",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G1-CS04-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 4",
+      "section": "pre-dryer",
+      "position": [
+       18.3,
+       3,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G1-CS04",
+      "steamGroup": "G1",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G1-CS05",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 5",
+      "section": "pre-dryer",
+      "position": [
+       19.4,
+       6.1,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G1",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G1-CS05-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 5",
+      "section": "pre-dryer",
+      "position": [
+       19.4,
+       6.1,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G1-CS05",
+      "steamGroup": "G1",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G1-CS05-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 5",
+      "section": "pre-dryer",
+      "position": [
+       19.4,
+       6.1,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G1-CS05",
+      "steamGroup": "G1",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G1-CS06",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 6",
+      "section": "pre-dryer",
+      "position": [
+       20.5,
+       3,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G1",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G1-CS06-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 6",
+      "section": "pre-dryer",
+      "position": [
+       20.5,
+       3,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G1-CS06",
+      "steamGroup": "G1",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G1-CS06-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 6",
+      "section": "pre-dryer",
+      "position": [
+       20.5,
+       3,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G1-CS06",
+      "steamGroup": "G1",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G2-CS07",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 7",
+      "section": "pre-dryer",
+      "position": [
+       21.6,
+       6.1,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G2",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G2-CS07-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 7",
+      "section": "pre-dryer",
+      "position": [
+       21.6,
+       6.1,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G2-CS07",
+      "steamGroup": "G2",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G2-CS07-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 7",
+      "section": "pre-dryer",
+      "position": [
+       21.6,
+       6.1,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G2-CS07",
+      "steamGroup": "G2",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G2-CS08",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 8",
+      "section": "pre-dryer",
+      "position": [
+       22.700000000000003,
+       3,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G2",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G2-CS08-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 8",
+      "section": "pre-dryer",
+      "position": [
+       22.700000000000003,
+       3,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G2-CS08",
+      "steamGroup": "G2",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G2-CS08-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 8",
+      "section": "pre-dryer",
+      "position": [
+       22.700000000000003,
+       3,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G2-CS08",
+      "steamGroup": "G2",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G2-CS09",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 9",
+      "section": "pre-dryer",
+      "position": [
+       23.8,
+       6.1,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G2",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G2-CS09-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 9",
+      "section": "pre-dryer",
+      "position": [
+       23.8,
+       6.1,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G2-CS09",
+      "steamGroup": "G2",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G2-CS09-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 9",
+      "section": "pre-dryer",
+      "position": [
+       23.8,
+       6.1,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G2-CS09",
+      "steamGroup": "G2",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G2-CS10",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 10",
+      "section": "pre-dryer",
+      "position": [
+       24.900000000000002,
+       3,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G2",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G2-CS10-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 10",
+      "section": "pre-dryer",
+      "position": [
+       24.900000000000002,
+       3,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G2-CS10",
+      "steamGroup": "G2",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G2-CS10-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 10",
+      "section": "pre-dryer",
+      "position": [
+       24.900000000000002,
+       3,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G2-CS10",
+      "steamGroup": "G2",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G2-CS11",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 11",
+      "section": "pre-dryer",
+      "position": [
+       26,
+       6.1,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G2",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G2-CS11-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 11",
+      "section": "pre-dryer",
+      "position": [
+       26,
+       6.1,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G2-CS11",
+      "steamGroup": "G2",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G2-CS11-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 11",
+      "section": "pre-dryer",
+      "position": [
+       26,
+       6.1,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G2-CS11",
+      "steamGroup": "G2",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G2-CS12",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 12",
+      "section": "pre-dryer",
+      "position": [
+       27.1,
+       3,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G2",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G2-CS12-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 12",
+      "section": "pre-dryer",
+      "position": [
+       27.1,
+       3,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G2-CS12",
+      "steamGroup": "G2",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G2-CS12-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 12",
+      "section": "pre-dryer",
+      "position": [
+       27.1,
+       3,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G2-CS12",
+      "steamGroup": "G2",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G3-CS13",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 13",
+      "section": "pre-dryer",
+      "position": [
+       28.200000000000003,
+       6.1,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G3",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G3-CS13-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 13",
+      "section": "pre-dryer",
+      "position": [
+       28.200000000000003,
+       6.1,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G3-CS13",
+      "steamGroup": "G3",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G3-CS13-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 13",
+      "section": "pre-dryer",
+      "position": [
+       28.200000000000003,
+       6.1,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G3-CS13",
+      "steamGroup": "G3",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G3-CS14",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 14",
+      "section": "pre-dryer",
+      "position": [
+       29.300000000000004,
+       3,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G3",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G3-CS14-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 14",
+      "section": "pre-dryer",
+      "position": [
+       29.300000000000004,
+       3,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G3-CS14",
+      "steamGroup": "G3",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G3-CS14-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 14",
+      "section": "pre-dryer",
+      "position": [
+       29.300000000000004,
+       3,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G3-CS14",
+      "steamGroup": "G3",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G3-CS15",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 15",
+      "section": "pre-dryer",
+      "position": [
+       30.400000000000002,
+       6.1,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G3",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G3-CS15-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 15",
+      "section": "pre-dryer",
+      "position": [
+       30.400000000000002,
+       6.1,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G3-CS15",
+      "steamGroup": "G3",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G3-CS15-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 15",
+      "section": "pre-dryer",
+      "position": [
+       30.400000000000002,
+       6.1,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G3-CS15",
+      "steamGroup": "G3",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G3-CS16",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 16",
+      "section": "pre-dryer",
+      "position": [
+       31.500000000000004,
+       3,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G3",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G3-CS16-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 16",
+      "section": "pre-dryer",
+      "position": [
+       31.500000000000004,
+       3,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G3-CS16",
+      "steamGroup": "G3",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G3-CS16-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 16",
+      "section": "pre-dryer",
+      "position": [
+       31.500000000000004,
+       3,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G3-CS16",
+      "steamGroup": "G3",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G3-CS17",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 17",
+      "section": "pre-dryer",
+      "position": [
+       32.6,
+       6.1,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G3",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G3-CS17-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 17",
+      "section": "pre-dryer",
+      "position": [
+       32.6,
+       6.1,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G3-CS17",
+      "steamGroup": "G3",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G3-CS17-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 17",
+      "section": "pre-dryer",
+      "position": [
+       32.6,
+       6.1,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G3-CS17",
+      "steamGroup": "G3",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G3-CS18",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 18",
+      "section": "pre-dryer",
+      "position": [
+       33.7,
+       3,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G3",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G3-CS18-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 18",
+      "section": "pre-dryer",
+      "position": [
+       33.7,
+       3,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G3-CS18",
+      "steamGroup": "G3",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G3-CS18-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 18",
+      "section": "pre-dryer",
+      "position": [
+       33.7,
+       3,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G3-CS18",
+      "steamGroup": "G3",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G4-CS19",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 19",
+      "section": "pre-dryer",
+      "position": [
+       34.8,
+       6.1,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G4",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G4-CS19-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 19",
+      "section": "pre-dryer",
+      "position": [
+       34.8,
+       6.1,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G4-CS19",
+      "steamGroup": "G4",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G4-CS19-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 19",
+      "section": "pre-dryer",
+      "position": [
+       34.8,
+       6.1,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G4-CS19",
+      "steamGroup": "G4",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G4-CS20",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 20",
+      "section": "pre-dryer",
+      "position": [
+       35.9,
+       3,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G4",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G4-CS20-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 20",
+      "section": "pre-dryer",
+      "position": [
+       35.9,
+       3,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G4-CS20",
+      "steamGroup": "G4",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G4-CS20-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 20",
+      "section": "pre-dryer",
+      "position": [
+       35.9,
+       3,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G4-CS20",
+      "steamGroup": "G4",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G4-CS21",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 21",
+      "section": "pre-dryer",
+      "position": [
+       37,
+       6.1,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G4",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G4-CS21-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 21",
+      "section": "pre-dryer",
+      "position": [
+       37,
+       6.1,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G4-CS21",
+      "steamGroup": "G4",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G4-CS21-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 21",
+      "section": "pre-dryer",
+      "position": [
+       37,
+       6.1,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G4-CS21",
+      "steamGroup": "G4",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G4-CS22",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 22",
+      "section": "pre-dryer",
+      "position": [
+       38.1,
+       3,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G4",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G4-CS22-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 22",
+      "section": "pre-dryer",
+      "position": [
+       38.1,
+       3,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G4-CS22",
+      "steamGroup": "G4",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G4-CS22-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 22",
+      "section": "pre-dryer",
+      "position": [
+       38.1,
+       3,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G4-CS22",
+      "steamGroup": "G4",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G4-CS23",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 23",
+      "section": "pre-dryer",
+      "position": [
+       39.2,
+       6.1,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G4",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G4-CS23-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 23",
+      "section": "pre-dryer",
+      "position": [
+       39.2,
+       6.1,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G4-CS23",
+      "steamGroup": "G4",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G4-CS23-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 23",
+      "section": "pre-dryer",
+      "position": [
+       39.2,
+       6.1,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G4-CS23",
+      "steamGroup": "G4",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G4-CS24",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 24",
+      "section": "pre-dryer",
+      "position": [
+       40.300000000000004,
+       3,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G4",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G4-CS24-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 24",
+      "section": "pre-dryer",
+      "position": [
+       40.300000000000004,
+       3,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G4-CS24",
+      "steamGroup": "G4",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G4-CS24-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 24",
+      "section": "pre-dryer",
+      "position": [
+       40.300000000000004,
+       3,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G4-CS24",
+      "steamGroup": "G4",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G4-CS25",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 25",
+      "section": "pre-dryer",
+      "position": [
+       41.400000000000006,
+       6.1,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G4",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G4-CS25-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 25",
+      "section": "pre-dryer",
+      "position": [
+       41.400000000000006,
+       6.1,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G4-CS25",
+      "steamGroup": "G4",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G4-CS25-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 25",
+      "section": "pre-dryer",
+      "position": [
+       41.400000000000006,
+       6.1,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G4-CS25",
+      "steamGroup": "G4",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G4-CS26",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 26",
+      "section": "pre-dryer",
+      "position": [
+       42.50000000000001,
+       3,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G4",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G4-CS26-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 26",
+      "section": "pre-dryer",
+      "position": [
+       42.50000000000001,
+       3,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G4-CS26",
+      "steamGroup": "G4",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G4-CS26-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 26",
+      "section": "pre-dryer",
+      "position": [
+       42.50000000000001,
+       3,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G4-CS26",
+      "steamGroup": "G4",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     }
+    ]
+   },
+   {
+    "id": "scanner-1",
+    "label": "Scanner 1",
+    "order": 5,
+    "assets": [
+     {
+      "tag": "MP1-QCS-SC1",
+      "kind": "scanner",
+      "label": "Scanner 1 · entrada do Speed Sizer",
+      "section": "scanner-1",
+      "position": [
+       48.2,
+       4.8,
+       0
+      ],
+      "radius": null,
+      "lengthM": 11.6,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": null,
+      "iso": null,
+      "source": "validated"
+     }
+    ]
+   },
+   {
+    "id": "speed-sizer",
+    "label": "Speed Sizer",
+    "order": 6,
+    "assets": [
+     {
+      "tag": "MP1-SZR-RS",
+      "kind": "roll",
+      "label": "Rolo aplicador superior",
+      "section": "speed-sizer",
+      "position": [
+       53.2,
+       5.949999999999999,
+       0
+      ],
+      "radius": 1.15,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": null,
+      "iso": null,
+      "source": "validated"
+     },
+     {
+      "tag": "MP1-SZR-RS-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Rolo aplicador superior",
+      "section": "speed-sizer",
+      "position": [
+       53.2,
+       5.949999999999999,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SZR-RS",
+      "steamGroup": null,
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "validated"
+     },
+     {
+      "tag": "MP1-SZR-RS-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Rolo aplicador superior",
+      "section": "speed-sizer",
+      "position": [
+       53.2,
+       5.949999999999999,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SZR-RS",
+      "steamGroup": null,
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "validated"
+     },
+     {
+      "tag": "MP1-SZR-RI",
+      "kind": "roll",
+      "label": "Rolo aplicador inferior",
+      "section": "speed-sizer",
+      "position": [
+       53.2,
+       3.65,
+       0
+      ],
+      "radius": 1.15,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": null,
+      "iso": null,
+      "source": "validated"
+     },
+     {
+      "tag": "MP1-SZR-RI-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Rolo aplicador inferior",
+      "section": "speed-sizer",
+      "position": [
+       53.2,
+       3.65,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SZR-RI",
+      "steamGroup": null,
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "validated"
+     },
+     {
+      "tag": "MP1-SZR-RI-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Rolo aplicador inferior",
+      "section": "speed-sizer",
+      "position": [
+       53.2,
+       3.65,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SZR-RI",
+      "steamGroup": null,
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "validated"
+     },
+     {
+      "tag": "MP1-SZR-NIP",
+      "kind": "nip",
+      "label": "Nip do Speed Sizer",
+      "section": "speed-sizer",
+      "position": [
+       53.2,
+       4.8,
+       0
+      ],
+      "radius": null,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": null,
+      "iso": null,
+      "source": "validated"
+     }
+    ]
+   },
+   {
+    "id": "post-dryer",
+    "label": "Pós-secagem",
+    "order": 7,
+    "assets": [
+     {
+      "tag": "MP1-SEC-G5-CS27",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 27",
+      "section": "post-dryer",
+      "position": [
+       58.7,
+       6.1,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G5",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G5-CS27-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 27",
+      "section": "post-dryer",
+      "position": [
+       58.7,
+       6.1,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G5-CS27",
+      "steamGroup": "G5",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G5-CS27-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 27",
+      "section": "post-dryer",
+      "position": [
+       58.7,
+       6.1,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G5-CS27",
+      "steamGroup": "G5",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G5-CS28",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 28",
+      "section": "post-dryer",
+      "position": [
+       59.800000000000004,
+       3,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G5",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G5-CS28-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 28",
+      "section": "post-dryer",
+      "position": [
+       59.800000000000004,
+       3,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G5-CS28",
+      "steamGroup": "G5",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G5-CS28-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 28",
+      "section": "post-dryer",
+      "position": [
+       59.800000000000004,
+       3,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G5-CS28",
+      "steamGroup": "G5",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G5-CS29",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 29",
+      "section": "post-dryer",
+      "position": [
+       60.900000000000006,
+       6.1,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G5",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G5-CS29-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 29",
+      "section": "post-dryer",
+      "position": [
+       60.900000000000006,
+       6.1,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G5-CS29",
+      "steamGroup": "G5",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G5-CS29-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 29",
+      "section": "post-dryer",
+      "position": [
+       60.900000000000006,
+       6.1,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G5-CS29",
+      "steamGroup": "G5",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G5-CS30",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 30",
+      "section": "post-dryer",
+      "position": [
+       62.00000000000001,
+       3,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G5",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G5-CS30-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 30",
+      "section": "post-dryer",
+      "position": [
+       62.00000000000001,
+       3,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G5-CS30",
+      "steamGroup": "G5",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G5-CS30-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 30",
+      "section": "post-dryer",
+      "position": [
+       62.00000000000001,
+       3,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G5-CS30",
+      "steamGroup": "G5",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G5-CS31",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 31",
+      "section": "post-dryer",
+      "position": [
+       63.1,
+       6.1,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G5",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G5-CS31-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 31",
+      "section": "post-dryer",
+      "position": [
+       63.1,
+       6.1,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G5-CS31",
+      "steamGroup": "G5",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G5-CS31-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 31",
+      "section": "post-dryer",
+      "position": [
+       63.1,
+       6.1,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G5-CS31",
+      "steamGroup": "G5",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G5-CS32",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 32",
+      "section": "post-dryer",
+      "position": [
+       64.2,
+       3,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G5",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G5-CS32-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 32",
+      "section": "post-dryer",
+      "position": [
+       64.2,
+       3,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G5-CS32",
+      "steamGroup": "G5",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G5-CS32-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 32",
+      "section": "post-dryer",
+      "position": [
+       64.2,
+       3,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G5-CS32",
+      "steamGroup": "G5",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G6-CS33",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 33",
+      "section": "post-dryer",
+      "position": [
+       65.3,
+       6.1,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G6",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G6-CS33-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 33",
+      "section": "post-dryer",
+      "position": [
+       65.3,
+       6.1,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G6-CS33",
+      "steamGroup": "G6",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G6-CS33-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 33",
+      "section": "post-dryer",
+      "position": [
+       65.3,
+       6.1,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G6-CS33",
+      "steamGroup": "G6",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G6-CS34",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 34",
+      "section": "post-dryer",
+      "position": [
+       66.39999999999999,
+       3,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G6",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G6-CS34-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 34",
+      "section": "post-dryer",
+      "position": [
+       66.39999999999999,
+       3,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G6-CS34",
+      "steamGroup": "G6",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G6-CS34-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 34",
+      "section": "post-dryer",
+      "position": [
+       66.39999999999999,
+       3,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G6-CS34",
+      "steamGroup": "G6",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G6-CS35",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 35",
+      "section": "post-dryer",
+      "position": [
+       67.5,
+       6.1,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G6",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G6-CS35-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 35",
+      "section": "post-dryer",
+      "position": [
+       67.5,
+       6.1,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G6-CS35",
+      "steamGroup": "G6",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G6-CS35-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 35",
+      "section": "post-dryer",
+      "position": [
+       67.5,
+       6.1,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G6-CS35",
+      "steamGroup": "G6",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G6-CS36",
+      "kind": "dryer-cylinder",
+      "label": "Cilindro secador 36",
+      "section": "post-dryer",
+      "position": [
+       68.6,
+       3,
+       0
+      ],
+      "radius": 1.05,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": "G6",
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G6-CS36-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Cilindro secador 36",
+      "section": "post-dryer",
+      "position": [
+       68.6,
+       3,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-SEC-G6-CS36",
+      "steamGroup": "G6",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-SEC-G6-CS36-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Cilindro secador 36",
+      "section": "post-dryer",
+      "position": [
+       68.6,
+       3,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-SEC-G6-CS36",
+      "steamGroup": "G6",
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     }
+    ]
+   },
+   {
+    "id": "calender",
+    "label": "Calandra",
+    "order": 8,
+    "assets": [
+     {
+      "tag": "MP1-CAL-RT",
+      "kind": "roll",
+      "label": "Rolo térmico",
+      "section": "calender",
+      "position": [
+       74.5,
+       4.2,
+       0
+      ],
+      "radius": 0.8,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": null,
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-CAL-RT-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Rolo térmico",
+      "section": "calender",
+      "position": [
+       74.5,
+       4.2,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-CAL-RT",
+      "steamGroup": null,
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-CAL-RT-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Rolo térmico",
+      "section": "calender",
+      "position": [
+       74.5,
+       4.2,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-CAL-RT",
+      "steamGroup": null,
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-CAL-RR",
+      "kind": "roll",
+      "label": "Rolo revestido",
+      "section": "calender",
+      "position": [
+       74.5,
+       2.5999999999999996,
+       0
+      ],
+      "radius": 0.8,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": null,
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-CAL-RR-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Rolo revestido",
+      "section": "calender",
+      "position": [
+       74.5,
+       2.5999999999999996,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-CAL-RR",
+      "steamGroup": null,
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-CAL-RR-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Rolo revestido",
+      "section": "calender",
+      "position": [
+       74.5,
+       2.5999999999999996,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-CAL-RR",
+      "steamGroup": null,
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-CAL-NIP",
+      "kind": "nip",
+      "label": "Nip da calandra",
+      "section": "calender",
+      "position": [
+       74.5,
+       3.4,
+       0
+      ],
+      "radius": null,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": null,
+      "iso": null,
+      "source": "assumed"
+     }
+    ]
+   },
+   {
+    "id": "scanner-2",
+    "label": "Scanner final",
+    "order": 9,
+    "assets": [
+     {
+      "tag": "MP1-QCS-SC2",
+      "kind": "scanner",
+      "label": "Scanner final · QCS",
+      "section": "scanner-2",
+      "position": [
+       79,
+       3.4,
+       0
+      ],
+      "radius": null,
+      "lengthM": 11.6,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": null,
+      "iso": null,
+      "source": "validated"
+     }
+    ]
+   },
+   {
+    "id": "pope-reel",
+    "label": "Enroladeira Pope",
+    "order": 10,
+    "assets": [
+     {
+      "tag": "MP1-POP-TBR",
+      "kind": "reel-drum",
+      "label": "Tambor da enroladeira",
+      "section": "pope-reel",
+      "position": [
+       84.5,
+       3.6,
+       0
+      ],
+      "radius": 0.8,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": null,
+      "iso": null,
+      "source": "validated"
+     },
+     {
+      "tag": "MP1-POP-TBR-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Tambor da enroladeira",
+      "section": "pope-reel",
+      "position": [
+       84.5,
+       3.6,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-POP-TBR",
+      "steamGroup": null,
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "validated"
+     },
+     {
+      "tag": "MP1-POP-TBR-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Tambor da enroladeira",
+      "section": "pope-reel",
+      "position": [
+       84.5,
+       3.6,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-POP-TBR",
+      "steamGroup": null,
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "validated"
+     }
+    ]
+   }
+  ]
+ },
+ "steamGroups": [
+  {
+   "id": "G1",
+   "from": 1,
+   "to": 6,
+   "section": "pre-dryer"
+  },
+  {
+   "id": "G2",
+   "from": 7,
+   "to": 12,
+   "section": "pre-dryer"
+  },
+  {
+   "id": "G3",
+   "from": 13,
+   "to": 18,
+   "section": "pre-dryer"
+  },
+  {
+   "id": "G4",
+   "from": 19,
+   "to": 26,
+   "section": "pre-dryer"
+  },
+  {
+   "id": "G5",
+   "from": 27,
+   "to": 32,
+   "section": "post-dryer"
+  },
+  {
+   "id": "G6",
+   "from": 33,
+   "to": 36,
+   "section": "post-dryer"
+  }
+ ],
+ "measurements": {
+  "BEARING_RADIUS_RATIO": 0.55,
+  "BEARING_Z_M": 4.3,
+  "BUILDING_ROOF_Y_M": 15,
+  "BUILDING_X0_M": -20,
+  "BUILDING_X1_M": 96.5,
+  "BUILDING_Z_LA_M": -14,
+  "BUILDING_Z_LC_M": 24,
+  "CALENDER_NIP_Y_M": 3.4,
+  "CALENDER_ROLL_RADIUS_M": 0.8,
+  "CALENDER_X_M": 74.5,
+  "DRYER_BOTTOM_Y_M": 3,
+  "DRYER_PITCH_M": 2.2,
+  "DRYER_RADIUS_M": 1.05,
+  "DRYER_TOP_Y_M": 6.1,
+  "DRY_SECTION_WEB_Y_M": 4.8,
+  "FELT_CLEARANCE_M": 0.016,
+  "FELT_ROLL_RADIUS_M": 0.15,
+  "FELT_ROLL_RISE_M": 0.62,
+  "FIRST_PRESS_ROLL_RADIUS_M": 0.9,
+  "FIRST_PRESS_X_M": 4.2,
+  "FLOOR_OPENING_MARGIN_M": 0.6,
+  "FORMING_LENGTH_M": 8.4,
+  "FORMING_ROLL_RADIUS_M": 0.55,
+  "FORMING_WIRE_Y_M": 2.6,
+  "FORMING_X0_M": -10.2,
+  "GROUND_FLOOR_Y_M": -6,
+  "GROUND_STAIR_X_M": 9.7,
+  "HEADBOX_X_M": -12.6,
+  "HEADBOX_Y_M": 2.2,
+  "MEZZANINE_COLUMN_PITCH_M": 6,
+  "OPERATING_FLOOR_OPENINGS": [
+   {
+    "from": 12.6,
+    "to": 44.800000000000004
+   },
+   {
+    "from": 56.300000000000004,
+    "to": 70.89999999999999
+   },
+   {
+    "from": 81.3,
+    "to": 87.7
+   }
+  ],
+  "OPERATING_FLOOR_THICKNESS_M": 0.35,
+  "PAPER_CLEARANCE_M": 0.004,
+  "POPE_DRUM_RADIUS_M": 0.8,
+  "POPE_DRUM_Y_M": 3.6,
+  "POPE_PIT_HALF_M": 3.2,
+  "POPE_X_M": 84.5,
+  "POST_DRYER_HOOD": {
+   "from": 56.900000000000006,
+   "to": 70.3
+  },
+  "POST_DRYER_PAIRS": 5,
+  "POST_DRYER_X0_M": 58.7,
+  "PRESS_BOTTOM_Y_M": 4.2,
+  "PRESS_ROLL_RADIUS_M": 0.95,
+  "PRESS_TOP_Y_M": 6.1,
+  "PRESS_X_M": 8,
+  "PRE_DRYER_HOOD": {
+   "from": 13.2,
+   "to": 44.2
+  },
+  "PRE_DRYER_PAIRS": 13,
+  "PRE_DRYER_X0_M": 15,
+  "SCANNER_1_X_M": 48.2,
+  "SCANNER_2_X_M": 79,
+  "SCANNER_2_Y_M": 3.4,
+  "SHOE_PRESS_NIP_LENGTH_M": 0.25,
+  "SIZER_ROLL_RADIUS_M": 1.15,
+  "SIZER_X_M": 53.2,
+  "SKYLIGHT_BANDS": [
+   {
+    "from": 15.4,
+    "to": 17.4
+   },
+   {
+    "from": 9.6,
+    "to": 11
+   }
+  ],
+  "SKYLIGHT_PANEL_M": 3.6,
+  "SKYLIGHT_PITCH_M": 6,
+  "WALKWAY_Y_M": 3.35,
+  "WALKWAY_Z0_M": 5.75,
+  "WALKWAY_Z1_M": 7,
+  "WEB_WIDTH_M": 8,
+  "WET_PLATFORM_Y_M": [
+   3.4,
+   6.8,
+   10.2
+  ],
+  "WET_PLATFORM_Z0_M": 4.7,
+  "WET_PLATFORM_Z1_M": 7.1
+ },
+ "zones": [
+  {
+   "id": "umida-formacao",
+   "label": "Caixa de entrada e formação",
+   "group": "machine",
+   "lightmap": 2048,
+   "span": {
+    "from": -20,
+    "to": 0
+   }
+  },
+  {
+   "id": "umida-prensas",
+   "label": "Prensas",
+   "group": "machine",
+   "lightmap": 2048,
+   "span": {
+    "from": 0,
+    "to": 10.6
+   }
+  },
+  {
+   "id": "g1",
+   "label": "Grupo de vapor G1",
+   "group": "machine",
+   "lightmap": 2048,
+   "span": {
+    "from": 10.6,
+    "to": 21.05
+   }
+  },
+  {
+   "id": "g2",
+   "label": "Grupo de vapor G2",
+   "group": "machine",
+   "lightmap": 2048,
+   "span": {
+    "from": 21.05,
+    "to": 27.65
+   }
+  },
+  {
+   "id": "g3",
+   "label": "Grupo de vapor G3",
+   "group": "machine",
+   "lightmap": 2048,
+   "span": {
+    "from": 27.65,
+    "to": 34.25
+   }
+  },
+  {
+   "id": "g4",
+   "label": "Grupo de vapor G4",
+   "group": "machine",
+   "lightmap": 2048,
+   "span": {
+    "from": 34.25,
+    "to": 46.2
+   }
+  },
+  {
+   "id": "scanner-sizer",
+   "label": "Scanner 1 e Speed Sizer",
+   "group": "machine",
+   "lightmap": 2048,
+   "span": {
+    "from": 46.2,
+    "to": 55.05
+   }
+  },
+  {
+   "id": "g5",
+   "label": "Grupo de vapor G5",
+   "group": "machine",
+   "lightmap": 2048,
+   "span": {
+    "from": 55.05,
+    "to": 64.75
+   }
+  },
+  {
+   "id": "g6",
+   "label": "Grupo de vapor G6",
+   "group": "machine",
+   "lightmap": 2048,
+   "span": {
+    "from": 64.75,
+    "to": 72.4
+   }
+  },
+  {
+   "id": "acabamento",
+   "label": "Calandra, scanner final e Pope",
+   "group": "machine",
+   "lightmap": 2048,
+   "span": {
+    "from": 72.4,
+    "to": 96.5
+   }
+  },
+  {
+   "id": "predio",
+   "label": "Prédio",
+   "group": "building",
+   "lightmap": 2048,
+   "span": null
+  }
+ ]
+}

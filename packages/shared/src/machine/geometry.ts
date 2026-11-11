@@ -96,3 +96,116 @@ export function dryerPairX(x0: number, pairIndex: number): { top: number; bottom
   const top = x0 + pairIndex * DRYER_PITCH_M;
   return { top, bottom: top + DRYER_PITCH_M / 2 };
 }
+
+/**
+ * Telas e folha: raio do rolo de retorno das telas e as folgas de desenho.
+ *
+ * Com o passo de 2,2 m e o raio de 1,05 m sobram **0,10 m** entre dois
+ * cilindros do mesmo nível — não cabe rolo nenhum ali. O rolo de retorno da
+ * tela sai do vão e sobe: fica a `FELT_ROLL_RISE_M` acima da linha de centro do
+ * nível superior (e o mesmo abaixo da do inferior), a meio vão. Isso dá 90° de
+ * abraço por cilindro com 4,7 cm de folga, contra 98° do protótipo de teste,
+ * que pôde usar passo maior.
+ */
+export const FELT_ROLL_RADIUS_M = 0.15;
+export const FELT_ROLL_RISE_M = 0.62;
+
+/** Folga da tela e da folha sobre o cilindro, para as duas não coincidirem. */
+export const FELT_CLEARANCE_M = 0.016;
+export const PAPER_CLEARANCE_M = 0.004;
+
+/**
+ * Parte úmida — só geometria, sem ativo nem tag.
+ *
+ * As formas vêm de `reference/prototypes/mp1-parte-umida.html`, deslocadas em X
+ * para o referencial da parte seca: o terceiro par de prensas daquele protótipo
+ * é o par que já mora em `PRESS_X_M`, e o deslocamento sai dessa coincidência.
+ *
+ * O par de `PRESS_X_M` é desenhado como prensa de sapata — o rolo de cima ganha
+ * a sapata e a correia —, e a primeira prensa fica em `FIRST_PRESS_X_M`.
+ */
+export const HEADBOX_X_M = -12.6;
+export const HEADBOX_Y_M = 2.2;
+
+/** Rolo de peito, onde o jato encontra a tela de formação. */
+export const FORMING_X0_M = -10.2;
+export const FORMING_LENGTH_M = 8.4;
+export const FORMING_ROLL_RADIUS_M = 0.55;
+export const FORMING_WIRE_Y_M = 2.6;
+
+export const FIRST_PRESS_X_M = 4.2;
+export const FIRST_PRESS_ROLL_RADIUS_M = 0.9;
+
+/** Comprimento do nip da sapata: é o que distingue a prensa de sapata de um nip comum. */
+export const SHOE_PRESS_NIP_LENGTH_M = 0.25;
+
+/** Os três níveis de plataforma da parte úmida, acima do piso de operação. */
+export const WET_PLATFORM_Y_M = [3.4, 6.8, 10.2] as const;
+export const WET_PLATFORM_Z0_M = 4.7;
+export const WET_PLATFORM_Z1_M = 7.1;
+
+/**
+ * Prédio em níveis.
+ *
+ * A máquina fica num piso de operação elevado, que continua sendo o `Y = 0` de
+ * todas as medidas acima. O térreo fica em `GROUND_FLOOR_Y_M`.
+ *
+ * Sob a secagem, a pós-secagem e a Pope o piso de operação é **aberto**: o vão
+ * desce até o térreo, e é por ele que se vê o refugo, os pilares e a tubulação.
+ * Sob a parte úmida o piso é fechado, e as plataformas da úmida ficam acima dele.
+ */
+export const GROUND_FLOOR_Y_M = -6.0;
+export const OPERATING_FLOOR_THICKNESS_M = 0.35;
+
+/** Quanto a borda do vão avança além da capota que ela acompanha. */
+export const FLOOR_OPENING_MARGIN_M = 0.6;
+
+/** Meio comprimento do vão sob a enroladeira, onde cai o refugo da troca de bobina. */
+export const POPE_PIT_HALF_M = 3.2;
+
+const floorOpening = (span: HoodSpan): HoodSpan => ({
+  from: span.from - FLOOR_OPENING_MARGIN_M,
+  to: span.to + FLOOR_OPENING_MARGIN_M,
+});
+
+/** Os vãos abertos no piso de operação, na ordem da máquina. */
+export const OPERATING_FLOOR_OPENINGS: readonly HoodSpan[] = Object.freeze([
+  floorOpening(PRE_DRYER_HOOD),
+  floorOpening(POST_DRYER_HOOD),
+  { from: POPE_X_M - POPE_PIT_HALF_M, to: POPE_X_M + POPE_PIT_HALF_M },
+]);
+
+export const BUILDING_X0_M = -20;
+export const BUILDING_X1_M = POPE_X_M + 12;
+
+/** Paredes: Z negativo é o lado acionamento, Z positivo o lado comando. */
+export const BUILDING_Z_LA_M = -14;
+export const BUILDING_Z_LC_M = 24;
+export const BUILDING_ROOF_Y_M = 15;
+
+/** Passo dos pilares e das vigas do mezanino que sustenta o piso de operação. */
+export const MEZZANINE_COLUMN_PITCH_M = 6;
+
+/** Escada entre o térreo e o piso de operação, num trecho de piso fechado. */
+export const GROUND_STAIR_X_M = PRE_DRYER_HOOD.from - 3.5;
+
+/** Passarela de operação da secagem, no nível que o protótipo de teste já usa. */
+export const WALKWAY_Y_M = 3.35;
+export const WALKWAY_Z0_M = 5.75;
+export const WALKWAY_Z1_M = 7.0;
+
+/**
+ * Claraboias do telhado.
+ *
+ * Duas faixas que correm no sentido da máquina, do lado comando, divididas em
+ * painéis entre as treliças. São a fonte de luz natural da sala — e, na cena,
+ * o que recebe bloom e lança os fachos de poeira.
+ */
+export const SKYLIGHT_BANDS: readonly HoodSpan[] = Object.freeze([
+  { from: 15.4, to: 17.4 },
+  { from: 9.6, to: 11.0 },
+]);
+
+/** Passo das claraboias no sentido da máquina, e o comprimento de cada painel. */
+export const SKYLIGHT_PITCH_M = 6;
+export const SKYLIGHT_PANEL_M = 3.6;

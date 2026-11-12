@@ -113,13 +113,88 @@ def split_materials_by_zone(doc):
     return created, len(doc["materials"])
 
 
+def normalize_lightmap_uv(doc):
+    """
+    Deixa o UV do lightmap como o único, no canal 0.
+
+    O Blender exporta duas camadas de UV nas zonas que têm curvas convertidas em
+    malha: a que veio da conversão e a "LM", criada depois pelo desdobramento do
+    bake. A LM é sempre a **última**. Tirar a outra ainda no Blender mudaria o
+    desdobramento — e com ele os lightmaps já assados —, então a troca é aqui:
+    o que era `TEXCOORD_1` passa a ser `TEXCOORD_0` e o outro é descartado.
+    """
+    trocadas = 0
+    for mesh in doc.get("meshes", []):
+        for prim in mesh.get("primitives", []):
+            attrs = prim.get("attributes", {})
+            sets = sorted(k for k in attrs if k.startswith("TEXCOORD_"))
+            if len(sets) < 2:
+                continue
+            attrs["TEXCOORD_0"] = attrs[sets[-1]]
+            for extra in sets[1:]:
+                attrs.pop(extra, None)
+            trocadas += 1
+    return trocadas
+
+
+def one_pixel_png():
+    """Um PNG branco de 1 × 1, montado aqui para não depender de Pillow."""
+    import struct as _struct
+    import zlib
+
+    def chunk(kind, payload):
+        return (
+            _struct.pack(">I", len(payload))
+            + kind
+            + payload
+            + _struct.pack(">I", zlib.crc32(kind + payload) & 0xFFFFFFFF)
+        )
+
+    header = _struct.pack(">IIBBBBB", 1, 1, 8, 2, 0, 0, 0)
+    return (
+        b"\x89PNG\r\n\x1a\n"
+        + chunk(b"IHDR", header)
+        + chunk(b"IDAT", zlib.compress(b"\x00\xff\xff\xff"))
+        + chunk(b"IEND", b"")
+    )
+
+
+def pin_uv_with_placeholder(doc):
+    """
+    Prende uma textura mínima em cada material, para o `gltfpack` manter o UV.
+
+    O `gltfpack` poda atributo que material nenhum usa — e os materiais deste
+    GLB não têm textura, porque quem aplica o lightmap é a página, em tempo de
+    carga. O resultado era um GLB sem UV nenhum e uma cena preta. Um PNG branco
+    de 1 × 1 em `occlusionTexture`, no canal 0, basta para o UV ser considerado
+    usado; a página descarta esses materiais de qualquer forma.
+    """
+    import base64
+
+    doc.setdefault("images", []).append(
+        {"uri": "data:image/png;base64," + base64.b64encode(one_pixel_png()).decode("ascii")}
+    )
+    doc.setdefault("samplers", []).append({"wrapS": 10497, "wrapT": 10497})
+    doc.setdefault("textures", []).append(
+        {"source": len(doc["images"]) - 1, "sampler": len(doc["samplers"]) - 1}
+    )
+    index = len(doc["textures"]) - 1
+    for material in doc.get("materials", []):
+        material["occlusionTexture"] = {"index": index, "texCoord": 0}
+    return len(doc.get("materials", []))
+
+
 def main():
     raw = os.path.join(OUT, "mp1_raw.glb")
     if not os.path.exists(raw):
         raise SystemExit(f"falta {raw}: rode o bake antes")
 
     version, doc, binary = read_glb(raw)
+    trocadas = normalize_lightmap_uv(doc)
+    print(f"UV do lightmap movido para o canal 0 em {trocadas} malhas")
     created, total = split_materials_by_zone(doc)
+    pinned = pin_uv_with_placeholder(doc)
+    print(f"textura mínima presa em {pinned} materiais, para o UV sobreviver")
     zoned = os.path.join(OUT, "mp1_zoned.glb")
     write_glb(zoned, version, doc, binary)
     print(f"materiais por zona: {created} criados, {total} no total")

@@ -105,6 +105,10 @@ PALETTE = [
     ("capota_painel", "#b9bec2", 0.5, 0.0),
     ("capota_porta", "#c4c8cb", 0.45, 0.0),
     ("capota_moldura", "#8c9196", 0.4, 0.5),
+    # Montantes e puxador da porta. Mesma liga da moldura, material à parte:
+    # é o que deixa a cena girar só a porta no shader, sem levar junto o
+    # batente e a faixa da capota, que são fixos e usam `capota_moldura`.
+    ("porta_moldura", "#8c9196", 0.4, 0.5),
     ("vidro", "#1a1f24", 0.08, 0.0),
     # --- passarelas e tubulação ---
     ("passarela", "#7c8085", 0.55, 0.8),

@@ -149,7 +149,7 @@ export function MaquinaScreen({ gateway, assetTag, onSelect }: MaquinaScreenProp
         </div>
 
         {selected && (
-          <aside className="w-96 shrink-0 overflow-auto border-l border-mill-line pl-4 max-lg:w-full max-lg:border-l-0 max-lg:pl-0">
+          <div className="w-96 shrink-0 overflow-auto border-l border-mill-line pl-4 max-lg:w-full max-lg:border-l-0 max-lg:pl-0">
             <AssetPanel
               asset={selected}
               data={assetData}
@@ -157,7 +157,7 @@ export function MaquinaScreen({ gateway, assetTag, onSelect }: MaquinaScreenProp
                 onSelect(null);
               }}
             />
-          </aside>
+          </div>
         )}
       </div>
     </>

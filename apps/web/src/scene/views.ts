@@ -1,7 +1,9 @@
 import {
+  BEARING_Z_M,
   CALENDER_NIP_Y_M,
   CALENDER_X_M,
   DRY_SECTION_WEB_Y_M,
+  DRYER_TOP_Y_M,
   GROUND_FLOOR_Y_M,
   POST_DRYER_HOOD,
   POST_DRYER_PAIRS,
@@ -33,26 +35,45 @@ export interface SceneView {
  * atualizar.
  */
 export const SCENE_VIEWS: readonly SceneView[] = [
+  /**
+   * A máquina inteira, de dentro do prédio.
+   *
+   * O Z tem de ficar dentro da parede do lado comando: desde que o prédio
+   * passou a ser fechado, uma câmera fora dele enquadra a parede externa, que
+   * não recebe luz assada nenhuma — fica uma tela preta.
+   */
   {
     id: 'overview',
     label: 'Visão geral',
     hint: '',
-    position: [PRE_DRYER_HOOD.from - 8, 15, 32],
-    target: [(PRE_DRYER_HOOD.from + POPE_X_M) / 2, 2, 0],
+    position: [PRE_DRYER_HOOD.from - 14, 10.5, 19],
+    target: [(PRE_DRYER_HOOD.from + POPE_X_M) / 2, 4, 0],
   },
+  /**
+   * As duas vistas da secagem ficam no piso de operação, à altura dos olhos e
+   * do lado comando — é de onde se olha a máquina de verdade.
+   *
+   * O Z passa de 7,0, que é a borda externa da passarela: por dentro dela a
+   * câmera cai na sombra que a passarela deixou assada no piso, e a secagem
+   * vira silhueta. Daqui as portas superiores da capota aparecem abertas.
+   *
+   * A de mancais mira a fileira **superior**. Mirando a de baixo, a linha de
+   * visada passa por baixo do tabuleiro da passarela e o que se enquadra é a
+   * barriga dela.
+   */
   {
     id: 'pre-dryer',
     label: 'Pré-secagem',
     hint: `${String(PRE_DRYER_PAIRS)} pares`,
-    position: [PRE_DRYER_X0_M + 5, 6.5, 13],
-    target: [PRE_DRYER_X0_M + 15, 4.2, -1],
+    position: [PRE_DRYER_X0_M + 2, 1.75, 12],
+    target: [PRE_DRYER_X0_M + 16, 7, 3],
   },
   {
     id: 'bearings',
     label: 'Mancais e juntas',
     hint: 'lado operação',
-    position: [PRE_DRYER_X0_M + 6, 5.5, 11],
-    target: [PRE_DRYER_X0_M + 12, 3.8, 3],
+    position: [PRE_DRYER_X0_M + 6, 1.8, 12.5],
+    target: [PRE_DRYER_X0_M + 10, DRYER_TOP_Y_M, BEARING_Z_M],
   },
   {
     id: 'pit',

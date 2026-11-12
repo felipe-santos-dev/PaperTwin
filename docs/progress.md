@@ -478,13 +478,94 @@ do lightmap. Sobra faixa de bits sem uso. Dá para melhorar excluindo os texels
 de `lampada` e `claraboia` do percentil, mas custa outro bake inteiro e o
 porão já está legível.
 
+### Fase (c) — a cena nova no R3F
+
+`three` e `@types/three` de 0.180 para 0.187, `@react-three/postprocessing` e
+`postprocessing` fora. `MachineScene` passou a montar um `WebGPURenderer`
+dentro do `Canvas` do R3F (fábrica `gl` assíncrona, com `init()`), carregar
+`public/scene/mp1.glb` e aplicar os materiais TSL por `zona__material`. O
+pós-processamento é um `RenderPipeline` com TRAA e bloom só no alvo emissivo —
+três alvos MRT, 24 bytes por pixel, dentro dos 32 que o WebGPU garante.
+
+Saíram `apps/web/src/scene/machine/` (14 arquivos) e `scene/materials.ts`.
+Entraram `scene/tsl/{noise,materials}.ts`, `scene/sceneData.ts`,
+`scene/Bearings.tsx` e `scene/Atmosphere.tsx`.
+
+#### Armadilhas que custaram caro
+
+1. **O `gltfpack` poda atributo que material nenhum usa.** Os materiais do GLB
+   não têm textura — quem aplica o lightmap é a página, em tempo de carga —,
+   então o empacotamento levava embora **os dois conjuntos de UV**. O resultado
+   era uma cena preta, com o lightmap amostrando um atributo inexistente. A
+   solução está em `publish.py`: um PNG branco de 1 × 1 preso em
+   `occlusionTexture` de cada material faz o UV contar como usado. O GLB subiu
+   de 1,75 para 1,91 MB.
+2. **O canal do lightmap mudava de zona para zona.** O Blender exporta duas
+   camadas de UV nas zonas que têm curvas convertidas em malha, e a "LM" é a
+   última — `TEXCOORD_1` ali, `TEXCOORD_0` nas outras. Limpar as camadas antes
+   do desdobramento **muda o desdobramento**: foi testado e 185 das 194 malhas
+   saíram com UV diferente, o que invalidaria os lightmaps já assados. Quem
+   normaliza é o `publish.py`, que promove a última camada a `TEXCOORD_0`.
+3. **`PMREMGenerator` tem de vir de `three/webgpu`.** O de `three` é o do
+   caminho WebGL: monta `ShaderMaterial`, que o construtor de nós recusa, e a
+   captura do ambiente falha calada. Sem ambiente, metal puro fica preto — ele
+   não tem difusa para receber a luz assada. Foi a causa das "silhuetas pretas"
+   na secagem. `CubeCamera`, `CubeRenderTarget` e `PMREMGenerator` vêm todos de
+   `three/webgpu`, e a captura esconde névoa, vapor e fachos.
+4. **A fábrica `gl` do `Canvas` tem de ser síncrona.** Devolvendo uma promessa,
+   o R3F 9.8 não chega a configurar o canvas no caminho WebGL2 do teste. O
+   renderizador é devolvido pronto, o `init()` corre por fora e uma bandeira
+   diz ao pipeline quando pode desenhar.
+5. **A vista geral estava fora do prédio**, enquadrando a parede externa, que
+   não recebe luz assada.
+6. **Janela minimizada engana.** Sem a janela visível o `ResizeObserver` não
+   dispara, o R3F nunca mede o container e nada monta. Horas de diagnóstico
+   pelo painel do navegador foram por esse ralo; a verificação que vale é o
+   Playwright, que tem navegador próprio.
+7. **Clique durante o redimensionamento.** Quando o painel do ativo fecha, o
+   container alarga na hora, mas o R3F só regrava a largura do canvas depois de
+   o React confirmar. Um clique nesse intervalo caía no mancal vizinho — o e2e
+   pegou isso como falha intermitente (1 em 9). Medido: canvas com 564 px na
+   leitura, 964 px no clique. Correção em dois pontos: o canvas acompanha o
+   container por CSS, e os eventos de ponteiro leem o retângulo vivo
+   (`livePointerEvents`). 15 de 15 na repetição.
+
+#### Medido
+
+Com `?perf=1`, `renderer.info` no navegador, backend **WebGPU**:
+
+| vista       | chamadas de desenho | triângulos |
+| ----------- | ------------------- | ---------- |
+| Visão geral | 270                 | 280 499    |
+| Pré-secagem | 153                 | 203 231    |
+
+São 287 malhas na cena — 194 assadas (uma por `zona__material`), 86 mancais
+vivos, 6 emissores de vapor e 1 malha de fachos.
+
+**O fps ainda não foi medido como se deve**: a aba do navegador embutido fica
+oculta e nela o `requestAnimationFrame` cai a cerca de 1 Hz.
+
+Ferramentas de conferência, atrás de parâmetro de URL: `?perf=1` publica
+`window.__twinPerf` e aceita captura de quadro; `?lm=1` troca os materiais por
+branco liso só com o lightmap, para ver a luz assada pura.
+
+#### Decidido pelo Felipe
+
+- **`THREE.Clock`**: fica o three 0.187. O aviso — disparado de dentro do
+  `@react-three/fiber` 9.8.2 — entrou na lista `IGNORED` do e2e com regex exata
+  e a instrução de tirar quando o R3F parar de construir `Clock`.
+- **`<aside>` aninhado** em `MaquinaScreen`: o externo virou `<div>`.
+
+#### Em aberto
+
+- **Cor dos mancais pela zona ISO.** A tabela de cores está em `Bearings.tsx` e
+  a cena aceita o mapa `tag → zona` como entrada opcional, mas nenhuma tela
+  busca hoje a vibração dos 86 mancais de uma vez, e criar essa busca mexeria
+  no back-end. Sem o mapa todos ficam em cinza neutro.
+
 ## Próximo passo exato
 
-Fase (c): a cena nova no R3F — `WebGPURenderer` dentro do `Canvas`, GLB e
-materiais TSL resolvidos por `zona__material`, `RenderPipeline` com TRAA e
-bloom só em emissivo, mancais vivos coloridos pela zona ISO e as portas no
-`positionNode`. A linha de dobradiça e as escalas `S`/`ref` de cada zona estão
-em `apps/web/public/scene/scene.json`.
-
-No fim da fase (c): fps e chamadas de desenho medidos por `renderer.info` na
-vista geral e na pré-secagem, e uma captura de cada vista de `views.ts`.
+Mudança de direção visual: máquina totalmente legível, luz branca de estúdio,
+sem galpão. Sai o envelope do prédio (paredes, telhado, treliças, claraboias),
+entra mundo branco uniforme mais uma direcional fraca; previews antes do
+rebake, e commit separado do da fase (c).

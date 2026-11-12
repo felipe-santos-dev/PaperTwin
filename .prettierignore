@@ -6,3 +6,6 @@ package-lock.json
 
 # Gerado pelo exportador e ambiente do Blender.
 tools/scene-bake/
+
+# Saída do bake: quem formata é o tools/scene-bake.
+apps/web/public/scene/

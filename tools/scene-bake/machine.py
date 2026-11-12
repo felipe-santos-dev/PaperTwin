@@ -491,11 +491,11 @@ def _door(x, z_top, h, tag):
             zc = wz0 + (wz1 - wz0) * (k + 0.5) / 3
             part(f"vidro{cx}{k}", (cx, -0.05, zc), (0.58, 0.02, (wz0 - wz1) / 3 - 0.1), "vidro")
     for cx in (-0.7, 0.0, 0.7):
-        part(f"montante{cx}", (cx, -0.065, (wz0 + wz1) / 2), (0.07, 0.04, wz0 - wz1 + 0.07), "capota_moldura")
+        part(f"montante{cx}", (cx, -0.065, (wz0 + wz1) / 2), (0.07, 0.04, wz0 - wz1 + 0.07), "porta_moldura")
     for k in range(4):
         zc = wz0 + (wz1 - wz0) * k / 3
-        part(f"travessa{k}", (0, -0.065, zc), (DOOR_W - 0.11, 0.04, 0.07), "capota_moldura")
-    part("puxador", (0, -0.12, -h + 0.25), (0.5, 0.05, 0.05), "capota_moldura")
+        part(f"travessa{k}", (0, -0.065, zc), (DOOR_W - 0.11, 0.04, 0.07), "porta_moldura")
+    part("puxador", (0, -0.12, -h + 0.25), (0.5, 0.05, 0.05), "porta_moldura")
 
 
 # ------------------------------------------------- estrutura e passarela

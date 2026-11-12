@@ -241,6 +241,9 @@ def unwrap(ob, margin):
     deselect_all()
     bpy.context.view_layer.objects.active = ob
     ob.select_set(True)
+    # A camada "LM" entra depois das que vierem das curvas convertidas em
+    # malha. Tirar as outras antes mudaria o desdobramento — e com ele os
+    # lightmaps já assados —, então quem resolve o canal é o `publish.py`.
     ob.data.uv_layers.new(name="LM")
     bpy.ops.object.mode_set(mode="EDIT")
     bpy.ops.mesh.select_all(action="SELECT")
@@ -284,6 +287,12 @@ SC.cycles.use_denoising = False
 spp = int(os.environ.get("BSPP", "128"))
 only = set(filter(None, os.environ.get("ZONES", "").split(",")))
 
+# Reexporta sem reassar. Serve para quando só a **atribuição** de material muda:
+# o desdobramento roda sobre a malha unida, antes de qualquer separação, então
+# os UVs dependem só da geometria e os lightmaps no disco continuam valendo.
+# Quem usar isto tem de conferir que os UVs saíram iguais aos do GLB anterior.
+skip_bake = os.environ.get("SKIP_BAKE") == "1"
+
 baked = []
 for zone in ZONES:
     zid = zone["id"]
@@ -296,9 +305,12 @@ for zone in ZONES:
     ob = join(zid)
     ob.data.validate()
     unwrap(ob, 0.0025)
-    t = time.time()
-    bake(ob, size, spp, zid)
-    print(f"bake {zid}: {size}² · {spp} spp · {time.time() - t:.0f}s")
+    if skip_bake:
+        print(f"zona {zid}: desdobrada, bake pulado")
+    else:
+        t = time.time()
+        bake(ob, size, spp, zid)
+        print(f"bake {zid}: {size}² · {spp} spp · {time.time() - t:.0f}s")
     baked.append(zid)
 
     # separa por material: menos draw calls, e a página troca material por nome

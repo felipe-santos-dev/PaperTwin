@@ -6,6 +6,17 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   base: process.env['VITE_BASE'] ?? '/',
+  /**
+   * Uma instância só de three no pacote.
+   *
+   * O `@react-three/drei` arrasta uma dúzia de pacotes que também dependem de
+   * three, e o npm hoista uma cópia 0.180 ao lado da 0.187 que a aplicação
+   * pede. Duas cópias no mesmo pacote quebram `instanceof` entre elas e o
+   * próprio three avisa no console — e o e2e falha com qualquer aviso.
+   */
+  resolve: {
+    dedupe: ['three'],
+  },
   server: {
     port: 5173,
   },
@@ -45,11 +56,7 @@ export default defineConfig({
            */
           if (/[/\\](react|react-dom|scheduler)[/\\]/.test(id)) return 'react';
 
-          if (
-            /[/\\](three|three-stdlib|postprocessing|@react-three|maath|its-fine|suspend-react)[/\\]/.test(
-              id,
-            )
-          ) {
+          if (/[/\\](three|three-stdlib|@react-three|maath|its-fine|suspend-react)[/\\]/.test(id)) {
             return 'three';
           }
 

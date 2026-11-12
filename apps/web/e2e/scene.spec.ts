@@ -23,7 +23,19 @@ const SCENE = '/#maquina';
 const sceneWith = (tag: string): string => `/?asset=${encodeURIComponent(tag)}#maquina`;
 
 /** Ruído conhecido do ambiente, que não indica defeito na aplicação. */
-const IGNORED = [/Download the React DevTools/i, /favicon/i];
+const IGNORED = [
+  /Download the React DevTools/i,
+  /favicon/i,
+  /**
+   * Deprecação do three disparada de dentro do `@react-three/fiber` 9.8.2, que
+   * constrói um `THREE.Clock` por store. O three marcou a classe como obsoleta
+   * na r183 e nós estamos na 0.187; não existe versão do R3F que já use
+   * `THREE.Timer`. A regex é exata de propósito — é este aviso, e só ele.
+   *
+   * Tirar daqui assim que o R3F parar de construir `Clock`.
+   */
+  /^THREE\.Clock: This module has been deprecated\. Please use THREE\.Timer instead\.$/,
+];
 
 // `window.__twin` vem declarado em src/scene/TestHook.tsx, no mesmo programa
 // do TypeScript — redeclarar aqui só criaria duas versões do mesmo tipo.

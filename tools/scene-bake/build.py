@@ -43,21 +43,37 @@ machine.paper_web()
 building.build_building()
 
 # -------------------------------------------------------------------- luz
-SUN_DIR = Vector((0.25, 0.42, -0.87)).normalized()
+# Luz de estúdio, não de fábrica: um mundo branco, neutro e uniforme é a fonte
+# principal, e é ele que dá a sombra suave de contato. A direcional é fraca,
+# alta e de frente pelo lado comando — só para dar volume às formas.
+SUN_DIR = Vector((0.18, 0.55, -0.82)).normalized()
 sun = bpy.data.objects.new("sol", bpy.data.lights.new("sol", "SUN"))
 parts.COL.objects.link(sun)
-sun.data.energy = float(os.environ.get("SUN", "9.0"))
-sun.data.angle = radians(1.2)
-sun.data.color = srgb("#fff1dc")
+sun.data.energy = float(os.environ.get("SUN", "1.6"))
+sun.data.angle = radians(18)   # disco largo: sombra de borda macia
+sun.data.color = (1, 1, 1)
 sun.rotation_euler = SUN_DIR.to_track_quat("-Z", "Y").to_euler()
 
 world = bpy.data.worlds.new("mundo")
 SC.world = world
 if world.node_tree is None:
     world.use_nodes = True
-bg = world.node_tree.nodes.get("Background")
-bg.inputs[0].default_value = (*srgb("#9fb0c0"), 1)
-bg.inputs[1].default_value = 0.12
+nt = world.node_tree
+bg = nt.nodes.get("Background")
+bg.inputs[0].default_value = (1, 1, 1, 1)
+bg.inputs[1].default_value = float(os.environ.get("WORLD", "1.0"))
+# Para a câmera o fundo é o cinza escuro do design; para a luz, o mundo é
+# branco. Só importa nos previews — o bake não tem raio de câmera.
+fundo = nt.nodes.new("ShaderNodeBackground")
+fundo.inputs[0].default_value = (*srgb("#0D1015"), 1)
+fundo.inputs[1].default_value = 1.0
+caminho = nt.nodes.new("ShaderNodeLightPath")
+mistura = nt.nodes.new("ShaderNodeMixShader")
+saida = nt.nodes.get("World Output")
+nt.links.new(caminho.outputs["Is Camera Ray"], mistura.inputs[0])
+nt.links.new(bg.outputs[0], mistura.inputs[1])
+nt.links.new(fundo.outputs[0], mistura.inputs[2])
+nt.links.new(mistura.outputs[0], saida.inputs["Surface"])
 
 SC.render.engine = "CYCLES"
 SC.cycles.device = "CPU"
@@ -74,7 +90,7 @@ if MODE == "conta":
     sys.exit(0)
 
 
-def camera(loc, target, lens=26, ortho=None):
+def camera(loc, target, lens=26, ortho=None, fov=None):
     cam = bpy.data.objects.new("cam", bpy.data.cameras.new("cam"))
     parts.COL.objects.link(cam)
     cam.location = loc
@@ -85,6 +101,10 @@ def camera(loc, target, lens=26, ortho=None):
         cam.data.ortho_scale = ortho
         cam.rotation_euler = (radians(90), 0, 0)
     cam.data.lens = lens
+    if fov is not None:
+        # o mesmo campo vertical da câmera da cena, para o preview valer
+        cam.data.sensor_fit = "VERTICAL"
+        cam.data.angle = radians(fov)
     SC.camera = cam
     return cam
 
@@ -126,7 +146,7 @@ def render_section():
     print("peças removidas do corte:", strip_near_side())
 
     x0, x1 = M["BUILDING_X0_M"], M["BUILDING_X1_M"]
-    top = M["BUILDING_ROOF_Y_M"] + 1.0
+    top = machine.HOOD_TOP + 8.0
     bottom = M["GROUND_FLOOR_Y_M"] - 1.5
     height = top - bottom
     center_z = (top + bottom) / 2
@@ -166,24 +186,52 @@ def render_section():
         bpy.data.objects.remove(light, do_unlink=True)
 
 
+def view(position, target):
+    """Uma vista de `views.ts`, da cena (x, y, z) para o Blender (x, -z, y)."""
+    (px, py, pz), (tx, ty, tz) = position, target
+    return (px, -pz, py), (tx, -tz, ty)
+
+
+_PX0 = M["PRE_DRYER_X0_M"]
+_CX = (M["HEADBOX_X_M"] + M["POPE_X_M"]) / 2
+_G = M["GROUND_FLOOR_Y_M"]
+
+# As mesmas posições de `apps/web/src/scene/views.ts`. Ficam espelhadas aqui
+# para o preview mostrar o que a cena vai enquadrar.
 CAMS = {
-    "preview": ((M["PRE_DRYER_X0_M"] + 6, -24.0, 6.0), (M["PRE_DRYER_X0_M"] + 20, 0, 4.0), 26),
-    "preview2": ((-18.0, -22.0, 8.0), (10.0, -2.0, 4.0), 24),
-    "preview3": ((M["POPE_X_M"] - 10, -18.0, 5.0), (M["POPE_X_M"] + 2, -2.0, 3.6), 24),
-    "preview_terreo": (
-        (M["PRE_DRYER_X0_M"] + 2, -14.0, M["GROUND_FLOOR_Y_M"] + 2.2),
-        (M["PRE_DRYER_X0_M"] + 24, -1.0, M["GROUND_FLOOR_Y_M"] + 1.5),
-        20,
-    ),
+    "preview_geral": view((_CX - 8, 30, 78), (_CX, 3, 0)),
+    "preview_pre": view((_PX0 + 6, 7.5, 22), (_PX0 + 15, 4.5, 0)),
+    "preview_mancais": view((_PX0 + 4, 6.4, 10.5), (_PX0 + 9, 5.6, M["BEARING_Z_M"])),
+    "preview_terreo": view((M["PRE_DRYER_HOOD"]["from"] - 6, _G + 1.7, 16), (M["PRE_DRYER_HOOD"]["from"] + 20, _G + 2.6, 0)),
 }
+
+
+def preview_bearings():
+    """
+    Carcaças de mancal só para o preview.
+
+    Na cena elas são malhas vivas, fora do bake; sem um substituto aqui, o
+    preview da vista de mancais mostraria munhões soltos no ar.
+    """
+    for section in parts.MODEL["sections"]:
+        by_tag = {a["tag"]: a for a in section["assets"]}
+        for a in section["assets"]:
+            if a["kind"] != "bearing":
+                continue
+            x, y, z = a["position"]
+            r = (by_tag.get(a["parentTag"], {}).get("radius") or 0.6) * M["BEARING_RADIUS_RATIO"]
+            ob = parts.cyl(f"prev_{a['tag']}", (x, -z, y), r, 0.42, "caixa_juncao", seg=24, zone="predio")
+            ob.name = f"prev_{a['tag']}"
+
 
 if MODE == "secao":
     render_section()
     sys.exit(0)
 
 if MODE.startswith("preview"):
-    camera(*CAMS[MODE])
-    SC.render.resolution_x, SC.render.resolution_y = 1280, 720
+    preview_bearings()
+    camera(*CAMS[MODE], fov=48)
+    SC.render.resolution_x, SC.render.resolution_y = 1920, 1080
     SC.cycles.samples = int(os.environ.get("SPP", "24"))
     SC.cycles.use_denoising = True
     SC.render.filepath = os.path.join(OUT, f"{MODE}.png")
@@ -356,6 +404,8 @@ meta = {
     # linha de dobradiça das portas de cima, em coordenadas da cena
     "hoodDoorHinge": {"y": round(machine.HOOD_TOP - 0.03, 3), "z": round(machine.Y_WALL + 0.1, 3)},
     "hoodTop": round(machine.HOOD_TOP, 3),
+    # as portas de cima são assadas abertas; a cena fecha girando de volta
+    "hoodDoorBakedDeg": machine.DOOR_OPEN_DEG,
     "exposure": 0.82,
 }
 with open(os.path.join(OUT, "scene.json"), "w", encoding="utf-8") as f:

@@ -78,6 +78,8 @@ export interface SceneUniforms {
   readonly lightMapOn: FloatUniform;
   /** Ângulo das portas superiores da capota, em radianos. */
   readonly doorAngle: FloatUniform;
+  /** Ângulo em que o bake deixou as portas, em radianos. */
+  readonly doorBaked: FloatUniform;
   /** Linha de dobradiça das portas, preenchida com o que o bake gravou. */
   readonly hingeY: FloatUniform;
   readonly hingeZ: FloatUniform;
@@ -87,6 +89,7 @@ export function createUniforms(): SceneUniforms {
   return {
     lightMapOn: makeFloatUniform(1),
     doorAngle: makeFloatUniform(0),
+    doorBaked: makeFloatUniform(0),
     hingeY: makeFloatUniform(0),
     hingeZ: makeFloatUniform(0),
   };
@@ -162,14 +165,20 @@ function hood(m: MeshStandardNodeMaterial, hex: number) {
   m.metalnessNode = float(0.15);
 }
 
-/** Onde o piso está molhado: poças grandes e a faixa junto à capota. */
+/**
+ * Onde o piso está molhado: poucas poças e a faixa junto à capota.
+ *
+ * Sem galpão, o que a poça espelha é o fundo escuro do estúdio. Com poças
+ * grandes e quase espelhadas o piso inteiro virava camuflagem, então elas são
+ * raras, rasas e só um pouco mais escuras que o concreto seco.
+ */
 const wetness = () => {
   const p = positionWorld.xz;
   const big = nz(p.mul(0.045)).b;
   const mid = nz(p.mul(0.19)).g;
-  const puddle = smoothstep(0.56, 0.64, big.mul(0.7).add(mid.mul(0.3)));
-  const near = smoothstep(9.0, 5.0, abs(positionWorld.z));
-  return clamp(puddle.add(near.mul(smoothstep(0.35, 0.65, mid)).mul(0.85)), 0, 1);
+  const puddle = smoothstep(0.64, 0.7, big.mul(0.7).add(mid.mul(0.3)));
+  const near = smoothstep(7.0, 5.0, abs(positionWorld.z));
+  return clamp(puddle.add(near.mul(smoothstep(0.45, 0.7, mid)).mul(0.6)), 0, 1);
 };
 
 function concreteFloor(m: MeshStandardNodeMaterial, hex: number, wet: boolean) {
@@ -183,8 +192,8 @@ function concreteFloor(m: MeshStandardNodeMaterial, hex: number, wet: boolean) {
   const base = mix(color(hex), color(0x8b8780), n.g)
     .mul(mix(0.82, 1.0, fine.r))
     .mul(mix(0.75, 1.0, n.b));
-  m.colorNode = base.mul(mix(float(1), float(0.42), water)).mul(mix(1.0, 0.45, joint));
-  m.roughnessNode = mix(float(0.8).add(fine.g.sub(0.5).mul(0.2)), float(0.07), water);
+  m.colorNode = base.mul(mix(float(1), float(0.72), water)).mul(mix(1.0, 0.45, joint));
+  m.roughnessNode = mix(float(0.8).add(fine.g.sub(0.5).mul(0.2)), float(0.22), water);
   m.metalnessNode = float(0);
   m.normalNode = bumpMap(fine.r.mul(water.oneMinus()), float(0.25));
 }
@@ -383,12 +392,17 @@ function doorSwing(u: SceneUniforms) {
   const p = positionLocal;
   const dy = p.y.sub(u.hingeY);
   const dz = p.z.sub(u.hingeZ);
-  const c = cos(u.doorAngle);
-  const s = sin(u.doorAngle);
+  // As portas vêm do bake já abertas, em `doorBaked`. O giro aqui é a
+  // diferença entre o ângulo pedido e esse: zero com as portas abertas,
+  // negativo para fechá-las de volta contra a capota.
+  const delta = u.doorAngle.sub(u.doorBaked);
+  const c = cos(delta);
+  const s = sin(delta);
+  // ângulo positivo abre para fora, que é o Z positivo do lado comando
   const swung = vec3(
     p.x,
-    u.hingeY.add(dy.mul(c).sub(dz.mul(s))),
-    u.hingeZ.add(dy.mul(s).add(dz.mul(c))),
+    u.hingeY.add(dy.mul(c).add(dz.mul(s))),
+    u.hingeZ.add(dz.mul(c).sub(dy.mul(s))),
   );
   // só a metade de cima abre
   return mix(p, swung, step(float(DOOR_SPLIT_Y), p.y));

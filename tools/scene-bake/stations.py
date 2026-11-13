@@ -214,7 +214,7 @@ def scanners():
         box(f"sc_{tag}_viga_inf", (x, 0, y - 1.05), (0.42, 2 * half, 0.4), "estrutura_clara", zone=zone, bevel=0.03)
         box(f"sc_{tag}_cabeca", (x, 1.2, y + 0.62), (0.6, 0.9, 0.5), "caixa_juncao", zone=zone, bevel=0.02)
         box(f"sc_{tag}_feixe", (x, 0, y), (0.05, 2 * half - 0.6, 0.05), "lampada", zone=zone)
-        area_light(f"al_{tag}", (x, 0, y + 0.3), 0.3, 60, "#cfe4ff")
+        area_light(f"al_{tag}", (x, 0, y + 0.3), 0.3, 60)
 
 
 def speed_sizer():

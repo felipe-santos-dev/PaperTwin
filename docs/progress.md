@@ -563,9 +563,79 @@ branco liso só com o lightmap, para ver a luz assada pura.
   busca hoje a vibração dos 86 mancais de uma vez, e criar essa busca mexeria
   no back-end. Sem o mapa todos ficam em cinza neutro.
 
+### Direção visual de estúdio
+
+A máquina inteira legível, sob luz branca, sem galpão. Previews do Cycles
+aprovados antes do bake.
+
+**O que saiu.** Paredes, telhado, treliças e claraboias. Em `geometry.ts` saíram
+`BUILDING_ROOF_Y_M`, `SKYLIGHT_BANDS`, `SKYLIGHT_PITCH_M` e `SKYLIGHT_PANEL_M`
+(63 → 59 medidas), e o contorno do piso cresceu para ~12 m além da máquina:
+`BUILDING_X0_M = HEADBOX_X_M − 14`, `BUILDING_X1_M = POPE_X_M + 20`,
+`BUILDING_Z_LA_M = −18`, `BUILDING_Z_LC_M = 19`. Nenhuma medida validada mudou.
+Na página saíram os fachos de sol e a poeira; o vapor ficou, mais ralo
+(alfa 0,12 × potência, 72 sprites).
+
+**O que ficou ou entrou no prédio.** Piso de operação, térreo, pilares e vigas
+do mezanino, escada, faixas de piso e um guarda-corpo em toda a borda do piso —
+sem as paredes, a borda é uma queda de 6 m.
+
+**Luz.** Mundo branco uniforme (1, 1, 1) mais uma direcional branca fraca do
+lado comando. Luminárias a ~5000 K (`#fff8f2`). Dentro da capota, três linhas
+de luminárias a cada dois passos (900 W nos lados, 600 W no meio). No térreo,
+poucas e fortes: duas fileiras de 1400 W a cada 24 m, no lugar das 38 de antes.
+Para a câmera, o mundo aparece como `#0D1015` (mistura por `LightPath`), então
+o fundo do bake bate com o da página.
+
+**Portas da capota.** As de cima são assadas abertas a 68°
+(`DOOR_OPEN_DEG` em `machine.py`, exportado em `scene.json` como
+`hoodDoorBakedDeg`). O shader gira pela diferença entre o ângulo pedido e o
+assado, então "Fechar portas" leva a 0° e a porta fecha contra a capota.
+
+**Página.** Fundo `#0D1015`, névoa de densidade 0,0012, bloom 0,12 só no alvo
+emissivo, ambiente capturado da própria cena com fundo branco (intensidade
+0,8). Exposição AgX mantida em **0,82**: medido nas capturas, o papel fica em
+p95 ≈ 238 de 255, e menos de 1% satura — só a linha de luz do scanner. As poças
+do piso ficaram raras e foscas (rugosidade 0,22, escurecem 28%): grandes e
+espelhadas, refletiam o fundo escuro e o piso parecia camuflagem.
+
+**Vistas.** Todas revistas. A geral enquadra da caixa de entrada à Pope; as de
+estação recuaram e subiram para mostrar a seção inteira; a calandra passou a
+ser vista de jusante e de cima, porque de frente a chapa do castelo esconde o
+nip; a do porão saiu de cima da fileira central de pilares do mezanino, que
+cortava a imagem ao meio.
+
+**Verificado.** Capturas 1920 × 1080 de todas as vistas pelo Playwright, e2e
+8/8, build de produção, typecheck, lint e os 228 testes do `shared`. O único
+aviso no console é o `THREE.Clock` já aceito.
+
+**Bake.** 2048², 128 amostras, OIDN. Total **3758 s (~63 min)**, contra ~2 h 10
+antes.
+
+| zona           | tempo  |
+| -------------- | ------ |
+| umida-formacao | 297 s  |
+| umida-prensas  | 325 s  |
+| g1             | 200 s  |
+| g2             | 248 s  |
+| g3             | 296 s  |
+| g4             | 255 s  |
+| scanner-sizer  | 707 s  |
+| g5             | 322 s  |
+| g6             | 362 s  |
+| acabamento     | 552 s  |
+| predio         | 194 s  |
+
+O `scanner-sizer` caiu de 4974 s para 707 s com o fim das 38 luminárias do
+térreo. `public/scene/` ficou com **3,49 MB**: `mp1.glb` 1,82 MB e 11 WebP com
+1,67 MB; 190 materiais por zona.
+
+Folga conhecida: nas zonas de secagem a escala do lightmap (S = 15–25) é
+puxada pelo interior da capota, agora muito mais iluminado que o lado de fora
+(ref 0,35–0,62). Sobra menos faixa de bits para o exterior; nas capturas não
+aparece banda, mas é o primeiro lugar a olhar se aparecer.
+
 ## Próximo passo exato
 
-Mudança de direção visual: máquina totalmente legível, luz branca de estúdio,
-sem galpão. Sai o envelope do prédio (paredes, telhado, treliças, claraboias),
-entra mundo branco uniforme mais uma direcional fraca; previews antes do
-rebake, e commit separado do da fase (c).
+Revisão das capturas da direção de estúdio pelo Felipe. Em aberto, de antes:
+cor dos mancais pela zona ISO, que depende de uma busca no back-end.

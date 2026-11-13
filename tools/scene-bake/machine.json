@@ -2787,11 +2787,10 @@
  "measurements": {
   "BEARING_RADIUS_RATIO": 0.55,
   "BEARING_Z_M": 4.3,
-  "BUILDING_ROOF_Y_M": 15,
-  "BUILDING_X0_M": -20,
-  "BUILDING_X1_M": 96.5,
-  "BUILDING_Z_LA_M": -14,
-  "BUILDING_Z_LC_M": 24,
+  "BUILDING_X0_M": -26.6,
+  "BUILDING_X1_M": 104.5,
+  "BUILDING_Z_LA_M": -18,
+  "BUILDING_Z_LC_M": 19,
   "CALENDER_NIP_Y_M": 3.4,
   "CALENDER_ROLL_RADIUS_M": 0.8,
   "CALENDER_X_M": 74.5,
@@ -2857,18 +2856,6 @@
   "SHOE_PRESS_NIP_LENGTH_M": 0.25,
   "SIZER_ROLL_RADIUS_M": 1.15,
   "SIZER_X_M": 53.2,
-  "SKYLIGHT_BANDS": [
-   {
-    "from": 15.4,
-    "to": 17.4
-   },
-   {
-    "from": 9.6,
-    "to": 11
-   }
-  ],
-  "SKYLIGHT_PANEL_M": 3.6,
-  "SKYLIGHT_PITCH_M": 6,
   "WALKWAY_Y_M": 3.35,
   "WALKWAY_Z0_M": 5.75,
   "WALKWAY_Z1_M": 7,
@@ -2888,7 +2875,7 @@
    "group": "machine",
    "lightmap": 2048,
    "span": {
-    "from": -20,
+    "from": -26.6,
     "to": 0
    }
   },
@@ -2979,7 +2966,7 @@
    "lightmap": 2048,
    "span": {
     "from": 72.4,
-    "to": 96.5
+    "to": 104.5
    }
   },
   {

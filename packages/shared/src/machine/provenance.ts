@@ -40,7 +40,7 @@ const FROM_PROTOTYPE = 'Tirado do protótipo navegável; falta conferir no mapa 
 const WET_PROTOTYPE =
   'Tirado de reference/prototypes/mp1-parte-umida.html, que serve de referência de forma; a parte úmida entra só como geometria, sem ativo.';
 const BUILDING_LAYOUT =
-  'Prédio em níveis decidido para a cena: piso de operação elevado, térreo 6 m abaixo. Não reproduz o layout da planta além disso.';
+  'Níveis decididos para a cena: piso de operação elevado, térreo 6 m abaixo, sem galpão em volta. Não reproduz o layout da planta além disso.';
 const WALKWAY_NOTE = 'O nível que o protótipo de teste já usa, mantido de propósito.';
 const CONFIRMED = 'Conferido em campo contra a máquina.';
 
@@ -152,19 +152,15 @@ export const MEASUREMENTS = {
     'Onde o piso de operação é aberto até o térreo',
     'Decidido assim: aberto sob a secagem, a pós-secagem e a Pope; fechado sob a parte úmida. Derivado das capotas e da Pope, não escrito à mão.',
   ),
-  BUILDING_X0_M: assumed('Parede do prédio antes da caixa de entrada', BUILDING_LAYOUT),
-  BUILDING_X1_M: assumed('Parede do prédio depois da enroladeira', BUILDING_LAYOUT),
-  BUILDING_Z_LA_M: assumed('Parede do prédio no lado acionamento', BUILDING_LAYOUT),
-  BUILDING_Z_LC_M: assumed('Parede do prédio no lado comando', BUILDING_LAYOUT),
-  BUILDING_ROOF_Y_M: assumed('Altura do telhado (15 m)', BUILDING_LAYOUT),
+  BUILDING_X0_M: assumed('Borda do piso de operação antes da caixa de entrada', BUILDING_LAYOUT),
+  BUILDING_X1_M: assumed('Borda do piso de operação depois da enroladeira', BUILDING_LAYOUT),
+  BUILDING_Z_LA_M: assumed('Borda do piso de operação no lado acionamento', BUILDING_LAYOUT),
+  BUILDING_Z_LC_M: assumed('Borda do piso de operação no lado comando', BUILDING_LAYOUT),
   MEZZANINE_COLUMN_PITCH_M: assumed('Passo dos pilares do mezanino', BUILDING_LAYOUT),
   GROUND_STAIR_X_M: assumed('X da escada entre o térreo e o piso de operação', BUILDING_LAYOUT),
   WALKWAY_Y_M: assumed('Altura da passarela de operação da secagem', WALKWAY_NOTE),
   WALKWAY_Z0_M: assumed('Borda interna da passarela da secagem', WALKWAY_NOTE),
   WALKWAY_Z1_M: assumed('Borda externa da passarela da secagem', WALKWAY_NOTE),
-  SKYLIGHT_BANDS: assumed('Faixas de claraboia no telhado', BUILDING_LAYOUT),
-  SKYLIGHT_PITCH_M: assumed('Passo das claraboias no sentido da máquina', BUILDING_LAYOUT),
-  SKYLIGHT_PANEL_M: assumed('Comprimento de um painel de claraboia', BUILDING_LAYOUT),
 } as const satisfies Record<string, Provenance>;
 
 export type MeasurementId = keyof typeof MEASUREMENTS;

@@ -1,7 +1,7 @@
 import { Suspense, use, useEffect, useMemo, useRef } from 'react';
 import { Canvas, events as pointerEvents, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
-import { AgXToneMapping, PCFShadowMap, Vector3 } from 'three';
+import { AgXToneMapping, Color, PCFShadowMap, Vector3 } from 'three';
 import {
   CubeCamera,
   CubeRenderTarget,
@@ -125,7 +125,8 @@ function Pipeline() {
     scenePass.setMRT(mrt(temporal ? { output, emissive, velocity } : { output, emissive }));
 
     const sceneColour = scenePass.getTextureNode('output');
-    const withBloom = sceneColour.add(bloom(scenePass.getTextureNode('emissive'), 0.55, 0.45, 0.0));
+    const withBloom = sceneColour.add(// bloom baixo: só um halo curto nas luminárias, nada lavado
+      bloom(scenePass.getTextureNode('emissive'), 0.12, 0.3, 0.0));
     const antialiased = temporal
       ? traa(
           withBloom,
@@ -341,11 +342,18 @@ const livePointerEvents: typeof pointerEvents = (store) => ({
 /** Ver a nota no `Canvas`: desliga a sombra sem passar por uma constante removida. */
 const SHADOWS = { enabled: false, type: PCFShadowMap } as const;
 
-/** Nome do grupo do vapor e dos fachos, para escondê-los na captura do ambiente. */
+/** Fundo da tela: o cinza escuro neutro do design. */
+const BACKGROUND = '#0D1015';
+
+/** O mundo branco do bake, usado como fundo só durante a captura do ambiente. */
+const STUDIO_WHITE = new Color(1, 1, 1);
+
+/** Quanto do ambiente capturado entra no reflexo. */
+const ENVIRONMENT_INTENSITY = 0.8;
+
+/** Nome do grupo do vapor, para escondê-lo na captura do ambiente. */
 const ATMOSPHERE = 'atmosfera';
 
-/** Ângulo de porta aberta, em radianos — basculante, abrindo para fora. */
-const DOOR_OPEN = (68 * Math.PI) / 180;
 
 interface ContentProps {
   readonly state: SceneState;
@@ -369,7 +377,8 @@ function SceneContent({ state, context, noise, bearingZones }: ContentProps) {
    * proíbe, e com razão: o valor volta ao que era na próxima renderização.
    */
   useEffect(() => {
-    scene.fogNode = fog(color(0x6e6a63), densityFogFactor(0.0085));
+    // névoa mínima, da cor do fundo: só o bastante para dar profundidade ao longe
+    scene.fogNode = fog(color(0x0d1015), densityFogFactor(0.0012));
     return () => {
       scene.fogNode = null;
     };
@@ -395,12 +404,17 @@ function SceneContent({ state, context, noise, bearingZones }: ContentProps) {
 
     void (async () => {
       const fogNode = scene.fogNode;
+      const background = scene.background;
       const atmosphere = scene.getObjectByName(ATMOSPHERE);
       try {
         // A captura é da sala, não do ar: névoa, vapor e fachos entrariam no
         // reflexo de todo metal e lavariam a cena inteira.
         scene.fogNode = null;
         if (atmosphere) atmosphere.visible = false;
+        // A luz do bake é um mundo branco e uniforme. Para o reflexo dos metais
+        // enxergar a mesma luz, a captura troca o fundo escuro da tela por esse
+        // branco — senão o metal espelharia o cinza do fundo e escureceria.
+        scene.background = STUDIO_WHITE;
 
         await cube.update(gl, scene);
 
@@ -410,12 +424,13 @@ function SceneContent({ state, context, noise, bearingZones }: ContentProps) {
         // metal puro não tem difusa para receber a luz assada.
         const pmrem = new PMREMGenerator(gl);
         scene.environment = pmrem.fromCubemap(target.texture).texture;
-        scene.environmentIntensity = 0.42;
+        scene.environmentIntensity = ENVIRONMENT_INTENSITY;
         pmrem.dispose();
       } catch {
         // sem ambiente a cena continua: o que se perde é o reflexo
       } finally {
         scene.fogNode = fogNode;
+        scene.background = background;
         if (atmosphere) atmosphere.visible = true;
         target.dispose();
       }
@@ -426,7 +441,7 @@ function SceneContent({ state, context, noise, bearingZones }: ContentProps) {
     if (state.playing) clock.value = (clock.value as number) + delta;
 
     // as portas chegam ao ângulo pedido em cerca de meio segundo
-    const wanted = state.doorsOpen ? DOOR_OPEN : 0;
+    const wanted = state.doorsOpen ? (context.uniforms.doorBaked.value as number) : 0;
     const angle = context.uniforms.doorAngle;
     angle.value =
       (angle.value as number) + (wanted - (angle.value as number)) * Math.min(1, delta * 6);
@@ -438,11 +453,10 @@ function SceneContent({ state, context, noise, bearingZones }: ContentProps) {
       <Bearings zones={bearingZones} />
       <Atmosphere
         name={ATMOSPHERE}
-        uniforms={context.uniforms}
-        clock={clock as never}
+        clock={clock}
         doorsOpen={state.doorsOpen}
-        sun={loaded.meta.sun}
         noise={noise}
+        hoodWallZ={loaded.meta.hoodDoorHinge.z - 0.1}
       />
     </group>
   );
@@ -489,7 +503,7 @@ export default function MachineScene({ view, state, bearingZones }: MachineScene
         state.select(null);
       }}
     >
-      <color attach="background" args={['#0b0d0f']} />
+      <color attach="background" args={[BACKGROUND]} />
 
       <SceneProvider value={state}>
         <Suspense fallback={null}>

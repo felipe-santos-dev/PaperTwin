@@ -175,13 +175,20 @@ export const OPERATING_FLOOR_OPENINGS: readonly HoodSpan[] = Object.freeze([
   { from: POPE_X_M - POPE_PIT_HALF_M, to: POPE_X_M + POPE_PIT_HALF_M },
 ]);
 
-export const BUILDING_X0_M = -20;
-export const BUILDING_X1_M = POPE_X_M + 12;
+/**
+ * Até onde o piso de operação se estende.
+ *
+ * Não há mais galpão em volta: a cena é a máquina sobre o seu piso, com luz de
+ * estúdio. O piso avança cerca de 12 m além da máquina para cada lado, que é o
+ * recuo de que a câmera precisa para enquadrá-la inteira. Os nomes guardam o
+ * `BUILDING` de quando isto era a planta de um prédio.
+ */
+export const BUILDING_X0_M = HEADBOX_X_M - 14;
+export const BUILDING_X1_M = POPE_X_M + 20;
 
-/** Paredes: Z negativo é o lado acionamento, Z positivo o lado comando. */
-export const BUILDING_Z_LA_M = -14;
-export const BUILDING_Z_LC_M = 24;
-export const BUILDING_ROOF_Y_M = 15;
+/** Bordas do piso: Z negativo é o lado acionamento, Z positivo o lado comando. */
+export const BUILDING_Z_LA_M = -18;
+export const BUILDING_Z_LC_M = 19;
 
 /** Passo dos pilares e das vigas do mezanino que sustenta o piso de operação. */
 export const MEZZANINE_COLUMN_PITCH_M = 6;
@@ -193,19 +200,3 @@ export const GROUND_STAIR_X_M = PRE_DRYER_HOOD.from - 3.5;
 export const WALKWAY_Y_M = 3.35;
 export const WALKWAY_Z0_M = 5.75;
 export const WALKWAY_Z1_M = 7.0;
-
-/**
- * Claraboias do telhado.
- *
- * Duas faixas que correm no sentido da máquina, do lado comando, divididas em
- * painéis entre as treliças. São a fonte de luz natural da sala — e, na cena,
- * o que recebe bloom e lança os fachos de poeira.
- */
-export const SKYLIGHT_BANDS: readonly HoodSpan[] = Object.freeze([
-  { from: 15.4, to: 17.4 },
-  { from: 9.6, to: 11.0 },
-]);
-
-/** Passo das claraboias no sentido da máquina, e o comprimento de cada painel. */
-export const SKYLIGHT_PITCH_M = 6;
-export const SKYLIGHT_PANEL_M = 3.6;

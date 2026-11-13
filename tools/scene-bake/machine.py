@@ -59,6 +59,9 @@ HOOD_TOP = Z_TOP + 4.3
 #: Largura das portas da capota; o passo de 2,2 m deixa 0,6 m de painel entre elas.
 DOOR_W = 1.6
 
+#: Ângulo em que as portas de cima são assadas, abertas.
+DOOR_OPEN_DEG = 68.0
+
 WALK_Y = M["WALKWAY_Y_M"]
 WALK_Z0, WALK_Z1 = M["WALKWAY_Z0_M"], M["WALKWAY_Z1_M"]
 
@@ -383,22 +386,28 @@ def hood(span, tag):
         )
 
     for i, x in enumerate(tops):
-        _door(x, Z_SPLIT - 0.03, Z_SPLIT - 0.08, f"{tag}i{i}")
+        _door(x, Z_SPLIT - 0.03, Z_SPLIT - 0.08, 0.0, f"{tag}i{i}")
     for i, x in enumerate(bots):
-        _door(x, HOOD_TOP - 0.03, HOOD_TOP - Z_SPLIT - 0.08, f"{tag}s{i}")
+        _door(x, HOOD_TOP - 0.03, HOOD_TOP - Z_SPLIT - 0.08, DOOR_OPEN_DEG, f"{tag}s{i}")
 
-    # lâmpadas internas: é o que se vê quando as portas abrem
-    x = x0 + 2.5
-    while x < x1 - 2:
-        box(
-            f"lamp_capota_{tag}{x:.1f}",
-            (x, -Y_WALL + 0.45, HOOD_TOP - 0.15),
-            (1.2, 0.12, 0.06),
-            "lampada",
-            zone=zone_for_x(x),
-        )
-        area_light(f"al_capota_{tag}{x:.1f}", (x, -Y_WALL + 0.45, HOOD_TOP - 0.25), 1.2, 700, sy=0.2, shape="RECTANGLE")
-        x += 6.0
+    # Luminárias internas, reforçadas: com as portas de cima abertas, é por
+    # elas que se vê cilindro, mancal e tela, e nada ali pode ficar em silhueta.
+    # Três linhas — alto dos dois lados e a meia altura no lado acionamento,
+    # entre os dois níveis —, uma luminária a cada dois passos.
+    x = x0 + 1.6
+    while x < x1 - 1:
+        zone = zone_for_x(x)
+        for nm, y, z, watts in (
+            ("lc", -Y_WALL + 0.45, HOOD_TOP - 0.15, 900),
+            ("la", Y_WALL - 0.45, HOOD_TOP - 0.15, 900),
+            ("meio", Y_WALL - 0.3, Z_SPLIT, 600),
+        ):
+            box(f"lamp_capota_{tag}{nm}{x:.1f}", (x, y, z), (1.2, 0.12, 0.06), "lampada", zone=zone)
+            light = area_light(f"al_capota_{tag}{nm}{x:.1f}", (x, y, z - 0.1), 1.2, watts, sy=0.2, shape="RECTANGLE")
+            if nm == "meio":
+                # virada para dentro, para lavar a face dos cilindros de baixo
+                light.rotation_euler = (radians(-90), 0, 0)
+        x += 2 * M["DRYER_PITCH_M"]
 
     # dutos de exaustão
     x = x0 + 3.0
@@ -462,15 +471,17 @@ def _wall_fill(x0, x1, z0, z1, door_xs, tag):
             )
 
 
-def _door(x, z_top, h, tag):
+def _door(x, z_top, h, angle, tag):
     """
-    Porta basculante, desenhada fechada.
+    Porta basculante, com o pivô no topo, abrindo para fora.
 
-    O bake é com a porta fechada e as lâmpadas de dentro acesas, então quando a
-    cena abre a porta no shader o interior aparece iluminado, não preto.
+    As de cima são assadas **abertas**: é por elas que a luz do estúdio entra na
+    capota, e é assim que a cena abre. A cena as fecha no shader girando de
+    volta em torno da mesma linha de dobradiça, com `DOOR_OPEN_DEG` como zero
+    de referência.
     """
     zone = zone_for_x(x)
-    hinge = Matrix.Translation((x, -Y_WALL - 0.1, z_top))
+    hinge = Matrix.Translation((x, -Y_WALL - 0.1, z_top)) @ Matrix.Rotation(-radians(angle), 4, "X")
 
     def part(nm, c, s, mat, bev=0.0):
         box(

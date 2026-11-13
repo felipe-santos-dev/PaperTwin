@@ -51,6 +51,9 @@ HIDE_IN_SECTION = set()
 
 MAT = {}
 
+#: Branco neutro das luminárias, perto de 5000 K sem puxar para o amarelo.
+NEUTRAL = "#fff8f2"
+
 
 def zone_for_x(x):
     """A zona de máquina que cobre um X. Fora de todas, cai na primeira ou na última."""
@@ -125,8 +128,6 @@ PALETTE = [
     ("laje", "#8a8884", 0.75, 0.0),
     ("fosso", "#4a4a47", 0.8, 0.0),
     ("refugo", "#dcdcd6", 0.9, 0.0),
-    ("parede", "#8d8b84", 0.85, 0.0),
-    ("telhado", "#3c3f42", 0.6, 0.3),
     ("trelica", "#585d62", 0.5, 0.6),
     ("pilar", "#c9b994", 0.6, 0.0),
     ("faixa_amarela", "#d9a816", 0.6, 0.0),
@@ -135,8 +136,8 @@ PALETTE = [
 
 for _n, _c, _r, _m in PALETTE:
     material(_n, srgb(_c), _r, _m)
-material("lampada", (1, 1, 1), 0.5, 0, emit=srgb("#ffe2b8"), strength=20.0)
-material("claraboia", (1, 1, 1), 0.5, 0, emit=srgb("#dfe9f2"), strength=6.0)
+# Luminárias em branco neutro: a luz da cena é de estúdio, sem tom quente.
+material("lampada", (1, 1, 1), 0.5, 0, emit=srgb(NEUTRAL), strength=20.0)
 
 
 # ---------------------------------------------------------------- objetos
@@ -293,7 +294,7 @@ def ribbon_split(name, pts, width, mat, thick, zone=None, y0=0.0):
     return out
 
 
-def area_light(name, loc, size, energy, color="#ffe2b8", sy=None, shape="DISK"):
+def area_light(name, loc, size, energy, color=NEUTRAL, sy=None, shape="DISK"):
     li = bpy.data.lights.new(name, "AREA")
     li.shape = shape
     li.size = size

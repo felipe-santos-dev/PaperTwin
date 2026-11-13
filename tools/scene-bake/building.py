@@ -9,8 +9,10 @@ desce até o térreo, e é por ele que se vê o refugo, os pilares e a tubulaç�
 vapor e condensado. Sob a parte úmida o piso é fechado, e as plataformas de três
 níveis da úmida ficam acima dele.
 
-Tudo aqui cai na zona de bake do prédio: pilares e vigas do mezanino, escadas
-entre os dois níveis e guarda-corpo nas bordas dos vãos.
+Não há galpão: paredes, telhado, treliças e claraboias saíram, e a cena é a
+máquina sobre o seu piso, com luz de estúdio. Ficam o piso de operação, o
+térreo, os pilares e vigas do mezanino, as escadas e os guarda-corpos — tudo na
+mesma zona de bake.
 
 No térreo só entra o que pertence à máquina. Preparo de massa fica fora, e o
 layout da planta não é reproduzido além do que está descrito aqui.
@@ -31,7 +33,6 @@ Z = "predio"
 X0, X1 = M["BUILDING_X0_M"], M["BUILDING_X1_M"]
 Y_LC = -M["BUILDING_Z_LC_M"]
 Y_LA = -M["BUILDING_Z_LA_M"]
-ROOF = M["BUILDING_ROOF_Y_M"]
 
 GROUND = M["GROUND_FLOOR_Y_M"]
 SLAB = M["OPERATING_FLOOR_THICKNESS_M"]
@@ -206,34 +207,16 @@ def ground_floor():
                 zone=Z,
             )
 
-    # Luminárias do térreo, presas sob a laje nos dois lados do vão.
-    #
-    # Uma luminária só não ilumina 116 m: a primeira versão deixava metade do
-    # nível de baixo em preto, e com a escala do lightmap puxada pelo telhado o
-    # porão caía em menos de 20 dos 255 níveis do WebP — escuro e com banda.
-    # Dentro do vão não há laje onde prender nada, e ali a luz vem de cima.
+    # Luminárias do térreo: poucas e fortes. Sem paredes, a luz do estúdio
+    # já entra pelos lados; estas só garantem o miolo sob a laje. A versão
+    # anterior tinha 38, e foram elas que levaram o bake de uma zona a 83 min.
     lamp_z = -SLAB - 0.45
-    x = X0 + 3
-    while x < X1 - 2:
-        for y in (PIT_Y0 - 3.5, PIT_Y1 + 3.5):
-            box(f"lamp_terreo{x:.0f}_{y:.0f}", (x, y, lamp_z), (1.3, 0.22, 0.1), "lampada", zone=Z)
-            box(
-                f"lamp_terreo_cup{x:.0f}_{y:.0f}",
-                (x, y, lamp_z + 0.12),
-                (1.4, 0.3, 0.12),
-                "duto",
-                zone=Z,
-            )
-            area_light(
-                f"al_terreo{x:.0f}_{y:.0f}",
-                (x, y, lamp_z - 0.1),
-                1.3,
-                260,
-                "#ffd9a0",
-                sy=0.22,
-                shape="RECTANGLE",
-            )
-        x += PITCH
+    x = X0 + 14
+    while x < X1 - 8:
+        for y in (PIT_Y0 - 4.0, PIT_Y1 + 4.0):
+            box(f"lamp_terreo{x:.0f}_{y:.0f}", (x, y, lamp_z), (2.4, 0.4, 0.1), "lampada", zone=Z)
+            area_light(f"al_terreo{x:.0f}_{y:.0f}", (x, y, lamp_z - 0.1), 2.4, 1400, sy=0.4, shape="RECTANGLE")
+        x += 24.0
 
 
 def stairs():
@@ -274,92 +257,8 @@ def stairs():
     box("patamar", (x + 0.9, y, -SLAB / 2), (1.8, 1.4, SLAB), "passarela", zone=Z)
 
 
-def shell():
-    """Paredes, telhado com claraboias, treliças e pilares do prédio."""
-    H = ROOF
-    for nm, (c, s) in {
-        "parede_lc": (((X0 + X1) / 2, Y_LC, (GROUND + H) / 2), (X1 - X0, 0.3, H - GROUND)),
-        "parede_la": (((X0 + X1) / 2, Y_LA, (GROUND + H) / 2), (X1 - X0, 0.3, H - GROUND)),
-        "parede_x0": ((X0, (Y_LC + Y_LA) / 2, (GROUND + H) / 2), (0.3, Y_LA - Y_LC, H - GROUND)),
-        "parede_x1": ((X1, (Y_LC + Y_LA) / 2, (GROUND + H) / 2), (0.3, Y_LA - Y_LC, H - GROUND)),
-    }.items():
-        box(nm, c, s, "parede", zone=Z, section_hidden=nm == "parede_lc")
-
-    bands = [(-b["to"], -b["from"]) for b in M["SKYLIGHT_BANDS"]]
-    panel = M["SKYLIGHT_PANEL_M"]
-    sky_x = []
-    x = X0 + M["SKYLIGHT_PITCH_M"]
-    while x < X1 - 2:
-        sky_x.append(x)
-        x += M["SKYLIGHT_PITCH_M"]
-
-    # telhado em tiras, deixando as faixas de claraboia de fora
-    edges = [Y_LC] + [e for b in bands for e in b] + [Y_LA]
-    for a, b in zip(edges[0::2], edges[1::2]):
-        box(f"telhado{a:.1f}", ((X0 + X1) / 2, (a + b) / 2, H + 0.1), (X1 - X0, b - a, 0.2), "telhado", zone=Z)
-    # dentro das faixas, telhado entre os painéis de claraboia
-    for a, b in bands:
-        xs = [X0] + [e for c in sky_x for e in (c - panel / 2, c + panel / 2)] + [X1]
-        for p, q in zip(xs[0::2], xs[1::2]):
-            if q - p > 0.05:
-                box(
-                    f"telhado_sk{a:.1f}_{p:.1f}",
-                    ((p + q) / 2, (a + b) / 2, H + 0.1),
-                    (q - p, b - a, 0.2),
-                    "telhado",
-                    zone=Z,
-                )
-        for e in (a, b):
-            box(f"clara_borda{e:.1f}", ((X0 + X1) / 2, e, H + 0.25), (X1 - X0, 0.1, 0.3), "trelica", zone=Z)
-        # os painéis emissivos de claraboia
-        for c in sky_x:
-            box(
-                f"claraboia_{a:.1f}_{c:.1f}",
-                (c, (a + b) / 2, H + 0.12),
-                (panel, b - a, 0.06),
-                "claraboia",
-                zone=Z,
-            )
-
-    # treliças, pilares e luminárias
-    x = X0 + 3
-    while x < X1 - 1:
-        for zz in (H - 0.15, H - 1.9):
-            box(f"banzo_t{x:.0f}{zz:.1f}", (x, (Y_LC + Y_LA) / 2, zz), (0.18, Y_LA - Y_LC, 0.18), "trelica", zone=Z)
-        y = Y_LC + 1.5
-        k = 0
-        while y < Y_LA - 1:
-            box(f"mont{x:.0f}{y:.0f}", (x, y, H - 1.02), (0.1, 0.1, 1.75), "trelica", zone=Z)
-            ang = atan2(1.75, 3.0) * (1 if k % 2 else -1)
-            box(
-                f"diag{x:.0f}{y:.0f}",
-                (x, y + 1.5, H - 1.02),
-                (0.08, 3.4, 0.08),
-                "trelica",
-                zone=Z,
-                rot=Matrix.Rotation(ang, 4, "X"),
-            )
-            y += 3.0
-            k += 1
-        for yw in (Y_LC + 0.45, Y_LA - 0.45):
-            box(f"pilar{x:.0f}{yw:.0f}", (x, yw, (GROUND + H) / 2), (0.5, 0.5, H - GROUND), "pilar", zone=Z, bevel=0.02)
-        for yl in (Y_LC + 7.0, -4.0, Y_LA - 4.0):
-            cyl(f"lamp{x:.0f}{yl:.0f}", (x + 3, yl, H - 2.4), 0.32, 0.08, "lampada", axis="Z", seg=24, zone=Z)
-            cyl(
-                f"lamp_cup{x:.0f}{yl:.0f}",
-                (x + 3, yl, H - 2.25),
-                0.36,
-                0.3,
-                "duto",
-                axis="Z",
-                seg=24,
-                zone=Z,
-                r2=0.12,
-            )
-            area_light(f"al{x:.0f}{yl:.0f}", (x + 3, yl, H - 2.5), 0.6, 380)
-        x += PITCH
-
-    # faixas de piso no corredor do lado comando
+def floor_markings():
+    """Faixas de piso no corredor do lado comando e na cabeça da escada."""
     box("faixa_corredor", ((X0 + X1) / 2, PIT_Y0 - 2.6, 0.004), (X1 - X0 - 2, 0.12, 0.008), "faixa_amarela", zone=Z)
     box(
         "faixa_escada",
@@ -370,9 +269,22 @@ def shell():
     )
 
 
+def perimeter_rail():
+    """
+    Guarda-corpo na borda do piso de operação.
+
+    Sem as paredes do galpão, a borda do piso é uma queda de 6 m para o térreo.
+    """
+    for y in (Y_LC, Y_LA):
+        _rail_x(f"gcborda_y{y:.0f}", X0, X1, y)
+    for x in (X0, X1):
+        _rail_y(f"gcborda_x{x:.0f}", x, Y_LC, Y_LA)
+
+
 def build_building():
     operating_floor()
     mezzanine()
     ground_floor()
     stairs()
-    shell()
+    floor_markings()
+    perimeter_rail()

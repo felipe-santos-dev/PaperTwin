@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>PaperTwin · Notas de manutenção</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D1015}
+a{color:#4F8CFF}a:hover{color:#7FAAFF}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+button{font-family:inherit;color:inherit}
+.nav{width:56px;height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-left:2px solid transparent;box-sizing:border-box;color:#7C8592;text-decoration:none}
+.nav:hover{color:#D5DAE1;background:#151A21}
+.sec{flex:1 1 0;min-width:0;height:48px;box-sizing:border-box;padding:6px 10px;background:#161B22;border:1px solid #222932;border-radius:3px;display:flex;flex-direction:column;justify-content:space-between;color:#9AA3AF;text-decoration:none}
+.sec:hover{border-color:#4F8CFF;color:#D5DAE1}
+.card{position:relative;display:flex;flex-direction:column;gap:7px;width:100%;box-sizing:border-box;padding:12px 12px 10px;background:#161B22;border:1px solid #222932;border-radius:3px;cursor:pointer;text-align:left;overflow:hidden}
+.card:hover{border-color:#3A4350}
+</style>
+</helmet>
+
+<div style="position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #0D1015; color: #D5DAE1; font-family: Inter, system-ui, sans-serif; font-size: 13px">
+
+<nav aria-label="Telas" style="position: absolute; left: 0; top: 0; width: 56px; height: 1080px; background: #0A0D11; border-right: 1px solid #1D232B; display: flex; flex-direction: column; align-items: center">
+<div style="height: 48px; width: 56px; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #1D232B; font-weight: 600; font-size: 13px; color: #D5DAE1">PT</div>
+<a class="nav" href="Main.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">1</span><span style="font-size: 10px">Turno</span></a>
+<a class="nav" href="Processo.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">2</span><span style="font-size: 10px">Processo</span></a>
+<a class="nav" href="Laboratorio.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">3</span><span style="font-size: 10px">Lab.</span></a>
+<a class="nav" href="Bobinas.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">4</span><span style="font-size: 10px">Bobinas</span></a>
+<a class="nav" href="Mancais.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">5</span><span style="font-size: 10px">Mancais</span></a>
+<a class="nav" href="Rondas.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">6</span><span style="font-size: 10px">Rondas</span></a>
+<a class="nav" href="Notas.dc.html" aria-current="page" style="border-left-color: #4F8CFF; color: #D5DAE1; background: #151A21"><span class="mono" style="font-size: 16px; font-weight: 600">7</span><span style="font-size: 10px">Notas</span></a>
+</nav>
+
+<header style="position: absolute; left: 56px; top: 0; width: 1864px; height: 48px; box-sizing: border-box; padding: 0 16px; border-bottom: 1px solid #1D232B; background: #0A0D11; display: flex; align-items: center; gap: 24px">
+<div style="display: flex; align-items: baseline; gap: 10px"><span style="font-size: 15px; font-weight: 600">MP1</span><span style="font-size: 12px; color: #7C8592">PaperTwin</span></div>
+<div style="width: 1px; height: 24px; background: #252C36"></div>
+<div style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 13px; font-weight: 600">Turno C</span><span class="mono" style="font-size: 12px; color: #9AA3AF">15:00–23:00</span><span style="font-size: 12px; color: #9AA3AF">J. Ribeiro</span></div>
+<div style="width: 1px; height: 24px; background: #252C36"></div>
+<div style="display: flex; align-items: baseline; gap: 6px"><span style="font-size: 11px; color: #7C8592">Gramatura</span><span class="mono" style="font-size: 14px; font-weight: 500">75</span><span style="font-size: 11px; color: #9AA3AF">g/m²</span></div>
+<div style="display: flex; align-items: center; gap: 8px"><span style="font-size: 11px; color: #7C8592">Velocidade</span><span class="mono" style="font-size: 14px; font-weight: 500">1.247</span><span style="font-size: 11px; color: #9AA3AF">m/min</span>
+<div title="Faixa 1.230–1.260 · SP 1.250" style="position: relative; width: 72px; height: 14px"><div style="position: absolute; left: 0; right: 0; top: 5px; height: 4px; background: #232A33"></div><div style="position: absolute; left: 30%; width: 30%; top: 5px; height: 4px; background: #3A424E"></div><div style="position: absolute; left: 50%; top: 3px; width: 2px; height: 8px; background: #9AA3AF"></div><div style="position: absolute; left: 47%; top: 0; width: 3px; height: 14px; margin-left: -1px; background: #D5DAE1"></div></div></div>
+<div style="flex: 1"></div>
+<div style="display: flex; align-items: center; gap: 6px"><span style="font-size: 11px; color: #7C8592; margin-right: 4px">Alarmes</span>
+<a href="Main.dc.html" title="Alta prioridade" style="display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; background: #161B22; border: 1px solid #252C36; border-radius: 3px; text-decoration: none"><span style="width: 8px; height: 8px; background: #3A424E"></span><span class="mono" style="font-size: 13px; color: #7C8592">0</span><span style="font-size: 11px; color: #7C8592">Alta</span></a>
+<a href="Main.dc.html" title="Média prioridade" style="display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; background: rgba(245,165,36,0.12); border: 1px solid #F5A524; border-radius: 3px; text-decoration: none"><span style="width: 8px; height: 8px; background: #F5A524"></span><span class="mono" style="font-size: 13px; font-weight: 600; color: #F5A524">2</span><span style="font-size: 11px; color: #D5DAE1">Média</span></a>
+<a href="Main.dc.html" title="Baixa prioridade" style="display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; background: rgba(227,207,74,0.10); border: 1px solid #E3CF4A; border-radius: 3px; text-decoration: none"><span style="width: 8px; height: 8px; background: #E3CF4A"></span><span class="mono" style="font-size: 13px; font-weight: 600; color: #E3CF4A">1</span><span style="font-size: 11px; color: #D5DAE1">Baixa</span></a></div>
+<div style="width: 1px; height: 24px; background: #252C36"></div>
+<div title="Dados simulados para demonstração" style="display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border: 1px dashed #5D6673; border-radius: 3px; font-size: 11px; color: #9AA3AF; letter-spacing: 0.04em"><span style="width: 7px; height: 7px; border: 1px solid #9AA3AF; border-radius: 50%; box-sizing: border-box"></span>DEMONSTRAÇÃO</div>
+<div style="display: flex; align-items: baseline; gap: 8px"><span class="mono" style="font-size: 15px; font-weight: 500">21:40:12</span><span class="mono" style="font-size: 11px; color: #7C8592">seg 09/11</span></div>
+</header>
+
+<div role="navigation" aria-label="Seções da máquina" style="position: absolute; left: 56px; top: 48px; width: 1864px; height: 64px; box-sizing: border-box; padding: 8px 16px; border-bottom: 1px solid #1D232B; display: flex; gap: 4px">
+<a class="sec" href="Processo.dc.html" style="background: rgba(245,165,36,0.10); border-color: #F5A524; color: #D5DAE1"><span style="display: flex; justify-content: space-between; width: 100%"><span style="font-size: 12px; font-weight: 500">Preparo e refino</span><span class="mono" style="min-width: 18px; height: 16px; padding: 0 4px; box-sizing: border-box; background: #F5A524; color: #14100A; font-size: 11px; font-weight: 600; text-align: center; line-height: 16px">1</span></span><span class="mono" style="font-size: 10px; color: #F5A524">FIC-107</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Caixa de entrada</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Formação</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Prensas</span></a>
+<a class="sec" href="PreSecagem.dc.html" style="background: rgba(245,165,36,0.10); border-color: #F5A524; color: #D5DAE1"><span style="display: flex; justify-content: space-between; width: 100%"><span style="font-size: 12px; font-weight: 500">Pré-secagem</span><span class="mono" style="min-width: 18px; height: 16px; padding: 0 4px; box-sizing: border-box; background: #F5A524; color: #14100A; font-size: 11px; font-weight: 600; text-align: center; line-height: 16px">2</span></span><span class="mono" style="font-size: 10px; color: #F5A524">PDIC-523 <span style="color: #E3CF4A">VI-5123B</span></span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Speed Sizer</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Pós-secagem</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Calandra</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">QCS</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Enroladeira</span></a>
+</div>
+
+<!-- ===== Visual principal: quadro ===== -->
+<section aria-label="Quadro de notas" style="position: absolute; left: 72px; top: 128px; width: 1260px; height: 936px; box-sizing: border-box; padding: 0 20px; background: #12161C; border: 1px solid #1D232B; border-radius: 4px">
+<div style="height: 56px; display: flex; align-items: center; gap: 16px">
+<h1 style="margin: 0; font-size: 16px; font-weight: 600">Notas de manutenção · MP1</h1>
+<span style="font-size: 12px; color: #7C8592"><span class="mono" style="color: #D5DAE1">10</span> ativas · <span class="mono" style="color: #D5DAE1">3</span> exigem parada · próxima parada <span class="mono" style="color: #D5DAE1">18/11</span></span>
+<span style="flex: 1"></span>
+<span style="display: flex; gap: 12px; font-size: 11px; color: #9AA3AF; align-items: center">
+<span>prioridade</span>
+<span style="display: flex; align-items: center; gap: 4px"><span style="width: 14px; height: 4px; background: #F2555A"></span>1</span>
+<span style="display: flex; align-items: center; gap: 4px"><span style="width: 14px; height: 4px; background: #F5A524"></span>2</span>
+<span style="display: flex; align-items: center; gap: 4px"><span style="width: 14px; height: 4px; background: #E3CF4A"></span>3</span>
+<span style="display: flex; align-items: center; gap: 4px"><span style="width: 14px; height: 4px; background: #5D6673"></span>4</span>
+</span>
+</div>
+<div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; height: 860px">
+<sc-for list="{{cols}}" as="c" hint-placeholder-count="5">
+<div style="display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 0 0 8px; background: #0F1318; border-radius: 3px">
+<div style="display: flex; align-items: center; justify-content: space-between; height: 36px; padding: 0 10px; border-bottom: 1px solid #1D232B"><span style="font-size: 12px; font-weight: 600; color: #9AA3AF; text-transform: uppercase; letter-spacing: 0.05em">{{c.name}}</span><span class="mono" style="font-size: 12px; color: #D5DAE1">{{c.count}}</span></div>
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 0 8px">
+<sc-if value="{{c.ghost}}" hint-placeholder-val="{{ false }}">
+<a href="Rondas.dc.html" style="display: flex; flex-direction: column; gap: 4px; padding: 10px 12px; border: 1px dashed #4F8CFF; border-radius: 3px; text-decoration: none; color: #7FAAFF; font-size: 12px">+ Abrir nota do achado<span style="color: #9AA3AF">Dosadora AKD P-107 · ronda 3, ponto 03</span></a>
+</sc-if>
+<sc-for list="{{c.notes}}" as="n" hint-placeholder-count="3">
+<button class="card" onClick="{{n.pick}}" aria-pressed="{{n.sel}}" style="border-color: {{n.bd}}; background: {{n.bg}}; opacity: {{n.op}}">
+<span style="position: absolute; left: 0; right: 0; top: 0; height: 4px; background: {{n.pc}}"></span>
+<span style="display: flex; align-items: center; gap: 6px; width: 100%">
+<span class="mono" style="font-size: 12px; font-weight: 600">{{n.id}}</span>
+<span class="mono" style="font-size: 10px; color: #9AA3AF">P{{n.p}}</span>
+<span style="flex: 1"></span>
+<span style="font-size: 10px; color: #9AA3AF; padding: 0 5px; border: 1px solid #2A313B; border-radius: 2px; line-height: 15px">{{n.orig}}</span>
+</span>
+<span style="font-size: 13px; line-height: 1.3">{{n.title}}</span>
+<span style="display: flex; align-items: center; gap: 6px; width: 100%">
+<span class="mono" style="font-size: 10px; color: #7C8592">{{n.tag}}</span>
+<span style="flex: 1"></span>
+<span style="font-size: 10px; font-weight: 600; letter-spacing: 0.04em; color: #D5DAE1; padding: 0 5px; line-height: 15px; border: 1px solid #9AA3AF; border-radius: 2px; display: {{n.stopD}}">PARADA</span>
+<span class="mono" style="font-size: 10px; color: #7C8592">{{n.when}}</span>
+</span>
+</button>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+
+<!-- ===== Detalhe ===== -->
+<section aria-label="Detalhe da nota" style="position: absolute; left: 1348px; top: 128px; width: 556px; height: 936px; box-sizing: border-box; padding: 0 20px; background: #12161C; border: 1px solid #1D232B; border-radius: 4px">
+<div style="height: 4px; margin: 0 -20px; background: {{cur.pc}}"></div>
+<div style="display: flex; align-items: center; gap: 10px; margin-top: 16px">
+<span class="mono" style="font-size: 16px; font-weight: 600">{{cur.id}}</span>
+<span style="font-size: 11px; padding: 1px 6px; border: 1px solid #2A313B; border-radius: 2px; color: #9AA3AF">{{cur.status}}</span>
+<span style="flex: 1"></span>
+<span class="mono" style="font-size: 11px; color: #7C8592">SAP {{cur.sap}}</span>
+</div>
+<h2 style="margin: 8px 0 14px; font-size: 18px; font-weight: 600; line-height: 1.3">{{cur.title}}</h2>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 20px; padding-bottom: 16px; border-bottom: 1px solid #1D232B">
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; color: #7C8592">Equipamento</span><span style="font-size: 13px">{{cur.equip}}</span></span>
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; color: #7C8592">Prioridade</span><span style="display: flex; align-items: center; gap: 6px; font-size: 13px"><span style="width: 14px; height: 4px; background: {{cur.pc}}"></span>{{cur.pLabel}}</span></span>
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; color: #7C8592">Origem</span><span style="font-size: 13px">{{cur.origLong}}</span></span>
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; color: #7C8592">Exige parada</span><span style="font-size: 13px">{{cur.stop}}</span></span>
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; color: #7C8592">Aberta em</span><span class="mono" style="font-size: 13px">{{cur.opened}}</span></span>
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 11px; color: #7C8592">Responsável</span><span style="font-size: 13px">{{cur.owner}}</span></span>
+</div>
+
+<div style="display: flex; align-items: baseline; justify-content: space-between; margin: 16px 0 8px"><span style="font-size: 13px; font-weight: 600">Sinal de origem</span><span class="mono" style="font-size: 11px; color: #7C8592">{{cur.sigLabel}}</span></div>
+<sc-if value="{{cur.hasSig}}" hint-placeholder-val="{{ true }}">
+<div style="position: relative; width: 516px; height: 220px">
+<svg width="476" height="196" viewBox="0 0 476 196" aria-hidden="true" style="position: absolute; left: 40px; top: 0">
+<rect x="0" y="{{z.aY}}" width="476" height="{{z.aH}}" fill="#1C2622"></rect>
+<rect x="0" y="{{z.bY}}" width="476" height="{{z.bH}}" fill="#252E29"></rect>
+<rect x="0" y="{{z.cY}}" width="476" height="{{z.cH}}" fill="#3A2F17"></rect>
+<rect x="0" y="0" width="476" height="{{z.dH}}" fill="#3D1D21"></rect>
+<rect x="0" y="{{cur.bandY}}" width="476" height="{{cur.bandH}}" fill="{{cur.bandFill}}"></rect>
+<line x1="0" y1="196" x2="476" y2="196" stroke="#2A313B"></line>
+<path d="{{cur.d}}" fill="none" stroke="{{cur.lc}}" stroke-width="1.5"></path>
+<line x1="{{cur.openX}}" y1="0" x2="{{cur.openX}}" y2="196" stroke="#4F8CFF" stroke-dasharray="3 3"></line>
+<circle cx="476" cy="{{cur.lastY}}" r="3.5" fill="{{cur.lastC}}"></circle>
+</svg>
+<span class="mono" style="position: absolute; left: 0; top: -2px; font-size: 10px; color: #7C8592">{{cur.ax1}}</span>
+<span class="mono" style="position: absolute; left: 0; top: 186px; font-size: 10px; color: #7C8592">{{cur.ax0}}</span>
+<span class="mono" style="position: absolute; top: 2px; font-size: 10px; color: #7FAAFF; background: #12161C; padding: 0 4px; left: {{cur.openLX}}px">nota aberta</span>
+<span style="position: absolute; right: 0; top: 200px; font-size: 11px; color: #9AA3AF"><span class="mono" style="font-size: 13px; color: {{cur.lastC}}">{{cur.last}}</span> {{cur.unit}} agora</span>
+<span class="mono" style="position: absolute; left: 40px; top: 202px; font-size: 10px; color: #7C8592">{{cur.win}}</span>
+</div>
+</sc-if>
+<sc-if value="{{cur.noSig}}" hint-placeholder-val="{{ false }}">
+<div style="height: 220px; display: flex; align-items: center; justify-content: center; border: 1px dashed #2A313B; border-radius: 3px; color: #7C8592; font-size: 12px">Sem sinal contínuo associado · inspeção visual</div>
+</sc-if>
+
+<div style="margin: 18px 0 8px; font-size: 13px; font-weight: 600">Histórico</div>
+<div style="position: relative; display: flex; flex-direction: column">
+<div style="position: absolute; left: 5px; top: 8px; bottom: 8px; width: 1px; background: #2A313B"></div>
+<sc-for list="{{cur.hist}}" as="h" hint-placeholder-count="4">
+<div style="display: grid; grid-template-columns: 18px 92px 1fr; column-gap: 8px; padding: 6px 0">
+<span style="width: 11px; height: 11px; margin-top: 3px; border-radius: 50%; background: #12161C; border: 2px solid {{h.c}}; box-sizing: border-box; position: relative"></span>
+<span class="mono" style="font-size: 11px; color: #9AA3AF; padding-top: 1px">{{h.t}}</span>
+<span style="font-size: 12px; line-height: 1.45">{{h.txt}}</span>
+</div>
+</sc-for>
+</div>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var st = this.state || {};
+    var self = this;
+    var sel = st.sel || 'N-0412';
+    var fmt = function (n, d) { var s = n.toFixed(d).split('.'); s[0] = s[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.'); return s.join(','); };
+    var nz = function (i, s) { return Math.sin(i * 0.7 + s) * 0.5 + Math.sin(i * 1.9 + s * 2.3) * 0.3 + Math.sin(i * 0.23 + s * 0.7) * 0.2; };
+    var PC = { 1: '#F2555A', 2: '#F5A524', 3: '#E3CF4A', 4: '#5D6673' };
+    var PL = { 1: '1 · emergência', 2: '2 · alta', 3: '3 · normal', 4: '4 · oportunidade' };
+    var OL = { ronda: 'Ronda', alarme: 'Alarme', 'operação': 'Operação' };
+    // sig: [tag, unid, dec, eixoMin, eixoMax, L, H, ini, fim, forma, iso, janela, abertura(0–1)]
+    var N = [
+      { id: 'N-0419', col: 0, p: 3, orig: 'ronda', title: 'Calibrar PT-513 · vapor do grupo 3', tag: 'PIC-513', when: '21:31', stop: false, equip: 'Transmissor de pressão PT-513', opened: '09/11 21:31', owner: 'Instrumentação', sap: '10458840',
+        sig: ['PIC-513', 'bar', 1, 2.0, 4.6, 2.8, 4.0, 3.2, 3.4, 'step', false, 'últimas 8 h', 0.99],
+        hist: [['09/11 21:24', 'Ronda 3, ponto 09: manômetro local 3,1 bar × PIC-513 3,4 bar (tol. ±0,1).', '#E45FB0'], ['09/11 21:31', 'Nota aberta por A. Lima a partir do achado.', '#4F8CFF']] },
+      { id: 'N-0417', col: 0, p: 2, orig: 'alarme', title: 'ΔP dos sifões do grupo 3 abaixo de L', tag: 'PDIC-523', when: '21:20', stop: false, equip: 'Sifões rotativos CS17–CS24', opened: '09/11 21:20', owner: 'Mecânica · plantão', sap: '10458838',
+        sig: ['PDIC-523', 'bar', 2, 0, 0.8, 0.30, 0.60, 0.40, 0.24, 'drop', false, 'últimas 8 h', 0.94],
+        hist: [['09/11 21:12', 'Alarme PDIC-523 baixo (0,30 bar).', '#F5A524'], ['09/11 21:20', 'Nota aberta por J. Ribeiro a partir do alarme.', '#4F8CFF'], ['09/11 21:40', 'Inspeção dos visores incluída na ronda 3 (ponto 12).', '#7C8592']] },
+      { id: 'N-0412', col: 0, p: 2, orig: 'ronda', title: 'Vibração em zona C no mancal LC do CS23', tag: 'VI-5123B', when: '16:30', stop: true, equip: 'Secador CS23 · mancal lado comando', opened: '09/11 16:30', owner: 'Mecânica · PCM', sap: '10458812',
+        sig: ['VI-5123B', 'mm/s', 1, 0, 9, null, null, 2.1, 4.9, 'rise', true, 'últimos 60 dias', 1.0],
+        hist: [['09/11 16:30', 'Ronda 1: 4,9 mm/s (zona C), TI-5323B 77 °C. Nota aberta por A. Lima.', '#E45FB0'], ['09/11 16:42', 'Prioridade 2 definida por J. Ribeiro.', '#7C8592'], ['09/11 21:27', 'Ronda 3: 79 °C no campo × 77 °C online; ruído audível.', '#7C8592'], ['projeção', 'Zona D em ~29 dias; 80 °C em ~9 dias. Candidata à parada de 18/11.', '#4F8CFF']] },
+      { id: 'N-0408', col: 1, p: 3, orig: 'operação', title: 'Ruído na bomba de vácuo BV-02', tag: 'VI-3201A', when: '07/11', stop: false, equip: 'Bomba de vácuo BV-02', opened: '07/11 10:15', owner: 'Mecânica · preditiva', sap: '10458761',
+        sig: ['VI-3201A', 'mm/s', 1, 0, 9, null, null, 2.0, 3.3, 'rise', true, 'últimos 30 dias', 0.93],
+        hist: [['07/11 10:15', 'Operador relata ruído intermitente.', '#7C8592'], ['08/11 14:00', 'Coleta espectral agendada pela preditiva.', '#4F8CFF']] },
+      { id: 'N-0405', col: 1, p: 3, orig: 'alarme', title: 'Válvula FV-1081 de amido oscilando', tag: 'FIC-108', when: '06/11', stop: false, equip: 'Válvula de controle FV-1081', opened: '06/11 03:40', owner: 'Instrumentação', sap: '10458744',
+        sig: ['FIC-108', 'kg/t', 1, 4, 12, 6.5, 9.5, 8.0, 8.0, 'osc', false, 'últimas 8 h', 0.5],
+        hist: [['06/11 03:40', 'Alarmes de desvio intermitentes no FIC-108.', '#F5A524'], ['07/11 09:00', 'Suspeita de atrito no posicionador; teste de curso pedido.', '#7C8592']] },
+      { id: 'N-0398', col: 2, p: 2, orig: 'operação', title: 'Troca do feltro da prensa 2', tag: 'Prensa 2', when: '18/11', stop: true, equip: 'Feltro inferior · prensa 2', opened: '30/10 08:00', owner: 'Mecânica · PCM', sap: '10458650',
+        sig: ['Feltro P2', 'dias', 0, 0, 70, 0, 50, 20, 52, 'lin', false, 'dias em uso', 0.4],
+        hist: [['30/10 08:00', 'Programação da troca pelo fim da vida útil (50 dias).', '#7C8592'], ['05/11 15:00', 'Programada para a parada de 18/11.', '#4F8CFF']] },
+      { id: 'N-0395', col: 2, p: 3, orig: 'ronda', title: 'Raspa do CS31 com desgaste irregular', tag: 'CS31', when: '18/11', stop: true, equip: 'Raspa do secador CS31', opened: '28/10 22:10', owner: 'Mecânica · PCM', sap: '10458631', sig: null,
+        hist: [['28/10 22:10', 'Ronda: lâmina com desgaste irregular no lado LA.', '#E45FB0'], ['05/11 15:00', 'Programada para a parada de 18/11.', '#4F8CFF']] },
+      { id: 'N-0401', col: 2, p: 4, orig: 'ronda', title: 'Relubrificar mancais CS15–CS31', tag: 'CS15–CS31', when: '12/11', stop: false, equip: 'Mancais da pré e pós-secagem', opened: '02/11 17:20', owner: 'Lubrificação', sap: '10458702', sig: null,
+        hist: [['02/11 17:20', 'Rota de lubrificação vencendo em 12/11.', '#7C8592']] },
+      { id: 'N-0410', col: 3, p: 2, orig: 'ronda', title: 'Vazamento de vapor na junta rotativa do CS17', tag: 'CS17', when: '20:10', stop: false, equip: 'Junta rotativa CS17 · lado comando', opened: '08/11 23:05', owner: 'Mecânica · plantão', sap: '10458790', sig: null,
+        hist: [['08/11 23:05', 'Ronda: vazamento visível na junta rotativa.', '#E45FB0'], ['09/11 20:10', 'Execução iniciada com máquina rodando (reaperto).', '#4F8CFF']] },
+      { id: 'N-0403', col: 3, p: 3, orig: 'operação', title: 'Calibrar sensor de cinzas do QCS', tag: 'AI-9203', when: '19:45', stop: false, equip: 'QCS · sensor de cinzas', opened: '05/11 11:30', owner: 'Instrumentação', sap: '10458720',
+        sig: ['Δ cinzas lab − QCS', '%', 1, -1.5, 1.5, -1.0, 1.0, 0.2, 0.8, 'lin', false, 'últimas 12 bobinas', 0.3],
+        hist: [['05/11 11:30', 'Δ lab − QCS em cinzas crescendo há uma semana.', '#7C8592'], ['09/11 19:45', 'Execução iniciada; padrão de verificação em uso.', '#4F8CFF']] },
+      { id: 'N-0399', col: 4, p: 2, orig: 'alarme', title: 'Selo da bomba de massa grossa', tag: 'FIC-105', when: '08/11', stop: false, equip: 'Bomba de massa P-105', opened: '04/11', owner: 'Mecânica', sap: '10458688', sig: null, hist: [['08/11 16:20', 'Encerrada: selo trocado.', '#7C8592']] },
+      { id: 'N-0392', col: 4, p: 2, orig: 'operação', title: 'Troca da bomba do tanque de mistura', tag: 'LIC-103', when: '08/11', stop: false, equip: 'Bomba P-103', opened: '03/11', owner: 'Mecânica', sap: '10458660', sig: null, hist: [['09/11 07:50', 'Encerrada: bomba reserva em operação.', '#7C8592']] },
+      { id: 'N-0390', col: 4, p: 4, orig: 'operação', title: 'Ajuste da raspa da calandra', tag: 'Calandra', when: '05/11', stop: false, equip: 'Raspa da calandra', opened: '02/11', owner: 'Mecânica', sap: '10458641', sig: null, hist: [['05/11 14:00', 'Encerrada.', '#7C8592']] }
+    ];
+    var names = ['Aberta', 'Em análise', 'Programada', 'Em execução', 'Encerrada'];
+    var cols = names.map(function (nm, ci) {
+      var list = N.filter(function (n) { return n.col === ci; }).map(function (n) {
+        var isSel = n.id === sel;
+        return {
+          id: n.id, p: n.p, pc: PC[n.p], orig: n.orig, title: n.title, tag: n.tag, when: n.when, stopD: n.stop ? 'inline-block' : 'none', sel: isSel,
+          bd: isSel ? '#4F8CFF' : '#222932', bg: isSel ? '#161E2C' : '#161B22', op: ci === 4 && !isSel ? '0.7' : '1',
+          pick: function () { self.setState({ sel: n.id }); }
+        };
+      });
+      return { name: nm, count: list.length, notes: list, ghost: ci === 0 };
+    });
+
+    var n = N.filter(function (q) { return q.id === sel; })[0];
+    var cur = {
+      id: n.id, title: n.title, status: names[n.col].toLowerCase(), sap: n.sap, equip: n.equip, pc: PC[n.p], pLabel: PL[n.p],
+      origLong: OL[n.orig], stop: n.stop ? 'Sim' : 'Não', opened: n.opened, owner: n.owner,
+      hist: n.hist.map(function (h) { return { t: h[0], txt: h[1], c: h[2] }; }),
+      hasSig: !!n.sig, noSig: !n.sig, iso: false, sigLabel: n.sig ? n.sig[0] + ' · ' + n.sig[11] : '—'
+    };
+    var z = { aY: 0, aH: 0, bY: 0, bH: 0, cY: 0, cH: 0, dH: 0 };
+    if (n.sig) {
+      var s = n.sig, lo = s[3], hi = s[4], H = 196, W = 476, pts = 80;
+      var Y = function (q) { return H - (Math.max(lo, Math.min(hi, q)) - lo) / (hi - lo) * H; };
+      var d = '', last = s[8];
+      for (var i = 0; i < pts; i++) {
+        var f = i / (pts - 1), q;
+        if (s[9] === 'rise') q = s[7] + (s[8] - s[7]) * Math.pow(Math.max(0, (f - 0.35) / 0.65), 1.6) + nz(i, 2) * 0.12;
+        else if (s[9] === 'drop') q = f < 0.55 ? s[7] + nz(i, 3) * 0.006 : s[7] - (s[7] - s[8]) * Math.pow((f - 0.55) / 0.45, 1.5) + nz(i, 3) * 0.006;
+        else if (s[9] === 'step') q = (f < 0.54 ? s[7] : s[8]) + nz(i, 4) * 0.02;
+        else if (s[9] === 'osc') q = s[7] + Math.sin(i * 0.9) * 0.9 * (0.4 + 0.6 * Math.abs(Math.sin(i * 0.11))) ;
+        else q = s[7] + (s[8] - s[7]) * f + (s[1] === 'dias' ? 0 : nz(i, 5) * 0.05);
+        if (i === pts - 1) q = s[8];
+        d += (i ? 'L' : 'M') + (f * W).toFixed(1) + ' ' + Y(q).toFixed(1) + ' ';
+      }
+      var out = s[10] ? (last >= 4.5) : (s[5] != null && (last < s[5] || last > s[6]));
+      cur.d = d; cur.unit = s[1]; cur.win = s[11];
+      cur.last = fmt(last, s[2]); cur.lastY = Y(last).toFixed(1);
+      cur.lastC = s[10] ? (last >= 7.1 ? '#F2555A' : (last >= 4.5 ? '#D6A23A' : '#D5DAE1')) : (out ? '#F5A524' : '#D5DAE1');
+      cur.lc = '#D5DAE1';
+      cur.iso = s[10];
+      cur.bandY = s[10] ? 0 : Y(s[6]).toFixed(1); cur.bandH = s[10] ? 0 : (Y(s[5]) - Y(s[6])).toFixed(1); cur.bandFill = '#1E252E';
+      cur.openX = (s[12] * W).toFixed(1); cur.openLX = Math.min(40 + s[12] * W - 70, 40 + W - 70).toFixed(1);
+      cur.ax0 = fmt(lo, s[2]); cur.ax1 = fmt(hi, s[2]);
+      if (s[10]) z = { aY: Y(2.3).toFixed(1), aH: (Y(0) - Y(2.3)).toFixed(1), bY: Y(4.5).toFixed(1), bH: (Y(2.3) - Y(4.5)).toFixed(1), cY: Y(7.1).toFixed(1), cH: (Y(4.5) - Y(7.1)).toFixed(1), dH: Y(7.1).toFixed(1) };
+    } else {
+      cur.d = ''; cur.unit = ''; cur.win = ''; cur.last = ''; cur.lastY = 0; cur.lastC = '#D5DAE1'; cur.lc = '#D5DAE1';
+      cur.bandY = 0; cur.bandH = 0; cur.bandFill = 'transparent'; cur.openX = 0; cur.openLX = 0; cur.ax0 = ''; cur.ax1 = '';
+    }
+    return { cols: cols, cur: cur, z: z };
+  }
+}
+</script>
+</body>
+</html>

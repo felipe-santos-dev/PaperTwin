@@ -450,16 +450,16 @@ describe('valores de mancal na retomada', () => {
     const scenario = degradationScenarioAt(NOW);
     const values = bearingValuesAt(SEED, scenario.toTick, scenario);
 
-    // HH da VI-51nnA é 4,5 mm/s, a fronteira C→D do grupo 2 rígido
-    expect(values.get('VI-5123A')).toBeGreaterThan(4.5);
+    // HH da VI-51nnB é 4,5 mm/s, a fronteira C→D do grupo 2 rígido
+    expect(values.get('VI-5123B')).toBeGreaterThan(4.5);
     // o vizinho do outro lado do mesmo cilindro segue saudável
-    expect(values.get('VI-5123B')).toBeLessThan(2.8);
+    expect(values.get('VI-5123A')).toBeLessThan(2.8);
   });
 
   it('ancora a degradação para terminar agora', () => {
     const scenario = degradationScenarioAt(NOW);
 
-    expect(scenario.assetTag).toBe('MP1-SEC-G4-CS23-MLA');
+    expect(scenario.assetTag).toBe('MP1-SEC-G4-CS23-MLC');
     expect(scenario.toTick - scenario.fromTick).toBe(72 * TICKS_PER_HOUR);
   });
 });

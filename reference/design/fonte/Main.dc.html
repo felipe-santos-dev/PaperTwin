@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>PaperTwin · Turno</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D1015}
+a{color:#4F8CFF}a:hover{color:#7FAAFF}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+button{font-family:inherit;color:inherit}
+.ev{position:absolute;display:flex;align-items:center;gap:6px;height:24px;padding:0 6px 0 4px;background:transparent;border:1px solid transparent;border-radius:3px;cursor:pointer;white-space:nowrap}
+.ev:hover{border-color:#3A4350;background:#1A2029}
+.sec{flex:1 1 0;min-width:0;height:48px;box-sizing:border-box;padding:6px 10px;background:#161B22;border:1px solid #222932;border-radius:3px;display:flex;flex-direction:column;justify-content:space-between;color:#9AA3AF;text-decoration:none}
+.sec:hover{border-color:#4F8CFF;color:#D5DAE1}
+.nav{width:56px;height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-left:2px solid transparent;box-sizing:border-box;color:#7C8592;text-decoration:none}
+.nav:hover{color:#D5DAE1;background:#151A21}
+</style>
+</helmet>
+
+<div style="position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #0D1015; color: #D5DAE1; font-family: Inter, system-ui, sans-serif; font-size: 13px">
+
+<!-- ===== Barra lateral ===== -->
+<nav aria-label="Telas" style="position: absolute; left: 0; top: 0; width: 56px; height: 1080px; background: #0A0D11; border-right: 1px solid #1D232B; display: flex; flex-direction: column; align-items: center">
+<div style="height: 48px; width: 56px; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #1D232B; font-weight: 600; font-size: 13px; letter-spacing: 0.02em; color: #D5DAE1">PT</div>
+<a class="nav" href="Main.dc.html" aria-current="page" style="border-left-color: #4F8CFF; color: #D5DAE1; background: #151A21"><span class="mono" style="font-size: 16px; font-weight: 600">1</span><span style="font-size: 10px">Turno</span></a>
+<a class="nav" href="Processo.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">2</span><span style="font-size: 10px">Processo</span></a>
+<a class="nav" href="Laboratorio.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">3</span><span style="font-size: 10px">Lab.</span></a>
+<a class="nav" href="Bobinas.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">4</span><span style="font-size: 10px">Bobinas</span></a>
+<a class="nav" href="Mancais.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">5</span><span style="font-size: 10px">Mancais</span></a>
+<a class="nav" href="Rondas.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">6</span><span style="font-size: 10px">Rondas</span></a>
+<a class="nav" href="Notas.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">7</span><span style="font-size: 10px">Notas</span></a>
+</nav>
+
+<!-- ===== Barra superior ===== -->
+<header style="position: absolute; left: 56px; top: 0; width: 1864px; height: 48px; box-sizing: border-box; padding: 0 16px; border-bottom: 1px solid #1D232B; background: #0A0D11; display: flex; align-items: center; gap: 24px">
+<div style="display: flex; align-items: baseline; gap: 10px">
+<span style="font-size: 15px; font-weight: 600">MP1</span>
+<span style="font-size: 12px; color: #7C8592">PaperTwin</span>
+</div>
+<div style="width: 1px; height: 24px; background: #252C36"></div>
+<div style="display: flex; align-items: baseline; gap: 8px">
+<span style="font-size: 13px; font-weight: 600">Turno C</span>
+<span class="mono" style="font-size: 12px; color: #9AA3AF">15:00–23:00</span>
+<span style="font-size: 12px; color: #9AA3AF">J. Ribeiro</span>
+</div>
+<div style="width: 1px; height: 24px; background: #252C36"></div>
+<div style="display: flex; align-items: baseline; gap: 6px">
+<span style="font-size: 11px; color: #7C8592">Gramatura</span>
+<span class="mono" style="font-size: 14px; font-weight: 500">75</span>
+<span style="font-size: 11px; color: #9AA3AF">g/m²</span>
+</div>
+<div style="display: flex; align-items: center; gap: 8px">
+<span style="font-size: 11px; color: #7C8592">Velocidade</span>
+<span class="mono" style="font-size: 14px; font-weight: 500">1.247</span>
+<span style="font-size: 11px; color: #9AA3AF">m/min</span>
+<div title="Faixa 1.230–1.260 · SP 1.250" style="position: relative; width: 72px; height: 14px">
+<div style="position: absolute; left: 0; right: 0; top: 5px; height: 4px; background: #232A33"></div>
+<div style="position: absolute; left: 30%; width: 30%; top: 5px; height: 4px; background: #3A424E"></div>
+<div style="position: absolute; left: 50%; top: 3px; width: 2px; height: 8px; background: #9AA3AF"></div>
+<div style="position: absolute; left: 47%; top: 0; width: 3px; height: 14px; margin-left: -1px; background: #D5DAE1"></div>
+</div>
+</div>
+<div style="flex: 1"></div>
+<div style="display: flex; align-items: center; gap: 6px">
+<span style="font-size: 11px; color: #7C8592; margin-right: 4px">Alarmes</span>
+<button title="Alta prioridade" style="display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; background: #161B22; border: 1px solid #252C36; border-radius: 3px; cursor: pointer"><span style="width: 8px; height: 8px; background: #3A424E"></span><span class="mono" style="font-size: 13px; color: #7C8592">0</span><span style="font-size: 11px; color: #7C8592">Alta</span></button>
+<button title="Média prioridade" style="display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; background: rgba(245,165,36,0.12); border: 1px solid #F5A524; border-radius: 3px; cursor: pointer"><span style="width: 8px; height: 8px; background: #F5A524"></span><span class="mono" style="font-size: 13px; font-weight: 600; color: #F5A524">2</span><span style="font-size: 11px; color: #D5DAE1">Média</span></button>
+<button title="Baixa prioridade" style="display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; background: rgba(227,207,74,0.10); border: 1px solid #E3CF4A; border-radius: 3px; cursor: pointer"><span style="width: 8px; height: 8px; background: #E3CF4A"></span><span class="mono" style="font-size: 13px; font-weight: 600; color: #E3CF4A">1</span><span style="font-size: 11px; color: #D5DAE1">Baixa</span></button>
+</div>
+<div style="width: 1px; height: 24px; background: #252C36"></div>
+<div title="Dados simulados para demonstração" style="display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border: 1px dashed #5D6673; border-radius: 3px; font-size: 11px; color: #9AA3AF; letter-spacing: 0.04em"><span style="width: 7px; height: 7px; border: 1px solid #9AA3AF; border-radius: 50%"></span>DEMONSTRAÇÃO</div>
+<div style="display: flex; align-items: baseline; gap: 8px">
+<span class="mono" style="font-size: 15px; font-weight: 500">21:40:12</span>
+<span class="mono" style="font-size: 11px; color: #7C8592">seg 09/11</span>
+</div>
+</header>
+
+<!-- ===== Faixa do processo ===== -->
+<div role="navigation" aria-label="Seções da máquina" style="position: absolute; left: 56px; top: 48px; width: 1864px; height: 64px; box-sizing: border-box; padding: 8px 16px; border-bottom: 1px solid #1D232B; display: flex; gap: 4px">
+<a class="sec" href="Processo.dc.html" style="background: rgba(245,165,36,0.10); border-color: #F5A524; color: #D5DAE1"><span style="display: flex; justify-content: space-between; width: 100%"><span style="font-size: 12px; font-weight: 500">Preparo e refino</span><span class="mono" style="min-width: 18px; height: 16px; padding: 0 4px; box-sizing: border-box; background: #F5A524; color: #14100A; font-size: 11px; font-weight: 600; text-align: center; line-height: 16px">1</span></span><span class="mono" style="font-size: 10px; color: #F5A524">FIC-107</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Caixa de entrada</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Formação</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Prensas</span></a>
+<a class="sec" href="PreSecagem.dc.html" style="background: rgba(245,165,36,0.10); border-color: #F5A524; color: #D5DAE1"><span style="display: flex; justify-content: space-between; width: 100%"><span style="font-size: 12px; font-weight: 500">Pré-secagem</span><span class="mono" style="min-width: 18px; height: 16px; padding: 0 4px; box-sizing: border-box; background: #F5A524; color: #14100A; font-size: 11px; font-weight: 600; text-align: center; line-height: 16px">2</span></span><span class="mono" style="font-size: 10px; color: #F5A524">PDIC-523 <span style="color: #E3CF4A">VI-5123B</span></span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Speed Sizer</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Pós-secagem</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Calandra</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">QCS</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Enroladeira</span></a>
+</div>
+
+<!-- ===== Visual principal: linha do tempo ===== -->
+<section aria-label="Linha do tempo do turno" style="position: absolute; left: 72px; top: 128px; width: 1832px; height: 568px; background: #12161C; border: 1px solid #1D232B; border-radius: 4px; box-sizing: border-box">
+
+<div style="position: absolute; left: 16px; right: 16px; top: 0; height: 52px; display: flex; align-items: center; gap: 20px">
+<h1 style="margin: 0; font-size: 14px; font-weight: 600">Linha do tempo do turno</h1>
+<div style="display: flex; align-items: center; gap: 14px; font-size: 12px; color: #9AA3AF">
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 8px; background: #F2555A"></span>Quebra <span class="mono" style="color: #D5DAE1">1</span></span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 9px solid #7C8592"></span>Gramatura <span class="mono" style="color: #D5DAE1">0</span></span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; background: #F5A524; transform: rotate(45deg)"></span>Alarme <span class="mono" style="color: #D5DAE1">3</span></span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 6px; height: 6px; border: 2px solid #9AA3AF; border-radius: 50%"></span>Setpoint <span class="mono" style="color: #D5DAE1">1</span></span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 9px; height: 9px; background: #E45FB0"></span>Bobina <span class="mono" style="color: #D5DAE1">2</span></span>
+</div>
+<div style="flex: 1"></div>
+<span style="font-size: 12px; color: #7C8592">restam <span class="mono" style="color: #D5DAE1">1 h 20 min</span></span>
+<div role="group" aria-label="Janela" style="display: flex; border: 1px solid #252C36; border-radius: 3px; overflow: hidden">
+<button style="height: 28px; padding: 0 12px; border: 0; background: #1B2A44; color: #CFE0FF; font-size: 12px; cursor: pointer">Turno</button>
+<button style="height: 28px; padding: 0 12px; border: 0; border-left: 1px solid #252C36; background: transparent; color: #9AA3AF; font-size: 12px; cursor: pointer">24 h</button>
+<button style="height: 28px; padding: 0 12px; border: 0; border-left: 1px solid #252C36; background: transparent; color: #9AA3AF; font-size: 12px; cursor: pointer">3 turnos</button>
+</div>
+</div>
+
+<!-- rótulos das faixas -->
+<div style="position: absolute; left: 16px; top: 52px; width: 124px; height: 492px">
+<div style="position: absolute; left: 0; top: 4px; font-size: 12px; color: #9AA3AF">Eventos</div>
+<div style="position: absolute; left: 0; top: 84px; font-size: 12px; color: #9AA3AF">Velocidade</div>
+<div style="position: absolute; left: 0; top: 100px; font-size: 11px; color: #7C8592">m/min</div>
+<div class="mono" style="position: absolute; right: 10px; top: 78px; font-size: 11px; color: #7C8592">1.300</div>
+<div class="mono" style="position: absolute; right: 10px; top: 105px; font-size: 11px; color: #9AA3AF">1.250</div>
+<div class="mono" style="position: absolute; right: 10px; top: 185px; font-size: 11px; color: #7C8592">1.100</div>
+<div class="mono" style="position: absolute; right: 10px; top: 238px; font-size: 11px; color: #7C8592">≤1.000</div>
+<div style="position: absolute; left: 0; top: 260px; font-size: 12px; color: #9AA3AF">Produção</div>
+<div style="position: absolute; left: 0; top: 276px; font-size: 11px; color: #7C8592">t acumuladas</div>
+<div class="mono" style="position: absolute; right: 10px; top: 254px; font-size: 11px; color: #7C8592">360</div>
+<div class="mono" style="position: absolute; right: 10px; top: 307px; font-size: 11px; color: #7C8592">240</div>
+<div class="mono" style="position: absolute; right: 10px; top: 361px; font-size: 11px; color: #7C8592">120</div>
+<div class="mono" style="position: absolute; right: 10px; top: 414px; font-size: 11px; color: #7C8592">0</div>
+<div style="position: absolute; left: 0; top: 442px; font-size: 12px; color: #9AA3AF">Bobinas</div>
+</div>
+
+<!-- área do gráfico -->
+<div style="position: absolute; left: 156px; top: 52px; width: 1660px; height: 492px">
+
+<!-- linhas de grade e séries -->
+<svg width="1660" height="160" viewBox="0 0 1660 160" aria-hidden="true" style="position: absolute; left: 0; top: 84px; overflow: visible">
+<rect x="0" y="21.3" width="1660" height="16" fill="#1E252E"></rect>
+<line x1="0" y1="0" x2="1660" y2="0" stroke="#1D232B"></line>
+<line x1="0" y1="26.7" x2="1660" y2="26.7" stroke="#3A424E" stroke-dasharray="2 3"></line>
+<line x1="0" y1="106.7" x2="1660" y2="106.7" stroke="#1D232B"></line>
+<line x1="0" y1="160" x2="1660" y2="160" stroke="#252C36"></line>
+<path d="{{velPath}}" fill="none" stroke="#C9CED6" stroke-width="1.5" stroke-linejoin="round"></path>
+<circle cx="1383.3" cy="{{velNowY}}" r="3.5" fill="#D5DAE1"></circle>
+</svg>
+
+<svg width="1660" height="160" viewBox="0 0 1660 160" aria-hidden="true" style="position: absolute; left: 0; top: 260px; overflow: visible">
+<line x1="0" y1="0" x2="1660" y2="0" stroke="#1D232B"></line>
+<line x1="0" y1="53.3" x2="1660" y2="53.3" stroke="#1D232B"></line>
+<line x1="0" y1="106.7" x2="1660" y2="106.7" stroke="#1D232B"></line>
+<line x1="0" y1="160" x2="1660" y2="160" stroke="#252C36"></line>
+<path d="{{prodArea}}" fill="#1F262F"></path>
+<path d="M0 160 L1660 0" fill="none" stroke="#7C8592" stroke-width="1" stroke-dasharray="5 4"></path>
+<path d="{{projPath}}" fill="none" stroke="#9AA3AF" stroke-width="1.5" stroke-dasharray="2 3"></path>
+<path d="{{prodPath}}" fill="none" stroke="#C9CED6" stroke-width="1.5" stroke-linejoin="round"></path>
+<circle cx="1383.3" cy="{{prodNowY}}" r="3.5" fill="#D5DAE1"></circle>
+</svg>
+
+<!-- quebra: faixa vertical -->
+<div style="position: absolute; left: 594.8px; top: 0; width: 48.4px; height: 464px; background: rgba(242,85,90,0.10); border-left: 1px solid rgba(242,85,90,0.5); border-right: 1px solid rgba(242,85,90,0.5); box-sizing: border-box"></div>
+
+<!-- futuro -->
+<div style="position: absolute; left: 1383.3px; top: 84px; width: 276.7px; height: 380px; background: rgba(255,255,255,0.018)"></div>
+
+<!-- linhas-guia dos eventos -->
+<sc-for list="{{events}}" as="e" hint-placeholder-count="7">
+<div style="position: absolute; top: 34px; width: 1px; height: 430px; left: {{e.x}}px; background: {{e.hair}}"></div>
+</sc-for>
+
+<!-- agora -->
+<div style="position: absolute; left: 1383.3px; top: 0; width: 1px; height: 464px; background: #D5DAE1"></div>
+<div class="mono" style="position: absolute; left: 1360px; top: 466px; width: 46px; height: 20px; line-height: 20px; text-align: center; background: #D5DAE1; color: #0D1015; font-size: 11px; font-weight: 600; border-radius: 2px">21:40</div>
+
+<!-- rótulos de valor atual -->
+<div style="position: absolute; left: 1392px; top: 98px; display: flex; align-items: baseline; gap: 4px"><span class="mono" style="font-size: 13px; font-weight: 500">1.247</span><span style="font-size: 11px; color: #9AA3AF">m/min</span></div>
+<div style="position: absolute; left: 1520px; top: 128px; font-size: 11px; color: #7C8592">faixa <span class="mono">1.230–1.260</span></div>
+<div style="position: absolute; left: 1392px; top: 304px; display: flex; align-items: baseline; gap: 4px"><span class="mono" style="font-size: 13px; font-weight: 500">279</span><span style="font-size: 11px; color: #9AA3AF">t</span><span style="font-size: 11px; color: #7C8592; margin-left: 6px">ritmo da meta</span><span class="mono" style="font-size: 11px; color: #9AA3AF">300 t</span></div>
+<div style="position: absolute; right: 0; top: 248px; display: flex; align-items: baseline; gap: 4px"><span style="font-size: 11px; color: #7C8592">projeção</span><span class="mono" style="font-size: 11px; color: #9AA3AF">338 t</span><span style="font-size: 11px; color: #7C8592">· meta</span><span class="mono" style="font-size: 11px; color: #9AA3AF">360 t</span></div>
+<div style="position: absolute; left: 600px; top: 226px; font-size: 11px; color: #F2555A; white-space: nowrap">0 m/min</div>
+
+<!-- bobinas -->
+<sc-for list="{{reels}}" as="r" hint-placeholder-count="8">
+<button title="{{r.tip}}" style="position: absolute; top: 436px; height: 28px; box-sizing: border-box; padding: 0 6px; overflow: hidden; text-align: left; border-radius: 2px; cursor: pointer; font-size: 11px; left: {{r.left}}px; width: {{r.w}}px; background: {{r.bg}}; border: 1px {{r.bs}} {{r.bd}}; color: {{r.fg}}"><span class="mono">{{r.label}}</span></button>
+</sc-for>
+
+<!-- eixo do tempo -->
+<sc-for list="{{hours}}" as="h" hint-placeholder-count="9">
+<div class="mono" style="position: absolute; top: 470px; font-size: 11px; color: #7C8592; left: {{h.left}}px">{{h.label}}</div>
+</sc-for>
+
+<!-- marcadores de evento -->
+<sc-for list="{{events}}" as="e" hint-placeholder-count="7">
+<button class="ev" aria-label="{{e.aria}}" onClick="{{e.pick}}" style="left: {{e.bx}}px; top: {{e.top}}px; border-color: {{e.bd}}">
+<span style="flex: none; box-sizing: border-box; width: {{e.gw}}px; height: {{e.gh}}px; background: {{e.gbg}}; border: {{e.gbw}}px solid {{e.gc}}; border-radius: {{e.grad}}; transform: rotate({{e.grot}}deg)"></span>
+<span class="mono" style="font-size: 11px; color: {{e.lc}}">{{e.short}}</span>
+</button>
+</sc-for>
+
+<!-- detalhe do evento selecionado -->
+<sc-if value="{{hasSel}}" hint-placeholder-val="{{ true }}">
+<div role="dialog" aria-label="Detalhe do evento" style="position: absolute; top: 74px; width: 360px; box-sizing: border-box; padding: 12px 14px; background: #1A2029; border: 1px solid #3A4350; border-radius: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.45); display: flex; flex-direction: column; gap: 8px; left: {{card.left}}px">
+<div style="display: flex; align-items: center; gap: 8px">
+<span style="width: 8px; height: 8px; background: {{card.color}}"></span>
+<span class="mono" style="font-size: 12px; color: #9AA3AF">{{card.time}}</span>
+<span style="font-size: 11px; color: #9AA3AF; text-transform: uppercase; letter-spacing: 0.05em">{{card.typeLabel}}</span>
+<span style="flex: 1"></span>
+<button aria-label="Fechar detalhe" onClick="{{close}}" style="width: 24px; height: 24px; padding: 0; background: transparent; border: 0; cursor: pointer; color: #7C8592; display: flex; align-items: center; justify-content: center"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 2 L10 10 M10 2 L2 10" stroke="currentColor" stroke-width="1.5"></path></svg></button>
+</div>
+<div style="font-size: 14px; font-weight: 600">{{card.title}}</div>
+<div style="font-size: 12px; color: #9AA3AF">{{card.meta}}</div>
+<sc-if value="{{card.hasBar}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; align-items: center; gap: 10px; padding-top: 2px">
+<span class="mono" style="font-size: 10px; color: #7C8592; width: 64px">{{card.b.tag}}</span>
+<div style="position: relative; height: 14px; flex: 1">
+<div style="position: absolute; left: 0; right: 0; top: 5px; height: 4px; background: #232A33"></div>
+<div style="position: absolute; top: 5px; height: 4px; background: #3A424E; left: {{card.b.nl}}%; width: {{card.b.nw}}%"></div>
+<div style="position: absolute; top: 2px; width: 1px; height: 10px; background: #7C8592; left: {{card.b.ll}}%; display: {{card.b.lld}}"></div>
+<div style="position: absolute; top: 2px; width: 1px; height: 10px; background: #7C8592; left: {{card.b.hh}}%; display: {{card.b.hhd}}"></div>
+<div style="position: absolute; top: 3px; width: 2px; height: 8px; background: #9AA3AF; left: {{card.b.sp}}%"></div>
+<div style="position: absolute; top: 0; width: 3px; height: 14px; margin-left: -1px; left: {{card.b.pv}}%; background: {{card.b.c}}"></div>
+</div>
+<span class="mono" style="font-size: 13px; font-weight: 600; min-width: 40px; text-align: right; color: {{card.b.vc}}">{{card.b.val}}</span>
+<span style="font-size: 11px; color: #9AA3AF; width: 34px">{{card.b.unit}}</span>
+</div>
+<div class="mono" style="font-size: 10px; color: #7C8592; padding-left: 74px">{{card.b.range}}</div>
+</sc-if>
+<div style="display: flex; justify-content: flex-end; padding-top: 2px"><a href="#" style="font-size: 12px; text-decoration: none">{{card.action}} →</a></div>
+</div>
+</sc-if>
+
+</div>
+</section>
+
+<!-- ===== Apoio 1: placar ===== -->
+<section aria-label="Placar do turno" style="position: absolute; left: 72px; top: 712px; width: 600px; height: 352px; box-sizing: border-box; padding: 0 20px; background: #12161C; border: 1px solid #1D232B; border-radius: 4px">
+<div style="height: 48px; display: flex; align-items: center; justify-content: space-between">
+<h2 style="margin: 0; font-size: 14px; font-weight: 600">Placar do turno</h2>
+<span style="font-size: 11px; color: #7C8592">até <span class="mono">21:40</span> · <span class="mono">400</span> de <span class="mono">480</span> min</span>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 30px; padding-top: 10px">
+<div title="Meta a 100 % do turno: 360 t. Ritmo da meta às 21:40: 300 t.">
+<div style="display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px"><span style="font-size: 12px; color: #9AA3AF; width: 140px">Produção</span><span class="mono" style="font-size: 22px; font-weight: 500">279</span><span style="font-size: 12px; color: #9AA3AF">t</span><span style="flex: 1"></span><span class="mono" style="font-size: 12px; color: #9AA3AF">−21 t</span><span style="font-size: 11px; color: #7C8592">vs. ritmo</span></div>
+<div style="position: relative; height: 20px">
+<div style="position: absolute; left: 0; right: 0; top: 6px; height: 8px; background: #1D232B"></div>
+<div style="position: absolute; left: 0; width: 77.5%; top: 6px; height: 8px; background: #8B94A3"></div>
+<div style="position: absolute; left: 77.5%; width: 16.4%; top: 6px; height: 8px; box-sizing: border-box; border: 1px dashed #5D6673; border-left: 0"></div>
+<div style="position: absolute; left: 83.3%; top: 0; width: 2px; height: 20px; background: #D5DAE1"></div>
+<div style="position: absolute; right: 0; top: 0; width: 2px; height: 20px; background: #5D6673"></div>
+</div>
+<div style="position: relative; height: 14px; margin-top: 4px; font-size: 10px; color: #7C8592">
+<span class="mono" style="position: absolute; left: 0">0</span>
+<span style="position: absolute; left: 83.3%; transform: translateX(-50%)">ritmo <span class="mono">300</span></span>
+<span style="position: absolute; right: 0">meta <span class="mono">360</span></span>
+</div>
+</div>
+
+<div title="Eficiência de tempo = tempo produzindo / tempo calendário. Faixa 91–95 %.">
+<div style="display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px"><span style="font-size: 12px; color: #9AA3AF; width: 140px">Eficiência de tempo</span><span class="mono" style="font-size: 22px; font-weight: 500">93,1</span><span style="font-size: 12px; color: #9AA3AF">%</span><span style="flex: 1"></span><span style="font-size: 11px; color: #7C8592">1 quebra · <span class="mono">14</span> min</span></div>
+<div style="position: relative; height: 20px">
+<div style="position: absolute; left: 0; right: 0; top: 6px; height: 8px; background: #1D232B"></div>
+<div style="position: absolute; left: 40%; width: 26.7%; top: 6px; height: 8px; background: #3A424E"></div>
+<div style="position: absolute; left: 54%; top: 0; width: 3px; height: 20px; margin-left: -1px; background: #D5DAE1"></div>
+</div>
+<div style="position: relative; height: 14px; margin-top: 4px; font-size: 10px; color: #7C8592">
+<span class="mono" style="position: absolute; left: 0">85</span>
+<span class="mono" style="position: absolute; left: 40%; transform: translateX(-50%)">91</span>
+<span class="mono" style="position: absolute; left: 66.7%; transform: translateX(-50%)">95</span>
+<span class="mono" style="position: absolute; right: 0">100</span>
+</div>
+</div>
+
+<div title="Refugo = perdas de papel / produção bruta. Meta ≤ 5,0 %.">
+<div style="display: flex; align-items: baseline; gap: 6px; margin-bottom: 8px"><span style="font-size: 12px; color: #9AA3AF; width: 140px">Refugo</span><span class="mono" style="font-size: 22px; font-weight: 500">4,6</span><span style="font-size: 12px; color: #9AA3AF">%</span><span style="flex: 1"></span><span style="font-size: 11px; color: #7C8592">meta ≤ <span class="mono">5,0</span> %</span></div>
+<div style="position: relative; height: 20px">
+<div style="position: absolute; left: 0; right: 0; top: 6px; height: 8px; background: #1D232B"></div>
+<div style="position: absolute; left: 0; width: 62.5%; top: 6px; height: 8px; background: #3A424E"></div>
+<div style="position: absolute; left: 57.5%; top: 0; width: 3px; height: 20px; margin-left: -1px; background: #D5DAE1"></div>
+</div>
+<div style="position: relative; height: 14px; margin-top: 4px; font-size: 10px; color: #7C8592">
+<span class="mono" style="position: absolute; left: 0">0</span>
+<span class="mono" style="position: absolute; left: 62.5%; transform: translateX(-50%)">5</span>
+<span class="mono" style="position: absolute; right: 0">8</span>
+</div>
+</div>
+</div>
+</section>
+
+<!-- ===== Apoio 2: alarmes ativos ===== -->
+<section aria-label="Alarmes ativos" style="position: absolute; left: 688px; top: 712px; width: 600px; height: 352px; box-sizing: border-box; padding: 0 20px; background: #12161C; border: 1px solid #1D232B; border-radius: 4px">
+<div style="height: 48px; display: flex; align-items: center; justify-content: space-between">
+<h2 style="margin: 0; font-size: 14px; font-weight: 600">Alarmes ativos</h2>
+<span style="font-size: 11px; color: #7C8592">por prioridade e tempo ativo</span>
+</div>
+<div style="display: flex; flex-direction: column">
+<sc-for list="{{alarms}}" as="a" hint-placeholder-count="3">
+<button style="display: grid; grid-template-columns: 24px 1fr 76px; column-gap: 12px; row-gap: 8px; align-items: center; padding: 14px 0; background: transparent; border: 0; border-top: 1px solid #1D232B; text-align: left; cursor: pointer; width: 100%">
+<span class="mono" style="grid-row: span 2; width: 22px; height: 22px; line-height: 22px; text-align: center; font-size: 12px; font-weight: 600; color: #14100A; align-self: start; background: {{a.c}}">{{a.pri}}</span>
+<span style="display: flex; align-items: baseline; gap: 8px; min-width: 0"><span class="mono" style="font-size: 11px; color: #9AA3AF">{{a.tag}}</span><span style="font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{a.desc}}</span></span>
+<span style="text-align: right; font-size: 11px; color: #7C8592">há <span class="mono" style="color: #D5DAE1">{{a.dur}}</span></span>
+<span style="display: flex; align-items: center; gap: 10px">
+<span style="position: relative; height: 14px; flex: 1">
+<span style="position: absolute; left: 0; right: 0; top: 5px; height: 4px; background: #232A33"></span>
+<span style="position: absolute; top: 5px; height: 4px; background: #3A424E; left: {{a.b.nl}}%; width: {{a.b.nw}}%"></span>
+<span style="position: absolute; top: 2px; width: 1px; height: 10px; background: #7C8592; left: {{a.b.ll}}%; display: {{a.b.lld}}"></span>
+<span style="position: absolute; top: 2px; width: 1px; height: 10px; background: #7C8592; left: {{a.b.hh}}%; display: {{a.b.hhd}}"></span>
+<span style="position: absolute; top: 3px; width: 2px; height: 8px; background: #9AA3AF; left: {{a.b.sp}}%"></span>
+<span style="position: absolute; top: 0; width: 3px; height: 14px; margin-left: -1px; left: {{a.b.pv}}%; background: {{a.c}}"></span>
+</span>
+<span class="mono" style="font-size: 13px; font-weight: 600; min-width: 36px; text-align: right; color: {{a.c}}">{{a.b.val}}</span>
+<span style="font-size: 11px; color: #9AA3AF; width: 34px">{{a.b.unit}}</span>
+</span>
+<span class="mono" style="text-align: right; font-size: 11px; color: #7C8592">{{a.since}}</span>
+</button>
+</sc-for>
+</div>
+<div style="border-top: 1px solid #1D232B; padding-top: 12px; display: flex; gap: 16px; font-size: 11px; color: #7C8592">
+<span>Barras: faixa operacional L–H, marcas LL/HH, alvo e PV</span>
+</div>
+</section>
+
+<!-- ===== Apoio 3: passagem de turno ===== -->
+<section aria-label="Pendências da passagem de turno" style="position: absolute; left: 1304px; top: 712px; width: 600px; height: 352px; box-sizing: border-box; padding: 0 20px; background: #12161C; border: 1px solid #1D232B; border-radius: 4px">
+<div style="height: 48px; display: flex; align-items: center; justify-content: space-between">
+<h2 style="margin: 0; font-size: 14px; font-weight: 600">Passagem de turno</h2>
+<span style="font-size: 11px; color: #7C8592"><span class="mono" style="color: #D5DAE1">5</span> pendências · entrega <span class="mono">23:00</span></span>
+</div>
+<div style="display: flex; flex-direction: column">
+
+<div style="display: flex; align-items: center; gap: 12px; height: 58px; border-top: 1px solid #1D232B">
+<input type="checkbox" id="p1" style="width: 16px; height: 16px; accent-color: #4F8CFF; margin: 0">
+<label for="p1" style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; cursor: pointer"><span style="font-size: 13px">Reteste de Cobb da bobina <span class="mono">1184</span> (retida)</span><span style="font-size: 11px; color: #7C8592"><span class="mono" style="color: #E45FB0">LAB-1211 29,4 g/m²</span> · faixa <span class="mono">22–28</span> · Laboratório</span></label>
+<span style="font-size: 11px; color: #E45FB0; border: 1px solid #E45FB0; padding: 2px 6px; border-radius: 2px">retida</span>
+</div>
+
+<div style="display: flex; align-items: center; gap: 12px; height: 58px; border-top: 1px solid #1D232B">
+<input type="checkbox" id="p2" style="width: 16px; height: 16px; accent-color: #4F8CFF; margin: 0">
+<label for="p2" style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; cursor: pointer"><span style="font-size: 13px">Definir destino da bobina <span class="mono">1183</span></span><span style="font-size: 11px; color: #7C8592"><span class="mono" style="color: #E45FB0">LAB-1211 28,9 g/m²</span> · demais ensaios dentro · Qualidade</span></label>
+<span style="font-size: 11px; color: #9AA3AF; border: 1px solid #3A424E; padding: 2px 6px; border-radius: 2px">em avaliação</span>
+</div>
+
+<div style="display: flex; align-items: center; gap: 12px; height: 58px; border-top: 1px solid #1D232B">
+<input type="checkbox" id="p3" style="width: 16px; height: 16px; accent-color: #4F8CFF; margin: 0">
+<label for="p3" style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; cursor: pointer"><span style="font-size: 13px">Cola AKD abaixo do SP desde <span class="mono">19:20</span></span><span style="font-size: 11px; color: #7C8592"><span class="mono" style="color: #F5A524">FIC-107 1,1 kg/t</span> · SP <span class="mono">1,4</span> · checar dosadora</span></label>
+<button style="height: 30px; padding: 0 10px; background: transparent; border: 1px solid #4F8CFF; color: #7FAAFF; border-radius: 3px; font-size: 12px; cursor: pointer">Abrir nota</button>
+</div>
+
+<div style="display: flex; align-items: center; gap: 12px; height: 58px; border-top: 1px solid #1D232B">
+<input type="checkbox" id="p4" style="width: 16px; height: 16px; accent-color: #4F8CFF; margin: 0">
+<label for="p4" style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; cursor: pointer"><span style="font-size: 13px">Inspecionar sifões do grupo 3 (ronda em curso, ponto <span class="mono">12</span>)</span><span style="font-size: 11px; color: #7C8592"><span class="mono" style="color: #F5A524">PDIC-523 0,24 bar</span> · PIC-513 alterado às <span class="mono">18:12</span></span></label>
+<span style="font-size: 11px; color: #9AA3AF; border: 1px solid #3A424E; padding: 2px 6px; border-radius: 2px">ronda</span>
+</div>
+
+<div style="display: flex; align-items: center; gap: 12px; height: 58px; border-top: 1px solid #1D232B">
+<input type="checkbox" id="p5" style="width: 16px; height: 16px; accent-color: #4F8CFF; margin: 0">
+<label for="p5" style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; cursor: pointer"><span style="font-size: 13px">Programar intervenção no mancal CS23 LC</span><span style="font-size: 11px; color: #7C8592"><span class="mono" style="color: #E3CF4A">VI-5123B 4,9 mm/s</span> zona C · <span class="mono">TI-5323B 77 °C</span></span></label>
+<span class="mono" style="font-size: 11px; color: #D5DAE1; border: 1px solid #3A424E; padding: 2px 6px; border-radius: 2px">N-0412 · P2</span>
+</div>
+
+</div>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var st = this.state || {};
+    var sel = ('sel' in st) ? st.sel : 'b2';
+    var W = 1660, H = 160, PPM = W / 480;
+    var X = function (m) { return m * PPM; };
+    var fmt = function (n, d) {
+      var s = n.toFixed(d).split('.');
+      s[0] = s[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      return s.join(',');
+    };
+
+    // velocidade (m/min): quebra 17:52–18:06 (172–186 min), retomada até 18:34
+    var base = function (m) { return 1247 + 3.5 * Math.sin(m / 6.3) + 2.2 * Math.sin(m / 1.9 + 1) + 1.4 * Math.cos(m / 13); };
+    var vel = function (m) {
+      if (m >= 172 && m < 186) return 0;
+      if (m >= 186 && m < 214) return 800 + (m - 186) / 28 * (base(m) - 800);
+      return base(m);
+    };
+    var yv = function (v) { return H - (Math.min(1300, Math.max(1000, v)) - 1000) / 300 * H; };
+    var velPath = '';
+    var acc = 0, cum = [];
+    for (var m = 0; m <= 400; m += 2) {
+      velPath += (m ? 'L' : 'M') + X(m).toFixed(1) + ' ' + yv(vel(m)).toFixed(1) + ' ';
+      acc += vel(m) / 1247 * 2;
+      cum.push([m, acc]);
+    }
+    var k = 279 / acc;
+    var yp = function (c) { return H - c / 360 * H; };
+    var prodPath = '';
+    for (var i = 0; i < cum.length; i++) {
+      prodPath += (i ? 'L' : 'M') + X(cum[i][0]).toFixed(1) + ' ' + yp(cum[i][1] * k).toFixed(1) + ' ';
+    }
+    var prodArea = prodPath + 'L' + X(400).toFixed(1) + ' 160 L0 160 Z';
+    var projPath = 'M' + X(400).toFixed(1) + ' ' + yp(279).toFixed(1) + ' L1660 ' + yp(338).toFixed(1);
+
+    // barra de faixa
+    var pct = function (v, a, b) { return Math.max(0, Math.min(100, (v - a) / (b - a) * 100)); };
+    var bar = function (o) {
+      var lo = (o.l != null) ? o.l : o.min, hi = (o.h != null) ? o.h : o.max;
+      return {
+        nl: pct(lo, o.min, o.max).toFixed(1),
+        nw: (pct(hi, o.min, o.max) - pct(lo, o.min, o.max)).toFixed(1),
+        ll: pct(o.ll != null ? o.ll : o.min, o.min, o.max).toFixed(1), lld: o.ll != null ? 'block' : 'none',
+        hh: pct(o.hh != null ? o.hh : o.max, o.min, o.max).toFixed(1), hhd: o.hh != null ? 'block' : 'none',
+        sp: pct(o.sp, o.min, o.max).toFixed(1),
+        pv: pct(o.pv, o.min, o.max).toFixed(1),
+        c: o.c, vc: o.c === '#C9CED6' ? '#D5DAE1' : o.c,
+        val: fmt(o.pv, o.d), unit: o.unit, tag: o.tag, range: o.range
+      };
+    };
+
+    var C = { alta: '#F2555A', media: '#F5A524', baixa: '#E3CF4A', fora: '#E45FB0', normal: '#C9CED6', sp: '#9AA3AF' };
+
+    var cobb1183 = bar({ tag: 'LAB-1211', min: 18, max: 32, l: 22, h: 28, sp: 25, pv: 28.9, d: 1, unit: 'g/m²', c: C.fora, range: 'espec. 22–28 · alvo 25' });
+    var cobb1184 = bar({ tag: 'LAB-1211', min: 18, max: 32, l: 22, h: 28, sp: 25, pv: 29.4, d: 1, unit: 'g/m²', c: C.fora, range: 'espec. 22–28 · alvo 25' });
+    var fic107 = bar({ tag: 'FIC-107', min: 0.5, max: 2.8, ll: 0.8, l: 1.2, sp: 1.4, h: 2.0, hh: 2.5, pv: 1.1, d: 1, unit: 'kg/t', c: C.media, range: 'LL 0,8 · L 1,2 · SP 1,4 · H 2,0 · HH 2,5' });
+    var pdic523 = bar({ tag: 'PDIC-523', min: 0, max: 0.8, ll: 0.20, l: 0.30, sp: 0.40, h: 0.60, hh: 0.70, pv: 0.24, d: 2, unit: 'bar', c: C.media, range: 'LL 0,20 · L 0,30 · SP 0,40 · H 0,60 · HH 0,70' });
+    var vi5123 = bar({ tag: 'VI-5123B', min: 0, max: 9, h: 4.5, hh: 7.1, sp: 2.3, pv: 4.9, d: 1, unit: 'mm/s', c: C.baixa, range: 'ISO 20816-3 · A/B 2,3 · B/C 4,5 · C/D 7,1' });
+    var pic513 = bar({ tag: 'PIC-513', min: 2.0, max: 4.6, ll: 2.4, l: 2.8, sp: 3.4, h: 4.0, hh: 4.3, pv: 3.4, d: 1, unit: 'bar', c: C.normal, range: 'LL 2,4 · L 2,8 · SP 3,4 · H 4,0 · HH 4,3' });
+
+    var defs = [
+      { id: 'r1', m: 90, row: 0, glyph: 'diamond', color: C.baixa, short: 'VI-5123B', time: '16:30', typeLabel: 'Alarme · baixa', title: 'Vibração CS23 lado LC em zona C', meta: 'Achado de ronda · nota N-0412 aberta, prioridade 2', b: vi5123, action: 'Abrir em Mancais' },
+      { id: 'q1', m: 172, m2: 186, row: 0, glyph: 'bar', color: C.alta, short: 'Quebra 14 min', time: '17:52–18:06', typeLabel: 'Quebra', title: 'Quebra de folha na pós-secagem', meta: 'Parada de 14 min · perda estimada 10,5 t · retomada plena às 18:34', b: null, action: 'Abrir no Processo' },
+      { id: 's1', m: 192, row: 1, glyph: 'circle', color: C.sp, short: 'PIC-513 SP', time: '18:12', typeLabel: 'Setpoint alterado', title: 'Vapor do grupo 3: SP 3,2 → 3,4 bar', meta: 'Motivo: umidade alta na retomada · J. Ribeiro', b: pic513, action: 'Ver histórico auditado' },
+      { id: 'a1', m: 260, row: 0, glyph: 'diamond', color: C.media, short: 'FIC-107', time: '19:20', typeLabel: 'Alarme · média', title: 'Dosagem de cola AKD abaixo do SP', meta: 'PV 1,1 kg/t com SP 1,4 kg/t · ativo há 2 h 20 min', b: fic107, action: 'Abrir no Processo' },
+      { id: 'b1', m: 341, row: 0, glyph: 'square', color: C.fora, short: '1183 Cobb', time: '20:41', typeLabel: 'Bobina · laboratório', title: 'Bobina 1183 com Cobb fora da especificação', meta: 'Demais ensaios dentro · destino em avaliação', b: cobb1183, action: 'Abrir no Laboratório' },
+      { id: 'a2', m: 372, row: 0, glyph: 'diamond', color: C.media, short: 'PDIC-523', time: '21:12', typeLabel: 'Alarme · média', title: 'ΔP dos sifões do grupo 3 baixo', meta: 'Pré-secagem · ativo há 28 min', b: pdic523, action: 'Abrir no Processo' },
+      { id: 'b2', m: 396, row: 1, glyph: 'square', color: C.fora, short: '1184 retida', time: '21:36', typeLabel: 'Bobina retida', title: 'Bobina 1184 retida para reteste', meta: '41,8 t · 69,7 km · demais ensaios dentro', b: cobb1184, action: 'Abrir em Bobinas' }
+    ];
+
+    var self = this;
+    var events = defs.map(function (d) {
+      var x = X(d.m), isSel = d.id === sel;
+      var g = { gw: 10, gh: 10, gbg: d.color, gbw: 0, gc: d.color, grad: '0', grot: 0 };
+      if (d.glyph === 'diamond') { g.gw = 9; g.gh = 9; g.grot = 45; }
+      if (d.glyph === 'circle') { g.gbg = 'transparent'; g.gbw = 2; g.grad = '50%'; }
+      if (d.glyph === 'bar') { g.gw = X(d.m2) - x; g.gh = 10; }
+      return {
+        x: x.toFixed(1),
+        bx: (d.glyph === 'bar' ? x - 5 : x - 9.5).toFixed(1),
+        top: d.row ? 40 : 8,
+        gw: g.gw.toFixed ? g.gw.toFixed(1) : g.gw, gh: g.gh, gbg: g.gbg, gbw: g.gbw, gc: g.gc, grad: g.grad, grot: g.grot,
+        short: d.short,
+        lc: isSel ? '#FFFFFF' : '#9AA3AF',
+        bd: isSel ? '#4F8CFF' : 'transparent',
+        hair: isSel ? 'rgba(79,140,255,0.6)' : '#1F252D',
+        aria: d.typeLabel + ' ' + d.time + ': ' + d.title,
+        pick: function () { self.setState({ sel: isSel ? null : d.id }); }
+      };
+    });
+
+    var cur = null;
+    for (var j = 0; j < defs.length; j++) if (defs[j].id === sel) cur = defs[j];
+    var card = { left: 0, color: '', time: '', typeLabel: '', title: '', meta: '', hasBar: false, b: cobb1184, action: '' };
+    if (cur) {
+      card = {
+        left: Math.max(0, Math.min(W - 360, X(cur.m) > W * 0.6 ? X(cur.m) + 24 - 360 : X(cur.m) - 24)).toFixed(1),
+        color: cur.color, time: cur.time, typeLabel: cur.typeLabel, title: cur.title, meta: cur.meta,
+        hasBar: !!cur.b, b: cur.b || cobb1184, action: cur.action
+      };
+    }
+
+    var reelDefs = [
+      { id: '1178', s: 0, e: 4, st: 'ok', tip: '1178 · turno B · aprovada' },
+      { id: '1179', s: 4, e: 60, st: 'ok', tip: '1179 · 15:04–16:00 · aprovada' },
+      { id: '1180', s: 60, e: 116, st: 'ok', tip: '1180 · 16:00–16:56 · aprovada' },
+      { id: '1181', s: 116, e: 172, st: 'ok', tip: '1181 · 16:56–17:52 · encerrada na quebra · aprovada' },
+      { id: '1182', s: 186, e: 242, st: 'ok', tip: '1182 · 18:06–19:02 · aprovada' },
+      { id: '1183', s: 242, e: 298, st: 'fora', tip: '1183 · 19:02–19:58 · Cobb 28,9 g/m² · destino em avaliação' },
+      { id: '1184', s: 298, e: 354, st: 'retida', tip: '1184 · 19:58–20:54 · 41,8 t · Cobb 29,4 g/m² · retida' },
+      { id: '1185', s: 354, e: 400, st: 'run', tip: '1185 · desde 20:54 · em formação · ensaios pendentes' }
+    ];
+    var reels = reelDefs.map(function (r) {
+      var w = X(r.e) - X(r.s) - 2;
+      var o = { left: (X(r.s) + 1).toFixed(1), w: w.toFixed(1), tip: r.tip, label: w > 40 ? r.id : '', bg: '#1A2029', bd: '#2A313B', bs: 'solid', fg: '#9AA3AF' };
+      if (r.st === 'fora') { o.bg = 'rgba(228,95,176,0.10)'; o.bd = '#E45FB0'; o.bs = 'dashed'; o.fg = '#E8A3CC'; o.label = '1183 · Cobb'; }
+      if (r.st === 'retida') { o.bg = 'rgba(228,95,176,0.28)'; o.bd = '#E45FB0'; o.fg = '#FFFFFF'; o.label = '1184 · RETIDA'; }
+      if (r.st === 'run') { o.bd = '#5D6673'; o.bs = 'dashed'; o.fg = '#D5DAE1'; o.label = '1185 ▸'; }
+      return o;
+    });
+
+    var hours = [];
+    for (var h = 0; h <= 8; h++) {
+      hours.push({ label: (15 + h) + ':00', left: (h === 0 ? 0 : (h === 8 ? W - 38 : X(h * 60) - 19)).toFixed(1) });
+    }
+
+    var alarms = [
+      { pri: '2', c: C.media, tag: 'PDIC-523', desc: 'ΔP sifões grupo 3 baixo', since: '21:12', dur: '28 min', b: pdic523 },
+      { pri: '2', c: C.media, tag: 'FIC-107', desc: 'Cola AKD abaixo do SP', since: '19:20', dur: '2 h 20', b: fic107 },
+      { pri: '3', c: C.baixa, tag: 'VI-5123B', desc: 'Vibração CS23 LC · zona C', since: '16:30', dur: '5 h 10', b: vi5123 }
+    ];
+
+    return {
+      velPath: velPath, velNowY: yv(vel(400)).toFixed(1),
+      prodPath: prodPath, prodArea: prodArea, projPath: projPath, prodNowY: yp(279).toFixed(1),
+      events: events, reels: reels, hours: hours, alarms: alarms,
+      hasSel: !!cur, card: card,
+      close: function () { self.setState({ sel: null }); }
+    };
+  }
+}
+</script>
+</body>
+</html>

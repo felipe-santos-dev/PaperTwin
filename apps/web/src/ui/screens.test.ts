@@ -15,12 +15,13 @@ function press(key: string, target?: HTMLElement): void {
   });
 }
 
-describe('as sete telas', () => {
-  it('estão na ordem do protótipo', () => {
+describe('as oito telas', () => {
+  it('estão na ordem do design', () => {
     expect(SCREEN_IDS).toEqual([
       'turno',
-      'bobinas',
       'processo',
+      'laboratorio',
+      'bobinas',
       'mancais',
       'rondas',
       'notas',
@@ -28,19 +29,24 @@ describe('as sete telas', () => {
     ]);
   });
 
-  it('tem as teclas 1 a 7, uma por tela', () => {
-    expect(SCREENS.map((screen) => screen.key)).toEqual(['1', '2', '3', '4', '5', '6', '7']);
+  it('tem as teclas 1 a 8, uma por tela, com a Máquina na 8', () => {
+    expect(SCREENS.map((screen) => screen.key)).toEqual(['1', '2', '3', '4', '5', '6', '7', '8']);
+    expect(SCREENS.find((s) => s.key === '8')?.id).toBe('maquina');
     expect(new Set(SCREENS.map((s) => s.key)).size).toBe(SCREENS.length);
   });
 
-  it('tem rótulo em todas', () => {
-    for (const screen of SCREENS) expect(screen.label.trim()).not.toBe('');
+  it('tem rótulo e rótulo curto em todas', () => {
+    for (const screen of SCREENS) {
+      expect(screen.label.trim()).not.toBe('');
+      expect(screen.short.trim()).not.toBe('');
+    }
   });
 
   it('cai na padrão para id que não existe', () => {
     expect(screenOf('qualquer')).toBe(DEFAULT_SCREEN);
     expect(screenOf(null)).toBe(DEFAULT_SCREEN);
     expect(screenOf('mancais')).toBe('mancais');
+    expect(screenOf('maquina')).toBe('maquina');
   });
 });
 
@@ -82,7 +88,7 @@ describe('navegação', () => {
     expect(result.current.screen).toBe('processo');
   });
 
-  it('as teclas 1 a 7 levam à tela certa', () => {
+  it('as teclas 1 a 8 levam à tela certa', () => {
     const { result } = renderHook(() => useScreen());
 
     for (const screen of SCREENS) {
@@ -93,7 +99,7 @@ describe('navegação', () => {
 
   it('ignora tecla que não é de tela', () => {
     const { result } = renderHook(() => useScreen());
-    press('8');
+    press('9');
     press('a');
 
     expect(result.current.screen).toBe(DEFAULT_SCREEN);

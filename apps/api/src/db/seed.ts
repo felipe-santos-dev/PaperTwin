@@ -26,10 +26,10 @@ import type { Database } from './repository';
 /**
  * O mancal que degrada na simulação.
  *
- * É o mesmo do conceito de tela de monitoramento, para quem comparar os dois
- * encontrar o mesmo ativo em alarme.
+ * É o CS23 do lado comando, o mesmo do design das telas, para quem comparar
+ * os dois encontrar o mesmo ativo em alarme.
  */
-export const DEGRADING_TAG: AssetTag = 'MP1-SEC-G4-CS23-MLA';
+export const DEGRADING_TAG: AssetTag = 'MP1-SEC-G4-CS23-MLC';
 
 export interface SeedResult {
   readonly assets: number;

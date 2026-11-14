@@ -301,8 +301,8 @@ async function precursorsOf(
  * mancais da secagem.
  */
 const ROUND_ROUTE: readonly string[] = [
-  'MP1-SEC-G4-CS23-MLA',
   'MP1-SEC-G4-CS23-MLC',
+  'MP1-SEC-G4-CS23-MLA',
   'MP1-SEC-G4-CS19-MLA',
   'MP1-SEC-G4-CS26-MLC',
   'MP1-SEC-G1-CS01-MLA',

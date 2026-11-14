@@ -58,8 +58,8 @@ export const RAW_TAGS: readonly string[] = [
   'SIC-1104',
   'PDIC-524',
   'AIC-905',
-  'VI-5123A',
-  'TI-5323A',
+  'VI-5123B',
+  'TI-5323B',
 ];
 
 /** O que uma varredura produziu. */

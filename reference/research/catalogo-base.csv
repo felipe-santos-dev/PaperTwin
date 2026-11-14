@@ -30,7 +30,7 @@ LIC-534,Nível do tanque separador G4,pré-secagem,condensado,%,30,70,50,,,,85,s
 TIC-505,Temperatura do ar de insuflamento da capota,pré-secagem,capota,°C,90,115,102,,,,,sim,TV-505 bateria de ar,0.5,1,B,média,
 AIC-506,Ponto de orvalho da exaustão da capota,pré-secagem,capota,°C,56,64,60,,,,65,sim,exaustores (VFD),0.2,0.5,B,média,HH 65 °C (condensação/gotejamento)
 PIC-507,Altura da linha de zero da capota,pré-secagem,capota,mm,1200,2000,1600,,,,,sim,ventiladores de insuflamento,10,20,B,baixa,
-TIC-508,Tensão das telas secadoras,pré-secagem,telas,kN/m,2.0,4.0,2.8,,,,,sim,esticador da tela,0.05,0.1,B,média,
+WIC-508,Tensão das telas secadoras,pré-secagem,telas,kN/m,2.0,4.0,2.8,,,,,sim,esticador da tela,0.05,0.1,B,média,a pesquisa B usa TIC-508; no ISA-5.1 T é temperatura
 AIC-601,Sólidos da calda de amido,speed sizer,amido,%,7,13,9.5,,,,,sim,AV-601 água de diluição,0.05,0.1,B,alta,
 AI-602,Viscosidade do amido,speed sizer,amido,mPa·s,20,80,40,,,,,não,dosagem de enzima no cozinhador,1,2,B,média,
 TIC-603,Temperatura do amido,speed sizer,amido,°C,58,68,63,52,,,72,sim,TV-603 trocador,0.2,0.5,B,alta,LL retrogradação; HH grumos

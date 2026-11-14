@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>PaperTwin · Sistema visual</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D1015}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1080px; box-sizing: border-box; padding: 48px 56px; background: #0D1015; color: #D5DAE1; font-family: Inter, system-ui, sans-serif; font-size: 13px; display: flex; flex-direction: column; gap: 36px">
+
+<div style="display: flex; align-items: baseline; gap: 16px">
+<h1 style="margin: 0; font-size: 22px; font-weight: 600">Sistema visual</h1>
+<span style="font-size: 13px; color: #9AA3AF">Cinza quando normal. Cor só para estado fora do normal. Azul só para interação.</span>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 40px">
+
+<!-- cores -->
+<section style="display: flex; flex-direction: column; gap: 20px">
+<h2 style="margin: 0; font-size: 12px; font-weight: 600; color: #9AA3AF; text-transform: uppercase; letter-spacing: 0.06em">Cores</h2>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 12px; color: #7C8592">Base</span>
+<div style="display: flex; gap: 8px">
+<div style="display: flex; flex-direction: column; gap: 4px"><div style="width: 72px; height: 36px; background: #0D1015; border: 1px solid #252C36"></div><span class="mono" style="font-size: 10px; color: #7C8592">fundo</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div style="width: 72px; height: 36px; background: #12161C; border: 1px solid #252C36"></div><span class="mono" style="font-size: 10px; color: #7C8592">painel</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div style="width: 72px; height: 36px; background: #1D232B"></div><span class="mono" style="font-size: 10px; color: #7C8592">linha</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div style="width: 72px; height: 36px; background: #3A424E"></div><span class="mono" style="font-size: 10px; color: #7C8592">faixa normal</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div style="width: 72px; height: 36px; background: #7C8592"></div><span class="mono" style="font-size: 10px; color: #7C8592">texto 3</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div style="width: 72px; height: 36px; background: #9AA3AF"></div><span class="mono" style="font-size: 10px; color: #7C8592">texto 2</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div style="width: 72px; height: 36px; background: #D5DAE1"></div><span class="mono" style="font-size: 10px; color: #7C8592">texto 1 · PV</span></div>
+</div>
+</div>
+
+<div style="display: flex; gap: 32px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 12px; color: #7C8592">Interação</span>
+<div style="display: flex; flex-direction: column; gap: 4px"><div style="width: 72px; height: 36px; background: #4F8CFF"></div><span class="mono" style="font-size: 10px; color: #7C8592">#4F8CFF</span></div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 12px; color: #7C8592">Alarmes · prioridade</span>
+<div style="display: flex; gap: 8px">
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="mono" style="width: 72px; height: 36px; background: #F2555A; color: #14100A; font-weight: 600; display: flex; align-items: center; justify-content: center">1</div><span style="font-size: 10px; color: #7C8592">alta</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="mono" style="width: 72px; height: 36px; background: #F5A524; color: #14100A; font-weight: 600; display: flex; align-items: center; justify-content: center">2</div><span style="font-size: 10px; color: #7C8592">média</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="mono" style="width: 72px; height: 36px; background: #E3CF4A; color: #14100A; font-weight: 600; display: flex; align-items: center; justify-content: center">3</div><span style="font-size: 10px; color: #7C8592">baixa</span></div>
+</div>
+</div>
+</div>
+
+<div style="display: flex; gap: 32px">
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 12px; color: #7C8592">Especificação</span>
+<div style="display: flex; gap: 8px">
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="mono" style="width: 72px; height: 36px; background: #262D36; color: #9AA3AF; display: flex; align-items: center; justify-content: center; font-size: 12px">25,1</div><span style="font-size: 10px; color: #7C8592">dentro</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="mono" style="width: 72px; height: 36px; background: #4A2A42; border: 1px solid #A0507F; box-sizing: border-box; color: #E8A3CC; display: flex; align-items: center; justify-content: center; font-size: 12px">27,6</div><span style="font-size: 10px; color: #7C8592">no limite (≥ 85 %)</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="mono" style="width: 72px; height: 36px; background: #E45FB0; color: #1A0A14; font-weight: 600; display: flex; align-items: center; justify-content: center; font-size: 12px">29,4</div><span style="font-size: 10px; color: #7C8592">fora</span></div>
+</div>
+</div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 12px; color: #7C8592">ISO 20816-3 · zonas</span>
+<div style="display: flex; gap: 0">
+<div style="display: flex; flex-direction: column; gap: 4px"><div style="width: 56px; height: 36px; background: #1C2622; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #9AA3AF">A</div><span class="mono" style="font-size: 10px; color: #7C8592">&lt;2,3</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div style="width: 56px; height: 36px; background: #252E29; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #9AA3AF">B</div><span class="mono" style="font-size: 10px; color: #7C8592">&lt;4,5</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div style="width: 56px; height: 36px; background: #4A3A16; border-top: 2px solid #D6A23A; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #E9C77A">C</div><span class="mono" style="font-size: 10px; color: #7C8592">&lt;7,1</span></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div style="width: 56px; height: 36px; background: #4A1E22; border-top: 2px solid #F2555A; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-weight: 600; color: #F59A9D">D</div><span class="mono" style="font-size: 10px; color: #7C8592">≥7,1 mm/s</span></div>
+</div>
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span style="font-size: 12px; color: #7C8592">Fonte de dados</span>
+<div style="display: flex; gap: 10px">
+<div style="display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border: 1px solid #5D6673; border-radius: 3px; font-size: 11px; color: #D5DAE1; letter-spacing: 0.04em"><span style="width: 7px; height: 7px; background: #D5DAE1; border-radius: 50%"></span>AO VIVO</div>
+<div style="display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border: 1px dashed #5D6673; border-radius: 3px; font-size: 11px; color: #9AA3AF; letter-spacing: 0.04em"><span style="width: 7px; height: 7px; border: 1px solid #9AA3AF; border-radius: 50%; box-sizing: border-box"></span>DEMONSTRAÇÃO</div>
+<div style="display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border: 1px solid #F2555A; border-radius: 3px; font-size: 11px; color: #F2555A; letter-spacing: 0.04em"><span style="width: 8px; height: 2px; background: #F2555A"></span>SEM DADOS</div>
+</div>
+</div>
+</section>
+
+<!-- tipografia -->
+<section style="display: flex; flex-direction: column; gap: 20px">
+<h2 style="margin: 0; font-size: 12px; font-weight: 600; color: #9AA3AF; text-transform: uppercase; letter-spacing: 0.06em">Tipografia</h2>
+<div style="display: flex; flex-direction: column; gap: 14px">
+<div style="display: flex; align-items: baseline; gap: 16px"><span class="mono" style="width: 120px; font-size: 10px; color: #7C8592">Inter 600 · 14</span><span style="font-size: 14px; font-weight: 600">Título de bloco</span></div>
+<div style="display: flex; align-items: baseline; gap: 16px"><span class="mono" style="width: 120px; font-size: 10px; color: #7C8592">Inter 400 · 12</span><span style="font-size: 12px; color: #9AA3AF">Rótulo curto de variável</span></div>
+<div style="display: flex; align-items: baseline; gap: 16px"><span class="mono" style="width: 120px; font-size: 10px; color: #7C8592">Mono 400 · 10–11</span><span class="mono" style="font-size: 11px; color: #9AA3AF">FIC-107 · TAG e escala</span></div>
+<div style="display: flex; align-items: baseline; gap: 16px"><span class="mono" style="width: 120px; font-size: 10px; color: #7C8592">Mono 500 · 22</span><span class="mono" style="font-size: 22px; font-weight: 500">1.247</span><span style="font-size: 12px; color: #9AA3AF">m/min</span></div>
+<div style="display: flex; align-items: baseline; gap: 16px"><span class="mono" style="width: 120px; font-size: 10px; color: #7C8592">Mono 600 · 13</span><span class="mono" style="font-size: 13px; font-weight: 600">29,4</span><span style="font-size: 11px; color: #9AA3AF">g/m²</span><span class="mono" style="font-size: 13px; font-weight: 600; margin-left: 16px">0,24</span><span style="font-size: 11px; color: #9AA3AF">bar</span><span class="mono" style="font-size: 13px; font-weight: 600; margin-left: 16px">93,1</span><span style="font-size: 11px; color: #9AA3AF">%</span></div>
+</div>
+<p style="margin: 0; font-size: 12px; color: #7C8592; line-height: 1.6; max-width: 560px">Vírgula decimal, ponto de milhar, dígitos tabulares. Unidade sempre ao lado, em cinza. Cantos de 2–4 px, sem relevo, sem sombra exceto em pop-over.</p>
+</section>
+</div>
+
+<div style="height: 1px; background: #1D232B"></div>
+
+<!-- componentes -->
+<section style="display: flex; flex-direction: column; gap: 24px">
+<h2 style="margin: 0; font-size: 12px; font-weight: 600; color: #9AA3AF; text-transform: uppercase; letter-spacing: 0.06em">Componentes</h2>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 40px">
+
+<!-- barra de faixa -->
+<div style="display: flex; flex-direction: column; gap: 14px">
+<span style="font-size: 12px; color: #9AA3AF">Barra de faixa</span>
+<div style="position: relative; height: 54px">
+<div style="position: absolute; left: 0; right: 0; top: 20px; height: 6px; background: #232A33"></div>
+<div style="position: absolute; left: 30%; width: 39%; top: 20px; height: 6px; background: #3A424E"></div>
+<div style="position: absolute; left: 13%; top: 15px; width: 1px; height: 16px; background: #7C8592"></div>
+<div style="position: absolute; left: 30%; top: 17px; width: 1px; height: 12px; background: #5D6673"></div>
+<div style="position: absolute; left: 69%; top: 17px; width: 1px; height: 12px; background: #5D6673"></div>
+<div style="position: absolute; left: 87%; top: 15px; width: 1px; height: 16px; background: #7C8592"></div>
+<div style="position: absolute; left: 39%; top: 18px; width: 2px; height: 10px; background: #9AA3AF"></div>
+<div style="position: absolute; left: 26%; top: 11px; width: 4px; height: 24px; margin-left: -2px; background: #F5A524"></div>
+<span class="mono" style="position: absolute; left: 13%; top: 36px; font-size: 10px; color: #7C8592; transform: translateX(-50%)">LL</span>
+<span class="mono" style="position: absolute; left: 30%; top: 36px; font-size: 10px; color: #7C8592; transform: translateX(-50%)">L</span>
+<span class="mono" style="position: absolute; left: 39%; top: 0; font-size: 10px; color: #9AA3AF; transform: translateX(-50%)">alvo</span>
+<span class="mono" style="position: absolute; left: 69%; top: 36px; font-size: 10px; color: #7C8592; transform: translateX(-50%)">H</span>
+<span class="mono" style="position: absolute; left: 87%; top: 36px; font-size: 10px; color: #7C8592; transform: translateX(-50%)">HH</span>
+<span class="mono" style="position: absolute; left: 26%; top: 0; font-size: 10px; color: #F5A524; transform: translateX(-50%)">PV</span>
+</div>
+<p style="margin: 0; font-size: 12px; color: #7C8592; line-height: 1.5">Faixa L–H mais clara. PV cinza-claro quando dentro; assume a cor da prioridade do alarme quando sai.</p>
+</div>
+
+<!-- linha de instrumento -->
+<div style="display: flex; flex-direction: column; gap: 14px">
+<span style="font-size: 12px; color: #9AA3AF">Linha de instrumento</span>
+<div style="display: grid; grid-template-columns: 92px 1fr 44px 120px; column-gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid #1D232B; border-bottom: 1px solid #1D232B">
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px">Cola AKD</span><span class="mono" style="font-size: 10px; color: #7C8592">FIC-107</span></span>
+<span style="display: flex; align-items: center; gap: 8px">
+<span style="position: relative; height: 14px; flex: 1">
+<span style="position: absolute; left: 0; right: 0; top: 5px; height: 4px; background: #232A33"></span>
+<span style="position: absolute; left: 30.4%; width: 34.8%; top: 5px; height: 4px; background: #3A424E"></span>
+<span style="position: absolute; left: 39.1%; top: 0; width: 0; height: 0; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid #9AA3AF; margin-left: -4px"></span>
+<span style="position: absolute; left: 26.1%; top: 0; width: 3px; height: 14px; margin-left: -1px; background: #F5A524"></span>
+</span>
+<span class="mono" style="font-size: 13px; font-weight: 600; color: #F5A524">1,1</span>
+</span>
+<span class="mono" style="font-size: 10px; text-align: center; padding: 2px 0; border: 1px solid #3A424E; border-radius: 2px; color: #9AA3AF">AUT</span>
+<svg width="120" height="28" viewBox="0 0 120 28" aria-hidden="true"><rect x="0" y="6" width="120" height="12" fill="#1E252E"></rect><path d="M0 11 L10 12 L20 10 L30 11 L40 12 L50 11 L56 12 L60 22 L70 23 L80 22 L90 23 L100 22 L110 23 L120 22" fill="none" stroke="#C9CED6" stroke-width="1.2"></path><circle cx="120" cy="22" r="2" fill="#F5A524"></circle></svg>
+</div>
+<div style="display: flex; gap: 6px">
+<span class="mono" style="font-size: 10px; padding: 2px 6px; border: 1px solid #3A424E; border-radius: 2px; color: #9AA3AF">AUT</span>
+<span class="mono" style="font-size: 10px; padding: 2px 6px; border: 1px solid #9AA3AF; border-radius: 2px; color: #D5DAE1; background: #262D36">MAN</span>
+<span class="mono" style="font-size: 10px; padding: 2px 6px; border: 1px solid #3A424E; border-radius: 2px; color: #9AA3AF">CAS</span>
+</div>
+<p style="margin: 0; font-size: 12px; color: #7C8592; line-height: 1.5">SP como triângulo sobre a barra. MAN em destaque neutro: fora do automático chama atenção sem ser alarme. Minigráfico de 1 h com a faixa L–H ao fundo.</p>
+</div>
+
+<!-- blocos -->
+<div style="display: flex; flex-direction: column; gap: 14px">
+<span style="font-size: 12px; color: #9AA3AF">Bloco de seção</span>
+<div style="display: flex; gap: 4px">
+<div style="flex: 1; height: 48px; box-sizing: border-box; padding: 6px 10px; background: #161B22; border: 1px solid #222932; border-radius: 3px; font-size: 12px; color: #9AA3AF">Prensas</div>
+<div style="flex: 1; height: 48px; box-sizing: border-box; padding: 6px 10px; background: rgba(245,165,36,0.10); border: 1px solid #F5A524; border-radius: 3px; display: flex; flex-direction: column; justify-content: space-between"><span style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 500">Pré-secagem<span class="mono" style="padding: 0 4px; height: 16px; line-height: 16px; background: #F5A524; color: #14100A; font-size: 11px; font-weight: 600">2</span></span><span class="mono" style="font-size: 10px; color: #F5A524">PDIC-523</span></div>
+<div style="flex: 1; height: 48px; box-sizing: border-box; padding: 6px 10px; background: rgba(242,85,90,0.12); border: 1px solid #F2555A; border-radius: 3px; display: flex; flex-direction: column; justify-content: space-between"><span style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 500">Pós-secagem<span class="mono" style="padding: 0 4px; height: 16px; line-height: 16px; background: #F2555A; color: #14100A; font-size: 11px; font-weight: 600">1</span></span><span style="font-size: 10px; color: #F2555A">quebra</span></div>
+</div>
+<span style="font-size: 12px; color: #9AA3AF; margin-top: 8px">Marcadores de evento</span>
+<div style="display: flex; gap: 16px; font-size: 11px; color: #9AA3AF">
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 8px; background: #F2555A"></span>quebra</span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 9px solid #7C8592"></span>gramatura</span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; background: #F5A524; transform: rotate(45deg)"></span>alarme</span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 6px; height: 6px; border: 2px solid #9AA3AF; border-radius: 50%"></span>setpoint</span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 9px; height: 9px; background: #E45FB0"></span>bobina</span>
+</div>
+</div>
+
+</div>
+</section>
+
+<!-- mancal -->
+<section style="display: flex; flex-direction: column; gap: 14px">
+<span style="font-size: 12px; color: #9AA3AF">Barra de mancal sobre zonas ISO 20816-3</span>
+<div style="display: grid; grid-template-columns: 120px 1fr 64px 140px; column-gap: 16px; align-items: center; max-width: 900px">
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px">CS23 · LC</span><span class="mono" style="font-size: 10px; color: #7C8592">VI-5123B</span></span>
+<span style="position: relative; height: 20px; display: flex">
+<span style="width: 25.6%; background: #1C2622"></span>
+<span style="width: 24.4%; background: #252E29"></span>
+<span style="width: 28.9%; background: #4A3A16"></span>
+<span style="width: 21.1%; background: #4A1E22"></span>
+<span style="position: absolute; left: 0; top: 6px; width: 54.4%; height: 8px; background: #D6A23A"></span>
+</span>
+<span><span class="mono" style="font-size: 13px; font-weight: 600; color: #E9C77A">4,9</span> <span style="font-size: 11px; color: #9AA3AF">mm/s</span></span>
+<span style="display: flex; align-items: center; gap: 8px"><span style="position: relative; width: 64px; height: 14px"><span style="position: absolute; left: 0; right: 0; top: 5px; height: 4px; background: #232A33"></span><span style="position: absolute; left: 0; width: 66.7%; top: 5px; height: 4px; background: #3A424E"></span><span style="position: absolute; left: 66.7%; top: 2px; width: 1px; height: 10px; background: #7C8592"></span><span style="position: absolute; left: 61.7%; top: 0; width: 3px; height: 14px; background: #D5DAE1"></span></span><span class="mono" style="font-size: 12px">77</span><span style="font-size: 11px; color: #9AA3AF">°C</span></span>
+</div>
+<p style="margin: 0; font-size: 12px; color: #7C8592; line-height: 1.5; max-width: 900px">Fundo com as quatro zonas; a barra de valor assume a cor da zona só a partir de C. Temperatura na escala 40–100 °C com marcas em 80 e 90 °C.</p>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1080}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

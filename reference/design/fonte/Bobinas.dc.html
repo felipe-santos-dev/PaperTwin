@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>PaperTwin · Bobinas</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D1015}
+a{color:#4F8CFF}a:hover{color:#7FAAFF}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+button{font-family:inherit;color:inherit}
+.nav{width:56px;height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-left:2px solid transparent;box-sizing:border-box;color:#7C8592;text-decoration:none}
+.nav:hover{color:#D5DAE1;background:#151A21}
+.sec{flex:1 1 0;min-width:0;height:48px;box-sizing:border-box;padding:6px 10px;background:#161B22;border:1px solid #222932;border-radius:3px;display:flex;flex-direction:column;justify-content:space-between;color:#9AA3AF;text-decoration:none}
+.sec:hover{border-color:#4F8CFF;color:#D5DAE1}
+.reel{display:grid;grid-template-columns:56px 48px minmax(0,1fr) 104px 64px;column-gap:12px;align-items:center;height:19px;width:100%;padding:0 6px;box-sizing:border-box;background:transparent;border:1px solid transparent;border-radius:2px;cursor:pointer;text-align:left}
+.reel:hover{background:#171C24}
+</style>
+</helmet>
+
+<div style="position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #0D1015; color: #D5DAE1; font-family: Inter, system-ui, sans-serif; font-size: 13px">
+
+<nav aria-label="Telas" style="position: absolute; left: 0; top: 0; width: 56px; height: 1080px; background: #0A0D11; border-right: 1px solid #1D232B; display: flex; flex-direction: column; align-items: center">
+<div style="height: 48px; width: 56px; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #1D232B; font-weight: 600; font-size: 13px; color: #D5DAE1">PT</div>
+<a class="nav" href="Main.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">1</span><span style="font-size: 10px">Turno</span></a>
+<a class="nav" href="Processo.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">2</span><span style="font-size: 10px">Processo</span></a>
+<a class="nav" href="Laboratorio.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">3</span><span style="font-size: 10px">Lab.</span></a>
+<a class="nav" href="Bobinas.dc.html" aria-current="page" style="border-left-color: #4F8CFF; color: #D5DAE1; background: #151A21"><span class="mono" style="font-size: 16px; font-weight: 600">4</span><span style="font-size: 10px">Bobinas</span></a>
+<a class="nav" href="Mancais.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">5</span><span style="font-size: 10px">Mancais</span></a>
+<a class="nav" href="Rondas.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">6</span><span style="font-size: 10px">Rondas</span></a>
+<a class="nav" href="Notas.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">7</span><span style="font-size: 10px">Notas</span></a>
+</nav>
+
+<header style="position: absolute; left: 56px; top: 0; width: 1864px; height: 48px; box-sizing: border-box; padding: 0 16px; border-bottom: 1px solid #1D232B; background: #0A0D11; display: flex; align-items: center; gap: 24px">
+<div style="display: flex; align-items: baseline; gap: 10px"><span style="font-size: 15px; font-weight: 600">MP1</span><span style="font-size: 12px; color: #7C8592">PaperTwin</span></div>
+<div style="width: 1px; height: 24px; background: #252C36"></div>
+<div style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 13px; font-weight: 600">Turno C</span><span class="mono" style="font-size: 12px; color: #9AA3AF">15:00–23:00</span><span style="font-size: 12px; color: #9AA3AF">J. Ribeiro</span></div>
+<div style="width: 1px; height: 24px; background: #252C36"></div>
+<div style="display: flex; align-items: baseline; gap: 6px"><span style="font-size: 11px; color: #7C8592">Gramatura</span><span class="mono" style="font-size: 14px; font-weight: 500">75</span><span style="font-size: 11px; color: #9AA3AF">g/m²</span></div>
+<div style="display: flex; align-items: center; gap: 8px"><span style="font-size: 11px; color: #7C8592">Velocidade</span><span class="mono" style="font-size: 14px; font-weight: 500">1.247</span><span style="font-size: 11px; color: #9AA3AF">m/min</span>
+<div title="Faixa 1.230–1.260 · SP 1.250" style="position: relative; width: 72px; height: 14px"><div style="position: absolute; left: 0; right: 0; top: 5px; height: 4px; background: #232A33"></div><div style="position: absolute; left: 30%; width: 30%; top: 5px; height: 4px; background: #3A424E"></div><div style="position: absolute; left: 50%; top: 3px; width: 2px; height: 8px; background: #9AA3AF"></div><div style="position: absolute; left: 47%; top: 0; width: 3px; height: 14px; margin-left: -1px; background: #D5DAE1"></div></div></div>
+<div style="flex: 1"></div>
+<div style="display: flex; align-items: center; gap: 6px"><span style="font-size: 11px; color: #7C8592; margin-right: 4px">Alarmes</span>
+<a href="Main.dc.html" title="Alta prioridade" style="display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; background: #161B22; border: 1px solid #252C36; border-radius: 3px; text-decoration: none"><span style="width: 8px; height: 8px; background: #3A424E"></span><span class="mono" style="font-size: 13px; color: #7C8592">0</span><span style="font-size: 11px; color: #7C8592">Alta</span></a>
+<a href="Main.dc.html" title="Média prioridade" style="display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; background: rgba(245,165,36,0.12); border: 1px solid #F5A524; border-radius: 3px; text-decoration: none"><span style="width: 8px; height: 8px; background: #F5A524"></span><span class="mono" style="font-size: 13px; font-weight: 600; color: #F5A524">2</span><span style="font-size: 11px; color: #D5DAE1">Média</span></a>
+<a href="Main.dc.html" title="Baixa prioridade" style="display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; background: rgba(227,207,74,0.10); border: 1px solid #E3CF4A; border-radius: 3px; text-decoration: none"><span style="width: 8px; height: 8px; background: #E3CF4A"></span><span class="mono" style="font-size: 13px; font-weight: 600; color: #E3CF4A">1</span><span style="font-size: 11px; color: #D5DAE1">Baixa</span></a></div>
+<div style="width: 1px; height: 24px; background: #252C36"></div>
+<div title="Dados simulados para demonstração" style="display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border: 1px dashed #5D6673; border-radius: 3px; font-size: 11px; color: #9AA3AF; letter-spacing: 0.04em"><span style="width: 7px; height: 7px; border: 1px solid #9AA3AF; border-radius: 50%; box-sizing: border-box"></span>DEMONSTRAÇÃO</div>
+<div style="display: flex; align-items: baseline; gap: 8px"><span class="mono" style="font-size: 15px; font-weight: 500">21:40:12</span><span class="mono" style="font-size: 11px; color: #7C8592">seg 09/11</span></div>
+</header>
+
+<div role="navigation" aria-label="Seções da máquina" style="position: absolute; left: 56px; top: 48px; width: 1864px; height: 64px; box-sizing: border-box; padding: 8px 16px; border-bottom: 1px solid #1D232B; display: flex; gap: 4px">
+<a class="sec" href="Processo.dc.html" style="background: rgba(245,165,36,0.10); border-color: #F5A524; color: #D5DAE1"><span style="display: flex; justify-content: space-between; width: 100%"><span style="font-size: 12px; font-weight: 500">Preparo e refino</span><span class="mono" style="min-width: 18px; height: 16px; padding: 0 4px; box-sizing: border-box; background: #F5A524; color: #14100A; font-size: 11px; font-weight: 600; text-align: center; line-height: 16px">1</span></span><span class="mono" style="font-size: 10px; color: #F5A524">FIC-107</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Caixa de entrada</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Formação</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Prensas</span></a>
+<a class="sec" href="PreSecagem.dc.html" style="background: rgba(245,165,36,0.10); border-color: #F5A524; color: #D5DAE1"><span style="display: flex; justify-content: space-between; width: 100%"><span style="font-size: 12px; font-weight: 500">Pré-secagem</span><span class="mono" style="min-width: 18px; height: 16px; padding: 0 4px; box-sizing: border-box; background: #F5A524; color: #14100A; font-size: 11px; font-weight: 600; text-align: center; line-height: 16px">2</span></span><span class="mono" style="font-size: 10px; color: #F5A524">PDIC-523 <span style="color: #E3CF4A">VI-5123B</span></span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Speed Sizer</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Pós-secagem</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Calandra</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">QCS</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Enroladeira</span></a>
+</div>
+
+<!-- ===== Visual principal: bobinas do dia ===== -->
+<section aria-label="Bobinas jumbo do dia" style="position: absolute; left: 72px; top: 128px; width: 1832px; height: 566px; box-sizing: border-box; padding: 0 14px; background: #12161C; border: 1px solid #1D232B; border-radius: 4px">
+<div style="height: 48px; display: flex; align-items: center; gap: 18px; padding: 0 6px">
+<h1 style="margin: 0; font-size: 16px; font-weight: 600">Bobinas jumbo · 09/11</h1>
+<span style="font-size: 12px; color: #7C8592"><span class="mono" style="color: #D5DAE1">23</span> bobinas · <span class="mono" style="color: #D5DAE1">{{totalT}}</span> t · <span class="mono" style="color: #E8A3CC">1</span> rebaixada · <span class="mono" style="color: #E8A3CC">1</span> segregada · <span class="mono" style="color: #E45FB0">1</span> retida</span>
+<span style="flex: 1"></span>
+<span style="display: flex; gap: 16px; font-size: 11px; color: #9AA3AF; align-items: center">
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 18px; height: 8px; background: #2A313B"></span>QCS dentro</span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 18px; height: 8px; background: #E45FB0"></span>QCS fora</span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 2px; height: 14px; background: #D5DAE1"></span>emenda</span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 3px; height: 14px; background: #F2555A"></span>quebra</span>
+</span>
+</div>
+<div class="mono" style="display: grid; grid-template-columns: 56px 48px minmax(0, 1fr) 104px 64px; column-gap: 12px; padding: 0 7px; height: 18px; font-size: 10px; color: #7C8592; align-items: end">
+<span>bobina</span><span>início</span>
+<span style="position: relative"><span style="position: absolute; left: 0">0</span><span style="position: absolute; left: 25%">20 km</span><span style="position: absolute; left: 50%">40 km</span><span style="position: absolute; left: 75%">60 km</span></span>
+<span>destino</span><span style="text-align: right">massa</span>
+</div>
+<div style="position: relative; display: flex; flex-direction: column; gap: 1px; margin-top: 4px">
+<div style="position: absolute; top: 0; bottom: 0; width: 1px; background: #1D232B; left: calc(7px + 56px + 12px + 48px + 12px + (100% - 14px - 56px - 48px - 104px - 64px - 48px) * 0.25)"></div>
+<div style="position: absolute; top: 0; bottom: 0; width: 1px; background: #1D232B; left: calc(7px + 56px + 12px + 48px + 12px + (100% - 14px - 56px - 48px - 104px - 64px - 48px) * 0.5)"></div>
+<div style="position: absolute; top: 0; bottom: 0; width: 1px; background: #1D232B; left: calc(7px + 56px + 12px + 48px + 12px + (100% - 14px - 56px - 48px - 104px - 64px - 48px) * 0.75)"></div>
+<sc-for list="{{reels}}" as="r" hint-placeholder-count="23">
+<button class="reel" onClick="{{r.pick}}" aria-pressed="{{r.sel}}" title="{{r.tip}}" style="border-color: {{r.bd}}; background: {{r.bg}}">
+<span class="mono" style="font-size: 12px; color: {{r.idc}}">{{r.id}}</span>
+<span class="mono" style="font-size: 11px; color: #7C8592">{{r.start}}</span>
+<span style="position: relative; height: 19px; display: block">
+<span style="position: absolute; left: 0; top: 4px; height: 11px; width: {{r.w}}%; background: #2A313B; border-right: {{r.runBd}}"></span>
+<sc-for list="{{r.segs}}" as="s" hint-placeholder-count="0">
+<span style="position: absolute; top: 4px; height: 11px; background: #E45FB0; left: {{s.l}}%; width: {{s.w}}%"></span>
+</sc-for>
+<sc-for list="{{r.splices}}" as="s" hint-placeholder-count="0">
+<span style="position: absolute; top: 1px; width: 2px; height: 17px; background: #D5DAE1; left: {{s.l}}%"></span>
+</sc-for>
+<span style="position: absolute; top: 0; width: 3px; height: 19px; background: #F2555A; left: {{r.brkL}}%; display: {{r.brkD}}"></span>
+<span class="mono" style="position: absolute; top: 2px; font-size: 10px; color: #9AA3AF; margin-left: 8px; left: {{r.w}}%">{{r.km}}</span>
+</span>
+<span style="font-size: 11px; justify-self: start; padding: 0 6px; line-height: 15px; border-radius: 2px; border: 1px solid {{r.dbd}}; color: {{r.dfg}}; background: {{r.dbg}}">{{r.dest}}</span>
+<span style="text-align: right; font-size: 11px; color: #9AA3AF"><span class="mono" style="color: #D5DAE1">{{r.t}}</span> t</span>
+</button>
+</sc-for>
+</div>
+</section>
+
+<!-- ===== Detalhe: mapa CD × MD ===== -->
+<section aria-label="Mapa de umidade CD por MD" style="position: absolute; left: 72px; top: 710px; width: 1100px; height: 354px; box-sizing: border-box; padding: 0 20px; background: #12161C; border: 1px solid #1D232B; border-radius: 4px">
+<div style="height: 44px; display: flex; align-items: center; gap: 12px">
+<h2 style="margin: 0; font-size: 14px; font-weight: 600">Umidade CD × MD</h2>
+<span style="font-size: 12px; color: #9AA3AF">bobina <span class="mono" style="color: #D5DAE1">{{cur.id}}</span> · <span class="mono">{{cur.span}}</span> · <span class="mono">{{cur.km}}</span> · <span class="mono">{{cur.t}}</span> t</span>
+<span style="font-size: 11px; padding: 0 6px; line-height: 16px; border-radius: 2px; border: 1px solid {{cur.dbd}}; color: {{cur.dfg}}; background: {{cur.dbg}}">{{cur.dest}}</span>
+<span style="flex: 1"></span>
+<span style="font-size: 11px; color: #7C8592">{{cur.note}}</span>
+</div>
+<div style="display: flex; gap: 14px">
+<div style="display: flex; flex-direction: column; justify-content: space-between; height: 240px; font-size: 10px; color: #7C8592; width: 28px; text-align: right"><span>LC</span><span class="mono">4 m</span><span>LA</span></div>
+<div style="display: grid; grid-template-columns: repeat(48, minmax(0, 1fr)); grid-template-rows: repeat(24, 10px); gap: 0; width: 912px; height: 240px">
+<sc-for list="{{heat}}" as="h" hint-placeholder-count="1152">
+<span title="{{h.tip}}" style="background: {{h.c}}"></span>
+</sc-for>
+</div>
+<div style="display: flex; flex-direction: column; gap: 6px; font-size: 10px; color: #9AA3AF; width: 92px">
+<span>umidade %</span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 10px; background: #E45FB0"></span><span class="mono">&gt; 5,5</span></span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 10px; background: #4A2A42"></span><span class="mono">5,35–5,5</span></span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 10px; background: #59626F"></span><span class="mono">5,2</span></span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 10px; background: #3A424E"></span><span class="mono">5,0</span></span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 10px; background: #1A1F26; border: 1px solid #2A313B; box-sizing: border-box"></span><span class="mono">4,8 alvo</span></span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 10px; background: #4A2A42"></span><span class="mono">4,0–4,15</span></span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 14px; height: 10px; background: #E45FB0"></span><span class="mono">&lt; 4,0</span></span>
+</div>
+</div>
+<div class="mono" style="display: flex; justify-content: space-between; margin: 6px 0 0 42px; width: 912px; font-size: 10px; color: #7C8592"><span>0 km</span><span>MD →</span><span>{{cur.km}}</span></div>
+</section>
+
+<!-- ===== Detalhe: tendência MD ===== -->
+<section aria-label="Tendência MD" style="position: absolute; left: 1188px; top: 710px; width: 716px; height: 354px; box-sizing: border-box; padding: 0 20px; background: #12161C; border: 1px solid #1D232B; border-radius: 4px">
+<div style="height: 44px; display: flex; align-items: center; justify-content: space-between"><h2 style="margin: 0; font-size: 14px; font-weight: 600">Perfil MD · média CD</h2><span style="font-size: 11px; color: #7C8592">QCS · banda = especificação</span></div>
+<sc-for list="{{md}}" as="t" hint-placeholder-count="3">
+<div style="display: grid; grid-template-columns: 96px 1fr 76px; column-gap: 12px; align-items: center; height: 88px; border-top: 1px solid #1D232B">
+<span style="display: flex; flex-direction: column; gap: 2px"><span style="font-size: 12px">{{t.name}}</span><span class="mono" style="font-size: 10px; color: #7C8592">{{t.spec}}</span></span>
+<svg width="472" height="72" viewBox="0 0 472 72" aria-hidden="true"><rect x="0" y="{{t.by}}" width="472" height="{{t.bh}}" fill="#1E252E"></rect><path d="{{t.d}}" fill="none" stroke="#C9CED6" stroke-width="1.2"></path><path d="{{t.dOut}}" fill="none" stroke="#E45FB0" stroke-width="2"></path></svg>
+<span style="text-align: right"><span class="mono" style="font-size: 13px; font-weight: 500">{{t.avg}}</span> <span style="font-size: 10px; color: #9AA3AF">{{t.u}}</span></span>
+</div>
+</sc-for>
+<div class="mono" style="display: flex; justify-content: space-between; margin-left: 108px; width: 472px; font-size: 10px; color: #7C8592"><span>0</span><span>km</span><span>{{cur.km}}</span></div>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var st = this.state || {};
+    var self = this;
+    var sel = st.sel || 1184;
+    var fmt = function (n, d) { var s = n.toFixed(d).split('.'); s[0] = s[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.'); return s.join(','); };
+    var hm = function (m) { var h = Math.floor(m / 60), mm = m % 60; return (h < 10 ? '0' : '') + h + ':' + (mm < 10 ? '0' : '') + mm; };
+    var MAXKM = 80;
+    var special = {
+      1166: { dest: 'rebaixada', segs: [[30.2, 33.0]], v: 'u', note: 'umidade fora 30,2–33,0 km' },
+      1168: { splices: [31.0] },
+      1170: { segs: [[8.4, 9.6]], v: 'g', note: 'gramatura fora 8,4–9,6 km' },
+      1172: { dest: 'segregada', segs: [[11.8, 24.0]], v: 'e', note: 'espessura fora 11,8–24,0 km' },
+      1176: { splices: [34.2] },
+      1181: { brkEnd: true, note: 'encerrada pela quebra das 17:52' },
+      1182: { segs: [[0, 0.9]], v: 'u', brkStart: true, note: 'umidade fora nos primeiros 0,9 km após a quebra' },
+      1183: { dest: 'avaliação', note: 'Cobb 28,9 g/m² no laboratório (QCS não mede Cobb)' },
+      1184: { dest: 'retida', note: 'Cobb 29,4 g/m² · aguarda reteste · QCS dentro em toda a bobina' },
+      1185: { dest: 'em formação', run: true, km: 57.4, note: 'em formação desde 20:54' }
+    };
+    var reels = [], total = 0, cur = null;
+    for (var id = 1163; id <= 1185; id++) {
+      var sp = special[id] || {};
+      var start = (id - 1163) * 56 + 8 + (id >= 1182 ? 14 : 0);
+      var km = sp.km || (69.6 + ((id * 7) % 4) * 0.1);
+      var t = km * 0.6;
+      total += t;
+      var dest = sp.dest || 'aprovada';
+      var dbd = '#2A313B', dfg = '#9AA3AF', dbg = 'transparent';
+      if (dest === 'retida') { dbd = '#E45FB0'; dfg = '#1A0A14'; dbg = '#E45FB0'; }
+      if (dest === 'rebaixada' || dest === 'segregada' || dest === 'avaliação') { dbd = '#A0507F'; dfg = '#E8A3CC'; }
+      if (dest === 'em formação') { dbd = '#5D6673'; dfg = '#D5DAE1'; }
+      var isSel = id === sel;
+      var r = {
+        id: String(id), start: hm(start), sel: isSel, km: fmt(km, 1) + ' km', t: fmt(t, 1),
+        w: (km / MAXKM * 100).toFixed(2),
+        runBd: sp.run ? '2px dashed #D5DAE1' : '0',
+        segs: (sp.segs || []).map(function (s) { return { l: (s[0] / MAXKM * 100).toFixed(2), w: Math.max(0.25, (s[1] - s[0]) / MAXKM * 100).toFixed(2) }; }),
+        splices: (sp.splices || []).map(function (s) { return { l: (s / MAXKM * 100).toFixed(2) }; }),
+        brkL: sp.brkEnd ? (km / MAXKM * 100 - 0.2).toFixed(2) : '0', brkD: (sp.brkEnd || sp.brkStart) ? 'block' : 'none',
+        dest: dest, dbd: dbd, dfg: dfg, dbg: dbg,
+        bd: isSel ? '#4F8CFF' : 'transparent', bg: isSel ? '#161E2C' : 'transparent', idc: isSel ? '#FFFFFF' : '#D5DAE1',
+        tip: 'Bobina ' + id + ' · início ' + hm(start) + ' · ' + fmt(km, 1) + ' km · ' + fmt(t, 1) + ' t · ' + dest + (sp.note ? ' · ' + sp.note : ''),
+        pick: (function (x) { return function () { self.setState({ sel: x }); }; })(id)
+      };
+      reels.push(r);
+      if (isSel) cur = { id: String(id), sp: sp, km: km, t: t, start: start, dest: dest, dbd: dbd, dfg: dfg, dbg: dbg };
+    }
+    reels.reverse();
+
+    // mapa de umidade 24 CD × 48 MD
+    var spm = cur.sp;
+    var bins = 48, binKm = cur.km / bins;
+    var moist = function (cd, md) {
+      var km = (md + 0.5) * binKm;
+      var v = 4.85 + 0.07 * Math.sin(cd * 0.9 + cur.km) + 0.06 * Math.sin(md * 0.4 + Number(cur.id) * 2) + (cd < 4 ? 0.07 * (4 - cd) : 0);
+      (spm.segs || []).forEach(function (s) { if (spm.v === 'u' && km >= s[0] - binKm / 2 && km <= s[1] + binKm / 2) v += 0.8 + 0.1 * Math.sin(cd); });
+      return v;
+    };
+    var heat = [];
+    for (var cd = 0; cd < 24; cd++) {
+      for (var md = 0; md < bins; md++) {
+        var v = moist(cd, md), c;
+        if (v > 5.5 || v < 4.0) c = '#E45FB0';
+        else if (v > 5.35 || v < 4.15) c = '#4A2A42';
+        else { var k = Math.min(1, Math.abs(v - 4.8) / 0.5); var L = Math.round(26 + k * 70); c = 'rgb(' + L + ',' + (L + 6) + ',' + (L + 14) + ')'; }
+        heat.push({ c: c, tip: 'CD ' + (cd + 1) + ' · ' + fmt((md + 0.5) * binKm, 1) + ' km · ' + fmt(v, 2) + ' %' });
+      }
+    }
+
+    // perfis MD
+    var mkMD = function (name, u, d, lie, lse, alvo, amp, key, s0) {
+      var n = 96, lo = lie - (lse - lie) * 0.25, hi = lse + (lse - lie) * 0.25;
+      var Y = function (q) { return 70 - (Math.max(lo, Math.min(hi, q)) - lo) / (hi - lo) * 68; };
+      var dd = '', dOut = '', sum = 0;
+      for (var i = 0; i < n; i++) {
+        var km = i / (n - 1) * cur.km;
+        var q = alvo + amp * (Math.sin(i * 0.5 + s0) * 0.5 + Math.sin(i * 1.7 + s0 * 2) * 0.3 + Math.sin(i * 0.11 + s0) * 0.4);
+        var out = false;
+        (spm.segs || []).forEach(function (s) { if (spm.v === key && km >= s[0] - 0.6 && km <= s[1] + 0.6) { q += (lse - alvo) * 1.35; out = true; } });
+        sum += q;
+        var x = (i / (n - 1) * 472).toFixed(1), y = Y(q).toFixed(1);
+        dd += (i ? 'L' : 'M') + x + ' ' + y + ' ';
+        if (out) dOut += (dOut === '' || !dOut.endsWith(' ') ? 'M' : 'L') + x + ' ' + y + ' ';
+      }
+      return { name: name, u: u, spec: fmt(lie, d) + '–' + fmt(lse, d), d: dd, dOut: dOut, by: Y(lse).toFixed(1), bh: (Y(lie) - Y(lse)).toFixed(1), avg: fmt(sum / n, d === 0 ? 0 : d + 1) };
+    };
+    var s0 = Number(cur.id) * 0.37;
+    var md = [
+      mkMD('Gramatura', 'g/m²', 1, 73.5, 76.5, cur.id === '1184' ? 75.1 : 75.0, 0.35, 'g', s0),
+      mkMD('Umidade', '%', 1, 4.0, 5.5, cur.id === '1184' ? 4.9 : 4.85, 0.12, 'u', s0 + 1),
+      mkMD('Espessura', 'µm', 0, 97, 107, 102, 1.3, 'e', s0 + 2)
+    ];
+    // segmentos fora contínuos: separa trechos com M
+    md.forEach(function (m) { m.dOut = m.dOut.replace(/^L/, 'M'); });
+
+    return {
+      reels: reels, heat: heat, md: md, totalT: fmt(total, 0),
+      cur: {
+        id: cur.id, km: fmt(cur.km, 1) + ' km', t: fmt(cur.t, 1),
+        span: hm(cur.start) + '–' + (spm.run ? 'agora' : hm(cur.start + 56)),
+        dest: cur.dest, dbd: cur.dbd, dfg: cur.dfg, dbg: cur.dbg, note: spm.note || 'sem desvios no QCS'
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

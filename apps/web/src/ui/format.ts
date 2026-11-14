@@ -128,3 +128,31 @@ export function span(from: string, to: string | null): string {
   if (to === null) return 'em andamento';
   return duration((Date.parse(to) - Date.parse(from)) / 1000);
 }
+
+/** `HH:MM:SS` no fuso de quem está olhando: o relógio da barra superior. */
+export function clockTime(iso: string | null | undefined): string {
+  if (!iso) return '—';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '—';
+
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
+const WEEKDAYS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'] as const;
+
+/** `seg 09/11`: o dia ao lado do relógio. */
+export function weekdayDate(iso: string | null | undefined): string {
+  if (!iso) return '—';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '—';
+
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  return `${WEEKDAYS[date.getDay()] ?? ''} ${day}/${month}`;
+}
+
+/** `15:00–23:00`: a janela de um turno. Turno em curso usa o fim previsto. */
+export function hourWindow(from: string, to: string | null | undefined): string {
+  return `${hhmm(from)}–${to ? hhmm(to) : '—'}`;
+}

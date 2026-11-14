@@ -76,7 +76,11 @@ describe('mancal em degradação', () => {
   });
 
   it('passa por todas as zonas no caminho, sem pular nenhuma', () => {
-    expect(new Set(zonas)).toEqual(new Set(['A', 'B', 'C', 'D']));
+    // da zona em que começa até D, todas as do meio aparecem
+    const ordem = ['A', 'B', 'C', 'D'];
+    const primeira = ordem.indexOf(zonas[0] ?? 'A');
+    expect(['A', 'B']).toContain(zonas[0]);
+    expect(new Set(zonas)).toEqual(new Set(ordem.slice(primeira)));
   });
 
   it('cruza C→D uma vez só, e não fica oscilando na fronteira', () => {

@@ -47,13 +47,13 @@ describe('tags', () => {
     }
   });
 
-  it('inclui o mancal do conceito de tela de monitoramento', () => {
-    // O conceito mostra `MP1-SEC-G4-CS23-MLA`. Se o agrupamento dos cilindros
-    // mudar, esta tag muda junto e a tela precisa saber.
-    const mancal = assetByTag(MP1, 'MP1-SEC-G4-CS23-MLA');
+  it('inclui o mancal que degrada na demonstração', () => {
+    // O design das telas mostra `MP1-SEC-G4-CS23-MLC` (VI-5123B). Se o
+    // agrupamento dos cilindros mudar, esta tag muda junto e a tela precisa saber.
+    const mancal = assetByTag(MP1, 'MP1-SEC-G4-CS23-MLC');
     expect(mancal).not.toBeNull();
     expect(mancal?.kind).toBe('bearing');
-    expect(mancal?.side).toBe('LA');
+    expect(mancal?.side).toBe('LC');
     expect(mancal?.steamGroup).toBe('G4');
     expect(assetByTag(MP1, 'MP1-SEC-G4-CS23')?.label).toBe('Cilindro secador 23');
   });

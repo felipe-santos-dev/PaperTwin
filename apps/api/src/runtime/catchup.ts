@@ -50,8 +50,8 @@ import { HISTORIAN_SCAN_TICKS, historianRecorder, type RecorderStats } from './r
  * mexer.
  */
 
-/** O mancal que degrada, o mesmo do conceito de tela de monitoramento. */
-export const DEGRADING_BEARING = 'MP1-SEC-G4-CS23-MLA';
+/** O mancal que degrada: o CS23 do lado comando, o mesmo do design das telas. */
+export const DEGRADING_BEARING = 'MP1-SEC-G4-CS23-MLC';
 
 /**
  * Quanto tempo a degradação do mancal leva, em horas.

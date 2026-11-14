@@ -8,7 +8,7 @@ import { assetByTag, MP1 } from '@mp1/shared';
  */
 
 /** Mancal usado nos testes de clique — o mesmo que degrada na simulação. */
-const BEARING = 'MP1-SEC-G4-CS23-MLA';
+const BEARING = 'MP1-SEC-G4-CS23-MLC';
 
 /**
  * A cena mora na tela de Máquina, que é a sétima.
@@ -190,7 +190,7 @@ test.describe('interação com a cena', () => {
     const ativo = assetByTag(MP1, BEARING);
     expect(ativo?.kind).toBe('bearing');
     await expect(painel.getByRole('heading')).toContainText('Mancal');
-    await expect(painel).toContainText('lado acionamento');
+    await expect(painel).toContainText('lado comando');
   });
 
   test('clicar fora desfaz a seleção', async ({ page }) => {

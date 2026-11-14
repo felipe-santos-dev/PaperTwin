@@ -22,7 +22,7 @@ import { DEFAULT_SEED, TICKS_PER_HOUR, tickTime } from './clock';
 const limits = isoLimitsOf(DRYER_BEARING_ISO);
 
 const SAUDÁVEL = 'MP1-SEC-G1-CS01-MLA';
-const DEGRADANDO = 'MP1-SEC-G4-CS23-MLA';
+const DEGRADANDO = 'MP1-SEC-G4-CS23-MLC';
 
 const START = 2_000_000;
 const JANELA = 72 * TICKS_PER_HOUR;
@@ -93,7 +93,9 @@ describe('amostra de mancal no passo', () => {
     const início = bearingSampleAt(DEFAULT_SEED, START, DEGRADANDO, cenário);
     const fim = bearingSampleAt(DEFAULT_SEED, START + JANELA, DEGRADANDO, cenário);
 
-    expect(classifyIsoZone(início.rmsMmS, limits)).toBe('A');
+    // começa saudável: A ou B, as zonas de operação sem restrição. A linha de
+    // base sai do hash da tag, e a do CS23 LC cai em B
+    expect(['A', 'B']).toContain(classifyIsoZone(início.rmsMmS, limits));
     expect(classifyIsoZone(fim.rmsMmS, limits)).toBe('D');
     expect(fim.rmsMmS).toBeCloseTo(DEGRADED_PEAK_MM_S, 1);
   });
@@ -133,11 +135,11 @@ describe('amostra de mancal no passo', () => {
    * exige banda morta.
    *
    * Então o que não pode piscar é o **alarme**, não o valor. Com a banda morta
-   * de 1 % da faixa (0,11 mm/s na `VI-5123A`, cinco vezes o desvio do ruído), o
+   * de 1 % da faixa (0,11 mm/s na `VI-5123B`, cinco vezes o desvio do ruído), o
    * alarme de `HH` dispara uma vez e não volta.
    */
   it('o valor cru pisca na fronteira e o alarme, com banda morta, não', () => {
-    const tagDeProcesso = 'VI-5123A';
+    const tagDeProcesso = 'VI-5123B';
     const fronteira = alarmThreshold(tagDeProcesso, 'HH');
     expect(fronteira).toBe(limits.cToD);
 

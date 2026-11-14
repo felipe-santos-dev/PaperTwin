@@ -604,7 +604,7 @@ export const CONCRETE_VARIABLES: readonly ProcessVariable[] = [
     steamGroup: null,
   },
   {
-    tag: 'TIC-508',
+    tag: 'WIC-508',
     name: 'Tensão das telas secadoras',
     area: 'pré-secagem',
     group: 'telas',
@@ -618,7 +618,7 @@ export const CONCRETE_VARIABLES: readonly ProcessVariable[] = [
     compression: { excDev: 0.05, compDev: 0.1 },
     source: 'B',
     confidence: 'média',
-    note: null,
+    note: 'a pesquisa B usa TIC-508; no ISA-5.1 T é temperatura',
     cylinder: null,
     steamGroup: null,
   },

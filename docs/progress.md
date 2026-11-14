@@ -756,7 +756,71 @@ lightmap das outras: elas são desdobradas de novo, e sem mudança de geometria 
 UV sai igual. Desta vez: scanner-sizer 341 s, acabamento 266 s, prédio 103 s.
 `public/scene/` com 3,64 MB. e2e 8/8, lint e os 102 testes da web verdes.
 
+## Telas no design novo
+
+Porte das telas para `reference/design/` (8 telas em 1920×1080 e o sistema
+visual; `fonte/*.dc.html` tem medidas, cores e textos). Só front: o que a API
+não tem vira dado fixo atrás do `DataGateway`, com selo "ilustrativo". Fases,
+com revisão ao fim de cada uma: (a) tokens, fontes, componentes e moldura;
+(b) Turno, Bobinas, Notas; (c) Processo e Laboratório; (d) Mancais e Rondas;
+(e) limpeza e verificação.
+
+### Tabela de fontes aprovada, com os ajustes
+
+- Capota da pré-secagem pelas TAGs do catálogo: `TIC-505` (insuflamento),
+  `AIC-506` (ponto de orvalho) e `PIC-507` (linha de zero).
+- Produção acumulada do Turno: integral de `XI-0001`, andando durante a bobina
+  em curso — não a soma das bobinas fechadas.
+- Refugo derivado: bobinas segregadas mais o papel ao pulper nas quebras
+  (duração × `XI-0001`), com a definição no tooltip.
+- Ranking de mancais: sempre os que estão em B, C ou D, mais os 10 de maior
+  vibração; o resto atrás de "mostrar todos".
+- Notas com as 4 situações da API; "retida" e "avaliação" de bobina só pelo
+  cenário AKD fixo; rondas comparam campo × online na temperatura; o histórico
+  de vibração mostra a janela que a API devolver (72 h no instantâneo).
+
+### Fase (a) — tokens, fontes, componentes e moldura
+
+**Dados.** O mancal que degrada passou a ser o CS23 do lado comando
+(`MP1-SEC-G4-CS23-MLC`, `VI-5123B`), como no design: `seed.ts`,
+`runtime/catchup.ts`, as tags cruas do registrador e a ordem da ronda. Os
+testes que dependiam do lado acionamento foram ajustados — inclusive dois da
+simulação que exigiam que o mancal começasse na zona A: a linha de base sai do
+hash da tag e a do CS23 LC cai em B. Eles passam a exigir "começa em A ou B,
+termina em D e passa por todas as zonas entre elas". Instantâneo de
+demonstração regenerado. `TIC-508` virou `WIC-508` (tensão das telas), pelo
+mesmo caminho do `WIC-1002`: linha da lista base e catálogo gerado de novo.
+
+**Sistema visual.** Tokens do design no tema do Tailwind (`index.css`): base,
+interação `action` (#4F8CFF), alarme 1/2/3, especificação dentro/no
+limite/fora e zonas ISO A–D. Os tokens `mill-*` ficaram apontando para a
+paleta nova, para as telas ainda não portadas não quebrarem; saem na fase (e).
+Fontes: Inter e JetBrains Mono no lugar do IBM Plex.
+
+A API tem quatro prioridades de alarme e o design, três: crítica e alta
+entram juntas na 1 (`ui/priority.ts`).
+
+**Componentes em `ui/`.** `Num`/`Tag`, `Panel` (com `Illustrative`,
+`PriorityBadge`, `ModeChip`), `RangeBar`, `InstrumentRow`, `SectionBlock`,
+`EventMarker`, `BearingBar`/`TemperatureBar` e, em `ui/chart`, `scale.ts` e
+`Sparkline`. Tudo em SVG ou CSS próprio, sem biblioteca nova. `#sistema`
+abre as amostras para comparar com `0-sistema-visual.png` — só nos builds de
+desenvolvimento e de teste; o de produção não leva o pedaço.
+
+**Moldura.** Navegação de 56 px com as teclas 1–8 (`#maquina` continua
+valendo), barra de 48 px e a faixa de 64 px com as dez seções. As seções são
+as áreas do catálogo — o design começa no preparo e trata o QCS como seção.
+Cada seção conta as TAGs com alarme em pé e mostra cada uma na cor da sua
+prioridade; medição de mancal entra na seção do cilindro (o `VI-5123B` na
+pré-secagem). Clicar numa seção abre Processo com ela; a tela de Processo
+passa a usar isso na fase (c). Laboratório tem só um aviso até a fase (c).
+
+**Verificado.** Testes da web (123), da API e do `shared`; typecheck, lint,
+build e e2e 8/8. Capturas em 1920×1080 e 1440×900 sem rolagem horizontal e
+com o console limpo.
+
 ## Próximo passo exato
 
-Revisão das capturas pelo Felipe. Em aberto, de antes: cor dos mancais pela
-zona ISO, que depende de uma busca no back-end.
+Revisão da fase (a) pelo Felipe. Depois, fase (b): Turno, Bobinas e Notas.
+Em aberto, de antes: cor dos mancais pela zona ISO, que depende de uma busca
+no back-end.

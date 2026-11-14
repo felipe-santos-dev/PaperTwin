@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>PaperTwin · Processo · Preparo e refino</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D1015}
+a{color:#4F8CFF}a:hover{color:#7FAAFF}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+button,input,select,textarea{font-family:inherit;color:inherit}
+.nav{width:56px;height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-left:2px solid transparent;box-sizing:border-box;color:#7C8592;text-decoration:none}
+.nav:hover{color:#D5DAE1;background:#151A21}
+.sec{flex:1 1 0;min-width:0;height:48px;box-sizing:border-box;padding:6px 10px;background:#161B22;border:1px solid #222932;border-radius:3px;display:flex;flex-direction:column;justify-content:space-between;color:#9AA3AF;text-decoration:none}
+.sec:hover{border-color:#4F8CFF;color:#D5DAE1}
+.seg{height:28px;padding:0 12px;border:0;border-left:1px solid #252C36;background:transparent;color:#9AA3AF;font-size:12px;cursor:pointer}
+.fld{height:32px;box-sizing:border-box;padding:0 8px;background:#0D1015;border:1px solid #2A313B;border-radius:3px;font-size:13px;color:#D5DAE1}
+.fld:focus{outline:none;border-color:#4F8CFF}
+</style>
+</helmet>
+
+<div style="position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #0D1015; color: #D5DAE1; font-family: Inter, system-ui, sans-serif; font-size: 13px">
+
+<nav aria-label="Telas" style="position: absolute; left: 0; top: 0; width: 56px; height: 1080px; background: #0A0D11; border-right: 1px solid #1D232B; display: flex; flex-direction: column; align-items: center">
+<div style="height: 48px; width: 56px; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #1D232B; font-weight: 600; font-size: 13px; color: #D5DAE1">PT</div>
+<a class="nav" href="Main.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">1</span><span style="font-size: 10px">Turno</span></a>
+<a class="nav" href="Processo.dc.html" aria-current="page" style="border-left-color: #4F8CFF; color: #D5DAE1; background: #151A21"><span class="mono" style="font-size: 16px; font-weight: 600">2</span><span style="font-size: 10px">Processo</span></a>
+<a class="nav" href="Laboratorio.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">3</span><span style="font-size: 10px">Lab.</span></a>
+<a class="nav" href="Bobinas.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">4</span><span style="font-size: 10px">Bobinas</span></a>
+<a class="nav" href="Mancais.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">5</span><span style="font-size: 10px">Mancais</span></a>
+<a class="nav" href="Rondas.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">6</span><span style="font-size: 10px">Rondas</span></a>
+<a class="nav" href="Notas.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">7</span><span style="font-size: 10px">Notas</span></a>
+</nav>
+
+<header style="position: absolute; left: 56px; top: 0; width: 1864px; height: 48px; box-sizing: border-box; padding: 0 16px; border-bottom: 1px solid #1D232B; background: #0A0D11; display: flex; align-items: center; gap: 24px">
+<div style="display: flex; align-items: baseline; gap: 10px"><span style="font-size: 15px; font-weight: 600">MP1</span><span style="font-size: 12px; color: #7C8592">PaperTwin</span></div>
+<div style="width: 1px; height: 24px; background: #252C36"></div>
+<div style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 13px; font-weight: 600">Turno C</span><span class="mono" style="font-size: 12px; color: #9AA3AF">15:00–23:00</span><span style="font-size: 12px; color: #9AA3AF">J. Ribeiro</span></div>
+<div style="width: 1px; height: 24px; background: #252C36"></div>
+<div style="display: flex; align-items: baseline; gap: 6px"><span style="font-size: 11px; color: #7C8592">Gramatura</span><span class="mono" style="font-size: 14px; font-weight: 500">75</span><span style="font-size: 11px; color: #9AA3AF">g/m²</span></div>
+<div style="display: flex; align-items: center; gap: 8px"><span style="font-size: 11px; color: #7C8592">Velocidade</span><span class="mono" style="font-size: 14px; font-weight: 500">1.247</span><span style="font-size: 11px; color: #9AA3AF">m/min</span>
+<div title="Faixa 1.230–1.260 · SP 1.250" style="position: relative; width: 72px; height: 14px"><div style="position: absolute; left: 0; right: 0; top: 5px; height: 4px; background: #232A33"></div><div style="position: absolute; left: 30%; width: 30%; top: 5px; height: 4px; background: #3A424E"></div><div style="position: absolute; left: 50%; top: 3px; width: 2px; height: 8px; background: #9AA3AF"></div><div style="position: absolute; left: 47%; top: 0; width: 3px; height: 14px; margin-left: -1px; background: #D5DAE1"></div></div></div>
+<div style="flex: 1"></div>
+<div style="display: flex; align-items: center; gap: 6px"><span style="font-size: 11px; color: #7C8592; margin-right: 4px">Alarmes</span>
+<a href="Main.dc.html" title="Alta prioridade" style="display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; background: #161B22; border: 1px solid #252C36; border-radius: 3px; text-decoration: none"><span style="width: 8px; height: 8px; background: #3A424E"></span><span class="mono" style="font-size: 13px; color: #7C8592">0</span><span style="font-size: 11px; color: #7C8592">Alta</span></a>
+<a href="Main.dc.html" title="Média prioridade" style="display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; background: rgba(245,165,36,0.12); border: 1px solid #F5A524; border-radius: 3px; text-decoration: none"><span style="width: 8px; height: 8px; background: #F5A524"></span><span class="mono" style="font-size: 13px; font-weight: 600; color: #F5A524">2</span><span style="font-size: 11px; color: #D5DAE1">Média</span></a>
+<a href="Main.dc.html" title="Baixa prioridade" style="display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; background: rgba(227,207,74,0.10); border: 1px solid #E3CF4A; border-radius: 3px; text-decoration: none"><span style="width: 8px; height: 8px; background: #E3CF4A"></span><span class="mono" style="font-size: 13px; font-weight: 600; color: #E3CF4A">1</span><span style="font-size: 11px; color: #D5DAE1">Baixa</span></a></div>
+<div style="width: 1px; height: 24px; background: #252C36"></div>
+<div title="Dados simulados para demonstração" style="display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border: 1px dashed #5D6673; border-radius: 3px; font-size: 11px; color: #9AA3AF; letter-spacing: 0.04em"><span style="width: 7px; height: 7px; border: 1px solid #9AA3AF; border-radius: 50%; box-sizing: border-box"></span>DEMONSTRAÇÃO</div>
+<div style="display: flex; align-items: baseline; gap: 8px"><span class="mono" style="font-size: 15px; font-weight: 500">21:40:12</span><span class="mono" style="font-size: 11px; color: #7C8592">seg 09/11</span></div>
+</header>
+
+<div role="navigation" aria-label="Seções da máquina" style="position: absolute; left: 56px; top: 48px; width: 1864px; height: 64px; box-sizing: border-box; padding: 8px 16px; border-bottom: 1px solid #1D232B; display: flex; gap: 4px">
+<a class="sec" href="Processo.dc.html" aria-current="true" style="background: rgba(245,165,36,0.10); border-color: #F5A524; box-shadow: 0 0 0 2px #4F8CFF; color: #D5DAE1"><span style="display: flex; justify-content: space-between; width: 100%"><span style="font-size: 12px; font-weight: 500">Preparo e refino</span><span class="mono" style="min-width: 18px; height: 16px; padding: 0 4px; box-sizing: border-box; background: #F5A524; color: #14100A; font-size: 11px; font-weight: 600; text-align: center; line-height: 16px">1</span></span><span class="mono" style="font-size: 10px; color: #F5A524">FIC-107</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Caixa de entrada</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Formação</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Prensas</span></a>
+<a class="sec" href="PreSecagem.dc.html" style="background: rgba(245,165,36,0.10); border-color: #F5A524; color: #D5DAE1"><span style="display: flex; justify-content: space-between; width: 100%"><span style="font-size: 12px; font-weight: 500">Pré-secagem</span><span class="mono" style="min-width: 18px; height: 16px; padding: 0 4px; box-sizing: border-box; background: #F5A524; color: #14100A; font-size: 11px; font-weight: 600; text-align: center; line-height: 16px">2</span></span><span class="mono" style="font-size: 10px; color: #F5A524">PDIC-523 <span style="color: #E3CF4A">VI-5123B</span></span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Speed Sizer</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Pós-secagem</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Calandra</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">QCS</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Enroladeira</span></a>
+</div>
+
+<!-- ===== Visual principal: grade de instrumentos ===== -->
+<section aria-label="Instrumentos de preparo e refino" style="position: absolute; left: 72px; top: 128px; width: 1100px; height: 936px; box-sizing: border-box; padding: 0 20px; background: #12161C; border: 1px solid #1D232B; border-radius: 4px">
+<div style="height: 56px; display: flex; align-items: center; gap: 16px">
+<h1 style="margin: 0; font-size: 16px; font-weight: 600">Preparo e refino</h1>
+<span style="font-size: 12px; color: #7C8592"><span class="mono" style="color: #D5DAE1">12</span> variáveis · <span class="mono" style="color: #F5A524">1</span> fora da faixa</span>
+<span style="flex: 1"></span>
+<label style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #9AA3AF; cursor: pointer"><input type="checkbox" checked="{{onlyOut}}" onChange="{{toggleOut}}" style="width: 16px; height: 16px; margin: 0; accent-color: #4F8CFF">Só fora da faixa</label>
+</div>
+<div style="display: grid; grid-template-columns: 176px minmax(0, 1fr) 96px 64px 48px 240px; column-gap: 16px; align-items: end; height: 28px; font-size: 11px; color: #7C8592">
+<span>Variável</span><span>Faixa · PV <span style="color: #5D6673">▾ SP</span></span><span style="text-align: right">PV</span><span style="text-align: right">SP</span><span>Modo</span><span>Última 1 h</span>
+</div>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="12">
+<div title="{{r.tip}}" style="display: grid; grid-template-columns: 176px minmax(0, 1fr) 96px 64px 48px 240px; column-gap: 16px; align-items: center; height: 62px; border-top: 1px solid #1D232B; background: {{r.rowbg}}">
+<span style="display: flex; flex-direction: column; gap: 3px; min-width: 0">
+<span style="font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.name}}</span>
+<span style="display: flex; align-items: center; gap: 6px"><span class="mono" style="font-size: 10px; color: #7C8592">{{r.tag}}</span><span class="mono" style="font-size: 10px; font-weight: 600; color: #14100A; padding: 0 4px; line-height: 14px; background: {{r.c}}; display: {{r.prid}}">{{r.pri}}</span></span>
+</span>
+<span style="position: relative; height: 20px">
+<span style="position: absolute; left: 0; right: 0; top: 9px; height: 4px; background: #232A33"></span>
+<span style="position: absolute; top: 9px; height: 4px; background: #3A424E; left: {{r.b.nl}}%; width: {{r.b.nw}}%"></span>
+<span style="position: absolute; top: 6px; width: 1px; height: 10px; background: #7C8592; left: {{r.b.ll}}%"></span>
+<span style="position: absolute; top: 6px; width: 1px; height: 10px; background: #7C8592; left: {{r.b.hh}}%"></span>
+<span style="position: absolute; top: 0; width: 0; height: 0; margin-left: -4px; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 6px solid #9AA3AF; left: {{r.b.sp}}%; display: {{r.spd}}"></span>
+<span style="position: absolute; top: 4px; width: 3px; height: 14px; margin-left: -1px; left: {{r.b.pv}}%; background: {{r.c}}"></span>
+</span>
+<span style="text-align: right; white-space: nowrap"><span class="mono" style="font-size: 16px; font-weight: 500; color: {{r.vc}}">{{r.pv}}</span> <span style="font-size: 11px; color: #9AA3AF">{{r.unit}}</span></span>
+<span class="mono" style="text-align: right; font-size: 12px; color: #9AA3AF">{{r.sp}}</span>
+<span class="mono" style="font-size: 10px; text-align: center; padding: 2px 0; border-radius: 2px; border: 1px solid {{r.mbd}}; color: {{r.mfg}}">{{r.mode}}</span>
+<span style="position: relative; width: 240px; height: 36px; display: block">
+<svg width="240" height="36" viewBox="0 0 240 36" aria-hidden="true" style="position: absolute; left: 0; top: 0"><rect x="0" y="{{r.s.by}}" width="240" height="{{r.s.bh}}" fill="#1E252E"></rect><path d="{{r.s.d}}" fill="none" stroke="#C9CED6" stroke-width="1.2"></path><circle cx="240" cy="{{r.s.ly}}" r="2.5" fill="{{r.c}}"></circle></svg>
+<sc-for list="{{r.labs}}" as="p" hint-placeholder-count="0">
+<span title="{{p.tip}}" style="position: absolute; width: 7px; height: 7px; margin: -4px 0 0 -4px; border: 1.5px solid #D5DAE1; background: #12161C; border-radius: 50%; left: {{p.x}}px; top: {{p.y}}px"></span>
+</sc-for>
+</span>
+</div>
+</sc-for>
+<div style="border-top: 1px solid #1D232B; padding-top: 10px; display: flex; gap: 20px; font-size: 11px; color: #7C8592">
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 7px; height: 7px; border: 1.5px solid #D5DAE1; border-radius: 50%"></span>ponto de laboratório</span>
+<span>Faixa clara = L–H · marcas = LL/HH · minigráfico com a banda L–H</span>
+</div>
+</section>
+
+<!-- ===== Apoio 1: efeito do refino ===== -->
+<section aria-label="Efeito do refino na folha" style="position: absolute; left: 1188px; top: 128px; width: 716px; height: 300px; box-sizing: border-box; padding: 0 20px; background: #12161C; border: 1px solid #1D232B; border-radius: 4px">
+<div style="height: 44px; display: flex; align-items: center; justify-content: space-between"><h2 style="margin: 0; font-size: 14px; font-weight: 600">Efeito do refino na folha</h2><span style="font-size: 11px; color: #7C8592">últimas 8 h · pontos = bobinas</span></div>
+<div style="position: relative; height: 250px">
+<span style="position: absolute; left: 0; top: 4px; font-size: 12px; color: #9AA3AF">JIC-101</span><span style="position: absolute; left: 0; top: 20px; font-size: 11px; color: #7C8592">kWh/t</span>
+<span style="position: absolute; left: 0; top: 92px; font-size: 12px; color: #9AA3AF">Gurley</span><span style="position: absolute; left: 0; top: 108px; font-size: 11px; color: #7C8592">s/100 mL</span>
+<span style="position: absolute; left: 0; top: 168px; font-size: 12px; color: #9AA3AF">Tração MD</span><span style="position: absolute; left: 0; top: 184px; font-size: 11px; color: #7C8592">kN/m</span>
+<div style="position: absolute; left: 84px; top: 0; width: 576px; height: 250px">
+<svg width="576" height="228" viewBox="0 0 576 228" aria-hidden="true" style="position: absolute; left: 0; top: 0; overflow: visible">
+<rect x="0" y="0" width="576" height="76" fill="#161B22"></rect>
+<path d="{{ef.spD}}" fill="none" stroke="#7C8592" stroke-dasharray="4 3"></path>
+<path d="{{ef.jicD}}" fill="none" stroke="#C9CED6" stroke-width="1.5"></path>
+<rect x="0" y="88" width="576" height="64" fill="#161B22"></rect>
+<rect x="0" y="{{ef.gBy}}" width="576" height="{{ef.gBh}}" fill="#1E252E"></rect>
+<rect x="0" y="164" width="576" height="64" fill="#161B22"></rect>
+<rect x="0" y="{{ef.tBy}}" width="576" height="{{ef.tBh}}" fill="#1E252E"></rect>
+<line x1="30" y1="0" x2="30" y2="228" stroke="#3A424E" stroke-dasharray="2 3"></line>
+</svg>
+<span class="mono" style="position: absolute; left: 34px; top: 2px; font-size: 10px; color: #9AA3AF">SP 52→55 · 14:05</span>
+<span style="position: absolute; right: 0; top: 2px; display: flex; align-items: baseline; gap: 4px"><span class="mono" style="font-size: 13px; font-weight: 500">58</span><span style="font-size: 10px; color: #9AA3AF">kWh/t</span></span>
+<sc-for list="{{ef.pts}}" as="p" hint-placeholder-count="16">
+<span title="{{p.tip}}" style="position: absolute; width: 8px; height: 8px; margin: -4px 0 0 -4px; border-radius: 50%; left: {{p.x}}px; top: {{p.y}}px; background: {{p.c}}"></span>
+</sc-for>
+<sc-for list="{{ef.ax}}" as="h" hint-placeholder-count="4">
+<span class="mono" style="position: absolute; top: 234px; font-size: 10px; color: #7C8592; margin-left: -14px; left: {{h.x}}px">{{h.l}}</span>
+</sc-for>
+</div>
+</div>
+</section>
+
+<!-- ===== Apoio 2: tendência ===== -->
+<section aria-label="Tendência" style="position: absolute; left: 1188px; top: 444px; width: 716px; height: 290px; box-sizing: border-box; padding: 0 20px; background: #12161C; border: 1px solid #1D232B; border-radius: 4px">
+<div style="height: 44px; display: flex; align-items: center; gap: 12px">
+<h2 style="margin: 0; font-size: 14px; font-weight: 600">Tendência</h2>
+<span style="flex: 1"></span>
+<div role="group" aria-label="Janela" style="display: flex; border: 1px solid #252C36; border-radius: 3px; overflow: hidden">
+<button class="seg" style="border-left: 0">1 h</button><button class="seg" style="background: #1B2A44; color: #CFE0FF">8 h</button><button class="seg">24 h</button><button class="seg">7 d</button>
+</div>
+</div>
+<div style="display: flex; gap: 6px; margin-bottom: 10px">
+<span class="mono" style="font-size: 11px; padding: 3px 8px; border: 1px solid #3A424E; border-radius: 2px">JIC-101 ×</span>
+<span class="mono" style="font-size: 11px; padding: 3px 8px; border: 1px solid #3A424E; border-radius: 2px">AIC-102 ×</span>
+<span class="mono" style="font-size: 11px; padding: 3px 8px; border: 1px solid #F5A524; color: #F5A524; border-radius: 2px">FIC-107 ×</span>
+<button style="font-size: 11px; padding: 3px 8px; border: 1px dashed #4F8CFF; color: #7FAAFF; background: transparent; border-radius: 2px; cursor: pointer">+ TAG</button>
+</div>
+<sc-for list="{{tr}}" as="t" hint-placeholder-count="3">
+<div style="display: grid; grid-template-columns: 72px 1fr 84px; column-gap: 12px; align-items: center; height: 54px; border-top: 1px solid #1D232B">
+<span class="mono" style="font-size: 11px; color: #9AA3AF">{{t.tag}}</span>
+<svg width="496" height="44" viewBox="0 0 496 44" aria-hidden="true"><rect x="0" y="{{t.s.by}}" width="496" height="{{t.s.bh}}" fill="#1E252E"></rect><path d="{{t.s.d}}" fill="none" stroke="#C9CED6" stroke-width="1.2"></path><circle cx="496" cy="{{t.s.ly}}" r="2.5" fill="{{t.c}}"></circle></svg>
+<span style="text-align: right"><span class="mono" style="font-size: 13px; font-weight: 500; color: {{t.vc}}">{{t.v}}</span> <span style="font-size: 10px; color: #9AA3AF">{{t.u}}</span></span>
+</div>
+</sc-for>
+<div style="display: flex; justify-content: space-between; padding: 4px 96px 0 84px; font-size: 10px; color: #7C8592" class="mono"><span>13:40</span><span>15:40</span><span>17:40</span><span>19:40</span><span>21:40</span></div>
+</section>
+
+<!-- ===== Apoio 3: alteração de setpoint ===== -->
+<section aria-label="Alteração de setpoint" style="position: absolute; left: 1188px; top: 750px; width: 716px; height: 314px; box-sizing: border-box; padding: 0 20px; background: #12161C; border: 1px solid #1D232B; border-radius: 4px">
+<div style="height: 44px; display: flex; align-items: center; justify-content: space-between"><h2 style="margin: 0; font-size: 14px; font-weight: 600">Alteração de setpoint</h2><span style="font-size: 11px; color: #7C8592">motivo obrigatório · registro auditado</span></div>
+<div style="display: grid; grid-template-columns: 132px 90px 96px 1fr; column-gap: 12px; align-items: end">
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #7C8592">TAG<select class="fld mono"><option>FIC-107</option><option>JIC-101</option><option>FIC-108</option><option>LIC-103</option></select></label>
+<span style="display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #7C8592">SP atual<span style="height: 32px; display: flex; align-items: center; gap: 4px"><span class="mono" style="font-size: 14px; color: #D5DAE1">1,4</span><span style="font-size: 11px; color: #9AA3AF">kg/t</span></span></span>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #7C8592">Novo SP<input class="fld mono" type="text" value="{{novo}}" onChange="{{onNovo}}" style="width: 96px"></label>
+<span style="display: flex; flex-direction: column; gap: 6px; font-size: 11px; color: #7C8592">Faixa <span class="mono">0,8–2,5</span>
+<span style="position: relative; height: 20px; display: block">
+<span style="position: absolute; left: 0; right: 0; top: 9px; height: 4px; background: #232A33"></span>
+<span style="position: absolute; left: 30.4%; width: 34.8%; top: 9px; height: 4px; background: #3A424E"></span>
+<span style="position: absolute; left: 13%; top: 6px; width: 1px; height: 10px; background: #7C8592"></span>
+<span style="position: absolute; left: 87%; top: 6px; width: 1px; height: 10px; background: #7C8592"></span>
+<span style="position: absolute; left: 39.1%; top: 0; width: 0; height: 0; margin-left: -4px; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 6px solid #5D6673"></span>
+<span style="position: absolute; top: 0; width: 0; height: 0; margin-left: -4px; border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 6px solid #4F8CFF; left: {{novoPct}}%"></span>
+<span style="position: absolute; left: 26.1%; top: 4px; width: 3px; height: 14px; margin-left: -1px; background: #F5A524"></span>
+</span></span>
+</div>
+<div style="display: grid; grid-template-columns: 180px 1fr 104px; column-gap: 12px; align-items: end; margin-top: 10px">
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #7C8592">Categoria<select class="fld"><option>Correção de qualidade</option><option>Equipamento</option><option>Troca de gramatura</option><option>Otimização</option></select></label>
+<label style="display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: #7C8592">Motivo<input class="fld" type="text" placeholder="Ex.: Cobb acima de 28 nas bobinas 1183–1184" value="{{motivo}}" onChange="{{onMotivo}}"></label>
+<button disabled="{{noApply}}" style="height: 32px; border-radius: 3px; font-size: 13px; cursor: pointer; border: 1px solid {{applyBd}}; background: {{applyBg}}; color: {{applyFg}}">Aplicar</button>
+</div>
+<div style="margin-top: 14px; font-size: 11px; color: #7C8592">Histórico</div>
+<div style="display: flex; flex-direction: column">
+<div style="display: grid; grid-template-columns: 44px 72px 104px 1fr 76px; column-gap: 10px; align-items: center; height: 30px; border-bottom: 1px solid #1D232B; font-size: 12px"><span class="mono" style="color: #9AA3AF">14:05</span><span class="mono" style="font-size: 11px; color: #9AA3AF">JIC-101</span><span class="mono">52 → 55 <span style="font-size: 10px; color: #9AA3AF">kWh/t</span></span><span style="color: #9AA3AF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Gurley abaixo do alvo nas 1175–1176</span><span style="font-size: 11px; color: #7C8592; text-align: right">M. Alves · B</span></div>
+<div style="display: grid; grid-template-columns: 44px 72px 104px 1fr 76px; column-gap: 10px; align-items: center; height: 30px; border-bottom: 1px solid #1D232B; font-size: 12px"><span class="mono" style="color: #9AA3AF">11:20</span><span class="mono" style="font-size: 11px; color: #9AA3AF">FIC-108</span><span class="mono">8,5 → 8,0 <span style="font-size: 10px; color: #9AA3AF">kg/t</span></span><span style="color: #9AA3AF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Lisura com folga; reduzir consumo de amido</span><span style="font-size: 11px; color: #7C8592; text-align: right">M. Alves · B</span></div>
+<div style="display: grid; grid-template-columns: 44px 72px 104px 1fr 76px; column-gap: 10px; align-items: center; height: 30px; font-size: 12px"><span class="mono" style="color: #9AA3AF">08:10</span><span class="mono" style="font-size: 11px; color: #9AA3AF">LIC-103</span><span class="mono">65 → 70 <span style="font-size: 10px; color: #9AA3AF">%</span></span><span style="color: #9AA3AF; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Estabilizar vazão após troca de bomba</span><span style="font-size: 11px; color: #7C8592; text-align: right">R. Prado · A</span></div>
+</div>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var st = this.state || {};
+    var self = this;
+    var onlyOut = !!st.onlyOut;
+    var novo = st.novo != null ? st.novo : '1,4';
+    var motivo = st.motivo || '';
+    var fmt = function (n, d) { var s = n.toFixed(d).split('.'); s[0] = s[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.'); return s.join(','); };
+    var pct = function (v, a, b) { return Math.max(0, Math.min(100, (v - a) / (b - a) * 100)); };
+    var nz = function (i, s) { return Math.sin(i * 0.7 + s) * 0.5 + Math.sin(i * 1.9 + s * 2.3) * 0.3 + Math.sin(i * 0.23 + s * 0.7) * 0.2; };
+    var spark = function (vals, l, h, w, ht) {
+      var span = h - l, lo = l - span * 0.6, hi = h + span * 0.6;
+      var y = function (v) { return ht - 2 - (Math.max(lo, Math.min(hi, v)) - lo) / (hi - lo) * (ht - 4); };
+      var d = '';
+      for (var i = 0; i < vals.length; i++) d += (i ? 'L' : 'M') + (i * w / (vals.length - 1)).toFixed(1) + ' ' + y(vals[i]).toFixed(1) + ' ';
+      return { d: d, by: y(h).toFixed(1), bh: (y(l) - y(h)).toFixed(1), ly: y(vals[vals.length - 1]).toFixed(1), y: y };
+    };
+    var C = { media: '#F5A524', normal: '#D5DAE1' };
+
+    var defs = [
+      { name: 'Potência específica', tag: 'JIC-101', unit: 'kWh/t', d: 0, min: 30, max: 90, ll: 35, l: 45, sp: 55, h: 70, hh: 85, pv: 58, amp: 1.2, mode: 'CAS' },
+      { name: 'Grau Schopper', tag: 'AIC-102', unit: '°SR', d: 0, min: 20, max: 36, ll: 22, l: 25, sp: 28, h: 31, hh: 34, pv: 29, amp: 0.35, mode: 'AUT', labs: [[5, 28.4, '20:45'], [50, 28.6, '21:30']] },
+      { name: 'Carga do refinador', tag: 'JI-111', unit: 'kW', d: 0, min: 1000, max: 2600, ll: 1200, l: 1500, sp: null, h: 2300, hh: 2450, pv: 1960, amp: 30, mode: '—' },
+      { name: 'Posição dos discos', tag: 'ZIC-112', unit: 'mm', d: 2, min: 0, max: 1, ll: 0.15, l: 0.25, sp: null, h: 0.7, hh: 0.85, pv: 0.38, amp: 0.01, mode: 'AUT' },
+      { name: 'Consistência', tag: 'AIC-104', unit: '%', d: 2, min: 3.4, max: 5.0, ll: 3.6, l: 3.9, sp: 4.2, h: 4.5, hh: 4.8, pv: 4.22, amp: 0.03, mode: 'AUT' },
+      { name: 'Vazão de massa', tag: 'FIC-105', unit: 'm³/h', d: 0, min: 800, max: 1300, ll: 900, l: 980, sp: 1070, h: 1160, hh: 1220, pv: 1068, amp: 6, mode: 'CAS' },
+      { name: 'Carga mineral PCC', tag: 'FIC-106', unit: 'kg/t', d: 0, min: 150, max: 350, ll: 180, l: 210, sp: 245, h: 280, hh: 310, pv: 246, amp: 2, mode: 'CAS' },
+      { name: 'Cola AKD', tag: 'FIC-107', unit: 'kg/t', d: 1, min: 0.5, max: 2.8, ll: 0.8, l: 1.2, sp: 1.4, h: 2.0, hh: 2.5, pv: 1.1, amp: 0.02, mode: 'AUT', pri: '2', mv: 'MV 100 %' },
+      { name: 'Amido', tag: 'FIC-108', unit: 'kg/t', d: 1, min: 4, max: 12, ll: 5, l: 6.5, sp: 8.0, h: 9.5, hh: 11, pv: 8.0, amp: 0.08, mode: 'AUT' },
+      { name: 'Retenção', tag: 'FIC-109', unit: 'kg/t', d: 2, min: 0.1, max: 0.6, ll: 0.15, l: 0.25, sp: 0.35, h: 0.45, hh: 0.55, pv: 0.35, amp: 0.006, mode: 'AUT' },
+      { name: 'Branqueador OBA', tag: 'FIC-110', unit: 'kg/t', d: 1, min: 0, max: 6, ll: 1.0, l: 2.0, sp: 3.2, h: 4.5, hh: 5.5, pv: 3.2, amp: 0.04, mode: 'AUT' },
+      { name: 'Nível tanque de mistura', tag: 'LIC-103', unit: '%', d: 0, min: 0, max: 100, ll: 20, l: 40, sp: 70, h: 85, hh: 92, pv: 68, amp: 1.5, mode: 'AUT' }
+    ];
+    var rows = [];
+    defs.forEach(function (o, k) {
+      var al = !!o.pri;
+      if (onlyOut && !al) return;
+      var vals = [];
+      for (var i = 0; i < 60; i++) vals.push(o.pv + nz(i, k * 1.7) * o.amp * (i === 59 ? 0 : 1));
+      var s = spark(vals, o.l, o.h, 240, 36);
+      var labs = (o.labs || []).map(function (p) { return { x: (p[0] * 240 / 59).toFixed(1), y: s.y(p[1]).toFixed(1), tip: 'Laboratório ' + p[2] + ': ' + fmt(p[1], 1) + ' ' + o.unit }; });
+      var sp = o.sp != null ? o.sp : (o.l + o.h) / 2;
+      rows.push({
+        name: o.name, tag: o.tag, unit: o.unit, pv: fmt(o.pv, o.d), sp: o.sp != null ? fmt(o.sp, o.d) : '—', mode: o.mode,
+        spd: o.sp != null ? 'block' : 'none',
+        c: al ? C.media : C.normal, vc: al ? C.media : '#D5DAE1', rowbg: al ? 'rgba(245,165,36,0.06)' : 'transparent',
+        pri: o.pri || '', prid: al ? 'inline-block' : 'none',
+        mbd: o.mode === 'MAN' ? '#9AA3AF' : '#2A313B', mfg: '#9AA3AF',
+        tip: o.tag + ' · LL ' + fmt(o.ll, o.d) + ' · L ' + fmt(o.l, o.d) + (o.sp != null ? ' · SP ' + fmt(o.sp, o.d) : '') + ' · H ' + fmt(o.h, o.d) + ' · HH ' + fmt(o.hh, o.d) + (o.mv ? ' · ' + o.mv + ' (saída saturada)' : ''),
+        b: { nl: pct(o.l, o.min, o.max).toFixed(1), nw: (pct(o.h, o.min, o.max) - pct(o.l, o.min, o.max)).toFixed(1), ll: pct(o.ll, o.min, o.max).toFixed(1), hh: pct(o.hh, o.min, o.max).toFixed(1), sp: pct(sp, o.min, o.max).toFixed(1), pv: pct(o.pv, o.min, o.max).toFixed(1) },
+        s: s, labs: labs
+      });
+    });
+
+    // efeito do refino: 13:40–21:40, 576 px = 480 min
+    var PX = 576 / 480;
+    var jic = function (m) { if (m < 25) return 52 + nz(m, 1) * 0.6; if (m < 45) return 52 + (m - 25) / 20 * 3 + nz(m, 1) * 0.6; if (m < 320) return 55 + nz(m / 3, 2) * 0.9; return 55 + (m - 320) / 160 * 3 + nz(m / 3, 2) * 0.9; };
+    var yj = function (v) { return 76 - (v - 45) / 20 * 76; };
+    var jicD = '';
+    for (var m = 0; m <= 480; m += 4) jicD += (m ? 'L' : 'M') + (m * PX).toFixed(1) + ' ' + yj(m === 480 ? 58 : jic(m)).toFixed(1) + ' ';
+    var spD = 'M0 ' + yj(52).toFixed(1) + ' L' + (25 * PX).toFixed(1) + ' ' + yj(52).toFixed(1) + ' L' + (25 * PX).toFixed(1) + ' ' + yj(55).toFixed(1) + ' L576 ' + yj(55).toFixed(1);
+    var yg = function (v) { return 88 + 64 - (v - 10) / 16 * 64; };
+    var yt = function (v) { return 164 + 64 - (v - 4.4) / 1.2 * 64; };
+    var labT = [[68, 1177, 13, 4.7], [124, 1178, 14, 4.8], [180, 1179, 15, 4.9], [236, 1180, 16, 5.0], [292, 1181, 16, 5.0], [362, 1182, 16, 5.0], [418, 1183, 17, 5.1], [474, 1184, 17, 5.1]];
+    var pts = [];
+    labT.forEach(function (p) {
+      var gp = (p[2] - 12) / 12, tp = (p[3] - 4.6) / 1.4;
+      var lim = function (q) { return q < 0 || q > 1 ? '#E45FB0' : (q < 0.1 || q > 0.9 ? '#A0507F' : '#C9CED6'); };
+      pts.push({ x: (p[0] * PX).toFixed(1), y: yg(p[2]).toFixed(1), c: lim(gp), tip: 'Bobina ' + p[1] + ' · Gurley ' + p[2] + ' s/100 mL · espec. 12–24' });
+      pts.push({ x: (p[0] * PX).toFixed(1), y: yt(p[3]).toFixed(1), c: lim(tp), tip: 'Bobina ' + p[1] + ' · Tração MD ' + fmt(p[3], 1) + ' kN/m · espec. 4,6–6,0' });
+    });
+    var ef = {
+      jicD: jicD, spD: spD, pts: pts,
+      gBy: yg(24).toFixed(1), gBh: (yg(12) - yg(24)).toFixed(1),
+      tBy: yt(5.6).toFixed(1), tBh: (yt(4.6) - yt(5.6)).toFixed(1),
+      ax: [{ x: 20 * PX, l: '14:00' }, { x: 140 * PX, l: '16:00' }, { x: 260 * PX, l: '18:00' }, { x: 380 * PX, l: '20:00' }]
+    };
+
+    // tendência 8 h (120 pontos)
+    var mk = function (f) { var v = []; for (var i = 0; i <= 120; i++) v.push(f(i * 4)); return v; };
+    var tr = [
+      { tag: 'JIC-101', u: 'kWh/t', v: '58', c: '#D5DAE1', vc: '#D5DAE1', s: spark(mk(function (m) { return m === 480 ? 58 : jic(m); }), 45, 70, 496, 44) },
+      { tag: 'AIC-102', u: '°SR', v: '29', c: '#D5DAE1', vc: '#D5DAE1', s: spark(mk(function (m) { return (m < 45 ? 27 : (m < 120 ? 27 + (m - 45) / 75 : 28)) + (m > 320 ? (m - 320) / 160 : 0) + nz(m / 4, 3) * 0.3; }), 25, 31, 496, 44) },
+      { tag: 'FIC-107', u: 'kg/t', v: '1,1', c: '#F5A524', vc: '#F5A524', s: spark(mk(function (m) { return (m < 340 ? 1.4 : (m < 346 ? 1.4 - (m - 340) / 6 * 0.3 : 1.1)) + nz(m / 4, 5) * 0.02; }), 1.2, 2.0, 496, 44) }
+    ];
+
+    var nv = parseFloat(String(novo).replace(',', '.'));
+    var novoPct = isNaN(nv) ? 39.1 : pct(nv, 0.5, 2.8).toFixed(1);
+    var ok = motivo.trim().length >= 10 && !isNaN(nv) && nv >= 0.8 && nv <= 2.5;
+    return {
+      rows: rows, onlyOut: onlyOut, ef: ef, tr: tr,
+      toggleOut: function () { self.setState({ onlyOut: !onlyOut }); },
+      novo: novo, motivo: motivo, novoPct: novoPct,
+      onNovo: function (e) { self.setState({ novo: e.target.value }); },
+      onMotivo: function (e) { self.setState({ motivo: e.target.value }); },
+      noApply: !ok,
+      applyBd: ok ? '#4F8CFF' : '#2A313B', applyBg: ok ? '#4F8CFF' : 'transparent', applyFg: ok ? '#0D1015' : '#5D6673'
+    };
+  }
+}
+</script>
+</body>
+</html>

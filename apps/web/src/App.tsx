@@ -11,19 +11,19 @@ import { NotasScreen } from './screens/NotasScreen';
 import { ProcessoScreen } from './screens/ProcessoScreen';
 import { RondasScreen } from './screens/RondasScreen';
 import { TurnoScreen } from './screens/TurnoScreen';
+import { LaboratorioScreen } from './screens/LaboratorioScreen';
 import { DataSourcePill } from './ui/DataSourcePill';
 import { Shell } from './ui/Shell';
-import { dayTime, int, tagValue } from './ui/format';
 import { useScreen } from './ui/screens';
 import { useAssetSelection } from './ui/useAssetUrl';
 import { useDataSource, type DataSourceProbes } from './ui/useDataSource';
-import { useResource } from './ui/useResource';
+import { useFrame } from './ui/useFrame';
 
 /** Estáveis entre renders, para os hooks não refazerem a busca à toa. */
 const PROBES: DataSourceProbes = { probeApi: fetchHealth, probeDemo: fetchDemoHealth };
 
 /**
- * A aplicação: sete telas sobre uma fonte de dados escolhida uma vez.
+ * A aplicação: oito telas sobre uma fonte de dados escolhida uma vez.
  *
  * ## A seleção entre telas é estado da aplicação, não de cada tela
  *
@@ -33,12 +33,11 @@ const PROBES: DataSourceProbes = { probeApi: fetchHealth, probeDemo: fetchDemoHe
  * que alguém faz quando investiga: do alarme para o mancal, do mancal para a
  * nota, da nota para a tendência.
  *
- * ## O cabeçalho é sempre o mesmo
+ * ## A moldura é sempre a mesma
  *
- * Velocidade, gramatura, bobina em formação e vapor do grupo principal ficam no
- * alto de todas as sete telas. São os quatro números que dizem se a máquina está
- * produzindo, e tirá-los de uma tela faria quem está nela ter de voltar para
- * saber.
+ * Turno, gramatura, velocidade, alarmes por prioridade e a faixa com as dez
+ * seções ficam no alto de todas as telas. Clicar numa seção abre ela em
+ * Processo, de qualquer tela.
  */
 export function App() {
   const { source, apiRecovered, useLive } = useDataSource(PROBES);
@@ -52,6 +51,7 @@ export function App() {
   const [reel, setReel] = useState<number | null>(null);
   const [tag, setTag] = useState<string | null>(null);
   const [bearing, setBearing] = useState<string | null>(null);
+  const [area, setArea] = useState<string | null>(null);
 
   /**
    * O ativo da cena continua espelhado em `?asset=`.
@@ -95,47 +95,51 @@ export function App() {
     [go],
   );
 
-  const headline = useHeadline(gateway);
+  /** Abre uma seção da faixa na tela de Processo. */
+  const openArea = useCallback(
+    (which: string) => {
+      setArea(which);
+      go('processo');
+    },
+    [go],
+  );
+
+  const frame = useFrame(gateway);
 
   return (
     <Shell
       screen={screen}
       go={go}
-      headline={headline.values}
-      stamp={headline.stamp}
+      top={frame.top}
+      sections={frame.sections}
+      area={area}
+      onArea={openArea}
       source={<DataSourcePill source={source} />}
       banner={
-        source === 'demo' ? (
-          apiRecovered ? (
-            <p
-              role="status"
-              className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b border-mill-line bg-white/4 px-5 py-1.5 text-xs"
+        /**
+         * Só o aviso que pede ação fica numa faixa: a API voltou e dá para
+         * trocar o instantâneo pelo ao vivo. Que os dados são de demonstração,
+         * o selo da barra superior já diz.
+         */
+        source === 'demo' && apiRecovered ? (
+          <p
+            role="status"
+            className="flex items-center justify-center gap-3 border-b border-line px-4 py-1 text-[12px] text-fg-2"
+          >
+            <span>API disponível · carregar dados ao vivo</span>
+            <button
+              type="button"
+              onClick={useLive}
+              className="h-6 border border-action px-2.5 text-[12px] text-action hover:border-action-hover hover:text-action-hover"
             >
-              <span>API disponível · carregar dados ao vivo</span>
-              <button
-                type="button"
-                onClick={useLive}
-                className="min-h-11 rounded border border-mill-line px-2.5 py-0.5 font-medium transition-colors hover:bg-white/8"
-              >
-                Carregar ao vivo
-              </button>
-            </p>
-          ) : (
-            <p
-              role="status"
-              className="flex flex-wrap items-center justify-center gap-x-2 border-b border-mill-attention/25 bg-mill-attention/8 px-5 py-1.5 text-xs text-mill-attention"
-            >
-              Dados de demonstração · API fora do ar
-              <span className="text-mill-attention/70">
-                — instantâneo gerado no build, não é leitura ao vivo
-              </span>
-            </p>
-          )
+              Carregar ao vivo
+            </button>
+          </p>
         ) : undefined
       }
     >
       {gateway === null ? (
-        <p role="status" className="py-6 text-sm text-mill-muted">
+        <p role="status" className="py-6 text-sm text-fg-2">
           Procurando a API…
         </p>
       ) : (
@@ -185,6 +189,8 @@ function Screen(props: ScreenProps) {
       );
     case 'processo':
       return <ProcessoScreen gateway={props.gateway} tag={props.tag} onSelectTag={props.setTag} />;
+    case 'laboratorio':
+      return <LaboratorioScreen />;
     case 'mancais':
       return (
         <MancaisScreen
@@ -208,49 +214,4 @@ function Screen(props: ScreenProps) {
         <MaquinaScreen gateway={props.gateway} assetTag={props.asset} onSelect={props.setAsset} />
       );
   }
-}
-
-/**
- * Os quatro números do cabeçalho.
- *
- * Uma busca só, da área `geral` mais as duas tags de vapor e de bobina — e não
- * quatro buscas, porque o cabeçalho aparece em todas as telas e quatro
- * requisições por troca de tela seriam quatro esperas num host que dorme.
- */
-function useHeadline(gateway: DataGateway | null): {
-  values: { label: string; value: string; tone?: 'attention' | 'critical' }[];
-  stamp: string;
-} {
-  const values = useResource(
-    useCallback(
-      (signal) => {
-        if (!gateway) return Promise.reject(new Error('fonte não escolhida'));
-        return gateway.processValues({}, signal);
-      },
-      [gateway],
-    ),
-    { enabled: gateway !== null },
-  );
-
-  const byTag = new Map(values.data?.values.map((item) => [item.tag, item]) ?? []);
-
-  const read = (tag: string): string => {
-    const found = byTag.get(tag);
-    return found ? `${tagValue(found.value, found.unit)} ${found.unit}` : '—';
-  };
-
-  const diameter = byTag.get('ZI-1004');
-
-  return {
-    values: [
-      { label: 'Velocidade', value: read('SIC-1104') },
-      { label: 'Gramatura', value: read('AIC-902') },
-      {
-        label: 'Bobina em formação',
-        value: diameter ? `Ø ${int(diameter.value)} mm` : '—',
-      },
-      { label: 'Vapor G4', value: read('PIC-514') },
-    ],
-    stamp: dayTime(values.data?.ts ?? null),
-  };
 }

@@ -398,7 +398,7 @@ describe('GET /alarms', () => {
   });
 
   it('tem o alarme do mancal que degrada', async () => {
-    const body = (await get('/alarms?tag=VI-5123A')).json<{ alarms: Alarm[] }>();
+    const body = (await get('/alarms?tag=VI-5123B')).json<{ alarms: Alarm[] }>();
 
     expect(body.alarms.length).toBeGreaterThan(0);
     expect(body.alarms.map((a) => a.limit)).toContain('HH');

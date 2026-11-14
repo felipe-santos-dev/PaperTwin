@@ -1,45 +1,81 @@
 @import 'tailwindcss';
 
-/* Paleta das sete telas aprovadas (reference/prototypes/papertwin-telas.html).
-   Sala de controle escura e quente, sem acento decorativo.
+/* Sistema visual do design novo (reference/design/0-sistema-visual.png e
+   fonte/Sistema.dc.html).
 
-   A paleta mudou na Fase 6 e vale dizer o que mudou e por quê. A Fase 2 usava
-   um fundo azulado com acento roxo e um semáforo verde/amarelo/vermelho; as
-   telas aprovadas usam um cinza quente, um amarelo só e um vermelho só.
+   Três regras, nesta ordem:
 
-   O que desapareceu foi o verde. Nas telas aprovadas **normal não tem cor**: é
-   o texto comum. É uma decisão de leitura, não de gosto — numa tela com 320
-   variáveis, pintar de verde as 300 que estão bem faz as 20 que importam
-   competirem com elas. Cor aqui significa "olhe isto".
+   1. **Cinza quando normal.** Fundo, painel, linhas e os três níveis de texto
+      são cinzas frios. Uma tela com tudo dentro da faixa é uma tela cinza.
+   2. **Cor só para estado.** Prioridade de alarme (1 vermelho, 2 âmbar,
+      3 amarelo), especificação de laboratório (dentro, no limite, fora) e as
+      quatro zonas da ISO 20816-3. Nenhuma cor decora.
+   3. **Azul só para interação.** `action` é o que se clica, o que está
+      selecionado e o foco — nunca um estado da máquina.
 
-   Por isso `mill-normal` é o próprio primeiro plano. O token continua existindo
-   porque o vocabulário do domínio tem três severidades; o que ele não tem mais é
-   uma cor própria.
-
-   O azul e o laranja são **séries de gráfico**, não severidades. Eles existem
-   para distinguir três linhas num mesmo eixo — vapor de três grupos, campo
-   contra online — e nunca para dizer que algo está bem ou mal. */
+   Os tokens `mill-*` da Fase 6 continuam aqui, apontando para a paleta nova,
+   até as telas antigas serem portadas; a limpeza da fase (e) os tira. */
 @theme {
-  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --font-sans: Inter, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
-  --color-mill-bg: #0d0f12;
-  --color-mill-panel: #131518;
-  --color-mill-line: #2b2f35;
-  --color-mill-fg: #ece8df;
-  --color-mill-muted: #a39e93;
-  /* um degrau abaixo do secundário, para rótulo de eixo e nota de pé */
-  --color-mill-dim: #8c877d;
-  --color-mill-accent: #f2c230;
+  /* base */
+  --color-base: #0d1015;
+  --color-chrome: #0a0d11;
+  --color-panel: #12161c;
+  --color-cell: #161b22;
+  --color-hover: #151a21;
+  --color-line: #1d232b;
+  --color-edge: #222932;
+  --color-line-strong: #252c36;
+  --color-track: #232a33;
+  --color-band: #3a424e;
+  --color-tick: #5d6673;
+  --color-fg: #d5dae1;
+  --color-fg-2: #9aa3af;
+  --color-fg-3: #7c8592;
 
-  --color-mill-normal: #ece8df;
-  --color-mill-attention: #f2c230;
-  --color-mill-critical: #f0605a;
+  /* interação */
+  --color-action: #4f8cff;
+  --color-action-hover: #7faaff;
 
-  /* séries de gráfico: três linhas distinguíveis, nenhuma com significado */
-  --color-series-1: #f2c230;
-  --color-series-2: #7fb2ee;
-  --color-series-3: #e8a15a;
+  /* alarme por prioridade: 1 alta, 2 média, 3 baixa */
+  --color-alarm-1: #f2555a;
+  --color-alarm-2: #f5a524;
+  --color-alarm-3: #e3cf4a;
+  --color-on-alarm: #14100a;
+
+  /* especificação de laboratório e de QCS */
+  --color-spec-in: #262d36;
+  --color-spec-in-fg: #9aa3af;
+  --color-spec-edge: #4a2a42;
+  --color-spec-edge-line: #a0507f;
+  --color-spec-edge-fg: #e8a3cc;
+  --color-spec-out: #e45fb0;
+  --color-spec-out-fg: #1a0a14;
+
+  /* ISO 20816-3: fundo de cada zona e o filete de C e D */
+  --color-iso-a: #1c2622;
+  --color-iso-b: #252e29;
+  --color-iso-c: #4a3a16;
+  --color-iso-c-line: #d6a23a;
+  --color-iso-d: #4a1e22;
+  --color-iso-d-line: #f2555a;
+
+  /* tokens da Fase 6, apontando para a paleta nova até a fase (e) */
+  --color-mill-bg: #0d1015;
+  --color-mill-panel: #12161c;
+  --color-mill-line: #1d232b;
+  --color-mill-fg: #d5dae1;
+  --color-mill-muted: #9aa3af;
+  --color-mill-dim: #7c8592;
+  --color-mill-accent: #4f8cff;
+  --color-mill-normal: #d5dae1;
+  --color-mill-attention: #f5a524;
+  --color-mill-critical: #f2555a;
+  --color-series-1: #d5dae1;
+  --color-series-2: #4f8cff;
+  --color-series-3: #f5a524;
 }
 
 @layer base {
@@ -50,9 +86,20 @@
   }
 
   body {
-    background-color: var(--color-mill-bg);
-    color: var(--color-mill-fg);
+    background-color: var(--color-base);
+    color: var(--color-fg);
     font-family: var(--font-sans);
+    font-size: 13px;
     -webkit-font-smoothing: antialiased;
+  }
+
+  /* Número e TAG: monoespaçada com dígitos tabulares, para coluna alinhar. */
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+
+  :focus-visible {
+    outline: 1px solid var(--color-action);
+    outline-offset: 1px;
   }
 }

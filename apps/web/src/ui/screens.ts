@@ -1,17 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
 
 /**
- * As sete telas, na ordem do protótipo aprovado.
+ * As oito telas, na ordem do design.
  *
- * A ordem é a do trabalho, não a da arquitetura: o turno primeiro, porque é o
- * recorte em que tudo acontece; a máquina por último, porque é a vista geral a
- * que se volta. Entre elas, o caminho do papel e o da condição.
+ * Turno primeiro, porque é o recorte em que tudo acontece; depois o caminho do
+ * papel (processo, laboratório, bobinas), a condição dos equipamentos (mancais,
+ * rondas, notas) e, por último, a máquina em 3D em tela cheia.
  */
 
 export const SCREEN_IDS = [
   'turno',
-  'bobinas',
   'processo',
+  'laboratorio',
+  'bobinas',
   'mancais',
   'rondas',
   'notas',
@@ -22,22 +23,28 @@ export type ScreenId = (typeof SCREEN_IDS)[number];
 
 export interface Screen {
   readonly id: ScreenId;
+  /** O nome por extenso, para o título e para o leitor de tela. */
   readonly label: string;
-  /** A tecla que leva a ela: 1 a 7, como no protótipo. */
+  /** O rótulo curto da navegação lateral, que tem 56 px de largura. */
+  readonly short: string;
+  /** A tecla que leva a ela: 1 a 8. */
   readonly key: string;
 }
 
+const LABELS: Readonly<Record<ScreenId, { label: string; short: string }>> = {
+  turno: { label: 'Turno', short: 'Turno' },
+  processo: { label: 'Processo', short: 'Processo' },
+  laboratorio: { label: 'Laboratório', short: 'Lab.' },
+  bobinas: { label: 'Bobinas', short: 'Bobinas' },
+  mancais: { label: 'Mancais', short: 'Mancais' },
+  rondas: { label: 'Rondas', short: 'Rondas' },
+  notas: { label: 'Notas de manutenção', short: 'Notas' },
+  maquina: { label: 'Máquina', short: 'Máquina' },
+};
+
 export const SCREENS: readonly Screen[] = SCREEN_IDS.map((id, index) => ({
   id,
-  label: {
-    turno: 'Turno',
-    bobinas: 'Bobinas',
-    processo: 'Processo',
-    mancais: 'Mancais',
-    rondas: 'Rondas',
-    notas: 'Notas de manutenção',
-    maquina: 'Máquina',
-  }[id],
+  ...LABELS[id],
   key: String(index + 1),
 }));
 
@@ -54,16 +61,16 @@ function hashScreen(): ScreenId {
 }
 
 /**
- * A tela aberta, na URL e nas teclas 1–7.
+ * A tela aberta, na URL e nas teclas 1–8.
  *
  * A tela mora na âncora da URL, e não num estado solto, por três razões: o botão
  * voltar do navegador funciona, um link para a tela de Mancais pode ser colado
  * numa conversa, e recarregar a página não joga quem estava olhando de volta
- * para o começo.
+ * para o começo. `#maquina` continua valendo.
  *
- * As teclas são as do protótipo. Elas são ignoradas quando o foco está num campo
- * de texto — digitar "3" no motivo de uma escrita de setpoint não pode levar a
- * pessoa para outra tela e perder o que ela escreveu.
+ * As teclas são ignoradas quando o foco está num campo de texto — digitar "3" no
+ * motivo de uma escrita de setpoint não pode levar a pessoa para outra tela e
+ * perder o que ela escreveu.
  */
 export function useScreen(): { screen: ScreenId; go: (id: ScreenId) => void } {
   const [screen, setScreen] = useState<ScreenId>(() =>

@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>PaperTwin · Mancais</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0D1015}
+a{color:#4F8CFF}a:hover{color:#7FAAFF}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums}
+button{font-family:inherit;color:inherit}
+.nav{width:56px;height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-left:2px solid transparent;box-sizing:border-box;color:#7C8592;text-decoration:none}
+.nav:hover{color:#D5DAE1;background:#151A21}
+.sec{flex:1 1 0;min-width:0;height:48px;box-sizing:border-box;padding:6px 10px;background:#161B22;border:1px solid #222932;border-radius:3px;display:flex;flex-direction:column;justify-content:space-between;color:#9AA3AF;text-decoration:none}
+.sec:hover{border-color:#4F8CFF;color:#D5DAE1}
+.brg{display:grid;grid-template-columns:168px minmax(0,1fr) 84px 196px 180px;column-gap:16px;align-items:center;height:56px;width:100%;padding:0 8px;box-sizing:border-box;background:transparent;border:1px solid transparent;border-top-color:#1D232B;border-radius:0;cursor:pointer;text-align:left}
+.brg:hover{background:#171C24}
+</style>
+</helmet>
+
+<div style="position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #0D1015; color: #D5DAE1; font-family: Inter, system-ui, sans-serif; font-size: 13px">
+
+<nav aria-label="Telas" style="position: absolute; left: 0; top: 0; width: 56px; height: 1080px; background: #0A0D11; border-right: 1px solid #1D232B; display: flex; flex-direction: column; align-items: center">
+<div style="height: 48px; width: 56px; display: flex; align-items: center; justify-content: center; border-bottom: 1px solid #1D232B; font-weight: 600; font-size: 13px; color: #D5DAE1">PT</div>
+<a class="nav" href="Main.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">1</span><span style="font-size: 10px">Turno</span></a>
+<a class="nav" href="Processo.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">2</span><span style="font-size: 10px">Processo</span></a>
+<a class="nav" href="Laboratorio.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">3</span><span style="font-size: 10px">Lab.</span></a>
+<a class="nav" href="Bobinas.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">4</span><span style="font-size: 10px">Bobinas</span></a>
+<a class="nav" href="Mancais.dc.html" aria-current="page" style="border-left-color: #4F8CFF; color: #D5DAE1; background: #151A21"><span class="mono" style="font-size: 16px; font-weight: 600">5</span><span style="font-size: 10px">Mancais</span></a>
+<a class="nav" href="Rondas.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">6</span><span style="font-size: 10px">Rondas</span></a>
+<a class="nav" href="Notas.dc.html"><span class="mono" style="font-size: 16px; font-weight: 600">7</span><span style="font-size: 10px">Notas</span></a>
+</nav>
+
+<header style="position: absolute; left: 56px; top: 0; width: 1864px; height: 48px; box-sizing: border-box; padding: 0 16px; border-bottom: 1px solid #1D232B; background: #0A0D11; display: flex; align-items: center; gap: 24px">
+<div style="display: flex; align-items: baseline; gap: 10px"><span style="font-size: 15px; font-weight: 600">MP1</span><span style="font-size: 12px; color: #7C8592">PaperTwin</span></div>
+<div style="width: 1px; height: 24px; background: #252C36"></div>
+<div style="display: flex; align-items: baseline; gap: 8px"><span style="font-size: 13px; font-weight: 600">Turno C</span><span class="mono" style="font-size: 12px; color: #9AA3AF">15:00–23:00</span><span style="font-size: 12px; color: #9AA3AF">J. Ribeiro</span></div>
+<div style="width: 1px; height: 24px; background: #252C36"></div>
+<div style="display: flex; align-items: baseline; gap: 6px"><span style="font-size: 11px; color: #7C8592">Gramatura</span><span class="mono" style="font-size: 14px; font-weight: 500">75</span><span style="font-size: 11px; color: #9AA3AF">g/m²</span></div>
+<div style="display: flex; align-items: center; gap: 8px"><span style="font-size: 11px; color: #7C8592">Velocidade</span><span class="mono" style="font-size: 14px; font-weight: 500">1.247</span><span style="font-size: 11px; color: #9AA3AF">m/min</span>
+<div title="Faixa 1.230–1.260 · SP 1.250" style="position: relative; width: 72px; height: 14px"><div style="position: absolute; left: 0; right: 0; top: 5px; height: 4px; background: #232A33"></div><div style="position: absolute; left: 30%; width: 30%; top: 5px; height: 4px; background: #3A424E"></div><div style="position: absolute; left: 50%; top: 3px; width: 2px; height: 8px; background: #9AA3AF"></div><div style="position: absolute; left: 47%; top: 0; width: 3px; height: 14px; margin-left: -1px; background: #D5DAE1"></div></div></div>
+<div style="flex: 1"></div>
+<div style="display: flex; align-items: center; gap: 6px"><span style="font-size: 11px; color: #7C8592; margin-right: 4px">Alarmes</span>
+<a href="Main.dc.html" title="Alta prioridade" style="display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; background: #161B22; border: 1px solid #252C36; border-radius: 3px; text-decoration: none"><span style="width: 8px; height: 8px; background: #3A424E"></span><span class="mono" style="font-size: 13px; color: #7C8592">0</span><span style="font-size: 11px; color: #7C8592">Alta</span></a>
+<a href="Main.dc.html" title="Média prioridade" style="display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; background: rgba(245,165,36,0.12); border: 1px solid #F5A524; border-radius: 3px; text-decoration: none"><span style="width: 8px; height: 8px; background: #F5A524"></span><span class="mono" style="font-size: 13px; font-weight: 600; color: #F5A524">2</span><span style="font-size: 11px; color: #D5DAE1">Média</span></a>
+<a href="Main.dc.html" title="Baixa prioridade" style="display: flex; align-items: center; gap: 6px; height: 28px; padding: 0 8px; background: rgba(227,207,74,0.10); border: 1px solid #E3CF4A; border-radius: 3px; text-decoration: none"><span style="width: 8px; height: 8px; background: #E3CF4A"></span><span class="mono" style="font-size: 13px; font-weight: 600; color: #E3CF4A">1</span><span style="font-size: 11px; color: #D5DAE1">Baixa</span></a></div>
+<div style="width: 1px; height: 24px; background: #252C36"></div>
+<div title="Dados simulados para demonstração" style="display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border: 1px dashed #5D6673; border-radius: 3px; font-size: 11px; color: #9AA3AF; letter-spacing: 0.04em"><span style="width: 7px; height: 7px; border: 1px solid #9AA3AF; border-radius: 50%; box-sizing: border-box"></span>DEMONSTRAÇÃO</div>
+<div style="display: flex; align-items: baseline; gap: 8px"><span class="mono" style="font-size: 15px; font-weight: 500">21:40:12</span><span class="mono" style="font-size: 11px; color: #7C8592">seg 09/11</span></div>
+</header>
+
+<div role="navigation" aria-label="Seções da máquina" style="position: absolute; left: 56px; top: 48px; width: 1864px; height: 64px; box-sizing: border-box; padding: 8px 16px; border-bottom: 1px solid #1D232B; display: flex; gap: 4px">
+<a class="sec" href="Processo.dc.html" style="background: rgba(245,165,36,0.10); border-color: #F5A524; color: #D5DAE1"><span style="display: flex; justify-content: space-between; width: 100%"><span style="font-size: 12px; font-weight: 500">Preparo e refino</span><span class="mono" style="min-width: 18px; height: 16px; padding: 0 4px; box-sizing: border-box; background: #F5A524; color: #14100A; font-size: 11px; font-weight: 600; text-align: center; line-height: 16px">1</span></span><span class="mono" style="font-size: 10px; color: #F5A524">FIC-107</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Caixa de entrada</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Formação</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Prensas</span></a>
+<a class="sec" href="PreSecagem.dc.html" style="background: rgba(245,165,36,0.10); border-color: #F5A524; color: #D5DAE1"><span style="display: flex; justify-content: space-between; width: 100%"><span style="font-size: 12px; font-weight: 500">Pré-secagem</span><span class="mono" style="min-width: 18px; height: 16px; padding: 0 4px; box-sizing: border-box; background: #F5A524; color: #14100A; font-size: 11px; font-weight: 600; text-align: center; line-height: 16px">2</span></span><span class="mono" style="font-size: 10px; color: #F5A524">PDIC-523 <span style="color: #E3CF4A">VI-5123B</span></span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Speed Sizer</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Pós-secagem</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Calandra</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">QCS</span></a>
+<a class="sec" href="Processo.dc.html"><span style="font-size: 12px">Enroladeira</span></a>
+</div>
+
+<!-- ===== Visual principal ===== -->
+<section aria-label="Severidade dos mancais" style="position: absolute; left: 72px; top: 128px; width: 1100px; height: 936px; box-sizing: border-box; padding: 0 12px; background: #12161C; border: 1px solid #1D232B; border-radius: 4px">
+<div style="height: 56px; display: flex; align-items: center; gap: 16px; padding: 0 8px">
+<h1 style="margin: 0; font-size: 16px; font-weight: 600">Mancais por severidade</h1>
+<span style="font-size: 12px; color: #7C8592"><span class="mono" style="color: #D5DAE1">14</span> mancais · <span class="mono" style="color: #E9C77A">1</span> em zona C · <span class="mono" style="color: #D5DAE1">0</span> em D · velocidade RMS 10–1.000 Hz</span>
+</div>
+<div style="display: grid; grid-template-columns: 168px minmax(0, 1fr) 84px 196px 180px; column-gap: 16px; height: 28px; padding: 0 9px; font-size: 11px; color: #7C8592; align-items: end">
+<span>Mancal</span>
+<span style="position: relative; height: 28px; display: block">
+<span style="position: absolute; bottom: 0; left: 0; width: 25.6%; text-align: center">A</span>
+<span style="position: absolute; bottom: 0; left: 25.6%; width: 24.4%; text-align: center">B</span>
+<span style="position: absolute; bottom: 0; left: 50%; width: 28.9%; text-align: center; color: #E9C77A">C</span>
+<span style="position: absolute; bottom: 0; left: 78.9%; width: 21.1%; text-align: center; color: #F59A9D">D</span>
+<span style="position: absolute; top: 0; left: 0">ISO 20816-3 · mm/s</span>
+</span>
+<span style="text-align: right">vibração</span>
+<span>temperatura · 80 / 90 °C</span>
+<span>30 dias</span>
+</div>
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="14">
+<button class="brg" onClick="{{r.pick}}" aria-pressed="{{r.sel}}" style="border-color: {{r.bd}}; border-top-color: {{r.btc}}; background: {{r.bg}}">
+<span style="display: flex; flex-direction: column; gap: 3px; min-width: 0"><span style="font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{r.name}}</span><span class="mono" style="font-size: 10px; color: #7C8592">{{r.vtag}} · {{r.side}}</span></span>
+<span style="position: relative; height: 22px; display: flex">
+<span style="width: 25.6%; background: #1C2622"></span><span style="width: 24.4%; background: #252E29"></span><span style="width: 28.9%; background: #3A2F17"></span><span style="width: 21.1%; background: #3D1D21"></span>
+<span style="position: absolute; left: 0; top: 7px; height: 8px; width: {{r.vw}}%; background: {{r.vc}}"></span>
+<span style="position: absolute; top: 2px; width: 2px; height: 18px; background: #D5DAE1; left: {{r.wk}}%" title="há 7 dias"></span>
+</span>
+<span style="text-align: right; white-space: nowrap"><span class="mono" style="font-size: 16px; font-weight: 500; color: {{r.vtc}}">{{r.v}}</span> <span style="font-size: 10px; color: #9AA3AF">mm/s</span></span>
+<span style="display: flex; align-items: center; gap: 8px">
+<span style="position: relative; flex: 1; height: 14px">
+<span style="position: absolute; left: 0; right: 0; top: 5px; height: 4px; background: #232A33"></span>
+<span style="position: absolute; left: 0; width: 66.7%; top: 5px; height: 4px; background: #3A424E"></span>
+<span style="position: absolute; left: 66.7%; top: 2px; width: 1px; height: 10px; background: #7C8592"></span>
+<span style="position: absolute; left: 83.3%; top: 2px; width: 1px; height: 10px; background: #7C8592"></span>
+<span style="position: absolute; top: 0; width: 3px; height: 14px; margin-left: -1px; left: {{r.tp}}%; background: {{r.tc}}"></span>
+</span>
+<span class="mono" style="font-size: 13px; width: 26px; text-align: right; color: {{r.ttc}}">{{r.t}}</span><span style="font-size: 10px; color: #9AA3AF">°C</span>
+</span>
+<svg width="180" height="36" viewBox="0 0 180 36" aria-hidden="true"><rect x="0" y="{{r.s.cy}}" width="180" height="{{r.s.ch}}" fill="#3A2F17"></rect><path d="{{r.s.d}}" fill="none" stroke="#C9CED6" stroke-width="1.2"></path><circle cx="180" cy="{{r.s.ly}}" r="2.5" fill="{{r.vc}}"></circle></svg>
+</button>
+</sc-for>
+<div style="display: flex; gap: 20px; margin-top: 12px; padding: 0 8px; font-size: 11px; color: #7C8592">
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 2px; height: 12px; background: #D5DAE1"></span>valor de 7 dias atrás</span>
+<span>minigráfico: faixa âmbar = zona C</span>
+</div>
+</section>
+
+<!-- ===== Apoio 1: tendência 90 dias ===== -->
+<section aria-label="Tendência de 90 dias" style="position: absolute; left: 1188px; top: 128px; width: 716px; height: 470px; box-sizing: border-box; padding: 0 20px; background: #12161C; border: 1px solid #1D232B; border-radius: 4px">
+<div style="height: 44px; display: flex; align-items: center; gap: 10px">
+<h2 style="margin: 0; font-size: 14px; font-weight: 600">{{cur.name}}</h2>
+<span class="mono" style="font-size: 11px; color: #7C8592">{{cur.vtag}} · {{cur.ttag}} · 90 dias + projeção</span>
+</div>
+<div style="display: flex; gap: 10px; margin-bottom: 12px">
+<div style="flex: 1; padding: 8px 10px; background: #161B22; border: 1px solid #1D232B; border-radius: 3px"><div style="font-size: 11px; color: #7C8592">próximo limite de vibração</div><div style="display: flex; align-items: baseline; gap: 6px; margin-top: 2px"><span class="mono" style="font-size: 18px; font-weight: 500; color: {{cur.pvc}}">{{cur.pvDays}}</span><span style="font-size: 11px; color: #9AA3AF">{{cur.pvTxt}}</span></div></div>
+<div style="flex: 1; padding: 8px 10px; background: #161B22; border: 1px solid #1D232B; border-radius: 3px"><div style="font-size: 11px; color: #7C8592">próximo limite de temperatura</div><div style="display: flex; align-items: baseline; gap: 6px; margin-top: 2px"><span class="mono" style="font-size: 18px; font-weight: 500">{{cur.ptDays}}</span><span style="font-size: 11px; color: #9AA3AF">{{cur.ptTxt}}</span></div></div>
+</div>
+<div style="position: relative; width: 676px; height: 330px">
+<span style="position: absolute; left: 0; top: 0; font-size: 11px; color: #9AA3AF">mm/s</span>
+<span style="position: absolute; left: 0; top: 196px; font-size: 11px; color: #9AA3AF">°C</span>
+<svg width="636" height="300" viewBox="0 0 636 300" aria-hidden="true" style="position: absolute; left: 40px; top: 0">
+<rect x="0" y="{{z.aY}}" width="636" height="{{z.aH}}" fill="#1C2622"></rect>
+<rect x="0" y="{{z.bY}}" width="636" height="{{z.bH}}" fill="#252E29"></rect>
+<rect x="0" y="{{z.cY}}" width="636" height="{{z.cH}}" fill="#3A2F17"></rect>
+<rect x="0" y="0" width="636" height="{{z.dH}}" fill="#3D1D21"></rect>
+<rect x="424" y="0" width="212" height="300" fill="rgba(255,255,255,0.02)"></rect>
+<line x1="424" y1="0" x2="424" y2="300" stroke="#D5DAE1"></line>
+<path d="{{cur.vD}}" fill="none" stroke="#D5DAE1" stroke-width="1.5"></path>
+<path d="{{cur.vP}}" fill="none" stroke="#D5DAE1" stroke-width="1.2" stroke-dasharray="4 4"></path>
+<rect x="0" y="196" width="636" height="80" fill="#161B22"></rect>
+<line x1="0" x2="636" y1="{{z.t80}}" y2="{{z.t80}}" stroke="#7C8592" stroke-dasharray="3 3"></line>
+<line x1="0" x2="636" y1="{{z.t90}}" y2="{{z.t90}}" stroke="#7C8592"></line>
+<line x1="424" y1="196" x2="424" y2="276" stroke="#D5DAE1"></line>
+<path d="{{cur.tD}}" fill="none" stroke="#D5DAE1" stroke-width="1.5"></path>
+<path d="{{cur.tP}}" fill="none" stroke="#D5DAE1" stroke-width="1.2" stroke-dasharray="4 4"></path>
+</svg>
+<span class="mono" style="position: absolute; left: 4px; font-size: 10px; color: #E9C77A; top: {{z.l45}}px">4,5</span>
+<span class="mono" style="position: absolute; left: 4px; font-size: 10px; color: #F59A9D; top: {{z.l71}}px">7,1</span>
+<span class="mono" style="position: absolute; left: 4px; font-size: 10px; color: #7C8592; top: {{z.l23}}px">2,3</span>
+<span class="mono" style="position: absolute; left: 4px; font-size: 10px; color: #7C8592; top: {{z.lt80}}px">80</span>
+<span class="mono" style="position: absolute; left: 4px; font-size: 10px; color: #7C8592; top: {{z.lt90}}px">90</span>
+<sc-for list="{{cur.marks}}" as="m" hint-placeholder-count="12">
+<span title="{{m.tip}}" style="position: absolute; left: {{m.x}}px; top: {{m.y}}px; width: {{m.s}}px; height: {{m.s}}px; margin: -4px 0 0 -4px; border-radius: {{m.r}}; background: {{m.bg}}; border: 1.5px solid {{m.c}}; box-sizing: border-box"></span>
+</sc-for>
+<span class="mono" style="position: absolute; top: 282px; left: 40px; font-size: 10px; color: #7C8592">11/08</span>
+<span class="mono" style="position: absolute; top: 282px; left: 241px; font-size: 10px; color: #7C8592">25/09</span>
+<span class="mono" style="position: absolute; top: 282px; left: 448px; font-size: 10px; color: #D5DAE1; background: #12161C; padding: 0 4px; margin-left: -20px">hoje</span>
+<span class="mono" style="position: absolute; top: 282px; right: 0; font-size: 10px; color: #7C8592">24/12</span>
+<div style="position: absolute; left: 40px; top: 304px; display: flex; gap: 16px; font-size: 11px; color: #9AA3AF">
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; border: 1.5px solid #D5DAE1; border-radius: 50%; box-sizing: border-box"></span>ronda (coletor)</span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 8px; height: 8px; background: #4F8CFF"></span>nota</span>
+<span style="display: flex; align-items: center; gap: 6px"><span style="width: 16px; height: 0; border-top: 1.5px dashed #D5DAE1"></span>projeção linear 30 d</span>
+</div>
+</div>
+</section>
+
+<!-- ===== Apoio 2: vista 3D (reservada) ===== -->
+<section aria-label="Vista 3D da máquina" style="position: absolute; left: 1188px; top: 614px; width: 716px; height: 450px; box-sizing: border-box; padding: 0 20px 20px; background: #12161C; border: 1px solid #1D232B; border-radius: 4px; display: flex; flex-direction: column">
+<div style="height: 44px; display: flex; align-items: center; justify-content: space-between"><h2 style="margin: 0; font-size: 14px; font-weight: 600">Vista 3D da máquina</h2><span class="mono" style="font-size: 11px; color: #7C8592">canvas WebGL</span></div>
+<div style="position: relative; flex: 1; border: 1px dashed #2A313B; border-radius: 3px; background: #0F1318; overflow: hidden">
+<div style="position: absolute; left: 0; right: 0; bottom: 0; height: 45%; background: repeating-linear-gradient(90deg, transparent 0 47px, #171C23 47px 48px), repeating-linear-gradient(0deg, transparent 0 23px, #171C23 23px 24px)"></div>
+<div style="position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #5D6673">
+<span style="font-size: 13px">Área reservada para o modelo 3D</span>
+<span class="mono" style="font-size: 11px">mancais coloridos pela zona ISO · clique sincroniza com a lista</span>
+</div>
+<div style="position: absolute; left: 12px; bottom: 12px; display: flex; gap: 6px; padding: 6px 8px; background: rgba(13,16,21,0.9); border: 1px solid #1D232B; border-radius: 3px; font-size: 11px; color: #9AA3AF">
+<span style="display: flex; align-items: center; gap: 5px"><span style="width: 12px; height: 12px; background: #5D6B63"></span>A</span>
+<span style="display: flex; align-items: center; gap: 5px; margin-left: 6px"><span style="width: 12px; height: 12px; background: #7C8578"></span>B</span>
+<span style="display: flex; align-items: center; gap: 5px; margin-left: 6px"><span style="width: 12px; height: 12px; background: #D6A23A"></span>C</span>
+<span style="display: flex; align-items: center; gap: 5px; margin-left: 6px"><span style="width: 12px; height: 12px; background: #F2555A"></span>D</span>
+<span style="display: flex; align-items: center; gap: 5px; margin-left: 6px"><span style="width: 12px; height: 12px; border: 1px dashed #5D6673; box-sizing: border-box"></span>sem leitura</span>
+</div>
+<div style="position: absolute; right: 12px; top: 12px; display: flex; flex-direction: column; gap: 4px">
+<button aria-label="Aproximar" style="width: 32px; height: 32px; background: #161B22; border: 1px solid #2A313B; border-radius: 3px; color: #9AA3AF; cursor: pointer; font-size: 16px">+</button>
+<button aria-label="Afastar" style="width: 32px; height: 32px; background: #161B22; border: 1px solid #2A313B; border-radius: 3px; color: #9AA3AF; cursor: pointer; font-size: 16px">−</button>
+<button aria-label="Recentrar" style="width: 32px; height: 32px; background: #161B22; border: 1px solid #2A313B; border-radius: 3px; color: #9AA3AF; cursor: pointer; display: flex; align-items: center; justify-content: center"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="4" fill="none" stroke="currentColor" stroke-width="1.4"></circle><path d="M7 0 V3 M7 11 V14 M0 7 H3 M11 7 H14" stroke="currentColor" stroke-width="1.4"></path></svg></button>
+</div>
+</div>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var st = this.state || {};
+    var self = this;
+    var sel = st.sel || 'VI-5123B';
+    var fmt = function (n, d) { var s = n.toFixed(d).split('.'); s[0] = s[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.'); return s.join(','); };
+    var nz = function (i, s) { return Math.sin(i * 0.7 + s) * 0.5 + Math.sin(i * 1.9 + s * 2.3) * 0.3 + Math.sin(i * 0.23 + s * 0.7) * 0.2; };
+    var zone = function (v) { return v >= 7.1 ? 'D' : (v >= 4.5 ? 'C' : (v >= 2.3 ? 'B' : 'A')); };
+    // [nome, vtag, ttag, lado, vib, temp, vib há 30 d, temp há 30 d, início da subida (dia)]
+    var B = [
+      ['Secador CS23', 'VI-5123B', 'TI-5323B', 'LC', 4.9, 77, 3.0, 71, 45],
+      ['Secador CS21', 'VI-5121A', 'TI-5321A', 'LA', 3.9, 71, 3.5, 70, 70],
+      ['Rolo de sucção', 'VI-3102B', 'TI-3302B', 'LC', 3.6, 64, 3.6, 64, 0],
+      ['Prensa 2 rolo inferior', 'VI-4202B', 'TI-4402B', 'LC', 3.1, 68, 3.0, 67, 0],
+      ['Secador CS27', 'VI-5127B', 'TI-5327B', 'LC', 2.8, 70, 2.8, 70, 0],
+      ['Calandra rolo superior', 'VI-8101A', 'TI-8301A', 'LA', 2.6, 62, 2.4, 61, 80],
+      ['Rolo guia Speed Sizer', 'VI-6105A', 'TI-6305A', 'LA', 2.2, 55, 2.2, 55, 0],
+      ['Secador CS19', 'VI-5119A', 'TI-5319A', 'LA', 2.0, 66, 2.0, 66, 0],
+      ['Enroladeira tambor', 'VI-9101B', 'TI-9301B', 'LC', 1.9, 58, 1.9, 58, 0],
+      ['Secador CS25', 'VI-5125B', 'TI-5325B', 'LC', 1.7, 69, 1.7, 69, 0],
+      ['Secador CS31', 'VI-5131A', 'TI-5331A', 'LA', 1.6, 72, 1.6, 72, 0],
+      ['Rolo cabeceira', 'VI-3101B', 'TI-3301B', 'LC', 1.4, 49, 1.4, 49, 0],
+      ['Prensa 1 rolo superior', 'VI-4101A', 'TI-4301A', 'LA', 1.3, 61, 1.3, 61, 0],
+      ['Secador CS15', 'VI-5115B', 'TI-5315B', 'LC', 1.2, 63, 1.2, 63, 0]
+    ];
+    var ZC = { A: '#8B94A3', B: '#8B94A3', C: '#D6A23A', D: '#F2555A' };
+    var ZT = { A: '#D5DAE1', B: '#D5DAE1', C: '#E9C77A', D: '#F59A9D' };
+    // série diária de 90 dias
+    var serie = function (b, k) {
+      var v0 = b[6], v = [], t = [];
+      var base90 = b[8] > 0 ? Math.min(v0, 2.1 + (b[6] - 2.1) * 0) : b[4];
+      for (var d = 0; d <= 90; d++) {
+        var x;
+        if (b[8] > 0) {
+          var startV = b[0] === 'Secador CS23' ? 2.1 : b[6];
+          x = d < b[8] ? startV : startV + (b[4] - startV) * Math.pow((d - b[8]) / (90 - b[8]), 1.6);
+        } else x = b[4];
+        v.push(d === 90 ? b[4] : x + nz(d, k) * 0.12);
+        var t0 = b[0] === 'Secador CS23' ? 64 : b[7];
+        var tt = b[8] > 0 ? (d < b[8] ? t0 : t0 + (b[5] - t0) * Math.pow((d - b[8]) / (90 - b[8]), 1.4)) : b[5];
+        t.push(d === 90 ? b[5] : tt + nz(d, k + 3) * 0.6);
+      }
+      return { v: v, t: t };
+    };
+    var rows = B.map(function (b, k) {
+      var z = zone(b[4]);
+      var s = serie(b, k);
+      var last = s.v.slice(60);
+      var lo = 0, hi = 7.1;
+      var Y = function (q) { return 34 - Math.max(0, Math.min(hi, q)) / hi * 32; };
+      var d = '';
+      last.forEach(function (q, i) { d += (i ? 'L' : 'M') + (i * 6).toFixed(1) + ' ' + Y(q).toFixed(1) + ' '; });
+      var isSel = b[1] === sel;
+      var tc = b[5] >= 90 ? '#F2555A' : (b[5] >= 80 ? '#F5A524' : '#D5DAE1');
+      return {
+        key: b[1], name: b[0], vtag: b[1], side: b[3], v: fmt(b[4], 1), t: String(b[5]), sel: isSel,
+        vw: (b[4] / 9 * 100).toFixed(1), wk: (s.v[83] / 9 * 100).toFixed(1), vc: ZC[z], vtc: ZT[z],
+        tp: ((b[5] - 40) / 60 * 100).toFixed(1), tc: tc, ttc: tc,
+        s: { d: d, ly: Y(b[4]).toFixed(1), cy: Y(7.1).toFixed(1), ch: (Y(4.5) - Y(7.1)).toFixed(1) },
+        bd: isSel ? '#4F8CFF' : 'transparent', btc: isSel ? '#4F8CFF' : '#1D232B', bg: isSel ? '#161E2C' : 'transparent',
+        pick: function () { self.setState({ sel: b[1] }); },
+        _b: b, _s: s, _z: z
+      };
+    });
+    rows.sort(function (a, b) { return b._b[4] - a._b[4]; });
+
+    var cr = rows.filter(function (r) { return r.key === sel; })[0];
+    var b = cr._b, s = cr._s;
+    // tendência: 90 d em 424 px, +45 d até 636 px
+    var PX = 424 / 90;
+    var Yv = function (q) { return 186 - Math.max(0, Math.min(9, q)) / 9 * 186; };
+    var Yt = function (q) { return 276 - (Math.max(50, Math.min(100, q)) - 50) / 50 * 80; };
+    var vD = '', tD = '';
+    for (var d = 0; d <= 90; d++) { vD += (d ? 'L' : 'M') + (d * PX).toFixed(1) + ' ' + Yv(s.v[d]).toFixed(1) + ' '; tD += (d ? 'L' : 'M') + (d * PX).toFixed(1) + ' ' + Yt(s.t[d]).toFixed(1) + ' '; }
+    var slopeV = (s.v[90] - s.v[60]) / 30, slopeT = (s.t[90] - s.t[60]) / 30;
+    var vP = 'M424 ' + Yv(b[4]).toFixed(1) + ' L636 ' + Yv(b[4] + slopeV * 45).toFixed(1);
+    var tP = 'M424 ' + Yt(b[5]).toFixed(1) + ' L636 ' + Yt(b[5] + slopeT * 45).toFixed(1);
+    var nextV = b[4] < 2.3 ? 2.3 : (b[4] < 4.5 ? 4.5 : (b[4] < 7.1 ? 7.1 : null));
+    var nextZ = nextV === 2.3 ? 'B' : (nextV === 4.5 ? 'C' : 'D');
+    var nextT = b[5] < 80 ? 80 : (b[5] < 90 ? 90 : null);
+    var date = function (days) { var dt = new Date(2026, 10, 9 + Math.round(days)); var dd = dt.getDate(), mm = dt.getMonth() + 1; return (dd < 10 ? '0' : '') + dd + '/' + (mm < 10 ? '0' : '') + mm; };
+    var pv = (slopeV > 0.01 && nextV) ? (nextV - b[4]) / slopeV : null;
+    var pt = (slopeT > 0.05 && nextT) ? (nextT - b[5]) / slopeT : null;
+    var marks = [];
+    for (var w = 6; w <= 90; w += 7) {
+      var dd = Math.min(90, w + (w === 90 ? 0 : 0));
+      marks.push({ x: (40 + dd * PX).toFixed(1), y: Yv(s.v[dd] + nz(w, 9) * 0.1).toFixed(1), s: 8, r: '50%', bg: '#12161C', c: '#D5DAE1', tip: 'Ronda ' + date(dd - 90) + ': ' + fmt(s.v[dd], 1) + ' mm/s (coletor portátil)' });
+    }
+    if (b[1] === 'VI-5123B') {
+      marks.push({ x: (40 + 52 * PX).toFixed(1), y: '10', s: 9, r: '0', bg: '#4F8CFF', c: '#4F8CFF', tip: 'N-0371 · 01/10 · relubrificação CS19–CS27 · encerrada' });
+      marks.push({ x: (40 + 90 * PX).toFixed(1), y: '10', s: 9, r: '0', bg: '#4F8CFF', c: '#4F8CFF', tip: 'N-0412 · 09/11 16:30 · vibração zona C · aberta · P2' });
+    }
+    var z = {
+      aY: Yv(2.3).toFixed(1), aH: (Yv(0) - Yv(2.3)).toFixed(1), bY: Yv(4.5).toFixed(1), bH: (Yv(2.3) - Yv(4.5)).toFixed(1),
+      cY: Yv(7.1).toFixed(1), cH: (Yv(4.5) - Yv(7.1)).toFixed(1), dH: Yv(7.1).toFixed(1),
+      t80: Yt(80).toFixed(1), t90: Yt(90).toFixed(1),
+      l23: (Yv(2.3) - 6).toFixed(1), l45: (Yv(4.5) - 6).toFixed(1), l71: (Yv(7.1) - 6).toFixed(1), lt80: (Yt(80) - 6).toFixed(1), lt90: (Yt(90) - 6).toFixed(1)
+    };
+    return {
+      rows: rows, z: z,
+      cur: {
+        name: b[0] + ' · lado ' + b[3], vtag: b[1], ttag: b[2], vD: vD, tD: tD, vP: vP, tP: tP, marks: marks,
+        pvDays: pv != null ? '~' + Math.round(pv) + ' d' : 'estável', pvTxt: pv != null ? 'zona ' + nextZ + ' (' + fmt(nextV, 1) + ' mm/s) em ' + date(pv) : 'sem tendência de alta em 30 d',
+        pvc: pv != null && pv < 45 ? '#E9C77A' : '#D5DAE1',
+        ptDays: pt != null ? '~' + Math.round(pt) + ' d' : 'estável', ptTxt: pt != null ? nextT + ' °C em ' + date(pt) : 'sem tendência de alta em 30 d'
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

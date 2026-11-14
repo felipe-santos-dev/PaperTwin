@@ -612,19 +612,19 @@ aviso no console é o `THREE.Clock` já aceito.
 **Bake.** 2048², 128 amostras, OIDN. Total **3758 s (~63 min)**, contra ~2 h 10
 antes.
 
-| zona           | tempo  |
-| -------------- | ------ |
-| umida-formacao | 297 s  |
-| umida-prensas  | 325 s  |
-| g1             | 200 s  |
-| g2             | 248 s  |
-| g3             | 296 s  |
-| g4             | 255 s  |
-| scanner-sizer  | 707 s  |
-| g5             | 322 s  |
-| g6             | 362 s  |
-| acabamento     | 552 s  |
-| predio         | 194 s  |
+| zona           | tempo |
+| -------------- | ----- |
+| umida-formacao | 297 s |
+| umida-prensas  | 325 s |
+| g1             | 200 s |
+| g2             | 248 s |
+| g3             | 296 s |
+| g4             | 255 s |
+| scanner-sizer  | 707 s |
+| g5             | 322 s |
+| g6             | 362 s |
+| acabamento     | 552 s |
+| predio         | 194 s |
 
 O `scanner-sizer` caiu de 4974 s para 707 s com o fim das 38 luminárias do
 térreo. `public/scene/` ficou com **3,49 MB**: `mp1.glb` 1,82 MB e 11 WebP com

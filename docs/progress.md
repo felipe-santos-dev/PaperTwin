@@ -735,6 +735,27 @@ rodada. Total **2553 s (~43 min)**.
 uma vez com a CPU tomada pelo bake e passaram na repetição — a tela não foi
 tocada.
 
+### Scanners, Speed Sizer e Pope apoiados
+
+- **Scanners:** duas cabeças, uma pendurada na viga de cima e outra apoiada na
+  de baixo, alinhadas na vertical, com 3,5 cm de vão até a folha de cada lado;
+  o feixe emissivo fica entre elas. As colunas do pórtico descem até o piso,
+  com base. A "escada deitada" entre a calandra e o QCS era a metade de baixo
+  do pórtico antigo, que terminava 1,4 m acima do piso.
+- **Speed Sizer:** os montantes — a placa cinza do tubo vermelho — começavam a
+  1,7 m do piso; agora descem até ele.
+- **Pope:** a laje de base estava sobre o vão do refugo, flutuando. Saiu; as
+  colunas descem até o térreo dentro do vão e terminam em base fora dele.
+- **Jumbo:** face lisa, com tampa em leque (o polígono de muitos lados saía
+  com recortes no lightmap), e carretel de aço saindo do centro, apoiado nos
+  trilhos. O trilho passava na frente da face, na altura do eixo; agora fica
+  logo abaixo do eixo e é mais baixo.
+
+`REBAKE=zona,zona python build.py bake` reassa só as zonas pedidas e mantém o
+lightmap das outras: elas são desdobradas de novo, e sem mudança de geometria o
+UV sai igual. Desta vez: scanner-sizer 341 s, acabamento 266 s, prédio 103 s.
+`public/scene/` com 3,64 MB. e2e 8/8, lint e os 102 testes da web verdes.
+
 ## Próximo passo exato
 
 Revisão das capturas pelo Felipe. Em aberto, de antes: cor dos mancais pela

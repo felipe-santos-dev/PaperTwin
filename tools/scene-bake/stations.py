@@ -315,19 +315,40 @@ def _sill():
 
 # ----------------------------------------------- scanners, sizer, calandra, Pope
 def scanners():
-    """Pórtico do scanner e o feixe emissivo que varre a folha."""
+    """
+    Pórtico do scanner: duas colunas com base no piso, viga de cima e de baixo,
+    e as duas cabeças de medição.
+
+    As cabeças ficam alinhadas na vertical, uma pendurada na viga de cima e a
+    outra apoiada na de baixo, com a folha passando entre elas num vão de
+    poucos centímetros. O feixe emissivo é o que atravessa esse vão.
+    """
+    gap = 0.035  # da folha até a face de cada cabeça
+    head_y = 1.2  # onde a cabeça está na sua varredura, no sentido transversal
     for a in assets("scanner"):
         x, y, _ = a["position"]
         half = a["lengthM"] / 2
         zone = zone_for_x(x)
         tag = a["tag"].rsplit("-", 1)[1]
+        top = y + 1.25
         for sg in (-1, 1):
-            box(f"sc_{tag}_col{sg}", (x, sg * half, y - 0.4), (0.5, 0.4, 3.2), "estrutura_clara", zone=zone, bevel=0.03)
+            box(f"sc_{tag}_col{sg}", (x, sg * half, top / 2), (0.5, 0.4, top), "estrutura_clara", zone=zone, bevel=0.03)
+            box(f"sc_{tag}_base{sg}", (x, sg * half, 0.04), (0.9, 0.8, 0.08), "estrutura", zone=zone, bevel=0.01)
         box(f"sc_{tag}_viga_sup", (x, 0, y + 1.05), (0.42, 2 * half, 0.4), "estrutura_clara", zone=zone, bevel=0.03)
         box(f"sc_{tag}_viga_inf", (x, 0, y - 1.05), (0.42, 2 * half, 0.4), "estrutura_clara", zone=zone, bevel=0.03)
-        box(f"sc_{tag}_cabeca", (x, 1.2, y + 0.62), (0.6, 0.9, 0.5), "caixa_juncao", zone=zone, bevel=0.02)
-        box(f"sc_{tag}_feixe", (x, 0, y), (0.05, 2 * half - 0.6, 0.05), "lampada", zone=zone)
-        area_light(f"al_{tag}", (x, 0, y + 0.3), 0.3, 60)
+        # cabeças: da viga até `gap` da folha, em cima e embaixo
+        reach = 1.05 - 0.2 - gap
+        for nm, sg in (("sup", 1), ("inf", -1)):
+            box(
+                f"sc_{tag}_cabeca_{nm}",
+                (x, head_y, y + sg * (gap + reach / 2)),
+                (0.6, 0.9, reach),
+                "caixa_juncao",
+                zone=zone,
+                bevel=0.02,
+            )
+        box(f"sc_{tag}_feixe", (x, head_y, y), (0.04, 0.5, 2 * gap), "lampada", zone=zone)
+        area_light(f"al_{tag}", (x, head_y, y + 0.3), 0.3, 60)
 
 
 def speed_sizer():
@@ -339,11 +360,13 @@ def speed_sizer():
     x = M["SIZER_X_M"]
     web = M["DRY_SECTION_WEB_Y_M"]
     zone = zone_for_x(x)
+    # os montantes descem até o piso de operação
+    top = web + 3.1
     for sg in (-1, 1):
         box(
             f"szr_estrutura{sg}",
-            (x, sg * (FACE / 2 + 1.0), web),
-            (3.0, 0.6, 6.2),
+            (x, sg * (FACE / 2 + 1.0), top / 2),
+            (3.0, 0.6, top),
             "estrutura_clara",
             zone=zone,
             bevel=0.04,
@@ -387,7 +410,14 @@ def calender():
 
 
 def pope():
-    """Tambor da enroladeira, o jumbo em formação, trilhos e braços."""
+    """
+    Tambor da enroladeira, a bobina jumbo, trilhos e braços.
+
+    A Pope fica sobre o vão do refugo, então nada dela assenta numa laje: as
+    colunas descem até o térreo onde o piso é aberto, e até o piso de operação
+    fora dele. A jumbo é um cilindro de face lisa; o carretel sai do centro e
+    apoia as pontas nos trilhos, que ficam logo abaixo do eixo.
+    """
     drum = assets("reel-drum")[0]
     x, y, _ = drum["position"]
     r = drum["radius"]
@@ -395,11 +425,24 @@ def pope():
     roll_with_housing("POP_TBR", x, y, r, "cil_ferro")
 
     jr = 1.45
-    cyl("pope_jumbo", (x + r + jr, 0, y), jr, FACE - 0.2, "papel", seg=56, zone=zone)
-    cyl("pope_jumbo_eixo", (x + r + jr, 0, y), 0.16, FACE + 1.6, "munhao", seg=24, zone=zone)
+    jx = x + r + jr
+    side = FACE / 2 + 0.75
+    cyl("pope_jumbo", (jx, 0, y), jr, FACE - 0.2, "papel", seg=96, zone=zone, cap_tris=True)
+    # carretel: tubo de aço que atravessa a bobina e sai pelas duas faces
+    cyl("pope_carretel", (jx, 0, y), 0.24, FACE - 0.1, "cil_cabeca", seg=48, zone=zone, cap_tris=True)
+    cyl("pope_jumbo_eixo", (jx, 0, y), 0.16, 2 * side + 0.5, "munhao", seg=32, zone=zone, cap_tris=True)
 
+    rail_h = 0.3
+    rail_z = y - 0.16 - rail_h / 2
+    rail_x0, rail_x1 = x - 1.3, x + 7.7
     for sg in (-1, 1):
-        box(f"pope_trilho{sg}", (x + 3.2, sg * (FACE / 2 + 0.75), y + 0.1), (9.0, 0.3, 0.5), "estrutura", zone=zone, bevel=0.02)
-        box(f"pope_braco{sg}", (x - 0.2, sg * (FACE / 2 + 0.75), y + 1.2), (0.4, 0.34, 3.0), "estrutura", zone=zone, bevel=0.02)
-        box(f"pope_col{sg}", (x - 1.6, sg * (FACE / 2 + 0.75), y / 2), (0.44, 0.44, y + 0.2), "estrutura", zone=zone, bevel=0.02)
-    box("pope_base", (x + 1.0, 0, 0.3), (6.0, FACE + 2.4, 0.6), "estrutura", zone=zone, bevel=0.03)
+        yy = sg * side
+        box(f"pope_trilho{sg}", ((rail_x0 + rail_x1) / 2, yy, rail_z), (rail_x1 - rail_x0, 0.3, rail_h), "estrutura", zone=zone, bevel=0.02)
+        box(f"pope_braco{sg}", (x - 0.2, yy, y + 1.2), (0.4, 0.34, 3.0), "estrutura", zone=zone, bevel=0.02)
+        # colunas: sob o braço do tambor e sob o trilho, até o piso que houver
+        for k, cx in enumerate((x - 0.2, x - 1.6, x + 3.0, rail_x1 - 0.3)):
+            top = (y - 0.3) if k == 0 else (rail_z - rail_h / 2)
+            base = floor_under(cx)
+            box(f"pope_col{sg}_{k}", (cx, yy, (top + base) / 2), (0.44, 0.44, top - base), "estrutura", zone=zone, bevel=0.02)
+            if base == 0.0:
+                box(f"pope_pe{sg}_{k}", (cx, yy, 0.04), (0.8, 0.8, 0.08), "estrutura", zone=zone, bevel=0.01)

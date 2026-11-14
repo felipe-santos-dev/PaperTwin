@@ -66,9 +66,9 @@
    "label": "Scanner 1 e Speed Sizer",
    "group": "machine",
    "lightmap": "lm_scanner-sizer.webp",
-   "scale": 3.46263,
-   "ref": 0.94534,
-   "coverage": 0.71,
+   "scale": 1.7181,
+   "ref": 0.83086,
+   "coverage": 0.668,
    "size": 2048
   },
   {
@@ -96,9 +96,9 @@
    "label": "Calandra, scanner final e Pope",
    "group": "machine",
    "lightmap": "lm_acabamento.webp",
-   "scale": 3.20521,
-   "ref": 1.01521,
-   "coverage": 0.755,
+   "scale": 1.59258,
+   "ref": 0.95461,
+   "coverage": 0.754,
    "size": 2048
   },
   {
@@ -106,8 +106,8 @@
    "label": "Prédio",
    "group": "building",
    "lightmap": "lm_predio.webp",
-   "scale": 3.77697,
-   "ref": 1.00018,
+   "scale": 3.77567,
+   "ref": 1.00016,
    "coverage": 0.746,
    "size": 2048
   }

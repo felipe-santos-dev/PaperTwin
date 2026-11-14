@@ -278,6 +278,13 @@ CAMS = {
     "preview_geral": view((_CX - 8, 30, 78), (_CX, 3, 0)),
     # parte úmida pelo lado comando, de frente e um pouco de cima
     "preview_umida": view((-3.5, 6.5, 21), (-2.5, 3.2, 0)),
+    # acabamento: calandra, scanner final e Pope, de cima e pelo lado comando
+    "preview_acabamento": view(
+        (M["CALENDER_X_M"] + 2.0, 9.0, 15.0), ((M["CALENDER_X_M"] + M["SCANNER_2_X_M"]) / 2, 0.5, 0)
+    ),
+    "preview_qcs": view((M["SCANNER_2_X_M"] - 5, 8, 17), (M["SCANNER_2_X_M"], M["CALENDER_NIP_Y_M"], 0)),
+    "preview_jumbo": view((M["POPE_X_M"] + 5.5, 4.6, 8.5), (M["POPE_X_M"] + 2.25, M["POPE_DRUM_Y_M"], -1.0)),
+    "preview_scanner": view((M["SCANNER_1_X_M"] - 3.5, 5.6, 9.0), (M["SCANNER_1_X_M"], M["DRY_SECTION_WEB_Y_M"] - 1.0, 0)),
     "preview_pre": view((_PX0 + 6, 7.5, 22), (_PX0 + 15, 4.5, 0)),
     "preview_mancais": view((_PX0 + 4, 6.4, 10.5), (_PX0 + 9, 5.6, M["BEARING_Z_M"])),
     "preview_terreo": view((M["PRE_DRYER_HOOD"]["from"] - 6, _G + 1.7, 16), (M["PRE_DRYER_HOOD"]["from"] + 20, _G + 2.6, 0)),
@@ -419,6 +426,12 @@ only = set(filter(None, os.environ.get("ZONES", "").split(",")))
 # Quem usar isto tem de conferir que os UVs saíram iguais aos do GLB anterior.
 skip_bake = os.environ.get("SKIP_BAKE") == "1"
 
+# Reassa só algumas zonas e reaproveita o lightmap das outras. As outras são
+# desdobradas e exportadas do mesmo jeito — o export precisa de todas —, e o
+# desdobramento depende só da geometria da zona: sem mudança nela, o UV sai
+# igual e o lightmap antigo continua valendo.
+rebake = set(filter(None, os.environ.get("REBAKE", "").split(",")))
+
 baked = []
 for zone in ZONES:
     zid = zone["id"]
@@ -431,8 +444,8 @@ for zone in ZONES:
     ob = join(zid)
     ob.data.validate()
     unwrap(ob, 0.0025)
-    if skip_bake:
-        print(f"zona {zid}: desdobrada, bake pulado")
+    if skip_bake or (rebake and zid not in rebake):
+        print(f"zona {zid}: desdobrada, lightmap anterior mantido")
     else:
         t = time.time()
         bake(ob, size, spp, zid)

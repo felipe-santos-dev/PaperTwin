@@ -198,13 +198,15 @@ AX = {
 }
 
 
-def cyl(name, c, r, d, mat, axis="Y", seg=48, zone=None, r2=None, caps=True, section_hidden=False):
+def cyl(name, c, r, d, mat, axis="Y", seg=48, zone=None, r2=None, caps=True, section_hidden=False, cap_tris=False):
     """Cilindro de raio `r` e comprimento `d`, com o eixo em `axis`."""
     bm = bmesh.new()
     bmesh.ops.create_cone(
         bm,
         cap_ends=caps,
-        cap_tris=False,
+        # tampa em leque: num polígono de muitos lados o desdobramento do
+        # lightmap sai torto e a face fica com recortes
+        cap_tris=cap_tris,
         segments=seg,
         radius1=r,
         radius2=r if r2 is None else r2,

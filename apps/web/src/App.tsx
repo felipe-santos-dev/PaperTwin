@@ -15,6 +15,7 @@ import { LaboratorioScreen } from './screens/LaboratorioScreen';
 import { DataSourcePill } from './ui/DataSourcePill';
 import { Shell } from './ui/Shell';
 import { useScreen } from './ui/screens';
+import { areaOfTag } from './ui/sections';
 import { useAssetSelection } from './ui/useAssetUrl';
 import { useDataSource, type DataSourceProbes } from './ui/useDataSource';
 import { useFrame } from './ui/useFrame';
@@ -74,6 +75,7 @@ export function App() {
   const openTrend = useCallback(
     (which: string) => {
       setTag(which);
+      setArea(areaOfTag(which));
       go('processo');
     },
     [go],
@@ -167,6 +169,7 @@ export function App() {
           openTrend={openTrend}
           openBearing={openBearing}
           openReel={openReel}
+          area={area}
           note={note}
           setNote={setNote}
           openNote={openNote}
@@ -190,6 +193,7 @@ interface ScreenProps {
   readonly openTrend: (tag: string) => void;
   readonly openBearing: (assetTag: string) => void;
   readonly openReel: (number: number) => void;
+  readonly area: string | null;
   readonly note: string | null;
   readonly setNote: (value: string | null) => void;
   readonly openNote: (number: string) => void;
@@ -211,9 +215,17 @@ function Screen(props: ScreenProps) {
         <BobinasScreen gateway={props.gateway} selected={props.reel} onSelect={props.setReel} />
       );
     case 'processo':
-      return <ProcessoScreen gateway={props.gateway} tag={props.tag} onSelectTag={props.setTag} />;
+      return (
+        <ProcessoScreen
+          gateway={props.gateway}
+          area={props.area}
+          tag={props.tag}
+          onSelectTag={props.setTag}
+          onOpenBearing={props.openBearing}
+        />
+      );
     case 'laboratorio':
-      return <LaboratorioScreen />;
+      return <LaboratorioScreen gateway={props.gateway} />;
     case 'mancais':
       return (
         <MancaisScreen

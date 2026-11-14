@@ -1,471 +1,412 @@
 import { useCallback, useMemo, useState } from 'react';
+import {
+  bearingOfProcessTag,
+  variablesOfArea,
+  type Alarm,
+  type ProcessVariable,
+} from '@mp1/shared';
 
-import { PROCESS_CATALOG } from '@mp1/shared';
-
+import { FIXED_VARIABLES } from '../api/fixtures';
 import type { DataGateway } from '../api/gateway';
-import type { SetpointRejection, TagDetail } from '../api/process';
-import { Block, ScreenTitle } from '../ui/Shell';
-import { Facts, Table } from '../ui/Table';
-import { Trend } from '../ui/chart/Trend';
-import { hhmm, num, tagValue } from '../ui/format';
+import type { TagTrend } from '../api/process';
+import { seriesOf, valueAt } from '../ui/chart/series';
+import { tagValue } from '../ui/format';
+import { INSTRUMENT_GRID, InstrumentRow } from '../ui/InstrumentRow';
+import { Illustrative } from '../ui/Panel';
+import { designPriority, worst, type DesignPriority } from '../ui/priority';
 import { ResourceState } from '../ui/ResourceState';
+import { areaOfTag, isStanding, PROCESS_AREAS } from '../ui/sections';
+import { isOut, tagScale } from '../ui/tagScale';
 import { useResource } from '../ui/useResource';
+import { RefiningEffect } from './processo/RefiningEffect';
+import { SetpointPanel } from './processo/SetpointPanel';
+import { MAX_TREND_TAGS, TrendStack } from './processo/TrendStack';
 
 /**
- * Processo — as variáveis, a tendência e a escrita de setpoint.
+ * Processo — uma seção da máquina por vez.
  *
- * As áreas vêm do catálogo, não de uma lista escrita aqui: são as mesmas 14
- * áreas que o CSV declara, e uma lista à mão divergiria na primeira área nova.
+ * O padrão das duas seções desenhadas (preparo e pré-secagem) vale para as dez:
+ * à esquerda as variáveis da seção, do catálogo, com faixa, PV, SP e a última
+ * hora; à direita a tendência multi-TAG e a alteração de setpoint. A seção vem
+ * da faixa do processo, no alto.
  *
- * ## A escrita é a parte séria da tela
- *
- * É a única coisa que o gêmeo deixa mexer no processo, e por isso o formulário
- * cobra motivo, mostra a faixa do catálogo antes de o usuário digitar, e explica
- * a recusa com as palavras da API em vez de um "valor inválido" genérico.
+ * O preparo tem sete variáveis que o catálogo não tem; elas vêm do dado fixo,
+ * com o selo, e o painel "Efeito do refino" só aparece ali.
  */
-
-const AREAS = [...new Set(PROCESS_CATALOG.map((variable) => variable.area))].sort();
-
-const DEFAULT_AREA = 'pré-secagem';
 
 export interface ProcessoScreenProps {
   readonly gateway: DataGateway;
-  /** A tag aberta no detalhe, quando outra tela pediu. */
+  /** A seção escolhida na faixa; `null` usa a da TAG, ou o preparo. */
+  readonly area?: string | null;
   readonly tag: string | null;
   readonly onSelectTag: (tag: string | null) => void;
+  readonly onOpenBearing?: (assetTag: string) => void;
 }
 
-export function ProcessoScreen({ gateway, tag, onSelectTag }: ProcessoScreenProps) {
-  const [area, setArea] = useState<string>(() => {
-    const requested = tag
-      ? PROCESS_CATALOG.find((variable) => variable.tag === tag)?.area
-      : undefined;
-    return requested ?? DEFAULT_AREA;
-  });
-
-  const values = useResource(
-    useCallback((signal) => gateway.processValues({ area }, signal), [gateway, area]),
-    { isEmpty: (data) => data.values.length === 0 },
-  );
-
-  const rows = useMemo(() => {
-    const byTag = new Map(values.data?.values.map((item) => [item.tag, item]) ?? []);
-
-    return PROCESS_CATALOG.filter((variable) => variable.area === area).map((variable) => ({
-      variable,
-      value: byTag.get(variable.tag)?.value ?? null,
-    }));
-  }, [values.data, area]);
-
-  const selectedTag = tag ?? rows.find((row) => row.variable.controlled)?.variable.tag ?? null;
-
+export function ProcessoScreen({
+  gateway,
+  area = null,
+  tag,
+  onSelectTag,
+  onOpenBearing,
+}: ProcessoScreenProps) {
+  const current = area ?? (tag ? areaOfTag(tag) : null) ?? 'preparo';
   return (
-    <>
-      <ScreenTitle
-        eyebrow="Processo e controle"
-        title={area}
-        aside={`· ${String(rows.length)} variáveis`}
-        actions={
-          <label className="flex min-h-11 items-center gap-2 text-sm text-mill-muted">
-            Área
-            <select
-              value={area}
-              onChange={(event) => {
-                setArea(event.target.value);
-                onSelectTag(null);
-              }}
-              className="min-h-11 rounded border border-mill-line bg-mill-panel px-2 py-1.5 text-mill-fg"
-            >
-              {AREAS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
-          </label>
-        }
-      />
-
-      <ResourceState
-        resource={values}
-        label="as variáveis"
-        emptyMessage="Nenhuma variável desta área tem valor. A simulação precisa rodar um intervalo."
-      >
-        {(data) => (
-          <>
-            <Block title="Variáveis" aside={`valores de ${hhmm(data.ts)}`}>
-              <Table
-                caption={`Variáveis de ${area}`}
-                rows={rows}
-                keyOf={(row) => row.variable.tag}
-                selected={(row) => row.variable.tag === selectedTag}
-                onSelect={(row) => {
-                  onSelectTag(row.variable.tag);
-                }}
-                columns={[
-                  {
-                    key: 'tag',
-                    header: 'TAG',
-                    render: (row) => <span className="font-mono text-xs">{row.variable.tag}</span>,
-                  },
-                  { key: 'nome', header: 'Variável', render: (row) => row.variable.name },
-                  {
-                    key: 'valor',
-                    header: 'Valor',
-                    numeric: true,
-                    render: (row) => <LimitValue value={row.value} variable={row.variable} />,
-                  },
-                  {
-                    key: 'un',
-                    header: 'Un.',
-                    hideBelow: 'md',
-                    render: (row) => (
-                      <span className="text-xs text-mill-muted">{row.variable.unit}</span>
-                    ),
-                  },
-                  {
-                    key: 'alvo',
-                    header: 'Alvo',
-                    numeric: true,
-                    hideBelow: 'md',
-                    render: (row) => tagValue(row.variable.target, row.variable.unit),
-                  },
-                  {
-                    key: 'faixa',
-                    header: 'Faixa',
-                    numeric: true,
-                    hideBelow: 'lg',
-                    render: (row) =>
-                      `${tagValue(row.variable.min, row.variable.unit)}–${tagValue(
-                        row.variable.max,
-                        row.variable.unit,
-                      )}`,
-                  },
-                  {
-                    key: 'malha',
-                    header: 'Malha',
-                    hideBelow: 'lg',
-                    render: (row) =>
-                      row.variable.controlled ? (
-                        'sim'
-                      ) : (
-                        <span className="text-mill-muted">medição</span>
-                      ),
-                  },
-                  {
-                    key: 'fonte',
-                    header: 'Fonte',
-                    hideBelow: 'xl',
-                    render: (row) => (
-                      <span
-                        className={
-                          row.variable.source === 'assumed' ? 'text-mill-muted' : undefined
-                        }
-                        title={row.variable.note ?? undefined}
-                      >
-                        {row.variable.source}
-                      </span>
-                    ),
-                  },
-                ]}
-              />
-            </Block>
-
-            {selectedTag && <TagPanel gateway={gateway} tag={selectedTag} />}
-          </>
-        )}
-      </ResourceState>
-    </>
+    <AreaView
+      key={current}
+      gateway={gateway}
+      area={current}
+      tag={tag}
+      onSelectTag={onSelectTag}
+      onOpenBearing={onOpenBearing}
+    />
   );
 }
 
-/** Quanto tempo a tendência mostra. */
-const WINDOWS = [
-  { label: '1 h', hours: 1 },
-  { label: '3 h', hours: 3 },
-  { label: '8 h', hours: 8 },
-  { label: '24 h', hours: 24 },
-] as const;
+/** Grupos da tabela: o grupo de vapor (G1…G4) quando o nome o diz, senão o grupo do catálogo. */
+function groupOf(variable: ProcessVariable): string {
+  const steam = /\bG(\d)\b/.exec(variable.name);
+  return steam ? `Grupo ${steam[1] ?? ''}` : variable.group;
+}
 
-function TagPanel({ gateway, tag }: { readonly gateway: DataGateway; readonly tag: string }) {
-  const [hours, setHours] = useState(3);
+/** As variáveis da seção: catálogo (sem as por cilindro) e, no preparo, as fixas. */
+export function variablesFor(area: string): ProcessVariable[] {
+  const catalog = variablesOfArea(area).filter((v) => v.cylinder === null);
+  const all = area === 'preparo' ? [...catalog, ...FIXED_VARIABLES] : catalog;
+  const order = new Map<string, number>();
+  for (const v of all) if (!order.has(groupOf(v))) order.set(groupOf(v), order.size);
+  return [...all].sort((a, b) => (order.get(groupOf(a)) ?? 0) - (order.get(groupOf(b)) ?? 0));
+}
 
-  const detail = useResource(useCallback((signal) => gateway.tag(tag, signal), [gateway, tag]));
+const FIXED_TAGS = new Set(FIXED_VARIABLES.map((v) => v.tag));
 
-  const trend = useResource(
+function AreaView({
+  gateway,
+  area,
+  tag,
+  onSelectTag,
+  onOpenBearing,
+}: {
+  readonly gateway: DataGateway;
+  readonly area: string;
+  readonly tag: string | null;
+  readonly onSelectTag: (tag: string | null) => void;
+  readonly onOpenBearing: ((assetTag: string) => void) | undefined;
+}) {
+  const label = PROCESS_AREAS.find((item) => item.id === area)?.label ?? area;
+  const variables = useMemo(() => variablesFor(area), [area]);
+  const [reload, setReload] = useState(0);
+  const [onlyOut, setOnlyOut] = useState(false);
+
+  const data = useResource(
     useCallback(
-      (signal) => {
-        const to = new Date();
-        return gateway.tagTrend(
-          tag,
-          { from: new Date(to.getTime() - hours * 3_600_000), to, buckets: 240 },
-          signal,
-        );
+      async (signal: AbortSignal) => {
+        const [values, alarms, fixed, setpoints] = await Promise.all([
+          gateway.processValues({}, signal),
+          gateway.alarms({}, signal),
+          area === 'preparo' ? gateway.fixedProcess(signal) : Promise.resolve(null),
+          gateway.setpointChanges({ limit: 100 }, signal),
+        ]);
+        return { values, alarms, fixed, setpoints, reload };
       },
-      [gateway, tag, hours],
+      [gateway, area, reload],
     ),
-    { isEmpty: (data) => data.buckets.length === 0 },
+    { isEmpty: (result) => variables.length === 0 && result.values.values.length === 0 },
+  );
+
+  /** A última hora de cada variável, para o minigráfico da linha. */
+  const history = useResource(
+    useCallback(
+      async (signal: AbortSignal) => {
+        const values = await gateway.processValues({}, signal);
+        const now = Date.parse(values.ts);
+        const query = { from: new Date(now - 3_600_000), to: new Date(now), buckets: 60 };
+        const trends = await Promise.all(
+          variables.map((v) =>
+            (FIXED_TAGS.has(v.tag)
+              ? (gateway.fixedTrend(v.tag, query, signal) as Promise<TagTrend>)
+              : gateway.tagTrend(v.tag, query, signal)
+            ).catch(() => null),
+          ),
+        );
+        const out = new Map<string, number[]>();
+        variables.forEach((v, i) => {
+          const trend = trends[i];
+          if (!trend) return;
+          const points = seriesOf(trend, now);
+          out.set(
+            v.tag,
+            Array.from(
+              { length: 60 },
+              (_, k) => valueAt(points, now - 3_600_000 + (k / 59) * 3_600_000) ?? Number.NaN,
+            ),
+          );
+        });
+        return out;
+      },
+      [gateway, variables],
+    ),
   );
 
   return (
-    <ResourceState resource={detail} label="a variável">
-      {(data) => (
-        <>
-          <Block
-            title={`${data.variable.tag} · ${data.variable.name}`}
-            aside={
-              <div className="flex gap-1.5">
-                {WINDOWS.map((option) => (
-                  <button
-                    key={option.label}
-                    type="button"
-                    onClick={() => {
-                      setHours(option.hours);
-                    }}
-                    aria-pressed={hours === option.hours}
-                    className={`min-h-11 rounded border px-2.5 py-1 text-xs transition-colors ${
-                      hours === option.hours
-                        ? 'border-mill-accent/50 bg-mill-accent/12 text-mill-fg'
-                        : 'border-mill-line text-mill-muted hover:text-mill-fg'
-                    }`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            }
-          >
-            <Facts
-              columns={4}
-              items={[
-                {
-                  label: 'Agora',
-                  value: `${tagValue(data.value?.value, data.variable.unit)} ${data.variable.unit}`,
-                },
-                {
-                  label: 'Alvo',
-                  value: tagValue(data.variable.target, data.variable.unit),
-                },
-                {
-                  label: 'Faixa de operação',
-                  value: `${tagValue(data.variable.min, data.variable.unit)}–${tagValue(
-                    data.variable.max,
-                    data.variable.unit,
-                  )}`,
-                },
-                {
-                  label: 'Média no tempo',
-                  value: tagValue(trend.data?.timeWeightedAverage, data.variable.unit),
-                },
-              ]}
-            />
+    <ResourceState
+      resource={data}
+      label="o processo"
+      emptyMessage="A seção não tem variável no catálogo."
+    >
+      {({ values, alarms, fixed, setpoints }) => {
+        const now = Date.parse(values.ts);
+        const pv = new Map(values.values.map((v) => [v.tag, v]));
+        for (const v of fixed?.values ?? []) pv.set(v.tag, v);
+        const standing: Alarm[] = [...alarms.alarms, ...(fixed?.alarms ?? [])].filter(isStanding);
+        const priorityOf = (t: string): DesignPriority | null =>
+          worst(standing.filter((a) => a.tag === t).map((a) => designPriority(a.priority)));
+        const outOf = (v: ProcessVariable) => {
+          const value = pv.get(v.tag)?.value;
+          const scale = tagScale(v.tag);
+          return (
+            priorityOf(v.tag) !== null ||
+            (value !== undefined && scale !== null && isOut(scale, value))
+          );
+        };
+        const outCount = variables.filter(outOf).length;
+        // um link por mancal: VI e VE do mesmo mancal são o mesmo assunto
+        const byBearing = new Map<string, string>();
+        for (const a of standing) {
+          const bearing = bearingOfProcessTag(a.tag);
+          if (bearing && areaOfTag(a.tag) === area && !byBearing.has(bearing.assetTag)) {
+            byBearing.set(bearing.assetTag, a.tag);
+          }
+        }
+        const bearings = [...byBearing.values()];
+        const shown = onlyOut ? variables.filter(outOf) : variables;
+        const areaTags = new Set(variables.map((v) => v.tag));
+        const loops = variables.filter((v) => v.controlled && !FIXED_TAGS.has(v.tag));
+        const history2 = setpoints.changes.filter((c) => areaTags.has(c.tag));
 
-            <ResourceState
-              resource={trend}
-              label="a tendência"
-              emptyMessage="Sem valores arquivados nesta janela. O historiador só tem os períodos em que a simulação rodou."
+        return (
+          <div className="grid h-[calc(100vh-152px)] min-h-[760px] grid-cols-[minmax(0,1100fr)_minmax(0,716fr)] gap-4">
+            <section
+              aria-label={label}
+              className="flex min-h-0 flex-col border border-line bg-panel px-5 pt-4"
             >
-              {(series) => (
-                <Trend
-                  buckets={series.buckets}
-                  unit={series.unit}
-                  limits={series.limits}
-                  target={series.target}
-                  label={`Tendência de ${series.tag} nas últimas ${String(hours)} h, com a faixa de mínimo e máximo por coluna e os limites de alarme`}
-                />
-              )}
-            </ResourceState>
-          </Block>
+              <header className="mb-3 flex items-baseline gap-4">
+                <h1 className="text-[17px] font-semibold">{label}</h1>
+                <span className="text-[12px] text-fg-2">
+                  <span className="font-mono text-fg">{variables.length}</span> variáveis ·{' '}
+                  <span className={`font-mono ${outCount > 0 ? 'text-alarm-2' : 'text-fg'}`}>
+                    {outCount}
+                  </span>{' '}
+                  fora da faixa
+                  {bearings.map((b) => {
+                    const bearing = bearingOfProcessTag(b);
+                    return (
+                      <span key={b}>
+                        {' '}
+                        · mancal{' '}
+                        <button
+                          type="button"
+                          className="font-mono text-alarm-3 hover:underline"
+                          onClick={() => {
+                            if (bearing) onOpenBearing?.(bearing.assetTag);
+                          }}
+                        >
+                          {b}
+                        </button>{' '}
+                        em Mancais
+                      </span>
+                    );
+                  })}
+                </span>
+                {area === 'preparo' ? (
+                  <Illustrative title="Sete variáveis do preparo não estão no catálogo e vêm do dado fixo; cada uma leva o selo." />
+                ) : null}
+                <label className="ml-auto flex items-center gap-2 text-[12px] text-fg-2">
+                  <input
+                    type="checkbox"
+                    checked={onlyOut}
+                    onChange={(event) => {
+                      setOnlyOut(event.target.checked);
+                    }}
+                    className="size-4 accent-action"
+                  />
+                  Só fora da faixa
+                </label>
+              </header>
+              <div
+                role="table"
+                aria-label={`Variáveis de ${label}`}
+                className="flex min-h-0 flex-1 flex-col"
+              >
+                <div
+                  role="row"
+                  className={`${INSTRUMENT_GRID} border-b border-line pb-1.5 text-[11px] text-fg-3`}
+                >
+                  <span role="columnheader">Variável</span>
+                  <span role="columnheader">Faixa · PV ▾ SP</span>
+                  <span role="columnheader" className="text-right">
+                    PV
+                  </span>
+                  <span role="columnheader" className="text-right">
+                    SP
+                  </span>
+                  <span
+                    role="columnheader"
+                    title="A API não informa o modo do controlador; a coluna diz se a TAG é malha."
+                  >
+                    Malha
+                  </span>
+                  <span role="columnheader">Última 1 h</span>
+                </div>
+                <div className="min-h-0 flex-1 overflow-y-auto">
+                  {shown.length === 0 ? (
+                    <p className="py-4 text-[12px] text-fg-2">
+                      Nenhuma variável fora da faixa nesta seção.
+                    </p>
+                  ) : (
+                    shown.map((v, index) => {
+                      const group = groupOf(v);
+                      const value = pv.get(v.tag);
+                      const sp = value?.setpoint ?? null;
+                      return (
+                        <div key={v.tag} role="rowgroup">
+                          {index === 0 || groupOf(shown[index - 1] as ProcessVariable) !== group ? (
+                            <div className="border-b border-line pt-3 pb-1.5 text-[11px] font-semibold tracking-[0.05em] text-fg-2 uppercase">
+                              {group}
+                            </div>
+                          ) : null}
+                          <InstrumentRow
+                            name={v.name}
+                            tag={v.tag}
+                            unit={v.unit}
+                            pv={value?.value ?? null}
+                            pvText={tagValue(value?.value, v.unit)}
+                            sp={sp}
+                            spText={sp === null ? '–' : tagValue(sp, v.unit)}
+                            mode={v.controlled ? 'malha' : null}
+                            limits={{ min: v.min, max: v.max, ...v.limits, target: v.target }}
+                            history={history.data?.get(v.tag) ?? []}
+                            priority={priorityOf(v.tag)}
+                            badge={FIXED_TAGS.has(v.tag) ? <Illustrative /> : undefined}
+                            selected={v.tag === tag}
+                            onSelect={() => {
+                              onSelectTag(v.tag);
+                            }}
+                          />
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+                <p className="border-t border-line py-2.5 text-[11px] text-fg-3">
+                  Faixa clara = L–H · marcas = LL/HH · ▾ = SP · minigráfico com a banda L–H
+                </p>
+              </div>
+            </section>
 
-          <SetpointForm gateway={gateway} detail={data} />
-        </>
-      )}
+            <Side
+              gateway={gateway}
+              area={area}
+              now={now}
+              tag={tag}
+              variables={variables}
+              loops={loops}
+              standing={standing}
+              setpoints={setpoints.changes}
+              history={history2}
+              onSelectTag={onSelectTag}
+              onWritten={() => {
+                setReload((n) => n + 1);
+              }}
+            />
+          </div>
+        );
+      }}
     </ResourceState>
   );
 }
 
-/**
- * O formulário de escrita.
- *
- * Ele não aparece quando a tag não aceita escrita — e no lugar dele vai a razão,
- * que a API já mandou. Mostrar um campo desabilitado sem dizer por quê é pior
- * que não mostrar campo nenhum.
- */
-function SetpointForm({
+function Side({
   gateway,
-  detail,
+  area,
+  now,
+  tag,
+  variables,
+  loops,
+  standing,
+  setpoints,
+  history,
+  onSelectTag,
+  onWritten,
 }: {
   readonly gateway: DataGateway;
-  readonly detail: TagDetail;
+  readonly area: string;
+  readonly now: number;
+  readonly tag: string | null;
+  readonly variables: readonly ProcessVariable[];
+  readonly loops: readonly ProcessVariable[];
+  readonly standing: readonly Alarm[];
+  readonly setpoints: React.ComponentProps<typeof SetpointPanel>['history'];
+  readonly history: React.ComponentProps<typeof SetpointPanel>['history'];
+  readonly onSelectTag: (tag: string | null) => void;
+  readonly onWritten: () => void;
 }) {
-  const [value, setValue] = useState('');
-  const [reason, setReason] = useState('');
-  const [result, setResult] = useState<
-    | { kind: 'ok'; message: string }
-    | { kind: 'erro'; rejected: SetpointRejection | null; message: string }
-    | null
-  >(null);
-  const [sending, setSending] = useState(false);
-
-  const write = gateway.writeSetpoint;
-
-  if (!detail.writable) {
-    return (
-      <Block title="Escrita de setpoint">
-        <p className="text-sm text-mill-muted">
-          {detail.variable.tag} não aceita escrita — {detail.notWritableBecause}.
-        </p>
-      </Block>
-    );
+  const areaTags = useMemo(() => new Set(variables.map((v) => v.tag)), [variables]);
+  /** Começa pela TAG escolhida e pelas que estão em alarme na seção. */
+  const [tags, setTags] = useState<string[]>(() => {
+    const alarmed = standing.map((a) => a.tag).filter((t) => areaTags.has(t));
+    const fill = [...loops, ...variables].map((v) => v.tag);
+    const start = [...new Set([...(tag && areaTags.has(tag) ? [tag] : []), ...alarmed, ...fill])];
+    return start.slice(0, 3);
+  });
+  const [lastTag, setLastTag] = useState(tag);
+  if (tag !== lastTag) {
+    setLastTag(tag);
+    if (tag && !tags.includes(tag)) setTags((list) => [tag, ...list].slice(0, MAX_TREND_TAGS));
   }
 
-  if (!write) {
-    return (
-      <Block title="Escrita de setpoint">
-        <p className="text-sm text-mill-muted">
-          O modo de demonstração é um instantâneo: ele não aceita escrita. Suba a API para mexer no
-          processo.
-        </p>
-      </Block>
-    );
-  }
-
-  const submit = (event: React.FormEvent): void => {
-    event.preventDefault();
-    const parsed = Number(value.replace(',', '.'));
-
-    if (!Number.isFinite(parsed)) {
-      setResult({ kind: 'erro', rejected: null, message: 'Escreva um número.' });
-      return;
-    }
-
-    setSending(true);
-    write(detail.variable.tag, { value: parsed, reason, changedBy: 'operador' })
-      .then((response) => {
-        if (response.ok) {
-          setResult({
-            kind: 'ok',
-            message:
-              `Setpoint de ${detail.variable.tag} em ${num(response.accepted.change.newValue, 2)} ` +
-              `${response.accepted.change.unit}. Anterior: ${num(response.accepted.change.previousValue, 2)}.`,
-          });
-          setValue('');
-          setReason('');
-        } else {
-          setResult({
-            kind: 'erro',
-            rejected: response.rejected,
-            message: response.rejected.message,
-          });
-        }
-      })
-      .catch((cause: unknown) => {
-        setResult({
-          kind: 'erro',
-          rejected: null,
-          message: cause instanceof Error ? cause.message : 'Falha ao escrever o setpoint',
-        });
-      })
-      .finally(() => {
-        setSending(false);
-      });
-  };
+  const setpointTag =
+    tag && loops.some((l) => l.tag === tag)
+      ? tag
+      : (tags.find((t) => loops.some((l) => l.tag === t)) ?? null);
 
   return (
-    <Block
-      title="Escrita de setpoint"
-      aside={`faixa ${num(detail.variable.min, 1)}–${num(detail.variable.max, 1)} ${detail.variable.unit}`}
-    >
-      <form onSubmit={submit} className="flex flex-col gap-3 border-t border-mill-line pt-3">
-        <div className="flex flex-wrap items-end gap-4">
-          <label className="flex flex-col gap-1 text-xs text-mill-muted">
-            Novo valor ({detail.variable.unit})
-            <input
-              value={value}
-              onChange={(event) => {
-                setValue(event.target.value);
-              }}
-              inputMode="decimal"
-              required
-              className="min-h-11 w-36 rounded border border-mill-line bg-mill-bg px-2.5 py-1.5 font-mono text-mill-fg"
-            />
-          </label>
-
-          <label className="flex min-w-60 flex-1 flex-col gap-1 text-xs text-mill-muted">
-            Motivo
-            <input
-              value={reason}
-              onChange={(event) => {
-                setReason(event.target.value);
-              }}
-              required
-              placeholder="por que a malha está sendo movida"
-              className="min-h-11 rounded border border-mill-line bg-mill-bg px-2.5 py-1.5 text-mill-fg"
-            />
-          </label>
-
-          <button
-            type="submit"
-            disabled={sending}
-            className="min-h-11 rounded bg-mill-fg px-5 py-2 text-sm font-semibold text-mill-panel transition-opacity disabled:opacity-50"
-          >
-            {sending ? 'Escrevendo…' : 'Escrever'}
-          </button>
-        </div>
-
-        <p className="text-xs text-mill-muted">
-          O valor anterior é lido pelo servidor, não enviado pela tela — quem escreve não tem como
-          saber se alguém mexeu entre a leitura e o clique.
-        </p>
-
-        {result && (
-          <p
-            role={result.kind === 'ok' ? 'status' : 'alert'}
-            className={`text-sm ${result.kind === 'ok' ? 'text-mill-fg' : 'text-mill-critical'}`}
-          >
-            {result.message}
-            {result.kind === 'erro' &&
-              result.rejected?.min !== null &&
-              result.rejected?.max !== null &&
-              result.rejected !== null && (
-                <span className="text-mill-muted">
-                  {' '}
-                  Faixa: {num(result.rejected.min, 1)}–{num(result.rejected.max, 1)}.
-                </span>
-              )}
-          </p>
-        )}
-      </form>
-    </Block>
-  );
-}
-
-/** Um valor com a cor do limite que ele estourou, e o motivo no título. */
-function LimitValue({
-  value,
-  variable,
-}: {
-  readonly value: number | null;
-  readonly variable: (typeof PROCESS_CATALOG)[number];
-}) {
-  if (value === null) return <span className="text-mill-muted">—</span>;
-
-  const { ll, l, h, hh } = variable.limits;
-  const critical = (ll !== null && value <= ll) || (hh !== null && value >= hh);
-  const attention = !critical && ((l !== null && value <= l) || (h !== null && value >= h));
-
-  const text = tagValue(value, variable.unit);
-  if (!critical && !attention) return <>{text}</>;
-
-  const level = critical ? 'LL/HH' : 'L/H';
-
-  return (
-    <span
-      className={critical ? 'text-mill-critical' : 'text-mill-attention'}
-      title={`fora do limite ${level} de ${variable.tag}`}
-    >
-      {text}
-      <span className="sr-only"> — fora do limite {level}</span>
-    </span>
+    <div className="flex min-h-0 flex-col gap-4">
+      {area === 'preparo' ? (
+        <RefiningEffect
+          gateway={gateway}
+          now={now}
+          setpoints={setpoints}
+          className="h-[288px] shrink-0"
+        />
+      ) : null}
+      <TrendStack
+        gateway={gateway}
+        tags={tags}
+        now={now}
+        fixedTags={FIXED_TAGS}
+        options={variables.map((v) => ({ tag: v.tag, name: v.name }))}
+        setpoints={setpoints}
+        alarms={standing}
+        onAdd={(t) => {
+          setTags((list) => [...list, t].slice(0, MAX_TREND_TAGS));
+        }}
+        onRemove={(t) => {
+          setTags((list) => list.filter((item) => item !== t));
+        }}
+        className="min-h-0 flex-1"
+      />
+      <SetpointPanel
+        gateway={gateway}
+        loops={loops}
+        tag={setpointTag}
+        onTag={(t) => {
+          onSelectTag(t);
+        }}
+        history={history}
+        onWritten={onWritten}
+        className={area === 'preparo' ? 'h-[330px] shrink-0' : 'h-[440px] shrink-0'}
+      />
+    </div>
   );
 }

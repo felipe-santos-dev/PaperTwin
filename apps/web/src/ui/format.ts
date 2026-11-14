@@ -85,6 +85,8 @@ const DIGITS_BY_UNIT: Readonly<Record<string, number>> = {
   '% ISO': 2,
   's/100mL': 0,
   'mL/min': 0,
+  '°SR': 0,
+  kW: 0,
 };
 
 /** `HH:MM` no fuso de quem está olhando. */

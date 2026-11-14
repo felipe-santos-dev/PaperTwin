@@ -3,6 +3,8 @@ import type { WebBreak } from '@mp1/shared';
 
 import type { ReelView } from '../api/process';
 import { breakMarks, merge, outRuns } from './bobinas/derive';
+import { cellOf, controlChart, stateOf } from './laboratorio/derive';
+import { variablesFor } from './ProcessoScreen';
 import { accumulate, lanes, production, scrap, type Point } from './turno/derive';
 
 const T0 = Date.parse('2026-06-15T17:00:00Z');
@@ -122,5 +124,54 @@ describe('trechos fora na bobina', () => {
     ]);
     const quebra = { startedAt: new Date(T0 + H / 4).toISOString() } as WebBreak;
     expect(breakMarks([quebra], span)).toEqual([0.25]);
+  });
+});
+
+describe('laboratório', () => {
+  const spec = {
+    tag: 'LAB-1211',
+    label: 'Cobb',
+    unit: 'g/m²',
+    lo: 22,
+    hi: 28,
+    target: 25,
+    everyReels: 1,
+  };
+
+  it('separa dentro, no limite e fora pela faixa da especificação', () => {
+    expect(stateOf(spec, 25)).toBe('dentro');
+    expect(stateOf(spec, 27.6)).toBe('limite');
+    expect(stateOf(spec, 29.4)).toBe('fora');
+  });
+
+  it('diz atrasado só quando o ensaio era desta bobina', () => {
+    const reel = { number: 1185 } as ReelView;
+    expect(cellOf({ ...spec, everyReels: 5 }, reel, []).state).toBe('atrasado');
+    expect(cellOf({ ...spec, everyReels: 2 }, reel, []).state).toBe('não programado');
+  });
+
+  it('calcula os limites de controle sem as últimas bobinas', () => {
+    const results = Array.from({ length: 15 }, (_, i) => ({
+      reelNumber: 1170 + i,
+      tag: 'LAB-1211',
+      value: i < 10 ? (i % 2 === 0 ? 24.8 : 25.2) : 29,
+      unit: 'g/m²',
+      analyzedAt: '',
+    }));
+    const chart = controlChart(spec, results);
+    expect(chart?.base).toEqual([1170, 1179]);
+    expect(chart?.mean).toBeCloseTo(25, 6);
+    expect(chart?.ucl).toBeGreaterThan(25.5);
+    expect(chart?.cpk).toBeGreaterThan(1);
+  });
+});
+
+describe('seções do processo', () => {
+  it('agrupa a pré-secagem por grupo de vapor e põe as fixas no preparo', () => {
+    const pre = variablesFor('pré-secagem');
+    expect(pre.slice(0, 3).map((v) => v.tag)).toEqual(['PIC-511', 'PDIC-521', 'LIC-531']);
+    expect(pre.some((v) => v.tag === 'TIC-505')).toBe(true);
+    expect(variablesFor('preparo').some((v) => v.tag === 'FIC-107')).toBe(true);
+    expect(variablesFor('pré-secagem').some((v) => v.tag === 'FIC-107')).toBe(false);
   });
 });

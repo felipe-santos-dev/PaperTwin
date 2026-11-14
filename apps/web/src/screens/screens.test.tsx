@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { DataGateway } from '../api/gateway';
 import type { ReelView, ShiftDetail, ShiftView } from '../api/process';
+import { LaboratorioScreen } from './LaboratorioScreen';
 import { BobinasScreen } from './BobinasScreen';
 import { NotasScreen } from './NotasScreen';
 import { ProcessoScreen } from './ProcessoScreen';
@@ -234,6 +235,56 @@ function turnoGateway(over: Partial<DataGateway> = {}): DataGateway {
     ...over,
   });
 }
+
+describe('Laboratório', () => {
+  it('explica que o ensaio vem depois da bobina fechar', async () => {
+    render(<LaboratorioScreen gateway={gatewayOf()} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toHaveTextContent(/depois que ela sai da Pope/);
+    });
+  });
+
+  it('marca a matriz como ilustrativa e mostra a bobina', async () => {
+    render(
+      <LaboratorioScreen
+        gateway={gatewayOf({
+          tagTrend: falha,
+          reels: () => Promise.resolve({ count: 1, reels: [BOBINA] }),
+          labResults: () =>
+            Promise.resolve({
+              illustrative: true as const,
+              specs: [
+                {
+                  tag: 'LAB-1211',
+                  label: 'Cobb₆₀',
+                  unit: 'g/m²',
+                  lo: 22,
+                  hi: 28,
+                  target: 25,
+                  everyReels: 1,
+                },
+              ],
+              results: [
+                {
+                  reelNumber: 412,
+                  tag: 'LAB-1211',
+                  value: 29.4,
+                  unit: 'g/m²',
+                  analyzedAt: '2026-06-15T18:30:00Z',
+                },
+              ],
+            }),
+        })}
+      />,
+    );
+
+    const matriz = await screen.findByRole('region', { name: 'Bobinas × ensaios' });
+    expect(within(matriz).getByText('412')).toBeInTheDocument();
+    expect(within(matriz).getByText('ilustrativo')).toBeInTheDocument();
+    expect(within(matriz).getByText('1', { selector: '.text-spec-out' })).toBeInTheDocument();
+  });
+});
 
 describe('Bobinas', () => {
   it('explica o vazio com o tempo que a primeira bobina leva', async () => {
@@ -543,19 +594,19 @@ describe('Processo · escrita de setpoint', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /escrever/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /aplicar/i })).toBeInTheDocument();
     });
 
-    await userEvent.type(screen.getByLabelText(/Novo valor/i), '400');
+    await userEvent.type(screen.getByLabelText(/Novo SP/i), '400');
     await userEvent.type(screen.getByLabelText(/Motivo/i), 'quero secar mais');
-    await userEvent.click(screen.getByRole('button', { name: /escrever/i }));
+    await userEvent.click(screen.getByRole('button', { name: /aplicar/i }));
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(/fora da faixa de operação/);
     });
     expect(writeSetpoint).toHaveBeenCalledWith('PIC-712', {
       value: 400,
-      reason: 'quero secar mais',
+      reason: 'Correção de qualidade: quero secar mais',
       changedBy: 'operador',
     });
   });
@@ -593,12 +644,12 @@ describe('Processo · escrita de setpoint', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /escrever/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /aplicar/i })).toBeInTheDocument();
     });
 
-    await userEvent.type(screen.getByLabelText(/Novo valor/i), '160');
+    await userEvent.type(screen.getByLabelText(/Novo SP/i), '160');
     await userEvent.type(screen.getByLabelText(/Motivo/i), 'umidade final acima do alvo');
-    await userEvent.click(screen.getByRole('button', { name: /escrever/i }));
+    await userEvent.click(screen.getByRole('button', { name: /aplicar/i }));
 
     // a tendência vazia também tem role="status", então a consulta é pelo texto
     await waitFor(() => {
@@ -640,17 +691,17 @@ describe('Processo · escrita de setpoint', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /escrever/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /aplicar/i })).toBeInTheDocument();
     });
 
-    await userEvent.type(screen.getByLabelText(/Novo valor/i), '145,5');
+    await userEvent.type(screen.getByLabelText(/Novo SP/i), '145,5');
     await userEvent.type(screen.getByLabelText(/Motivo/i), 'motivo');
-    await userEvent.click(screen.getByRole('button', { name: /escrever/i }));
+    await userEvent.click(screen.getByRole('button', { name: /aplicar/i }));
 
     await waitFor(() => {
       expect(writeSetpoint).toHaveBeenCalledWith('PIC-712', {
         value: 145.5,
-        reason: 'motivo',
+        reason: 'Correção de qualidade: motivo',
         changedBy: 'operador',
       });
     });

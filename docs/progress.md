@@ -875,8 +875,52 @@ sem decimal (1,4 kg/t não vira "1").
 Capturas em 1920×1080 e 1440×900 sem rolagem horizontal e com o console
 limpo.
 
+### Fase (c) — Processo e Laboratório
+
+**Processo.** Uma seção por vez, escolhida na faixa (ou pela TAG que abriu a
+tela; abrir uma tendência de outra tela acerta a seção junto). As variáveis
+são as do catálogo para a área, sem as por cilindro; o preparo soma as sete
+fixas, cada uma com selo. Agrupamento: o grupo de vapor quando o nome diz
+`G1`…`G4` (a pré-secagem fica em Grupo 1–4 com pressão, ΔP e nível, mais
+capota e telas), senão o grupo do catálogo. A capota usa `TIC-505`, `AIC-506`
+e `PIC-507`, como pedido. Cada linha: barra de faixa, PV, SP da API, e a
+última hora da tendência real. A API não informa o modo do controlador
+(AUT/CAS): a coluna virou "Malha" e diz só se a TAG é malha. "Só fora da
+faixa" filtra por alarme em pé ou PV fora de L/H. Mancal em alarme na seção
+aparece no cabeçalho como link para Mancais (um por mancal, não por TAG).
+
+**Tendência multi-TAG.** Até quatro TAGs, uma faixa por TAG com escala
+própria, banda L–H, setpoint alterado em azul e alarme na cor da prioridade,
+no mesmo eixo. Janelas 1 h/8 h/24 h/7 d; o eixo mostra o que a resposta cobre
+(o instantâneo tem 4 h). TAG fixa vem da rota fixa e leva selo.
+
+**Setpoint.** Rota real, motivo obrigatório. A categoria não existe na API:
+entra no começo do motivo (`Equipamento: …`), que é o campo auditado. Malha
+escrava de cascata e o instantâneo de demonstração dizem por que não aceitam
+escrita. Histórico da seção = alterações das TAGs da seção.
+
+**Efeito do refino** (só no preparo): `JIC-101` real em cima, Gurley e tração
+MD do laboratório fixo embaixo, em faixas separadas, cada uma com a fonte.
+
+**Laboratório.** Matriz das últimas 12 bobinas fechadas × 12 ensaios: ponto
+na posição dentro da especificação, "no limite" nos 10 % das pontas, atrasado
+quando o ensaio era daquela bobina e não saiu, não programado pela
+frequência. Clicar na coluna abre a carta de controle: LSC/LIC = média ± 3σ
+numa base que deixa de fora as 5 últimas bobinas (quando há bobinas
+suficientes), Cpk sobre a mesma base. Fila: ensaios da última bobina passando
+do prazo (35 min depois do fim), reteste da retida (prazo de 2 h, suposição)
+e a próxima bobina com a troca prevista pela mediana real. Lab × QCS:
+gramatura e umidade contra a média real da bobina, cinzas contra a média de
+`AIC-904` na janela da bobina; banda do Δ = ¼ da faixa de especificação. Todo
+painel do laboratório leva selo.
+
+**Verificado.** Testes da web (145), typecheck, lint, build e e2e 8/8.
+Capturas em 1920×1080 e 1440×900 sem rolagem horizontal e com o console
+limpo.
+
 ## Próximo passo exato
 
-Revisão da fase (b) pelo Felipe. Depois, fase (c): Processo e Laboratório.
+Revisão da fase (c) pelo Felipe. Depois, fase (d): Mancais (com o painel 3D)
+e Rondas.
 Em aberto, de antes: cor dos mancais pela zona ISO, que depende de uma busca
 no back-end.

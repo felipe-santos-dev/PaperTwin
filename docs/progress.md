@@ -819,8 +819,64 @@ passa a usar isso na fase (c). Laboratório tem só um aviso até a fase (c).
 build e e2e 8/8. Capturas em 1920×1080 e 1440×900 sem rolagem horizontal e
 com o console limpo.
 
+### Fase (b) — Turno, Bobinas e Notas
+
+**Dados fixos atrás do portão.** `api/fixtures/` responde as rotas que a API
+não tem, com o formato que uma rota real teria (`types.ts`): resultados de
+laboratório, bobinas paradas pela qualidade, as sete TAGs do preparo que o
+catálogo não tem (`AIC-102`, `JI-111`, `ZIC-112`, `FIC-107`, `FIC-108`,
+`FIC-110`, `LIC-103`), a tendência delas e o mapa CD × MD de umidade. O
+`DataGateway` estende `FixtureRoutes`; os dois portões (ao vivo e
+demonstração) as montam sobre as **suas** bobinas e o **seu** instante de
+leitura, então um ensaio sempre aponta para uma bobina que existe naquela
+fonte. Tudo determinístico (ruído por hash, não por relógio). O cenário AKD:
+a cola cai 38 min antes da penúltima bobina fechada, alarma em L, a
+penúltima fica "em avaliação" e a última "retida" com Cobb₆₀ 28,9 e 29,4.
+Retenção nunca fica depois da leitura.
+
+**Turno.** Linha do tempo em SVG próprio com eventos (quebra, gramatura,
+alarme, setpoint, bobina), velocidade `SIC-1104`, produção acumulada e a faixa
+de bobinas, no eixo do turno. A produção é a **integral de `XI-0001`**
+(trapézios entre as amostras arquivadas), então anda durante a bobina em
+curso; meta = alvo de `XI-0001` × 8 h, ritmo da meta = alvo × tempo
+decorrido, projeção = ritmo da última hora. Refugo derivado: (bobinas
+segregadas + duração das quebras × `XI-0001` antes da quebra) / produção
+bruta, com a definição no `title`. Meta de refugo (≤ 5 %) e faixa de
+eficiência (91–95 %) são as do desenho, marcadas como meta. `SIC-1104` não tem
+L/H no catálogo, então não há faixa desenhada — só o alvo. Os botões "24 h" e
+"3 turnos" ficam desabilitados no instantâneo, que só tem o turno em curso.
+Alarmes ativos: um por TAG, pela pior prioridade, com o fixo da cola marcado.
+Passagem: retenções e cola (fixos, com selo), pontos da ronda com ruído ou
+vazamento, notas abertas de prioridade 1–2 e as linhas de `handover` da API.
+A faixa do processo continua só com alarme real — o da cola não entra na
+contagem.
+
+**Bobinas.** Uma faixa por bobina com o comprimento, os trechos em que
+`AIC-902`, `AIC-903` ou `AIC-905` saíram da tolerância (tempo → posição na
+bobina) e as quebras. Onde o historiador não cobre a bobina não há trecho
+desenhado. Emendas só como contagem: a API não diz onde caíram. A bobina em
+formação tem comprimento estimado por tempo × velocidade. Mapa CD × MD
+fixo, escalado pela média e pelo 2σ CD reais da bobina. Perfil MD das três
+propriedades a partir da tendência real.
+
+**Notas.** Quadro com as quatro situações da API (planejada aparece como
+"Programada"); prioridade pela cor da borda, origem, "PARADA". O detalhe traz
+o sinal de origem: para mancal, a vibração da rota da Fase 3 sobre as zonas
+ISO, na janela que a API devolve (72 h ao vivo), com a nota marcada e a
+projeção de zona D da própria API; para TAG de processo, a tendência com a
+faixa L–H. Sem "Abrir nota do achado": não há rota de criação.
+
+**Também.** `ui/chart/series.ts` (pontos de tendência e interpolação),
+`ui/tagScale.ts` (escala de qualquer TAG: catálogo, fixa ou laboratório),
+`ui/useWidth.ts`. `tagValue` dá uma casa a valores abaixo de 10 em unidades
+sem decimal (1,4 kg/t não vira "1").
+
+**Verificado.** Testes da web (139), typecheck, lint, build e e2e 8/8.
+Capturas em 1920×1080 e 1440×900 sem rolagem horizontal e com o console
+limpo.
+
 ## Próximo passo exato
 
-Revisão da fase (a) pelo Felipe. Depois, fase (b): Turno, Bobinas e Notas.
+Revisão da fase (b) pelo Felipe. Depois, fase (c): Processo e Laboratório.
 Em aberto, de antes: cor dos mancais pela zona ISO, que depende de uma busca
 no back-end.

@@ -46,6 +46,7 @@ import {
   type TagTrend,
   type TrendQuery,
 } from './process';
+import { fixtureRoutes, type FixtureRoutes } from './fixtures';
 
 /**
  * A porta de entrada dos dados, numa interface só.
@@ -67,7 +68,7 @@ import {
  *    que recusar: o número voltaria ao anterior no próximo carregamento sem
  *    nenhuma explicação.
  */
-export interface DataGateway {
+export interface DataGateway extends FixtureRoutes {
   readonly kind: 'live' | 'demo';
 
   /**
@@ -144,6 +145,7 @@ export interface DataGateway {
 /** O portão que fala com a API. */
 export const LIVE_GATEWAY: DataGateway = {
   kind: 'live',
+  ...fixtureRoutes({ reels: fetchReels, processValues: fetchProcessValues }),
   asset: fetchAsset,
   vibration: fetchVibration,
   processValues: fetchProcessValues,

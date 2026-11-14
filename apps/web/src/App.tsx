@@ -52,6 +52,7 @@ export function App() {
   const [tag, setTag] = useState<string | null>(null);
   const [bearing, setBearing] = useState<string | null>(null);
   const [area, setArea] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
 
   /**
    * O ativo da cena continua espelhado em `?asset=`.
@@ -91,6 +92,15 @@ export function App() {
     (which: number) => {
       setReel(which);
       go('bobinas');
+    },
+    [go],
+  );
+
+  /** Abre uma nota na tela de Notas. */
+  const openNote = useCallback(
+    (which: string) => {
+      setNote(which);
+      go('notas');
     },
     [go],
   );
@@ -157,6 +167,9 @@ export function App() {
           openTrend={openTrend}
           openBearing={openBearing}
           openReel={openReel}
+          note={note}
+          setNote={setNote}
+          openNote={openNote}
         />
       )}
     </Shell>
@@ -177,12 +190,22 @@ interface ScreenProps {
   readonly openTrend: (tag: string) => void;
   readonly openBearing: (assetTag: string) => void;
   readonly openReel: (number: number) => void;
+  readonly note: string | null;
+  readonly setNote: (value: string | null) => void;
+  readonly openNote: (number: string) => void;
 }
 
 function Screen(props: ScreenProps) {
   switch (props.screen) {
     case 'turno':
-      return <TurnoScreen gateway={props.gateway} onSelectReel={props.openReel} />;
+      return (
+        <TurnoScreen
+          gateway={props.gateway}
+          onSelectReel={props.openReel}
+          onOpenTag={props.openTrend}
+          onOpenNote={props.openNote}
+        />
+      );
     case 'bobinas':
       return (
         <BobinasScreen gateway={props.gateway} selected={props.reel} onSelect={props.setReel} />
@@ -205,6 +228,8 @@ function Screen(props: ScreenProps) {
       return (
         <NotasScreen
           gateway={props.gateway}
+          selected={props.note}
+          onSelect={props.setNote}
           onOpenTrend={props.openTrend}
           onOpenBearing={props.openBearing}
         />

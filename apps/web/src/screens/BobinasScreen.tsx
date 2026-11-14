@@ -1,27 +1,28 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
+import { processVariable, type WebBreak } from '@mp1/shared';
 
-import { processVariable } from '@mp1/shared';
-
+import type { CdMap, ReelHold } from '../api/fixtures';
 import type { DataGateway } from '../api/gateway';
 import type { ReelView } from '../api/process';
-import { Block, ScreenTitle, StatRow } from '../ui/Shell';
-import { Facts, Table } from '../ui/Table';
-import { hhmm, int, num, span } from '../ui/format';
+import { fraction } from '../ui/chart/scale';
+import { seriesOf, valueAt, type Point } from '../ui/chart/series';
+import { Sparkline } from '../ui/chart/Sparkline';
+import { hhmm, int, num, tagValue } from '../ui/format';
+import { Illustrative, Panel } from '../ui/Panel';
 import { ResourceState } from '../ui/ResourceState';
 import { useResource } from '../ui/useResource';
+import { useWidth } from '../ui/useWidth';
+import { breakMarks, merge, outRuns, reelLength, reelSpan, type Span } from './bobinas/derive';
 
 /**
- * Bobinas — a qualidade do que a máquina entregou.
+ * Bobinas — o que saiu da máquina, bobina a bobina.
  *
- * A tela tem duas metades: a lista, para comparar bobinas, e o detalhe, para
- * entender uma. A pergunta que ela responde é **por que esta bobina foi
- * rebaixada** — e a resposta tem de estar na própria tela, não numa conversa.
+ * Em cima, uma faixa por bobina com o comprimento, os trechos em que o QCS viu
+ * a folha fora da tolerância e as quebras. Embaixo, a bobina escolhida: o mapa
+ * de umidade CD × MD e o perfil MD das três propriedades do QCS.
  *
- * ## Especificação ao lado do medido
- *
- * Cada média vem com a tolerância do catálogo ao lado, e o desvio marcado quando
- * sai dela. Sem a tolerância, "75,8 g/m²" não diz nada a quem não decorou que a
- * faixa é 73,5–76,5; com ela, a mesma linha responde "está dentro".
+ * Os trechos fora e o perfil MD saem da tendência real do QCS na janela da
+ * bobina. O mapa CD × MD e as bobinas retidas são dado fixo, com selo.
  */
 
 export interface BobinasScreenProps {
@@ -30,254 +31,583 @@ export interface BobinasScreenProps {
   readonly onSelect: (number: number | null) => void;
 }
 
-export function BobinasScreen({ gateway, selected, onSelect }: BobinasScreenProps) {
-  const reels = useResource(
-    useCallback((signal) => gateway.reels({ limit: 40 }, signal), [gateway]),
-    { isEmpty: (data) => data.reels.length === 0 },
-  );
+/** As três propriedades do QCS que a faixa e o perfil olham. */
+const QCS = [
+  { tag: 'AIC-902', label: 'Gramatura', key: 'basisWeightGsm' },
+  { tag: 'AIC-903', label: 'Umidade', key: 'moisturePct' },
+  { tag: 'AIC-905', label: 'Espessura', key: 'caliperUm' },
+] as const;
 
-  const current =
-    reels.data?.reels.find((reel) => reel.number === selected) ??
-    reels.data?.reels.find((reel) => reel.endedAt !== null) ??
-    reels.data?.reels[0] ??
-    null;
+const REELS = 24;
+
+export function BobinasScreen({ gateway, selected, onSelect }: BobinasScreenProps) {
+  const data = useResource(
+    useCallback(
+      async (signal: AbortSignal) => {
+        const [reels, values, breaks, holds] = await Promise.all([
+          gateway.reels({ limit: REELS }, signal),
+          gateway.processValues({}, signal),
+          gateway.webBreaks({ limit: 100 }, signal),
+          gateway.reelHolds(signal),
+        ]);
+        const now = Date.parse(values.ts);
+        const oldest = reels.reels.at(-1);
+        const from = oldest ? Date.parse(oldest.startedAt) : now - 3_600_000;
+        const query = { from: new Date(from), to: new Date(now), buckets: 720 };
+        if (reels.reels.length === 0)
+          return {
+            reels: reels.reels,
+            values,
+            breaks: breaks.webBreaks,
+            holds: holds.holds,
+            trends: [],
+            now,
+          };
+        const trends = await Promise.all(
+          QCS.map((item) => gateway.tagTrend(item.tag, query, signal).catch(() => null)),
+        );
+        return {
+          reels: reels.reels,
+          values,
+          breaks: breaks.webBreaks,
+          holds: holds.holds,
+          trends,
+          now,
+        };
+      },
+      [gateway],
+    ),
+    { isEmpty: (result) => result.reels.length === 0 },
+  );
 
   return (
     <ResourceState
-      resource={reels}
+      resource={data}
       label="as bobinas"
       emptyMessage="Nenhuma bobina fechada ainda. A primeira leva cerca de 53 min."
     >
-      {(data) => (
-        <>
-          <ScreenTitle
-            eyebrow={`Bobina jumbo${current ? ` · turno ${current.shiftId.slice(-1)}` : ''}`}
-            title={current ? `Nº ${int(current.number)}` : 'Bobinas'}
-            aside={current ? dispositionLabel(current) : undefined}
-          />
-
-          {current && <ReelSummary reel={current} />}
-
-          <Block title="Bobinas recentes" aside="clique para abrir">
-            <Table
-              caption="Bobinas jumbo recentes"
-              rows={data.reels}
-              keyOf={(reel) => String(reel.number)}
-              selected={(reel) => reel.number === current?.number}
-              onSelect={(reel) => {
-                onSelect(reel.number);
-              }}
-              columns={[
-                { key: 'n', header: 'Nº', numeric: true, render: (r) => int(r.number) },
-                { key: 'turno', header: 'Turno', hideBelow: 'md', render: (r) => r.shiftId },
-                { key: 'ini', header: 'Início', render: (r) => hhmm(r.startedAt) },
-                {
-                  key: 'dur',
-                  header: 'Duração',
-                  hideBelow: 'lg',
-                  render: (r) => span(r.startedAt, r.endedAt),
-                },
-                {
-                  key: 'peso',
-                  header: 'Peso',
-                  numeric: true,
-                  render: (r) => (r.weightT === null ? '—' : `${num(r.weightT, 1)} t`),
-                },
-                {
-                  key: 'gram',
-                  header: 'Gramatura',
-                  numeric: true,
-                  render: (r) => <SpecValue value={r.basisWeightGsm} tag="AIC-902" />,
-                },
-                {
-                  key: 'umid',
-                  header: 'Umidade',
-                  numeric: true,
-                  hideBelow: 'md',
-                  render: (r) => <SpecValue value={r.moisturePct} tag="AIC-903" />,
-                },
-                {
-                  key: 'esp',
-                  header: 'Espessura',
-                  numeric: true,
-                  hideBelow: 'xl',
-                  render: (r) => <SpecValue value={r.caliperUm} tag="AIC-905" />,
-                },
-                {
-                  key: 'emend',
-                  header: 'Emendas',
-                  numeric: true,
-                  hideBelow: 'lg',
-                  render: (r) => int(r.splices),
-                },
-                {
-                  key: 'dest',
-                  header: 'Destino',
-                  render: (r) =>
-                    r.disposition === null ? (
-                      <span className="text-mill-muted">em formação</span>
-                    ) : r.disposition === 'aprovada' ? (
-                      'aprovada'
-                    ) : (
-                      <span className="text-mill-attention">{r.disposition}</span>
-                    ),
-                },
-              ]}
+      {(result) => {
+        const series = result.trends.map((trend) => (trend ? seriesOf(trend, result.now) : []));
+        const speed = result.values.values.find((v) => v.tag === 'SIC-1104')?.value ?? null;
+        const pick =
+          result.reels.find((reel) => reel.number === selected) ??
+          result.reels.find((reel) => reel.endedAt !== null) ??
+          result.reels[0];
+        return (
+          <div className="flex flex-col gap-4">
+            <ReelList
+              reels={result.reels}
+              holds={result.holds}
+              breaks={result.breaks}
+              series={series}
+              now={result.now}
+              speed={speed}
+              selected={pick?.number ?? null}
+              onSelect={onSelect}
             />
-          </Block>
-        </>
-      )}
+            {pick ? (
+              <div className="grid h-88 grid-cols-[minmax(0,1100fr)_minmax(0,716fr)] gap-4">
+                <CdPanel
+                  gateway={gateway}
+                  reel={pick}
+                  hold={result.holds.find((hold) => hold.reelNumber === pick.number) ?? null}
+                  now={result.now}
+                  speed={speed}
+                  outside={QCS.some(
+                    (item, i) =>
+                      outOf(series[i] ?? [], item.tag, reelSpan(pick, result.now)).runs.length > 0,
+                  )}
+                />
+                <MdProfile reel={pick} series={series} now={result.now} />
+              </div>
+            ) : null}
+          </div>
+        );
+      }}
     </ResourceState>
   );
 }
 
-function ReelSummary({ reel }: { readonly reel: ReelView }) {
+function outOf(series: readonly Point[], tag: string, span: Span) {
+  const limits = processVariable(tag)?.limits;
+  return outRuns(series, span, limits?.l ?? limits?.ll ?? null, limits?.h ?? limits?.hh ?? null);
+}
+
+/* ---------------------------------------------------------------- faixas */
+
+const DEST: Readonly<Record<string, string>> = {
+  aprovada: 'border-band text-fg-2',
+  rebaixada: 'border-spec-out text-fg',
+  segregada: 'border-spec-out bg-spec-out/20 text-fg',
+};
+
+function ReelList({
+  reels,
+  holds,
+  breaks,
+  series,
+  now,
+  speed,
+  selected,
+  onSelect,
+}: {
+  readonly reels: readonly ReelView[];
+  readonly holds: readonly ReelHold[];
+  readonly breaks: readonly WebBreak[];
+  readonly series: readonly (readonly Point[])[];
+  readonly now: number;
+  readonly speed: number | null;
+  readonly selected: number | null;
+  readonly onSelect: (number: number) => void;
+}) {
+  const holdOf = new Map(holds.map((hold) => [hold.reelNumber, hold]));
+  const lengths = reels.map((reel) => reelLength(reel, now, speed));
+  const longest = Math.max(1, ...lengths.map((value) => value ?? 0));
+  const scaleM = Math.ceil((longest * 1.02) / 20_000) * 20_000;
+  const ticks = Array.from({ length: scaleM / 20_000 + 1 }, (_, i) => i * 20_000);
+  const closed = reels.filter((reel) => reel.endedAt !== null);
+  const count = (d: string) => closed.filter((reel) => reel.disposition === d).length;
+  const held = holds.filter((hold) => hold.status === 'retida').length;
+  const day = reels[0] ? new Date(reels[0].startedAt) : null;
+
+  return (
+    <Panel
+      title={
+        <span className="text-[16px]">
+          Bobinas jumbo
+          {day
+            ? ` · ${String(day.getDate()).padStart(2, '0')}/${String(day.getMonth() + 1).padStart(2, '0')}`
+            : ''}
+        </span>
+      }
+      label="Bobinas jumbo"
+      context={
+        <span>
+          <span className="font-mono text-fg">{closed.length}</span> bobinas ·{' '}
+          <span className="font-mono text-fg">
+            {int(closed.reduce((t, r) => t + (r.weightT ?? 0), 0))}
+          </span>{' '}
+          t · <span className="font-mono text-fg">{count('rebaixada')}</span> rebaixada ·{' '}
+          <span className="font-mono text-fg">{count('segregada')}</span> segregada
+          {holds.length > 0 ? (
+            <>
+              {' '}
+              · <span className="font-mono text-spec-out">{held}</span> retida{' '}
+              <Illustrative title="Retenção pela qualidade: cenário fixo de demonstração." />
+            </>
+          ) : null}
+        </span>
+      }
+      aside={
+        <span className="flex items-center gap-4 text-[11px] text-fg-2">
+          <span className="flex items-center gap-1.5">
+            <span className="h-2 w-4 bg-track" />
+            QCS dentro
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-2 w-4 bg-spec-out" />
+            QCS fora
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-3 w-0.5 bg-alarm-1" />
+            quebra
+          </span>
+        </span>
+      }
+      className="h-142"
+      bodyClassName="flex min-h-0 flex-col"
+    >
+      <div className="grid grid-cols-[68px_62px_minmax(0,1fr)_124px_64px] items-end gap-x-2 text-[11px] text-fg-3">
+        <span className="font-mono">bobina</span>
+        <span className="font-mono">início</span>
+        <div className="relative h-4">
+          {ticks.map((m) => (
+            <span
+              key={m}
+              className="absolute font-mono text-[10px]"
+              style={{ left: `${(fraction(m, 0, scaleM) * 100).toFixed(2)}%` }}
+            >
+              {m === 0 ? '0' : `${String(m / 1000)} km`}
+            </span>
+          ))}
+        </div>
+        <span className="font-mono">destino</span>
+        <span className="text-right font-mono">massa</span>
+      </div>
+      <ul className="min-h-0 flex-1 overflow-y-auto">
+        {reels.map((reel, index) => {
+          const span = reelSpan(reel, now);
+          const length = lengths[index] ?? null;
+          const barW = length === null ? 0 : fraction(length, 0, scaleM);
+          const runs = merge(QCS.flatMap((item, i) => outOf(series[i] ?? [], item.tag, span).runs));
+          const marks = breakMarks(breaks, span);
+          const hold = holdOf.get(reel.number);
+          const open = reel.endedAt === null;
+          const active = reel.number === selected;
+          const destino = hold ? hold.status : open ? 'em formação' : (reel.disposition ?? '—');
+          const destClass = hold
+            ? hold.status === 'retida'
+              ? 'border-spec-out bg-spec-out text-[#1a0a14]'
+              : 'border-spec-out text-fg'
+            : open
+              ? 'border-fg-3 text-fg'
+              : (DEST[reel.disposition ?? ''] ?? 'border-band text-fg-2');
+
+          return (
+            <li key={reel.number}>
+              <button
+                type="button"
+                aria-pressed={active}
+                aria-label={`Bobina ${String(reel.number)}`}
+                onClick={() => {
+                  onSelect(reel.number);
+                }}
+                title={
+                  [
+                    reel.dispositionReason,
+                    hold ? `${hold.status} (ilustrativo): ${hold.reason}` : null,
+                    reel.splices > 0 ? `${String(reel.splices)} emenda(s)` : null,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ') || undefined
+                }
+                className={`grid h-5 w-full grid-cols-[68px_62px_minmax(0,1fr)_124px_64px] items-center gap-x-2 border text-left ${
+                  active ? 'border-action bg-hover' : 'border-transparent hover:bg-hover'
+                }`}
+              >
+                <span className={`pl-1.5 font-mono text-[12px] ${active ? 'text-fg' : 'text-fg'}`}>
+                  {reel.number}
+                </span>
+                <span className="font-mono text-[11px] text-fg-3">{hhmm(reel.startedAt)}</span>
+                <span className="relative block h-5">
+                  <span
+                    className={`absolute top-1.5 left-0 h-2 ${open ? 'bg-track/70' : 'bg-track'}`}
+                    style={{ width: `${(barW * 100).toFixed(2)}%` }}
+                  />
+                  {runs.map((run) => (
+                    <span
+                      key={run.from}
+                      className="absolute top-1 h-3 bg-spec-out"
+                      style={{
+                        left: `${(run.from * barW * 100).toFixed(2)}%`,
+                        width: `${(Math.max(0.002, (run.to - run.from) * barW) * 100).toFixed(2)}%`,
+                      }}
+                    />
+                  ))}
+                  {marks.map((at) => (
+                    <span
+                      key={at}
+                      className="absolute top-0.5 h-4 w-0.5 bg-alarm-1"
+                      style={{ left: `${(at * barW * 100).toFixed(2)}%` }}
+                    />
+                  ))}
+                  {length !== null ? (
+                    <span
+                      className="absolute top-0 font-mono text-[10px] whitespace-nowrap text-fg-2"
+                      style={
+                        barW > 0.85
+                          ? {
+                              right: `${((1 - barW) * 100).toFixed(2)}%`,
+                              transform: 'translateX(calc(100% + 6px))',
+                              top: -1,
+                            }
+                          : { left: `calc(${(barW * 100).toFixed(2)}% + 6px)`, top: -1 }
+                      }
+                    >
+                      {num(length / 1000, 1)} km
+                      {reel.splices > 0
+                        ? ` · ${String(reel.splices)} emenda${reel.splices > 1 ? 's' : ''}`
+                        : ''}
+                    </span>
+                  ) : null}
+                </span>
+                <span>
+                  <span className={`border px-1.5 text-[11px] leading-4 ${destClass}`}>
+                    {destino}
+                  </span>
+                </span>
+                <span className="pr-1.5 text-right">
+                  <span className="font-mono text-[12px]">
+                    {reel.weightT ? num(reel.weightT, 1) : '—'}
+                  </span>
+                  <span className="ml-0.5 text-[10px] text-fg-3">t</span>
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </Panel>
+  );
+}
+
+/* ----------------------------------------------------------- mapa CD × MD */
+
+/** As classes de cor do mapa, da mais seca à mais úmida, em torno da tolerância. */
+function bins(lo: number, hi: number, target: number) {
+  const edge = (hi - lo) * 0.15;
+  return [
+    {
+      label: `> ${num(hi + 0.2, 1)}`,
+      test: (v: number) => v > hi + 0.2,
+      color: 'var(--color-spec-out)',
+    },
+    {
+      label: `${num(hi, 1)}–${num(hi + 0.2, 1)}`,
+      test: (v: number) => v > hi,
+      color: 'var(--color-spec-edge-line)',
+    },
+    {
+      label: `${num(hi - edge, 2)}–${num(hi, 1)}`,
+      test: (v: number) => v > hi - edge,
+      color: 'var(--color-spec-edge)',
+    },
+    { label: num(target + 0.2, 1), test: (v: number) => v > target + 0.2, color: '#5d6673' },
+    { label: num(target + 0.1, 1), test: (v: number) => v > target + 0.1, color: '#3a424e' },
+    { label: `${num(target, 1)} alvo`, test: (v: number) => v >= target - 0.1, color: '#262d36' },
+    { label: num(target - 0.2, 1), test: (v: number) => v >= lo + edge, color: '#1d232b' },
+    {
+      label: `${num(lo, 1)}–${num(lo + edge, 2)}`,
+      test: (v: number) => v >= lo,
+      color: 'var(--color-spec-edge)',
+    },
+    { label: `< ${num(lo, 1)}`, test: () => true, color: 'var(--color-spec-out)' },
+  ];
+}
+
+function CdPanel({
+  gateway,
+  reel,
+  hold,
+  now,
+  speed,
+  outside,
+}: {
+  readonly gateway: DataGateway;
+  readonly reel: ReelView;
+  readonly hold: ReelHold | null;
+  readonly now: number;
+  readonly speed: number | null;
+  readonly outside: boolean;
+}) {
+  const map = useResource(
+    useCallback(
+      (signal: AbortSignal) => gateway.cdMap(reel.number, signal),
+      [gateway, reel.number],
+    ),
+  );
+  const length = reelLength(reel, now, speed);
   const open = reel.endedAt === null;
 
   return (
-    <>
-      <StatRow
-        stats={[
-          {
-            label: 'Peso',
-            value:
-              reel.weightT === null ? (
-                '—'
-              ) : (
-                <>
-                  {num(reel.weightT, 1)} <span className="text-[13px] text-mill-muted">t</span>
-                </>
-              ),
-            hint: reel.lengthM === null ? 'em formação' : `${int(reel.lengthM)} m`,
-          },
-          {
-            label: 'Diâmetro final',
-            value: reel.finalDiameterMm === null ? '—' : int(reel.finalDiameterMm),
-            hint: 'mm · troca em 3.000',
-          },
-          {
-            label: 'Gramatura média',
-            value: <SpecValue value={reel.basisWeightGsm} tag="AIC-902" />,
-            hint: toleranceHint('AIC-902'),
-          },
-          {
-            label: 'Umidade média',
-            value: <SpecValue value={reel.moisturePct} tag="AIC-903" />,
-            hint: toleranceHint('AIC-903'),
-          },
-          {
-            label: 'Espessura média',
-            value: <SpecValue value={reel.caliperUm} tag="AIC-905" />,
-            hint: toleranceHint('AIC-905'),
-          },
-        ]}
-      />
-
-      <Block
-        title="Dispersão no sentido da largura"
-        aside="2σ do perfil CD medido pelo scanner final"
-      >
-        {reel.cdSpread === null ? (
-          <p className="text-sm text-mill-muted">
-            {open
-              ? 'A dispersão só é fechada quando a bobina fecha.'
-              : 'Sem perfil CD registrado nesta bobina.'}
-          </p>
-        ) : (
-          <Facts
-            columns={3}
-            items={[
-              {
-                label: 'Gramatura 2σ',
-                value: <SpecValue value={reel.cdSpread.basisWeightGsm} tag="AI-912" />,
-              },
-              {
-                label: 'Umidade 2σ',
-                value: <SpecValue value={reel.cdSpread.moisturePct} tag="AI-913" />,
-              },
-              {
-                label: 'Espessura 2σ',
-                value: <SpecValue value={reel.cdSpread.caliperUm} tag="AI-915" />,
-              },
-            ]}
-          />
-        )}
-      </Block>
-
-      <Block title="Destino">
-        {reel.disposition === null ? (
-          <p className="text-sm text-mill-muted">
-            A bobina está na Pope. O destino é decidido quando ela fecha.
-          </p>
-        ) : (
-          <div className="flex flex-col gap-2 border-t border-mill-line pt-3 text-sm">
-            <div className="flex flex-wrap items-baseline gap-3">
-              <span
-                className={
-                  reel.disposition === 'aprovada'
-                    ? 'font-semibold'
-                    : 'font-semibold text-mill-attention'
-                }
-              >
-                {reel.disposition}
-              </span>
-              <span className="text-mill-muted">
-                {reel.splices === 0
-                  ? 'sem emenda'
-                  : `${int(reel.splices)} ${reel.splices === 1 ? 'emenda' : 'emendas'}`}
-              </span>
-            </div>
-            {reel.dispositionReason !== null && (
-              <p className="text-mill-muted">{reel.dispositionReason}</p>
-            )}
-          </div>
-        )}
-      </Block>
-    </>
+    <Panel
+      title="Umidade CD × MD"
+      label="Umidade CD × MD"
+      context={
+        <span className="flex items-center gap-1.5">
+          bobina <span className="font-mono text-fg">{reel.number}</span> ·{' '}
+          <span className="font-mono">
+            {hhmm(reel.startedAt)}–{open ? 'agora' : hhmm(reel.endedAt)}
+          </span>
+          {length !== null ? (
+            <>
+              {' '}
+              · <span className="font-mono">{num(length / 1000, 1)}</span> km
+            </>
+          ) : null}
+          {reel.weightT ? (
+            <>
+              {' '}
+              · <span className="font-mono">{num(reel.weightT, 1)}</span> t
+            </>
+          ) : null}
+          {hold ? (
+            <span
+              className={`px-1.5 text-[11px] ${hold.status === 'retida' ? 'bg-spec-out text-[#1a0a14]' : 'border border-spec-out text-fg'}`}
+            >
+              {hold.status}
+            </span>
+          ) : null}
+        </span>
+      }
+      aside={
+        <span className="flex items-center gap-2">
+          <span className="truncate">
+            {hold
+              ? `${hold.reason} · `
+              : reel.dispositionReason
+                ? `${reel.dispositionReason} · `
+                : open
+                  ? 'A bobina está na Pope. O destino é decidido quando ela fecha. · '
+                  : ''}
+            {outside ? 'QCS fora em trecho da bobina' : 'QCS dentro em toda a bobina'}
+          </span>
+          <Illustrative title="Mapa CD × MD: desenho fixo escalado pela média e pelo 2σ CD reais da bobina." />
+        </span>
+      }
+      bodyClassName="min-h-0"
+    >
+      <ResourceState resource={map} label="o mapa CD">
+        {(data) => <CdGrid map={data} lengthM={length} />}
+      </ResourceState>
+    </Panel>
   );
 }
 
-/** `aprovada` ou `rebaixada · motivo`, para o título. */
-function dispositionLabel(reel: ReelView): string {
-  if (reel.disposition === null) return '· em formação';
-  if (reel.disposition === 'aprovada') return '· aprovada';
-  return `· ${reel.disposition}${reel.dispositionReason ? ` · ${reel.dispositionReason}` : ''}`;
-}
-
-/** A tolerância de uma tag, do catálogo, em texto curto. */
-function toleranceHint(tag: string): string {
-  const variable = processVariable(tag);
-  const low = variable?.limits.l;
-  const high = variable?.limits.h;
-
-  if (low === null || low === undefined || high === null || high === undefined) {
-    return variable ? `faixa ${num(variable.min, 1)}–${num(variable.max, 1)}` : '';
-  }
-
-  return `tolerância ${num(low, 1)}–${num(high, 1)}`;
-}
-
-/**
- * Um valor medido com o desvio da tolerância marcado.
- *
- * A marca é a cor e **também** o texto do título: cor sozinha não serve a quem
- * não distingue vermelho de amarelo, e numa sala de controle isso é comum o
- * bastante para não valer o risco.
- */
-function SpecValue({ value, tag }: { readonly value: number | null; readonly tag: string }) {
-  const variable = processVariable(tag);
-  if (value === null || !variable) return <>{num(value, 2)}</>;
-
-  const low = variable.limits.l;
-  const high = variable.limits.h;
-  const out = (low !== null && value < low) || (high !== null && value > high) ? true : false;
-
-  if (!out) return <>{num(value, 2)}</>;
+function CdGrid({ map, lengthM }: { readonly map: CdMap; readonly lengthM: number | null }) {
+  const [ref, width] = useWidth<HTMLDivElement>(900);
+  const variable = processVariable(map.tag);
+  const lo = variable?.limits.l ?? 4.3;
+  const hi = variable?.limits.h ?? 5.3;
+  const target = variable?.target ?? 4.8;
+  const scale = useMemo(() => bins(lo, hi, target), [lo, hi, target]);
+  const rows = map.values.length;
+  const cols = map.values[0]?.length ?? 0;
+  const height = 240;
+  const cw = width / Math.max(1, cols);
+  const ch = height / Math.max(1, rows);
 
   return (
-    <span className="text-mill-attention" title={`fora da tolerância de ${tag}`}>
-      {num(value, 2)}
-      <span className="sr-only"> — fora da tolerância</span>
-    </span>
+    <div className="flex h-full gap-3">
+      <div
+        className="flex w-8 shrink-0 flex-col justify-between pb-6 font-mono text-[10px] text-fg-3"
+        style={{ height: height + 24 }}
+      >
+        <span>LC</span>
+        <span>{int(map.widthM / 2)} m</span>
+        <span>LA</span>
+      </div>
+      <div ref={ref} className="min-w-0 flex-1">
+        <svg
+          role="img"
+          aria-label={`Mapa de umidade da bobina ${String(map.reelNumber)}`}
+          width={width}
+          height={height}
+        >
+          {map.values.map((row, r) =>
+            row.map((v, c) => (
+              <rect
+                key={`${String(r)}-${String(c)}`}
+                x={c * cw}
+                y={r * ch}
+                width={cw + 0.5}
+                height={ch + 0.5}
+                fill={scale.find((bin) => bin.test(v))?.color ?? '#262d36'}
+              />
+            )),
+          )}
+        </svg>
+        <div className="mt-1.5 flex justify-between font-mono text-[10px] text-fg-3">
+          <span>0 km</span>
+          <span>MD →</span>
+          <span>{lengthM !== null ? `${num(lengthM / 1000, 1)} km` : '—'}</span>
+        </div>
+      </div>
+      <ul className="w-28 shrink-0 text-[11px] text-fg-2">
+        <li className="mb-1 text-fg-3">umidade %</li>
+        {scale.map((bin) => (
+          <li key={bin.label} className="flex items-center gap-2 font-mono leading-[17px]">
+            <span className="size-2.5 shrink-0" style={{ background: bin.color }} />
+            {bin.label}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
+}
+
+/* --------------------------------------------------------------- perfil MD */
+
+function MdProfile({
+  reel,
+  series,
+  now,
+}: {
+  readonly reel: ReelView;
+  readonly series: readonly (readonly Point[])[];
+  readonly now: number;
+}) {
+  const [ref, width] = useWidth<HTMLDivElement>(470);
+  const span = reelSpan(reel, now);
+  const length = reel.lengthM;
+
+  return (
+    <Panel
+      title="Perfil MD · média CD"
+      aside="QCS · banda = tolerância"
+      bodyClassName="flex min-h-0 flex-col"
+    >
+      {QCS.map((item, i) => {
+        const variable = processVariable(item.tag);
+        const lo = variable?.limits.l ?? null;
+        const hi = variable?.limits.h ?? null;
+        const points = series[i] ?? [];
+        const samples = Array.from(
+          { length: 160 },
+          (_, k) => valueAt(points, span.from + (k / 159) * (span.to - span.from)) ?? Number.NaN,
+        );
+        const value = reel[item.key];
+        const unit = variable?.unit ?? '';
+        const out = value !== null && ((lo !== null && value < lo) || (hi !== null && value > hi));
+        return (
+          <div
+            key={item.tag}
+            className="grid flex-1 grid-cols-[104px_minmax(0,1fr)_88px] items-center gap-3 border-t border-line"
+          >
+            <div>
+              <div className="text-[12px]">{item.label}</div>
+              <div className="font-mono text-[10px] text-fg-3">
+                {lo !== null && hi !== null ? `tolerância ${num(lo, 1)}–${num(hi, 1)}` : '—'}
+              </div>
+            </div>
+            <div ref={i === 0 ? ref : undefined} className="min-w-0">
+              {samples.some(Number.isFinite) ? (
+                <Sparkline
+                  values={samples}
+                  band={lo !== null && hi !== null ? { lo, hi } : null}
+                  {...(variable
+                    ? { domain: padDomain(lo ?? variable.min, hi ?? variable.max, samples) }
+                    : {})}
+                  width={width}
+                  height={46}
+                  bandColor="#1a2028"
+                  color="var(--color-fg-2)"
+                  label={`Perfil MD de ${item.label.toLowerCase()} da bobina ${String(reel.number)}`}
+                />
+              ) : (
+                <p className="text-[11px] text-fg-3">
+                  sem tendência no historiador para esta bobina
+                </p>
+              )}
+            </div>
+            <div className="text-right">
+              <span className={`font-mono text-[14px] ${out ? 'text-spec-out' : ''}`}>
+                {tagValue(value, unit)}
+              </span>
+              <span className="ml-1 text-[11px] text-fg-2">{unit}</span>
+            </div>
+          </div>
+        );
+      })}
+      <div className="grid grid-cols-[104px_minmax(0,1fr)_88px] gap-3 pt-2 font-mono text-[10px] text-fg-3">
+        <span />
+        <span className="flex justify-between">
+          <span>0</span>
+          <span>km</span>
+          <span>
+            {length !== null && length > 0 ? `${num(length / 1000, 1)} km` : 'em formação'}
+          </span>
+        </span>
+      </div>
+    </Panel>
+  );
+}
+
+/** A tolerância com folga, aberta até onde a série for: valor fora não some do gráfico. */
+function padDomain(lo: number, hi: number, values: readonly number[]): [number, number] {
+  const pad = (hi - lo) * 0.6;
+  const finite = values.filter(Number.isFinite);
+  const min = Math.min(lo - pad, ...finite.map((v) => v - pad * 0.3));
+  const max = Math.max(hi + pad, ...finite.map((v) => v + pad * 0.3));
+  return [min, max];
 }

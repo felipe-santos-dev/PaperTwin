@@ -9,6 +9,7 @@ import {
 
 import { ApiError } from './client';
 import { fetchDemoAsset, fetchDemoVibration } from './demo';
+import { fixtureRoutes, type FixtureRoutes } from './fixtures';
 import type { DataGateway } from './gateway';
 import type { AlarmList, ProcessValues, ReelView, ShiftView } from './process';
 
@@ -107,7 +108,7 @@ function byShift<T extends { readonly shiftId: string }>(
   return rows.filter((row) => shiftId === undefined || row.shiftId === shiftId);
 }
 
-export const DEMO_GATEWAY: DataGateway = {
+const DEMO_ROUTES: Omit<DataGateway, keyof FixtureRoutes> = {
   kind: 'demo',
 
   // as duas rotas da Fase 3 já tinham instantâneo próprio, com o caminho
@@ -257,4 +258,10 @@ export const DEMO_GATEWAY: DataGateway = {
   // um instantâneo não aceita escrita, e dizer isso é melhor que simular
   writeSetpoint: null,
   acknowledgeAlarm: null,
+};
+
+/** O instantâneo, com as rotas fixas montadas sobre as bobinas dele. */
+export const DEMO_GATEWAY: DataGateway = {
+  ...DEMO_ROUTES,
+  ...fixtureRoutes(DEMO_ROUTES),
 };

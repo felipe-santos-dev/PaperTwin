@@ -52,7 +52,9 @@ export function int(value: number | null | undefined): string {
 export function tagValue(value: number | null | undefined, unit: string): string {
   if (value === null || value === undefined || !Number.isFinite(value)) return '—';
 
-  const digits = DIGITS_BY_UNIT[unit] ?? (Math.abs(value) >= 100 ? 0 : 2);
+  const byUnit = DIGITS_BY_UNIT[unit] ?? (Math.abs(value) >= 100 ? 0 : 2);
+  // uma dosagem de 1,4 kg/t sem casa viraria "1": abaixo de 10, inteiro não basta
+  const digits = byUnit === 0 && Math.abs(value) < 10 && value !== 0 ? 1 : byUnit;
   return formatter(digits).format(value);
 }
 

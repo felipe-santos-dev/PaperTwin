@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -29,7 +29,7 @@ const TURNO: ShiftView = {
   id: 'T-2026-06-15-B',
   letter: 'B',
   operationDate: '2026-06-15',
-  startedAt: '2026-06-15T14:00:00-03:00',
+  startedAt: '2026-06-15T17:00:00Z',
   endedAt: null,
   operator: 'turno B',
   productionT: 162.4,
@@ -40,8 +40,8 @@ const TURNO: ShiftView = {
 const BOBINA: ReelView = {
   number: 412,
   shiftId: TURNO.id,
-  startedAt: '2026-06-15T14:05:00-03:00',
-  endedAt: '2026-06-15T14:58:00-03:00',
+  startedAt: '2026-06-15T17:05:00Z',
+  endedAt: '2026-06-15T17:58:00Z',
   weightT: 39.9,
   lengthM: 66_540,
   finalDiameterMm: 3000,
@@ -96,19 +96,30 @@ function gatewayOf(over: Partial<DataGateway> = {}): DataGateway {
     setpointChanges: vazio({ count: 0, changes: [] }),
     writeSetpoint: null,
     acknowledgeAlarm: null,
+    labResults: vazio({ illustrative: true as const, specs: [], results: [] }),
+    reelHolds: vazio({ illustrative: true as const, holds: [] }),
+    fixedProcess: vazio({
+      illustrative: true as const,
+      ts: '2026-06-15T17:00:00Z',
+      variables: [],
+      values: [],
+      alarms: [],
+    }),
+    fixedTrend: nunca,
+    cdMap: nunca,
     ...over,
   };
 }
 
 describe('Turno', () => {
   it('diz que está carregando antes de a resposta chegar', () => {
-    render(<TurnoScreen gateway={gatewayOf({ shifts: nunca })} onSelectReel={vi.fn()} />);
+    render(<TurnoScreen gateway={gatewayOf({ shifts: nunca })} {...turnoProps()} />);
 
     expect(screen.getByRole('status')).toHaveTextContent(/Carregando/i);
   });
 
   it('explica o vazio em vez de mostrar uma tela em branco', async () => {
-    render(<TurnoScreen gateway={gatewayOf()} onSelectReel={vi.fn()} />);
+    render(<TurnoScreen gateway={gatewayOf()} {...turnoProps()} />);
 
     await waitFor(() => {
       expect(screen.getByRole('status')).toHaveTextContent(/Nenhum turno registrado/i);
@@ -116,7 +127,7 @@ describe('Turno', () => {
   });
 
   it('mostra a mensagem da API no erro, com botão de tentar de novo', async () => {
-    render(<TurnoScreen gateway={gatewayOf({ shifts: falha })} onSelectReel={vi.fn()} />);
+    render(<TurnoScreen gateway={gatewayOf({ shifts: falha })} {...turnoProps()} />);
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent('A API respondeu 503');
@@ -130,7 +141,7 @@ describe('Turno', () => {
       .mockRejectedValueOnce(new Error('A API respondeu 503'))
       .mockResolvedValue({ count: 1, shifts: [TURNO] });
 
-    render(<TurnoScreen gateway={gatewayOf({ shifts })} onSelectReel={vi.fn()} />);
+    render(<TurnoScreen gateway={gatewayOf({ shifts })} {...turnoProps()} />);
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeInTheDocument();
@@ -140,55 +151,41 @@ describe('Turno', () => {
     expect(shifts).toHaveBeenCalledTimes(2);
   });
 
-  it('mostra a produção, as bobinas e a passagem do turno', async () => {
-    render(
-      <TurnoScreen
-        gateway={gatewayOf({
-          shifts: () => Promise.resolve({ count: 1, shifts: [TURNO] }),
-          shift: () => Promise.resolve(DETALHE),
-        })}
-        onSelectReel={vi.fn()}
-      />,
-    );
+  it('integra a produção instantânea e mostra a passagem do turno', async () => {
+    render(<TurnoScreen gateway={turnoGateway()} {...turnoProps()} />);
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Turno B');
+      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+        'Linha do tempo do turno',
+      );
     });
 
-    expect(screen.getByText('162,4')).toBeInTheDocument();
-    expect(screen.getByText(/eficiência 94,2 %/)).toBeInTheDocument();
+    // 45 t/h das 17:00 às 19:00: 90 t no placar
+    const placar = screen.getByRole('region', { name: 'Placar do turno' });
+    const producao = within(placar).getByText('Produção').parentElement as HTMLElement;
+    expect(producao).toHaveTextContent(/Produçãos*90s*t/);
     expect(screen.getByText(/CS23 MLA em zona D/)).toBeInTheDocument();
   });
 
-  it('abre a bobina ao clicar na linha', async () => {
-    const onSelectReel = vi.fn();
+  it('abre a bobina ao clicar na faixa de bobinas', async () => {
+    const props = turnoProps();
+    render(<TurnoScreen gateway={turnoGateway()} {...props} />);
 
-    render(
-      <TurnoScreen
-        gateway={gatewayOf({
-          shifts: () => Promise.resolve({ count: 1, shifts: [TURNO] }),
-          shift: () => Promise.resolve(DETALHE),
-        })}
-        onSelectReel={onSelectReel}
-      />,
-    );
+    const bobina = await screen.findByRole('button', { name: '412' });
+    await userEvent.click(bobina);
 
-    await waitFor(() => {
-      expect(screen.getAllByRole('button', { name: /412/ }).length).toBeGreaterThan(0);
-    });
-    await userEvent.click(screen.getAllByRole('button', { name: /412/ })[0] as HTMLElement);
-
-    expect(onSelectReel).toHaveBeenCalledWith(412);
+    expect(props.onSelectReel).toHaveBeenCalledWith(412);
   });
 
   it('diz que nada ficou pendente quando a passagem está vazia', async () => {
+    const vazio = { ...TURNO, handover: [] };
     render(
       <TurnoScreen
-        gateway={gatewayOf({
-          shifts: () => Promise.resolve({ count: 1, shifts: [{ ...TURNO, handover: [] }] }),
-          shift: () => Promise.resolve({ ...DETALHE, shift: { ...TURNO, handover: [] } }),
+        gateway={turnoGateway({
+          shifts: () => Promise.resolve({ count: 1, shifts: [vazio] }),
+          shift: () => Promise.resolve({ ...DETALHE, shift: vazio }),
         })}
-        onSelectReel={vi.fn()}
+        {...turnoProps()}
       />,
     );
 
@@ -197,6 +194,46 @@ describe('Turno', () => {
     });
   });
 });
+
+/** As três navegações da tela de Turno, como funções vigiadas. */
+function turnoProps() {
+  return { onSelectReel: vi.fn(), onOpenTag: vi.fn(), onOpenNote: vi.fn() };
+}
+
+/** Um turno das 17:00 com leitura às 19:00 e XI-0001 constante em 45 t/h. */
+function turnoGateway(over: Partial<DataGateway> = {}): DataGateway {
+  const trend = (tag: string) =>
+    Promise.resolve({
+      tag,
+      unit: tag === 'XI-0001' ? 't/h' : 'm/min',
+      from: '2026-06-15T17:00:00Z',
+      to: '2026-06-15T19:00:00Z',
+      bucketS: 60,
+      buckets: [
+        {
+          bucketStart: '2026-06-15T17:00:00Z',
+          samples: 1,
+          min: tag === 'XI-0001' ? 45 : 1250,
+          max: tag === 'XI-0001' ? 45 : 1250,
+          first: tag === 'XI-0001' ? 45 : 1250,
+          last: tag === 'XI-0001' ? 45 : 1250,
+        },
+      ],
+      before: null,
+      after: null,
+      timeWeightedAverage: null,
+      limits: null,
+      target: null,
+    });
+  return gatewayOf({
+    shifts: () => Promise.resolve({ count: 1, shifts: [TURNO] }),
+    shift: () => Promise.resolve(DETALHE),
+    processValues: () => Promise.resolve({ ts: '2026-06-15T19:00:00Z', count: 0, values: [] }),
+    reels: () => Promise.resolve({ count: 1, reels: [BOBINA] }),
+    tagTrend: trend,
+    ...over,
+  });
+}
 
 describe('Bobinas', () => {
   it('explica o vazio com o tempo que a primeira bobina leva', async () => {
@@ -210,19 +247,27 @@ describe('Bobinas', () => {
   it('mostra as médias da bobina com a tolerância ao lado', async () => {
     render(
       <BobinasScreen
-        gateway={gatewayOf({ reels: () => Promise.resolve({ count: 1, reels: [BOBINA] }) })}
+        gateway={gatewayOf({
+          tagTrend: falha,
+          cdMap: falha,
+          reels: () => Promise.resolve({ count: 1, reels: [BOBINA] }),
+        })}
         selected={412}
         onSelect={vi.fn()}
       />,
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Nº 412');
+      expect(screen.getByRole('button', { name: 'Bobina 412' })).toHaveAttribute(
+        'aria-pressed',
+        'true',
+      );
     });
 
     // a tolerância do catálogo, não um número escrito na tela
     expect(screen.getByText('tolerância 73,5–76,5')).toBeInTheDocument();
     expect(screen.getByText('tolerância 4,3–5,3')).toBeInTheDocument();
+    expect(screen.getByText('75,10')).toBeInTheDocument();
   });
 
   /**
@@ -243,7 +288,11 @@ describe('Bobinas', () => {
 
     render(
       <BobinasScreen
-        gateway={gatewayOf({ reels: () => Promise.resolve({ count: 1, reels: [aberta] }) })}
+        gateway={gatewayOf({
+          tagTrend: falha,
+          cdMap: falha,
+          reels: () => Promise.resolve({ count: 1, reels: [aberta] }),
+        })}
         selected={413}
         onSelect={vi.fn()}
       />,
@@ -252,7 +301,7 @@ describe('Bobinas', () => {
     await waitFor(() => {
       expect(screen.getByText(/A bobina está na Pope/)).toBeInTheDocument();
     });
-    // "em formação" aparece no título e na linha da tabela
+    // "em formação" aparece no destino e no perfil
     expect(screen.getAllByText(/em formação/i).length).toBeGreaterThan(0);
   });
 
@@ -265,14 +314,18 @@ describe('Bobinas', () => {
 
     render(
       <BobinasScreen
-        gateway={gatewayOf({ reels: () => Promise.resolve({ count: 1, reels: [rebaixada] }) })}
+        gateway={gatewayOf({
+          tagTrend: falha,
+          cdMap: falha,
+          reels: () => Promise.resolve({ count: 1, reels: [rebaixada] }),
+        })}
         selected={412}
         onSelect={vi.fn()}
       />,
     );
 
     await waitFor(() => {
-      expect(screen.getByText('papel de transição de gramatura')).toBeInTheDocument();
+      expect(screen.getByText(/papel de transição de gramatura/)).toBeInTheDocument();
     });
   });
 });

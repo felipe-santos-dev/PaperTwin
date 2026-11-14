@@ -163,7 +163,7 @@ test.describe('seleção por URL', () => {
     await page.goto(sceneWith(BEARING));
     await waitForScene(page);
 
-    // dentro do painel: fora dele, "Fechar" também casaria com "Fechar portas"
+    // dentro do painel, onde está o "Fechar" do ativo
     await page.getByRole('complementary').getByRole('button', { name: 'Fechar' }).click();
     await expect(page).toHaveURL((url) => !url.searchParams.has('asset'));
 

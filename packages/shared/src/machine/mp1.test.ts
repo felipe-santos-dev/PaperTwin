@@ -6,6 +6,7 @@ import {
   DRYER_BOTTOM_Y_M,
   DRYER_RADIUS_M,
   DRYER_TOP_Y_M,
+  FELT_CLEARANCE_M,
   POST_DRYER_PAIRS,
   PRE_DRYER_PAIRS,
   SCANNER_1_X_M,
@@ -104,6 +105,50 @@ describe('seções', () => {
   });
 });
 
+describe('parte úmida', () => {
+  const WET_ROLLS = [
+    'MP1-FOR-RCB',
+    'MP1-FOR-RFS',
+    'MP1-FOR-RCO',
+    'MP1-PRE-RPU',
+    'MP1-PRE-P1S',
+    'MP1-PRE-P1I',
+  ] as const;
+
+  it('tem os rolos principais como ativos supostos, cada um com dois mancais', () => {
+    for (const tag of WET_ROLLS) {
+      const roll = assetByTag(MP1, tag);
+      expect(roll?.kind, tag).toBe('roll');
+      expect(roll?.source, tag).toBe('assumed');
+      expect(
+        bearings.filter((b) => b.parentTag === tag).map((b) => b.side),
+        tag,
+      ).toEqual(['LA', 'LC']);
+    }
+  });
+
+  it('põe o couch e o pick-up na linha em que as telas correm juntas', () => {
+    const forming = assetByTag(MP1, 'MP1-FOR-RFS');
+    const couch = assetByTag(MP1, 'MP1-FOR-RCO');
+    const pickup = assetByTag(MP1, 'MP1-PRE-RPU');
+    if (!forming?.radius || !couch?.radius || !pickup?.radius) throw new Error('rolo ausente');
+
+    const run = forming.position[1] + forming.radius;
+    expect(couch.position[1] + couch.radius).toBeCloseTo(run, 9);
+    // folga de desenho para tela, folha e feltro caberem sob o pick-up
+    expect(pickup.position[1] - pickup.radius).toBeCloseTo(run + FELT_CLEARANCE_M, 9);
+    // o pick-up tira a folha antes do couch, com a tela ainda na horizontal
+    expect(pickup.position[0]).toBeLessThan(couch.position[0]);
+  });
+
+  it('segue a ordem do processo: formador, couch, pick-up, primeira prensa, sapata', () => {
+    const x = (tag: string) => assetByTag(MP1, tag)?.position[0] ?? Number.NaN;
+    expect(x('MP1-FOR-RFS')).toBeLessThan(x('MP1-PRE-RPU'));
+    expect(x('MP1-PRE-RPU')).toBeLessThan(x('MP1-PRE-P1S'));
+    expect(x('MP1-PRE-P1S')).toBeLessThan(x('MP1-PRE-R2'));
+  });
+});
+
 describe('cilindros secadores', () => {
   it('tem 13 pares na pré-secagem e 5 na pós', () => {
     expect(
@@ -150,6 +195,7 @@ describe('geometria', () => {
 
   it('encosta os dois rolos de cada nip, sem afastar nem penetrar', () => {
     for (const [tagA, tagB] of [
+      ['MP1-PRE-P1I', 'MP1-PRE-P1S'],
       ['MP1-PRE-R1', 'MP1-PRE-R2'],
       ['MP1-SZR-RS', 'MP1-SZR-RI'],
       ['MP1-CAL-RT', 'MP1-CAL-RR'],

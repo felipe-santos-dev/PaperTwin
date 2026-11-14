@@ -1,27 +1,21 @@
-import { DRYER_BOTTOM_Y_M, DRYER_TOP_Y_M } from '@mp1/shared';
 import { DoubleSide, type Texture } from 'three';
 import { MeshStandardNodeMaterial } from 'three/webgpu';
 import {
   abs,
   clamp,
   color,
-  cos,
   float,
   fract,
   luminance,
   max,
   mix,
   normalWorld,
-  positionLocal,
   positionWorld,
-  sin,
   smoothstep,
-  step,
   texture,
   uniform,
   uv,
   vec2,
-  vec3,
   bumpMap,
 } from 'three/tsl';
 
@@ -76,22 +70,11 @@ const faceU = () => mix(positionWorld.x, positionWorld.z, smoothstep(0.6, 0.8, a
 export interface SceneUniforms {
   /** Liga e desliga a luz assada. */
   readonly lightMapOn: FloatUniform;
-  /** Ângulo das portas superiores da capota, em radianos. */
-  readonly doorAngle: FloatUniform;
-  /** Ângulo em que o bake deixou as portas, em radianos. */
-  readonly doorBaked: FloatUniform;
-  /** Linha de dobradiça das portas, preenchida com o que o bake gravou. */
-  readonly hingeY: FloatUniform;
-  readonly hingeZ: FloatUniform;
 }
 
 export function createUniforms(): SceneUniforms {
   return {
     lightMapOn: makeFloatUniform(1),
-    doorAngle: makeFloatUniform(0),
-    doorBaked: makeFloatUniform(0),
-    hingeY: makeFloatUniform(0),
-    hingeZ: makeFloatUniform(0),
   };
 }
 
@@ -166,36 +149,29 @@ function hood(m: MeshStandardNodeMaterial, hex: number) {
 }
 
 /**
- * Onde o piso está molhado: poucas poças e a faixa junto à capota.
+ * Concreto do piso.
  *
- * Sem galpão, o que a poça espelha é o fundo escuro do estúdio. Com poças
- * grandes e quase espelhadas o piso inteiro virava camuflagem, então elas são
- * raras, rasas e só um pouco mais escuras que o concreto seco.
+ * O grão é fino e de pouco contraste. Com o ruído a 0,35 por metro as manchas
+ * tinham uns 3 m e liam como textura de baixa resolução esticada; agora o
+ * desenho vem de três escalas — mancha larga e fraca, grão médio e areia —, e
+ * nenhuma delas domina. Sem poças: no estúdio elas espelhavam o fundo escuro
+ * e, de longe, também liam como manchas.
  */
-const wetness = () => {
-  const p = positionWorld.xz;
-  const big = nz(p.mul(0.045)).b;
-  const mid = nz(p.mul(0.19)).g;
-  const puddle = smoothstep(0.64, 0.7, big.mul(0.7).add(mid.mul(0.3)));
-  const near = smoothstep(7.0, 5.0, abs(positionWorld.z));
-  return clamp(puddle.add(near.mul(smoothstep(0.45, 0.7, mid)).mul(0.6)), 0, 1);
-};
-
-function concreteFloor(m: MeshStandardNodeMaterial, hex: number, wet: boolean) {
-  const n = tri(0.35);
-  const fine = nz(positionWorld.xz.mul(2.3));
-  const water = wet ? wetness() : float(0);
+function concreteFloor(m: MeshStandardNodeMaterial, hex: number) {
+  const broad = nz(positionWorld.xz.mul(0.09));
+  const n = tri(1.6);
+  const fine = nz(positionWorld.xz.mul(7.0));
   // juntas de dilatação a cada 6 m
   const jx = smoothstep(0.012, 0.0, abs(abs(fract(positionWorld.x.div(6)).sub(0.5)).sub(0.498)));
   const jz = smoothstep(0.012, 0.0, abs(abs(fract(positionWorld.z.div(6)).sub(0.5)).sub(0.498)));
   const joint = max(jx, jz);
-  const base = mix(color(hex), color(0x8b8780), n.g)
-    .mul(mix(0.82, 1.0, fine.r))
-    .mul(mix(0.75, 1.0, n.b));
-  m.colorNode = base.mul(mix(float(1), float(0.72), water)).mul(mix(1.0, 0.45, joint));
-  m.roughnessNode = mix(float(0.8).add(fine.g.sub(0.5).mul(0.2)), float(0.22), water);
+  const base = mix(color(hex), color(0x8b8780), broad.g.mul(0.6).add(n.g.mul(0.4)))
+    .mul(mix(0.9, 1.0, fine.r))
+    .mul(mix(0.9, 1.0, n.b));
+  m.colorNode = base.mul(mix(1.0, 0.45, joint));
+  m.roughnessNode = float(0.8).add(fine.g.sub(0.5).mul(0.2));
   m.metalnessNode = float(0);
-  m.normalNode = bumpMap(fine.r.mul(water.oneMinus()), float(0.25));
+  m.normalNode = bumpMap(fine.r, float(0.25));
 }
 
 function stripe(m: MeshStandardNodeMaterial, zebra: boolean) {
@@ -253,11 +229,20 @@ const SPECS: Record<string, Spec> = {
     m.side = DoubleSide;
   },
   tela_formacao: (m) => {
-    // tela de formação: trama mais fina e aberta que a do feltro
+    // tela de formação: trama mais fina e aberta que a do feltro, cinza-azulada
+    // para não se confundir com o feltro bege nem com a folha
     const weave = nz(positionWorld.xz.mul(22.0)).r;
-    m.colorNode = color(0x2a4652).mul(mix(0.75, 1.15, weave));
+    m.colorNode = color(0x7a90a1).mul(mix(0.82, 1.1, weave));
     m.roughnessNode = float(0.7);
     m.metalnessNode = float(0.2);
+    m.side = DoubleSide;
+  },
+  feltro_prensa: (m) => {
+    // feltro de prensa: bege, grosso e fosco
+    const weave = nz(positionWorld.xz.mul(7.0)).r;
+    m.colorNode = color(0xc4ae86).mul(mix(0.86, 1.06, weave));
+    m.roughnessNode = float(0.95);
+    m.metalnessNode = float(0);
     m.side = DoubleSide;
   },
   papel: (m) => {
@@ -267,6 +252,7 @@ const SPECS: Record<string, Spec> = {
     m.side = DoubleSide;
   },
   sapata_correia: painted(0x1d2328, { rough: 0.5, grime: 0.2, scale: 2.4, dirtFloor: false }),
+  manta_sapata: painted(0x2e6b74, { rough: 0.48, grime: 0.15, scale: 2, dirtFloor: false }),
 
   capota_painel: (m) => {
     hood(m, 0x9ea3a6);
@@ -308,14 +294,14 @@ const SPECS: Record<string, Spec> = {
   },
   duto: metal(0xa0a5a9, { rough: 0.38, variation: 0.2, scale: 0.8 }),
 
-  painel_acionamento: painted(0x2d4a9a, { rough: 0.45, grime: 0.25, scale: 1.4 }),
-  armario_branco: painted(0xeceeef, { rough: 0.5, grime: 0.3, scale: 1.8 }),
+  caixa_drenagem: metal(0xa7aeb3, { rough: 0.36, variation: 0.15, scale: 1.4 }),
+  motor: painted(0x4b6955, { rough: 0.5, grime: 0.25, scale: 1.6 }),
 
   piso: (m) => {
-    concreteFloor(m, 0x6c6a65, true);
+    concreteFloor(m, 0x6c6a65);
   },
   laje: (m) => {
-    concreteFloor(m, 0x7f7d79, false);
+    concreteFloor(m, 0x7f7d79);
   },
   fosso: painted(0x444440, { rough: 0.75, grime: 0.5, scale: 0.5, dirtFloor: false }),
   refugo: (m) => {
@@ -368,45 +354,11 @@ const METALS = new Set([
   'tubo_isolado',
   'duto',
   'passarela',
+  'caixa_drenagem',
 ]);
 
 /** Materiais emissivos, que não recebem lightmap. */
 const EMISSIVE = new Set(['lampada', 'claraboia']);
-
-/** As peças da porta basculante, que giram no shader. */
-const DOOR_PARTS = new Set(['capota_porta', 'vidro', 'porta_moldura']);
-
-/** Altura em que a capota se divide: abaixo dela as portas são fixas. */
-const DOOR_SPLIT_Y = (DRYER_TOP_Y_M + DRYER_BOTTOM_Y_M) / 2;
-
-/**
- * Gira as portas de cima em torno da linha de dobradiça.
- *
- * Todas as portas superiores da capota — nas duas capotas — compartilham a
- * mesma linha, que corre no sentido da máquina no alto do lado comando. É isso
- * que deixa abrir todas com um uniform só, sem separar malha nenhuma: cada
- * vértice acima de `DOOR_SPLIT_Y` roda em torno dessa linha, e os de baixo, que
- * são as portas fixas da metade inferior, ficam onde estão.
- */
-function doorSwing(u: SceneUniforms) {
-  const p = positionLocal;
-  const dy = p.y.sub(u.hingeY);
-  const dz = p.z.sub(u.hingeZ);
-  // As portas vêm do bake já abertas, em `doorBaked`. O giro aqui é a
-  // diferença entre o ângulo pedido e esse: zero com as portas abertas,
-  // negativo para fechá-las de volta contra a capota.
-  const delta = u.doorAngle.sub(u.doorBaked);
-  const c = cos(delta);
-  const s = sin(delta);
-  // ângulo positivo abre para fora, que é o Z positivo do lado comando
-  const swung = vec3(
-    p.x,
-    u.hingeY.add(dy.mul(c).add(dz.mul(s))),
-    u.hingeZ.add(dz.mul(c).sub(dy.mul(s))),
-  );
-  // só a metade de cima abre
-  return mix(p, swung, step(float(DOOR_SPLIT_Y), p.y));
-}
 
 export interface MaterialContext {
   readonly uniforms: SceneUniforms;
@@ -452,10 +404,6 @@ export function buildMaterial(
       missingSpecs.add(name);
       painted(0x888888)(material);
     }
-  }
-
-  if (DOOR_PARTS.has(name)) {
-    material.positionNode = doorSwing(context.uniforms);
   }
 
   if (lightMap && !EMISSIVE.has(name)) {

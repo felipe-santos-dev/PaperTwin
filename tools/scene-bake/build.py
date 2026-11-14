@@ -14,6 +14,7 @@ glTF com `export_yup` devolve (x, z, −y) para a cena, e o lado comando volta
 para Z positivo.
 """
 
+import colorsys
 import json
 import os
 import sys
@@ -34,9 +35,13 @@ MODE = sys.argv[1] if len(sys.argv) > 1 else "secao"
 # ------------------------------------------------------------------ cena
 stations.wet_part()
 machine.drying_section("pre-dryer", M["PRE_DRYER_HOOD"], "pre")
+# Passarela do lado acionamento: uma só da parte úmida ao fim da pré-secagem,
+# com escada na cabeceira; outra na pós-secagem.
+machine.walkway(M["HEADBOX_X_M"] - 1.5, M["PRE_DRYER_HOOD"]["to"], "la_pre")
 stations.scanners()
 stations.speed_sizer()
 machine.drying_section("post-dryer", M["POST_DRYER_HOOD"], "pos")
+machine.walkway(M["POST_DRYER_HOOD"]["from"], M["POST_DRYER_HOOD"]["to"], "la_pos")
 stations.calender()
 stations.pope()
 machine.paper_web()
@@ -144,6 +149,56 @@ def render_section():
     operação elevado, o vão aberto sob a secagem e o nível de baixo.
     """
     print("peças removidas do corte:", strip_near_side())
+    # De lado, tela, feltro e folha são vistos de quina: com milímetros de
+    # espessura somem. No corte elas engrossam para virar linha legível.
+    # E cada laço ganha uma cor própria, como emissão, e a folha sai em
+    # destaque: de quina, a borda de cada fita recebe luz ou não conforme o
+    # lado para onde a fita aponta, e metade delas sairia preta. O corte é um
+    # diagrama — o que importa é seguir cada laço de ponta a ponta.
+    zone_ids = {z["id"] for z in ZONES}
+    loops = []
+    for ob in bpy.data.objects:
+        if ob.type == "MESH" and ob.modifiers.get("esp"):
+            nm = ob.name.split(".")[0]
+            base = nm.rsplit("_", 1)[0] if nm.rsplit("_", 1)[-1] in zone_ids else nm
+            if base != "papel" and base not in loops:
+                loops.append(base)
+    flat = {}
+
+    def emission(key, rgb, strength):
+        if key not in flat:
+            m = bpy.data.materials.new(f"corte_{key}")
+            m.use_nodes = True
+            nt = m.node_tree
+            nt.nodes.remove(nt.nodes["Principled BSDF"])
+            em = nt.nodes.new("ShaderNodeEmission")
+            em.inputs["Color"].default_value = (*rgb, 1)
+            em.inputs["Strength"].default_value = strength
+            nt.links.new(em.outputs[0], nt.nodes["Material Output"].inputs["Surface"])
+            flat[key] = m
+        return flat[key]
+
+    for ob in bpy.data.objects:
+        mod = ob.modifiers.get("esp") if ob.type == "MESH" else None
+        if not mod:
+            continue
+        nm = ob.name.split(".")[0]
+        base = nm.rsplit("_", 1)[0] if nm.rsplit("_", 1)[-1] in zone_ids else nm
+        # a fita colorida não ilumina a cena: sem isto a parede do fundo
+        # pega a cor de cada laço e o corte vira mancha
+        ob.visible_diffuse = False
+        ob.visible_glossy = False
+        ob.visible_transmission = False
+        if base == "papel":
+            # a folha mais grossa, branca e um pouco à frente das fitas
+            mod.thickness = 0.09
+            ob.scale.y = 1.04
+            ob.data.materials[0] = emission("papel", (1.0, 1.0, 1.0), 2.5)
+        else:
+            mod.thickness = 0.05
+            hue = (loops.index(base) * 0.61803) % 1.0
+            ob.data.materials[0] = emission(base, colorsys.hsv_to_rgb(hue, 0.75, 1.0), 1.4)
+    print("laços no corte:", ", ".join(loops))
 
     x0, x1 = M["BUILDING_X0_M"], M["BUILDING_X1_M"]
     top = machine.HOOD_TOP + 8.0
@@ -159,16 +214,37 @@ def render_section():
     # detalhe: os primeiros pares da pré-secagem, onde a mecânica das telas aparece
     detail_x0 = M["PRE_DRYER_X0_M"] - 2.5
     bands.append(("secao_detalhe", detail_x0, detail_x0 + 15.0, 0))
+    # detalhe: a passagem do grupo G1 para o G2, com o laço de cada um
+    groups = {g["id"]: g for g in DATA["steamGroups"]}
+    cyl_x = {
+        int(a["tag"].rsplit("-CS", 1)[1]): a["position"][0]
+        for sec in DATA["model"]["sections"]
+        for a in sec["assets"]
+        if a["kind"] == "dryer-cylinder"
+    }
+    gx0 = min(cyl_x[n] for n in range(groups["G1"]["from"], groups["G1"]["to"] + 1)) - 2.5
+    gx1 = max(cyl_x[n] for n in range(groups["G2"]["from"], groups["G2"]["to"] + 1)) + 2.5
+    bands.append(("secao_grupos", gx0, gx1, 0))
+    # detalhe: a parte úmida inteira, da caixa de entrada à prensa de sapata
+    bands.append(("secao_umida", M["BREAST_ROLL_X_M"] - 2.0, M["PRE_DRYER_X0_M"] + 3.0, -1))
+    only = set(filter(None, os.environ.get("BANDS", "").split(",")))
+    if only:
+        bands = [b for b in bands if b[0] in only]
 
     SC.cycles.samples = int(os.environ.get("SPP", "12"))
     SC.cycles.use_denoising = True
 
     for name, bx0, bx1, h in bands:
         span = bx1 - bx0
-        if h:
+        if h > 0:
             res_x = 2200
             res_y = int(res_x * h / span)
             cz = center_z
+            scale = span
+        elif h < 0:
+            res_x = 2400
+            res_y = 1150
+            cz = 4.8
             scale = span
         else:
             res_x = 1900
@@ -176,7 +252,7 @@ def render_section():
             cz = (M["DRYER_TOP_Y_M"] + M["DRYER_BOTTOM_Y_M"]) / 2
             scale = span
         camera(((bx0 + bx1) / 2, -60, cz), None, ortho=scale)
-        light = area_light(f"luz_{name}", ((bx0 + bx1) / 2, -26, cz), span, 9000, "#ffffff", sy=h or 16, shape="RECTANGLE")
+        light = area_light(f"luz_{name}", ((bx0 + bx1) / 2, -26, cz), span, 9000, "#ffffff", sy=h if h > 0 else 16, shape="RECTANGLE")
         light.rotation_euler = (radians(90), 0, 0)
         SC.render.resolution_x, SC.render.resolution_y = res_x, res_y
         SC.render.filepath = os.path.join(OUT, f"{name}.png")
@@ -200,6 +276,8 @@ _G = M["GROUND_FLOOR_Y_M"]
 # para o preview mostrar o que a cena vai enquadrar.
 CAMS = {
     "preview_geral": view((_CX - 8, 30, 78), (_CX, 3, 0)),
+    # parte úmida pelo lado comando, de frente e um pouco de cima
+    "preview_umida": view((-3.5, 6.5, 21), (-2.5, 3.2, 0)),
     "preview_pre": view((_PX0 + 6, 7.5, 22), (_PX0 + 15, 4.5, 0)),
     "preview_mancais": view((_PX0 + 4, 6.4, 10.5), (_PX0 + 9, 5.6, M["BEARING_Z_M"])),
     "preview_terreo": view((M["PRE_DRYER_HOOD"]["from"] - 6, _G + 1.7, 16), (M["PRE_DRYER_HOOD"]["from"] + 20, _G + 2.6, 0)),
@@ -401,11 +479,7 @@ meta = {
     ],
     # Blender (x, y, z) -> three (x, z, -y)
     "sun": [round(SUN_DIR.x, 4), round(SUN_DIR.z, 4), round(-SUN_DIR.y, 4)],
-    # linha de dobradiça das portas de cima, em coordenadas da cena
-    "hoodDoorHinge": {"y": round(machine.HOOD_TOP - 0.03, 3), "z": round(machine.Y_WALL + 0.1, 3)},
     "hoodTop": round(machine.HOOD_TOP, 3),
-    # as portas de cima são assadas abertas; a cena fecha girando de volta
-    "hoodDoorBakedDeg": machine.DOOR_OPEN_DEG,
     "exposure": 0.82,
 }
 with open(os.path.join(OUT, "scene.json"), "w", encoding="utf-8") as f:

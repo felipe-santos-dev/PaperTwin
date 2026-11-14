@@ -100,10 +100,16 @@ PALETTE = [
     ("rolo_feltro", "#7d8287", 0.35, 1.0),
     ("rolo_borracha", "#2a2e33", 0.55, 0.1),
     # --- telas, feltros e folha ---
+    # telas da secagem
     ("feltro", "#2c3e4a", 0.95, 0.0),
-    ("tela_formacao", "#2a4652", 0.7, 0.2),
+    # parte úmida: tela cinza-azulada, feltro bege, para não confundir com a folha
+    ("tela_formacao", "#7d93a4", 0.6, 0.2),
+    ("feltro_prensa", "#c9b38a", 0.95, 0.0),
     ("papel", "#e9e9e4", 0.85, 0.0),
     ("sapata_correia", "#1d2328", 0.5, 0.1),
+    # manta da prensa de sapata: cor própria, para a sapata não se confundir
+    # com a primeira prensa
+    ("manta_sapata", "#2f6f78", 0.5, 0.0),
     # --- capota ---
     ("capota_painel", "#b9bec2", 0.5, 0.0),
     ("capota_porta", "#c4c8cb", 0.45, 0.0),
@@ -121,8 +127,8 @@ PALETTE = [
     ("duto", "#9ea3a6", 0.4, 0.8),
     # --- parte úmida ---
     ("estrutura_clara", "#d2d5d8", 0.62, 0.25),
-    ("painel_acionamento", "#2d4a9a", 0.45, 0.2),
-    ("armario_branco", "#eceeef", 0.5, 0.1),
+    ("caixa_drenagem", "#a3aab0", 0.4, 0.6),
+    ("motor", "#4d6b57", 0.5, 0.1),
     # --- prédio ---
     ("piso", "#7b7a76", 0.7, 0.0),
     ("laje", "#8a8884", 0.75, 0.0),

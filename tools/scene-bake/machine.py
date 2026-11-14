@@ -12,11 +12,12 @@ clicáveis. O que fica no bake é o que não responde a clique — munhão, junt
 vapor, mangueira, caixa de junção, proteção e pedestal.
 """
 
-from math import atan2, cos, hypot, pi, radians, sin
+from math import atan2, radians
 
 from mathutils import Matrix
 
 import geom
+import wet
 from parts import (
     DATA,
     M,
@@ -56,17 +57,17 @@ Z_SPLIT = (Z_TOP + Z_BOT) / 2
 #: Topo da capota. Tem de passar do laço de retorno da tela superior.
 HOOD_TOP = Z_TOP + 4.3
 
-#: Largura das portas da capota; o passo de 2,2 m deixa 0,6 m de painel entre elas.
-DOOR_W = 1.6
-
-#: Ângulo em que as portas de cima são assadas, abertas.
-DOOR_OPEN_DEG = 68.0
-
 WALK_Y = M["WALKWAY_Y_M"]
+
+#: Térreo, 6 m abaixo do piso de operação.
+GROUND = M["GROUND_FLOOR_Y_M"]
 WALK_Z0, WALK_Z1 = M["WALKWAY_Z0_M"], M["WALKWAY_Z1_M"]
 
-#: Coletores de vapor e condensado, no lado comando, atrás da passarela.
+#: Coletores de vapor e condensado: no lado comando, junto ao piso.
 HEADER_Y = -(WALK_Z1 - 0.25)
+
+#: Acima disto nada fica na frente dos mancais do lado comando.
+LC_CLEAR_Z = 1.0
 
 #: Relatório de mecânica, impresso junto com o corte lateral.
 REPORT = []
@@ -138,8 +139,15 @@ def bearing_hardware(asset):
     sg = -1 if side == "LC" else 1
     zone = zone_for_x(x)
 
-    # pedestal sob o mancal, até a viga da estrutura
-    base = Z_SPLIT - 0.35 if y > Z_SPLIT else 0.35
+    # Pedestal sob o mancal. No lado acionamento ele assenta na viga da
+    # estrutura; no lado comando, onde não há estrutura na frente dos mancais,
+    # cada mancal de cima tem a sua coluna até a soleira junto ao piso. As
+    # colunas ficam no plano dos mancais, e os de cima e os de baixo estão
+    # meio passo defasados — então nenhuma coluna passa na frente de mancal.
+    if side == "LC" or y <= Z_SPLIT:
+        base = 0.35
+    else:
+        base = Z_SPLIT - 0.35
     box(
         f"ped_{cs}_{side}",
         (x, by, (base + y - 0.42) / 2),
@@ -176,19 +184,31 @@ def bearing_hardware(asset):
         zone=zone,
     )
 
-    # mangueira até o coletor: o de cima na altura da passarela, o de baixo no piso
-    top_tier = y > Z_SPLIT
-    hz = WALK_Y + 0.42 if top_tier else 0.32
+    # Condensado: um flexível curto da junta até um tubo rígido, que desce
+    # rente ao pedestal até o coletor junto ao piso. O tubo fica ao lado do
+    # pedestal, não na frente do mancal, e só se afasta para o coletor abaixo
+    # de `LC_CLEAR_Z`.
+    pipe_x = x + 0.32
+    pipe_y = by - 0.7
+    top = y - 0.42
     tube(
-        f"mangueira_{cs}",
-        [
-            (x, by - 0.97, y - 0.22),
-            (x + 0.05, by - 1.1, y - 0.55),
-            (x + 0.25, HEADER_Y, hz + 0.5),
-            (x + 0.3, HEADER_Y, hz + 0.12),
-        ],
-        0.045,
+        f"flexivel_{cs}",
+        [(x, by - 0.97, y - 0.2), (x + 0.12, by - 0.9, y - 0.36), (pipe_x, pipe_y, top)],
+        0.04,
         "mangueira",
+        zone=zone,
+        section_hidden=True,
+    )
+    poly_tube(
+        f"tubo_cond_{cs}",
+        [
+            (pipe_x, pipe_y, top),
+            (pipe_x, pipe_y, 0.6),
+            (pipe_x, HEADER_Y + 0.15, 0.6),
+            (pipe_x, HEADER_Y + 0.15, 0.32 + 0.12),
+        ],
+        0.035,
+        "tubo_vermelho",
         zone=zone,
         section_hidden=True,
     )
@@ -214,15 +234,8 @@ def felts(section_id):
         for name, row, upper in (("sup", top, True), ("inf", bottom, False)):
             if len(row) < 2:
                 continue
-            circles = geom.felt_loop(
-                row,
-                upper,
-                R,
-                M["FELT_ROLL_RISE_M"],
-                M["FELT_ROLL_RADIUS_M"],
-                M["FELT_CLEARANCE_M"],
-                M["DRYER_PITCH_M"],
-            )
+            # a mesma conta que `wet.py` confere: um laço por fileira e grupo
+            circles = wet.dryer_loops()[f"tela_{group['id']}_{name}"]
             pts = geom.belt(circles, closed=True)
             tag = f"tela_{group['id']}_{name}"
             ribbon(tag, pts, W_FELT, "feltro", 0.006, zone=f"{group['id'].lower()}")
@@ -270,43 +283,29 @@ def felts(section_id):
 
 def paper_web():
     """
-    A folha, da prensa de sapata à enroladeira.
+    A folha, do lábio da caixa de entrada à enroladeira.
 
-    A pré-secagem é percorrida começando pela fileira **inferior**, para a folha
-    sair do último cilindro **superior** e correr horizontal até a pós-secagem —
-    é o que a medida validada `DRY_SECTION_WEB_Y_M` descreve. Com 13 pares, um
-    percurso que começasse em cima terminaria embaixo.
+    Na pré-secagem a folha anda sempre para a frente, alternando os níveis, e
+    sai do último cilindro de baixo para a linha horizontal de
+    `DRY_SECTION_WEB_Y_M`, que é medida validada.
     """
     rp = R + M["PAPER_CLEARANCE_M"]
     web_y = M["DRY_SECTION_WEB_Y_M"]
 
-    press_nip = (M["PRESS_X_M"], (M["PRESS_BOTTOM_Y_M"] + M["PRESS_TOP_Y_M"]) / 2)
-    first_nip = (M["FIRST_PRESS_X_M"], (M["PRESS_BOTTOM_Y_M"] + M["PRESS_TOP_Y_M"]) / 2 - 0.6)
-
-    # a folha na parte úmida: do jato da caixa de entrada até o nip da sapata.
-    # Pontos de passagem, não abraços: a parte úmida é geometria de referência,
-    # e um abraço errado ali chamaria mais atenção que a linha certa.
-    wet = [
-        ((M["HEADBOX_X_M"] + 1.6, M["HEADBOX_Y_M"] - 0.4), 0, 1),
-        ((M["FORMING_X0_M"], M["FORMING_WIRE_Y_M"] + M["FORMING_ROLL_RADIUS_M"]), 0, 1),
-        ((-5.6, 3.86), 0, 1),
-        ((-2.8, 4.66), 0, 1),
-        (first_nip, 0, 1),
-    ]
     pre = [(a["position"][0], a["position"][1]) for a in assets("dryer-cylinder", "pre-dryer")]
     post = [(a["position"][0], a["position"][1]) for a in assets("dryer-cylinder", "post-dryer")]
     pre_top, pre_bot = geom.dryer_rows(pre, Z_TOP, Z_BOT)
     post_top, post_bot = geom.dryer_rows(post, Z_TOP, Z_BOT)
 
-    circles = [*wet, (press_nip, 0, 1)]
+    # a parte úmida vem de `wet.py`, até o rolo de transferência
+    circles = list(wet.paper_circles())
 
-    # pré-secagem: inferior primeiro, para terminar num cilindro superior
-    for i in range(len(pre_top)):
-        if i < len(pre_bot):
-            circles.append((pre_bot[i], rp, 1))
-        circles.append((pre_top[i], rp, -1))
+    # pré-secagem: serpentina para a frente, de CS2 a CS26 (ver `wet.py`)
+    pre_path = wet.pre_dryer_paper()
+    circles += pre_path
     REPORT.append(
-        f"folha · pré-secagem: entra em CS{2} (inferior) e sai de CS{len(pre_top) * 2 - 1} (superior) a {Z_TOP:.2f} m"
+        f"folha · pré-secagem: {len(pre_path)} cilindros, entra no de baixo em x {pre_path[0][0][0]:.1f} "
+        f"e sai do de baixo em x {pre_path[-1][0][0]:.1f}"
     )
 
     # trecho horizontal: scanner 1 e nip do Speed Sizer
@@ -332,12 +331,14 @@ def paper_web():
 # -------------------------------------------------------------------- capota
 def hood(span, tag):
     """
-    Capota de uma secagem: teto, parede do lado acionamento e, no lado comando,
-    painéis e portas basculantes.
+    Capota de uma secagem: teto, parede do lado acionamento e as duas
+    extremidades. O lado comando é aberto do piso ao teto — sem painel, porta,
+    batente, moldura nem faixa —, e por ele se veem os dois níveis de
+    cilindros, as telas e o vão do porão embaixo.
 
-    As portas de cima giram todas em torno da **mesma** linha de dobradiça, no
-    topo da capota. É o que deixa a cena abri-las no shader com um uniform de
-    ângulo, sem separar malha nenhuma: a linha é a mesma nas duas capotas.
+    A extremidade de entrada da pré-secagem tem uma fenda embaixo: é por ela
+    que o feltro da prensa de sapata entra com a folha até o rolo de
+    transferência.
     """
     x0, x1 = span["from"], span["to"]
     zone_mid = zone_for_x((x0 + x1) / 2)
@@ -361,37 +362,17 @@ def hood(span, tag):
             zone=zone,
         )
     for x in (x0, x1):
+        bottom = _entry_slot(x) if tag == "pre" and x == x0 else 0.0
         box(
             f"capota_ext_{tag}{x:.1f}",
-            (x, 0, HOOD_TOP / 2),
-            (0.12, 2 * Y_WALL, HOOD_TOP),
+            (x, 0, (HOOD_TOP + bottom) / 2),
+            (0.12, 2 * Y_WALL, HOOD_TOP - bottom),
             "capota_painel",
             zone=zone_for_x(x),
         )
 
-    # as portas de baixo ficam nos X dos cilindros de cima, e vice-versa
-    tops = sorted({a["position"][0] for a in _hood_cylinders(span) if a["position"][1] > Z_SPLIT})
-    bots = sorted({a["position"][0] for a in _hood_cylinders(span) if a["position"][1] <= Z_SPLIT})
-
-    _wall_fill(x0, x1, 0.0, Z_SPLIT, tops, f"{tag}inf")
-    _wall_fill(x0, x1, Z_SPLIT, HOOD_TOP, bots, f"{tag}sup")
-    for seg_x0, seg_x1 in split_by_zone(x0, x1):
-        box(
-            f"capota_faixa_{tag}_{seg_x0:.1f}",
-            ((seg_x0 + seg_x1) / 2, -Y_WALL - 0.04, Z_SPLIT),
-            (seg_x1 - seg_x0, 0.16, 0.12),
-            "capota_moldura",
-            zone=zone_for_x((seg_x0 + seg_x1) / 2),
-            section_hidden=True,
-        )
-
-    for i, x in enumerate(tops):
-        _door(x, Z_SPLIT - 0.03, Z_SPLIT - 0.08, 0.0, f"{tag}i{i}")
-    for i, x in enumerate(bots):
-        _door(x, HOOD_TOP - 0.03, HOOD_TOP - Z_SPLIT - 0.08, DOOR_OPEN_DEG, f"{tag}s{i}")
-
-    # Luminárias internas, reforçadas: com as portas de cima abertas, é por
-    # elas que se vê cilindro, mancal e tela, e nada ali pode ficar em silhueta.
+    # Luminárias internas, reforçadas: com o lado comando aberto, é por ali que
+    # se vê cilindro, mancal e tela, e nada ali pode ficar em silhueta.
     # Três linhas — alto dos dois lados e a meia altura no lado acionamento,
     # entre os dois níveis —, uma luminária a cada dois passos.
     x = x0 + 1.6
@@ -445,73 +426,31 @@ def split_by_zone(x0, x1):
     return list(zip(cuts[:-1], cuts[1:]))
 
 
-def _wall_fill(x0, x1, z0, z1, door_xs, tag):
-    edges = [x0] + [e for x in door_xs for e in (x - DOOR_W / 2, x + DOOR_W / 2)] + [x1]
-    for a, b in zip(edges[0::2], edges[1::2]):
-        if b - a <= 0.02:
-            continue
-        for sa, sb in split_by_zone(a, b):
-            box(
-                f"painel_{tag}{sa:.2f}",
-                ((sa + sb) / 2, -Y_WALL, (z0 + z1) / 2),
-                (sb - sa, 0.12, z1 - z0),
-                "capota_painel",
-                zone=zone_for_x((sa + sb) / 2),
-                section_hidden=True,
-            )
-    for x in door_xs:
-        for e in (x - DOOR_W / 2, x + DOOR_W / 2):
-            box(
-                f"batente_{tag}{e:.2f}",
-                (e, -Y_WALL - 0.08, (z0 + z1) / 2),
-                (0.08, 0.06, z1 - z0),
-                "capota_moldura",
-                zone=zone_for_x(e),
-                section_hidden=True,
-            )
-
-
-def _door(x, z_top, h, angle, tag):
+def _entry_slot(x):
     """
-    Porta basculante, com o pivô no topo, abrindo para fora.
-
-    As de cima são assadas **abertas**: é por elas que a luz do estúdio entra na
-    capota, e é assim que a cena abre. A cena as fecha no shader girando de
-    volta em torno da mesma linha de dobradiça, com `DOOR_OPEN_DEG` como zero
-    de referência.
+    Até que altura a extremidade de entrada fica aberta: o ponto mais alto em
+    que um laço da parte úmida ou a folha atravessam o plano dela, com folga.
     """
-    zone = zone_for_x(x)
-    hinge = Matrix.Translation((x, -Y_WALL - 0.1, z_top)) @ Matrix.Rotation(-radians(angle), 4, "X")
-
-    def part(nm, c, s, mat, bev=0.0):
-        box(
-            f"{nm}_{tag}",
-            (0, 0, 0),
-            s,
-            mat,
-            zone=zone,
-            bevel=bev,
-            rot=hinge @ Matrix.Translation(c),
-            section_hidden=True,
-        )
-
-    part("porta", (0, 0, -h / 2), (DOOR_W - 0.04, 0.09, h - 0.03), "capota_porta", 0.015)
-    wz0, wz1 = -0.25, -0.25 - h * 0.55
-    for cx in (-0.36, 0.36):
-        for k in range(3):
-            zc = wz0 + (wz1 - wz0) * (k + 0.5) / 3
-            part(f"vidro{cx}{k}", (cx, -0.05, zc), (0.58, 0.02, (wz0 - wz1) / 3 - 0.1), "vidro")
-    for cx in (-0.7, 0.0, 0.7):
-        part(f"montante{cx}", (cx, -0.065, (wz0 + wz1) / 2), (0.07, 0.04, wz0 - wz1 + 0.07), "porta_moldura")
-    for k in range(4):
-        zc = wz0 + (wz1 - wz0) * k / 3
-        part(f"travessa{k}", (0, -0.065, zc), (DOOR_W - 0.11, 0.04, 0.07), "porta_moldura")
-    part("puxador", (0, -0.12, -h + 0.25), (0.5, 0.05, 0.05), "porta_moldura")
+    lines = [geom.belt(c, closed=True) for _m, c in wet.loops().values()]
+    lines.append(geom.belt(wet.paper_circles(), closed=False))
+    ys = []
+    for pts in lines:
+        for (ax, ay), (bx, by) in zip(pts[:-1], pts[1:]):
+            if (ax - x) * (bx - x) <= 0 and ax != bx:
+                ys.append(ay + (by - ay) * (x - ax) / (bx - ax))
+    return (max(ys) + 0.4) if ys else 0.0
 
 
 # ------------------------------------------------- estrutura e passarela
 def frame(span, tag):
-    """Colunas e vigas que sustentam os cilindros, nos dois lados da máquina."""
+    """
+    Colunas e vigas que sustentam os cilindros.
+
+    No lado acionamento, a estrutura de sempre: colunas a cada passo e vigas em
+    três alturas. No lado comando não há coluna nem viga na frente dos mancais —
+    cada mancal tem o seu pedestal até uma soleira junto ao piso, e no alto fica
+    só a viga de borda da capota, apoiada nas paredes de topo.
+    """
     x0, x1 = span["from"], span["to"]
     pitch = M["DRYER_PITCH_M"]
     xs = []
@@ -519,99 +458,164 @@ def frame(span, tag):
     while x < x1:
         xs.append(x)
         x += pitch
-    for sg in (-1, 1):
-        y = sg * Y_COL
-        for x in xs:
-            box(
-                f"col_{tag}{x:.2f}{sg}",
-                (x, y, (HOOD_TOP - 0.6) / 2),
-                (0.28, 0.36, HOOD_TOP - 0.6),
-                "estrutura",
-                zone=zone_for_x(x),
-                section_hidden=sg < 0,
-            )
+    # O piso de operação é aberto sob a secagem: as colunas do lado
+    # acionamento descem até o térreo, e no lado comando a soleira dos
+    # pedestais assenta em pilaretes até o térreo, nos mesmos X. Todos ficam
+    # abaixo do piso de operação, longe da frente dos mancais.
+    for x in xs:
+        box(
+            f"col_{tag}{x:.2f}",
+            (x, Y_COL, (HOOD_TOP - 0.6 + GROUND) / 2),
+            (0.28, 0.36, HOOD_TOP - 0.6 - GROUND),
+            "estrutura",
+            zone=zone_for_x(x),
+        )
+        box(
+            f"pilarete_lc_{tag}{x:.2f}",
+            (x, -Y_FRAME, GROUND / 2),
+            (0.3, 0.36, -GROUND),
+            "estrutura",
+            zone=zone_for_x(x),
+            section_hidden=True,
+        )
+    for sa, sb in split_by_zone(x0, x1):
+        zone = zone_for_x((sa + sb) / 2)
         for zb in (0.18, Z_SPLIT - 0.2, HOOD_TOP - 0.6):
-            for sa, sb in split_by_zone(x0, x1):
-                box(
-                    f"viga_{tag}{zb}{sg}{sa:.1f}",
-                    ((sa + sb) / 2, y, zb),
-                    (sb - sa, 0.36, 0.34),
-                    "estrutura",
-                    zone=zone_for_x((sa + sb) / 2),
-                    section_hidden=sg < 0,
-                )
+            box(
+                f"viga_{tag}{zb}{sa:.1f}",
+                ((sa + sb) / 2, Y_COL, zb),
+                (sb - sa, 0.36, 0.34),
+                "estrutura",
+                zone=zone,
+            )
+        # lado comando: soleira no plano dos mancais e viga de borda da capota
+        box(
+            f"soleira_{tag}{sa:.1f}",
+            ((sa + sb) / 2, -Y_FRAME, 0.18),
+            (sb - sa, 0.4, 0.34),
+            "estrutura",
+            zone=zone,
+            section_hidden=True,
+        )
+        box(
+            f"viga_borda_{tag}{sa:.1f}",
+            ((sa + sb) / 2, -Y_WALL, HOOD_TOP - 0.15),
+            (sb - sa, 0.3, 0.3),
+            "estrutura",
+            zone=zone,
+            section_hidden=True,
+        )
 
 
-def walkway(span, tag):
-    """Passarela de operação no lado comando, com guarda-corpo."""
-    x0, x1 = span["from"], span["to"]
-    y0, y1 = -WALK_Z0, -WALK_Z1
+def walkway(x0, x1, tag, stair=True):
+    """
+    Passarela de operação no lado acionamento, com guarda-corpo e escada.
+
+    A escada sobe do piso de operação ao longo da máquina e chega na cabeceira
+    da passarela, dentro da mesma faixa — não avança para o lado de fora.
+    """
+    y0, y1 = WALK_Z0, WALK_Z1
     for sa, sb in split_by_zone(x0, x1):
         zone = zone_for_x((sa + sb) / 2)
         box(
             f"passarela_{tag}{sa:.1f}",
             ((sa + sb) / 2, (y0 + y1) / 2, WALK_Y - 0.04),
-            (sb - sa, abs(y0 - y1), 0.08),
+            (sb - sa, y1 - y0, 0.08),
             "passarela",
             zone=zone,
-            section_hidden=True,
         )
-        for yy in (y0 - 0.05, y1 + 0.05):
+        for yy in (y0 + 0.05, y1 - 0.05):
             box(
                 f"pass_viga_{tag}{sa:.1f}{yy:.1f}",
                 ((sa + sb) / 2, yy, WALK_Y - 0.2),
                 (sb - sa, 0.1, 0.24),
                 "estrutura",
                 zone=zone,
-                section_hidden=True,
             )
         for zz in (WALK_Y + 1.1, WALK_Y + 0.55):
             poly_tube(
                 f"gc_rail_{tag}{sa:.1f}{zz:.2f}",
-                [(sa, y1 + 0.05, zz), (sb, y1 + 0.05, zz)],
+                [(sa, y1 - 0.05, zz), (sb, y1 - 0.05, zz)],
                 0.024,
                 "guarda_corpo",
                 zone=zone,
-                section_hidden=True,
             )
+        box(
+            f"gc_rodape_{tag}{sa:.1f}",
+            ((sa + sb) / 2, y1 - 0.05, WALK_Y + 0.06),
+            (sb - sa, 0.02, 0.12),
+            "guarda_corpo",
+            zone=zone,
+        )
     x = x0
     while x <= x1 + 1e-6:
         poly_tube(
             f"gc_post_{tag}{x:.1f}",
-            [(x, y1 + 0.05, WALK_Y), (x, y1 + 0.05, WALK_Y + 1.1)],
+            [(x, y1 - 0.05, WALK_Y), (x, y1 - 0.05, WALK_Y + 1.1)],
             0.024,
             "guarda_corpo",
             zone=zone_for_x(x),
-            section_hidden=True,
         )
         x += 1.3
-    # colunas da passarela
+    # colunas da passarela, dos dois lados da faixa
     x = x0 + 0.3
     while x < x1:
-        box(
-            f"pass_col_{tag}{x:.1f}",
-            (x, y1 + 0.1, WALK_Y / 2 - 0.1),
-            (0.14, 0.14, WALK_Y - 0.2),
-            "estrutura",
-            zone=zone_for_x(x),
-            section_hidden=True,
-        )
+        for yy in (y0 + 0.1, y1 - 0.1):
+            box(
+                f"pass_col_{tag}{x:.1f}{yy:.1f}",
+                (x, yy, WALK_Y / 2 - 0.1),
+                (0.14, 0.14, WALK_Y - 0.2),
+                "estrutura",
+                zone=zone_for_x(x),
+            )
         x += 2.6
+    if stair:
+        _walkway_stair(x0, tag)
+
+
+def _walkway_stair(x_top, tag):
+    """Escada do piso de operação até a cabeceira da passarela, subindo em +X."""
+    n = 17
+    rise = WALK_Y / n
+    run = 0.26
+    yc = (WALK_Z0 + WALK_Z1) / 2
+    width = min(1.0, WALK_Z1 - WALK_Z0 - 0.2)
+    x_foot = x_top - run * n
+    zone = zone_for_x(x_top - run * n / 2)
+    for k in range(n):
+        box(
+            f"pass_degrau_{tag}{k}",
+            (x_foot + run * (k + 0.5), yc, rise * (k + 1) - 0.03),
+            (run + 0.02, width, 0.05),
+            "passarela",
+            zone=zone,
+        )
+    length = ((run * n) ** 2 + WALK_Y**2) ** 0.5
+    ang = -atan2(WALK_Y, run * n)
+    for sg in (-1, 1):
+        yy = yc + sg * (width / 2 + 0.05)
+        box(
+            f"pass_banzo_{tag}{sg}",
+            (x_foot + run * n / 2, yy, WALK_Y / 2),
+            (length, 0.08, 0.24),
+            "estrutura",
+            zone=zone,
+            rot=Matrix.Rotation(ang, 4, "Y"),
+        )
+        poly_tube(
+            f"pass_corrimao_{tag}{sg}",
+            [(x_foot, yy, 1.0), (x_top, yy, WALK_Y + 1.0)],
+            0.024,
+            "guarda_corpo",
+            zone=zone,
+        )
 
 
 def steam_headers(span, tag):
-    """Coletores de vapor e de condensado ao longo da secagem, no lado comando."""
+    """Coletores de vapor e de condensado ao longo da secagem, no lado comando, junto ao piso."""
     x0, x1 = span["from"] - 0.2, span["to"] + 0.2
     for sa, sb in split_by_zone(x0, x1):
         zone = zone_for_x((sa + sb) / 2)
-        poly_tube(
-            f"coletor_vapor_sup_{tag}{sa:.1f}",
-            [(sa, HEADER_Y, WALK_Y + 0.42), (sb, HEADER_Y, WALK_Y + 0.42)],
-            0.13,
-            "tubo_isolado",
-            zone=zone,
-            section_hidden=True,
-        )
         poly_tube(
             f"coletor_cond_inf_{tag}{sa:.1f}",
             [(sa, HEADER_Y, 0.32), (sb, HEADER_Y, 0.32)],
@@ -638,5 +642,4 @@ def drying_section(section_id, span, tag):
     felts(section_id)
     hood(span, tag)
     frame(span, tag)
-    walkway(span, tag)
     steam_headers(span, tag)

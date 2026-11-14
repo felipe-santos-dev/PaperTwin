@@ -34,11 +34,17 @@ export const BEARING_Z_M = WEB_WIDTH_M / 2 + 0.3;
 /** Raio da carcaça do mancal, como fração do raio do corpo que ele sustenta. */
 export const BEARING_RADIUS_RATIO = 0.55;
 
-/** Prensas — só o par de saída, que serve de contexto para a parte seca. */
+/**
+ * Prensa de sapata, a última prensa antes da secagem.
+ *
+ * Contra-rolo embaixo e, em cima, o rolo de sapata com a manta — maior que o
+ * contra-rolo, que é o que a distingue da primeira prensa à primeira vista.
+ */
 export const PRESS_X_M = 8;
 export const PRESS_ROLL_RADIUS_M = 0.95;
+export const SHOE_ROLL_RADIUS_M = 1.25;
 export const PRESS_BOTTOM_Y_M = 4.2;
-export const PRESS_TOP_Y_M = 6.1;
+export const PRESS_TOP_Y_M = PRESS_BOTTOM_Y_M + PRESS_ROLL_RADIUS_M + SHOE_ROLL_RADIUS_M;
 
 /** Pré-secagem. */
 export const PRE_DRYER_X0_M = 15;
@@ -115,34 +121,74 @@ export const FELT_CLEARANCE_M = 0.016;
 export const PAPER_CLEARANCE_M = 0.004;
 
 /**
- * Parte úmida — só geometria, sem ativo nem tag.
+ * Parte úmida, na ordem do processo.
  *
- * As formas vêm de `reference/prototypes/mp1-parte-umida.html`, deslocadas em X
- * para o referencial da parte seca: o terceiro par de prensas daquele protótipo
- * é o par que já mora em `PRESS_X_M`, e o deslocamento sai dessa coincidência.
- *
- * O par de `PRESS_X_M` é desenhado como prensa de sapata — o rolo de cima ganha
+ * Caixa de entrada, gap former, pick-up, primeira prensa e prensa de sapata. O
+ * par de `PRESS_X_M` é desenhado como prensa de sapata — o rolo de cima ganha
  * a sapata e a correia —, e a primeira prensa fica em `FIRST_PRESS_X_M`.
+ *
+ * Gap former: as duas telas se encontram sobre o rolo formador, com o jato da
+ * caixa de entrada entrando na cunha entre elas. A tela de baixo envolve o
+ * rolo formador e o couch; a de cima chega do rolo cabeceira, corre junto até
+ * se separar antes do pick-up. Entre os dois rolos as telas correm juntas e na
+ * horizontal, em `WIRE_RUN_Y_M`, e é nessa linha que o pick-up tira a folha.
  */
-export const HEADBOX_X_M = -12.6;
-export const HEADBOX_Y_M = 2.2;
+/**
+ * Caixa de entrada: centro do corpo e inclinação.
+ *
+ * O corpo fica embaixo da tela de cima, inclinado com ela, e o bocal entra na
+ * cunha entre a tela de cima e o rolo formador. `tools/scene-bake/wet.py`
+ * calcula esta pose a partir dos rolos e confere que o lábio caiu na cunha.
+ */
+export const HEADBOX_X_M = -12.41;
+export const HEADBOX_Y_M = 1.56;
+export const HEADBOX_TILT_DEG = 20.9;
 
-/** Rolo de peito, onde o jato encontra a tela de formação. */
-export const FORMING_X0_M = -10.2;
-export const FORMING_LENGTH_M = 8.4;
-export const FORMING_ROLL_RADIUS_M = 0.55;
-export const FORMING_WIRE_Y_M = 2.6;
+/** Rolo formador de sucção: as duas telas se encontram sobre ele. */
+export const FORMING_ROLL_X_M = -9.8;
+export const FORMING_ROLL_Y_M = 2.3;
+export const FORMING_ROLL_RADIUS_M = 0.8;
 
+/** Altura em que as duas telas correm juntas, do rolo formador ao couch. */
+export const WIRE_RUN_Y_M = FORMING_ROLL_Y_M + FORMING_ROLL_RADIUS_M;
+
+/**
+ * Rolo cabeceira da tela de cima, atrás e abaixo do ponto de encontro.
+ *
+ * A tela de cima precisa chegar **subindo** ao rolo formador para tocá-lo antes
+ * do topo; vinda de cima, ela só encostaria depois do topo e daria a volta no
+ * rolo. Por isso o cabeceira fica baixo, atrás da caixa de entrada.
+ */
+export const BREAST_ROLL_X_M = -14.0;
+export const BREAST_ROLL_Y_M = 2.0;
+export const BREAST_ROLL_RADIUS_M = 0.4;
+
+/** Rolo couch, fim da tela de baixo, com o topo na linha das telas. */
+export const COUCH_ROLL_X_M = -3.0;
+export const COUCH_ROLL_RADIUS_M = 0.8;
+export const COUCH_ROLL_Y_M = WIRE_RUN_Y_M - COUCH_ROLL_RADIUS_M;
+
+/**
+ * Pick-up: encosta na folha sobre a tela, pouco antes do couch.
+ *
+ * Fica uma folga de desenho acima da linha das telas — a mesma das telas da
+ * secagem —, para tela, folha e feltro caberem empilhados sob ele.
+ */
+export const PICKUP_ROLL_X_M = -3.9;
+export const PICKUP_ROLL_RADIUS_M = 0.4;
+export const PICKUP_ROLL_Y_M = WIRE_RUN_Y_M + FELT_CLEARANCE_M + PICKUP_ROLL_RADIUS_M;
+
+/** Primeira prensa: dois rolos encostados, nip entre eles. */
 export const FIRST_PRESS_X_M = 4.2;
 export const FIRST_PRESS_ROLL_RADIUS_M = 0.9;
+export const FIRST_PRESS_BOTTOM_Y_M = 3.6;
+export const FIRST_PRESS_TOP_Y_M = FIRST_PRESS_BOTTOM_Y_M + 2 * FIRST_PRESS_ROLL_RADIUS_M;
 
 /** Comprimento do nip da sapata: é o que distingue a prensa de sapata de um nip comum. */
 export const SHOE_PRESS_NIP_LENGTH_M = 0.25;
 
-/** Os três níveis de plataforma da parte úmida, acima do piso de operação. */
-export const WET_PLATFORM_Y_M = [3.4, 6.8, 10.2] as const;
-export const WET_PLATFORM_Z0_M = 4.7;
-export const WET_PLATFORM_Z1_M = 7.1;
+/** Rolos-guia das telas e dos feltros da parte úmida. */
+export const WET_GUIDE_ROLL_RADIUS_M = 0.3;
 
 /**
  * Prédio em níveis.
@@ -196,7 +242,14 @@ export const MEZZANINE_COLUMN_PITCH_M = 6;
 /** Escada entre o térreo e o piso de operação, num trecho de piso fechado. */
 export const GROUND_STAIR_X_M = PRE_DRYER_HOOD.from - 3.5;
 
-/** Passarela de operação da secagem, no nível que o protótipo de teste já usa. */
+/**
+ * Passarela de operação, no nível que o protótipo de teste já usa.
+ *
+ * Corre no lado acionamento — `WALKWAY_Z0_M` e `WALKWAY_Z1_M` são distâncias ao
+ * centro da máquina, e o lado é o do acionamento. O lado comando fica livre
+ * para quem olha os mancais. Na parte úmida a mesma passarela serve de
+ * plataforma de acesso, contínua até a pré-secagem.
+ */
 export const WALKWAY_Y_M = 3.35;
 export const WALKWAY_Z0_M = 5.75;
 export const WALKWAY_Z1_M = 7.0;

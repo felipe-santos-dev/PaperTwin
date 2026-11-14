@@ -13,8 +13,6 @@ export interface SceneState {
   readonly hover: (tag: AssetTag | null) => void;
   /** Falso congela a máquina, para examinar um ponto parado. */
   readonly playing: boolean;
-  /** Portas da capota abertas, mostrando os cilindros por dentro. */
-  readonly doorsOpen: boolean;
 }
 
 const SceneContext = createContext<SceneState>({
@@ -23,7 +21,6 @@ const SceneContext = createContext<SceneState>({
   hoveredTag: null,
   hover: () => undefined,
   playing: true,
-  doorsOpen: true,
 });
 
 export function SceneProvider({ value, children }: { value: SceneState; children: ReactNode }) {

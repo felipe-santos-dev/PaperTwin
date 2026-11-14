@@ -16,7 +16,188 @@
     "id": "forming",
     "label": "Formação",
     "order": 2,
-    "assets": []
+    "assets": [
+     {
+      "tag": "MP1-FOR-RCB",
+      "kind": "roll",
+      "label": "Rolo cabeceira",
+      "section": "forming",
+      "position": [
+       -14,
+       2,
+       0
+      ],
+      "radius": 0.4,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": null,
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-FOR-RCB-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Rolo cabeceira",
+      "section": "forming",
+      "position": [
+       -14,
+       2,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-FOR-RCB",
+      "steamGroup": null,
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-FOR-RCB-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Rolo cabeceira",
+      "section": "forming",
+      "position": [
+       -14,
+       2,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-FOR-RCB",
+      "steamGroup": null,
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-FOR-RFS",
+      "kind": "roll",
+      "label": "Rolo formador de sucção",
+      "section": "forming",
+      "position": [
+       -9.8,
+       2.3,
+       0
+      ],
+      "radius": 0.8,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": null,
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-FOR-RFS-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Rolo formador de sucção",
+      "section": "forming",
+      "position": [
+       -9.8,
+       2.3,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-FOR-RFS",
+      "steamGroup": null,
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-FOR-RFS-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Rolo formador de sucção",
+      "section": "forming",
+      "position": [
+       -9.8,
+       2.3,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-FOR-RFS",
+      "steamGroup": null,
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-FOR-RCO",
+      "kind": "roll",
+      "label": "Rolo couch",
+      "section": "forming",
+      "position": [
+       -3,
+       2.3,
+       0
+      ],
+      "radius": 0.8,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": null,
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-FOR-RCO-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Rolo couch",
+      "section": "forming",
+      "position": [
+       -3,
+       2.3,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-FOR-RCO",
+      "steamGroup": null,
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-FOR-RCO-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Rolo couch",
+      "section": "forming",
+      "position": [
+       -3,
+       2.3,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-FOR-RCO",
+      "steamGroup": null,
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     }
+    ]
    },
    {
     "id": "press",
@@ -24,9 +205,207 @@
     "order": 3,
     "assets": [
      {
+      "tag": "MP1-PRE-RPU",
+      "kind": "roll",
+      "label": "Rolo pick-up",
+      "section": "press",
+      "position": [
+       -3.9,
+       3.5159999999999996,
+       0
+      ],
+      "radius": 0.4,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": null,
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-PRE-RPU-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Rolo pick-up",
+      "section": "press",
+      "position": [
+       -3.9,
+       3.5159999999999996,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-PRE-RPU",
+      "steamGroup": null,
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-PRE-RPU-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Rolo pick-up",
+      "section": "press",
+      "position": [
+       -3.9,
+       3.5159999999999996,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-PRE-RPU",
+      "steamGroup": null,
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-PRE-P1I",
+      "kind": "roll",
+      "label": "Primeira prensa · rolo inferior",
+      "section": "press",
+      "position": [
+       4.2,
+       3.6,
+       0
+      ],
+      "radius": 0.9,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": null,
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-PRE-P1I-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Primeira prensa · rolo inferior",
+      "section": "press",
+      "position": [
+       4.2,
+       3.6,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-PRE-P1I",
+      "steamGroup": null,
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-PRE-P1I-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Primeira prensa · rolo inferior",
+      "section": "press",
+      "position": [
+       4.2,
+       3.6,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-PRE-P1I",
+      "steamGroup": null,
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-PRE-P1S",
+      "kind": "roll",
+      "label": "Primeira prensa · rolo superior",
+      "section": "press",
+      "position": [
+       4.2,
+       5.4,
+       0
+      ],
+      "radius": 0.9,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": null,
+      "iso": null,
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-PRE-P1S-MLA",
+      "kind": "bearing",
+      "label": "Mancal LA · Primeira prensa · rolo superior",
+      "section": "press",
+      "position": [
+       4.2,
+       5.4,
+       -4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LA",
+      "parentTag": "MP1-PRE-P1S",
+      "steamGroup": null,
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-PRE-P1S-MLC",
+      "kind": "bearing",
+      "label": "Mancal LC · Primeira prensa · rolo superior",
+      "section": "press",
+      "position": [
+       4.2,
+       5.4,
+       4.3
+      ],
+      "radius": null,
+      "lengthM": null,
+      "side": "LC",
+      "parentTag": "MP1-PRE-P1S",
+      "steamGroup": null,
+      "iso": {
+       "group": "group2",
+       "support": "rigid"
+      },
+      "source": "assumed"
+     },
+     {
+      "tag": "MP1-PRE-NIP1",
+      "kind": "nip",
+      "label": "Nip da primeira prensa",
+      "section": "press",
+      "position": [
+       4.2,
+       4.5,
+       0
+      ],
+      "radius": null,
+      "lengthM": 8,
+      "side": null,
+      "parentTag": null,
+      "steamGroup": null,
+      "iso": null,
+      "source": "assumed"
+     },
+     {
       "tag": "MP1-PRE-R1",
       "kind": "roll",
-      "label": "Rolo de prensa inferior",
+      "label": "Contra-rolo da prensa de sapata",
       "section": "press",
       "position": [
        8,
@@ -44,7 +423,7 @@
      {
       "tag": "MP1-PRE-R1-MLA",
       "kind": "bearing",
-      "label": "Mancal LA · Rolo de prensa inferior",
+      "label": "Mancal LA · Contra-rolo da prensa de sapata",
       "section": "press",
       "position": [
        8,
@@ -65,7 +444,7 @@
      {
       "tag": "MP1-PRE-R1-MLC",
       "kind": "bearing",
-      "label": "Mancal LC · Rolo de prensa inferior",
+      "label": "Mancal LC · Contra-rolo da prensa de sapata",
       "section": "press",
       "position": [
        8,
@@ -86,14 +465,14 @@
      {
       "tag": "MP1-PRE-R2",
       "kind": "roll",
-      "label": "Rolo de prensa superior",
+      "label": "Rolo de sapata",
       "section": "press",
       "position": [
        8,
-       6.1,
+       6.4,
        0
       ],
-      "radius": 0.95,
+      "radius": 1.25,
       "lengthM": 8,
       "side": null,
       "parentTag": null,
@@ -104,11 +483,11 @@
      {
       "tag": "MP1-PRE-R2-MLA",
       "kind": "bearing",
-      "label": "Mancal LA · Rolo de prensa superior",
+      "label": "Mancal LA · Rolo de sapata",
       "section": "press",
       "position": [
        8,
-       6.1,
+       6.4,
        -4.3
       ],
       "radius": null,
@@ -125,11 +504,11 @@
      {
       "tag": "MP1-PRE-R2-MLC",
       "kind": "bearing",
-      "label": "Mancal LC · Rolo de prensa superior",
+      "label": "Mancal LC · Rolo de sapata",
       "section": "press",
       "position": [
        8,
-       6.1,
+       6.4,
        4.3
       ],
       "radius": null,
@@ -146,7 +525,7 @@
      {
       "tag": "MP1-PRE-NIP",
       "kind": "nip",
-      "label": "Nip de prensa",
+      "label": "Nip da prensa de sapata",
       "section": "press",
       "position": [
        8,
@@ -2787,13 +3166,19 @@
  "measurements": {
   "BEARING_RADIUS_RATIO": 0.55,
   "BEARING_Z_M": 4.3,
-  "BUILDING_X0_M": -26.6,
+  "BREAST_ROLL_RADIUS_M": 0.4,
+  "BREAST_ROLL_X_M": -14,
+  "BREAST_ROLL_Y_M": 2,
+  "BUILDING_X0_M": -26.41,
   "BUILDING_X1_M": 104.5,
   "BUILDING_Z_LA_M": -18,
   "BUILDING_Z_LC_M": 19,
   "CALENDER_NIP_Y_M": 3.4,
   "CALENDER_ROLL_RADIUS_M": 0.8,
   "CALENDER_X_M": 74.5,
+  "COUCH_ROLL_RADIUS_M": 0.8,
+  "COUCH_ROLL_X_M": -3,
+  "COUCH_ROLL_Y_M": 2.3,
   "DRYER_BOTTOM_Y_M": 3,
   "DRYER_PITCH_M": 2.2,
   "DRYER_RADIUS_M": 1.05,
@@ -2802,17 +3187,19 @@
   "FELT_CLEARANCE_M": 0.016,
   "FELT_ROLL_RADIUS_M": 0.15,
   "FELT_ROLL_RISE_M": 0.62,
+  "FIRST_PRESS_BOTTOM_Y_M": 3.6,
   "FIRST_PRESS_ROLL_RADIUS_M": 0.9,
+  "FIRST_PRESS_TOP_Y_M": 5.4,
   "FIRST_PRESS_X_M": 4.2,
   "FLOOR_OPENING_MARGIN_M": 0.6,
-  "FORMING_LENGTH_M": 8.4,
-  "FORMING_ROLL_RADIUS_M": 0.55,
-  "FORMING_WIRE_Y_M": 2.6,
-  "FORMING_X0_M": -10.2,
+  "FORMING_ROLL_RADIUS_M": 0.8,
+  "FORMING_ROLL_X_M": -9.8,
+  "FORMING_ROLL_Y_M": 2.3,
   "GROUND_FLOOR_Y_M": -6,
   "GROUND_STAIR_X_M": 9.7,
-  "HEADBOX_X_M": -12.6,
-  "HEADBOX_Y_M": 2.2,
+  "HEADBOX_TILT_DEG": 20.9,
+  "HEADBOX_X_M": -12.41,
+  "HEADBOX_Y_M": 1.56,
   "MEZZANINE_COLUMN_PITCH_M": 6,
   "OPERATING_FLOOR_OPENINGS": [
    {
@@ -2830,6 +3217,9 @@
   ],
   "OPERATING_FLOOR_THICKNESS_M": 0.35,
   "PAPER_CLEARANCE_M": 0.004,
+  "PICKUP_ROLL_RADIUS_M": 0.4,
+  "PICKUP_ROLL_X_M": -3.9,
+  "PICKUP_ROLL_Y_M": 3.5159999999999996,
   "POPE_DRUM_RADIUS_M": 0.8,
   "POPE_DRUM_Y_M": 3.6,
   "POPE_PIT_HALF_M": 3.2,
@@ -2842,7 +3232,7 @@
   "POST_DRYER_X0_M": 58.7,
   "PRESS_BOTTOM_Y_M": 4.2,
   "PRESS_ROLL_RADIUS_M": 0.95,
-  "PRESS_TOP_Y_M": 6.1,
+  "PRESS_TOP_Y_M": 6.4,
   "PRESS_X_M": 8,
   "PRE_DRYER_HOOD": {
    "from": 13.2,
@@ -2854,19 +3244,15 @@
   "SCANNER_2_X_M": 79,
   "SCANNER_2_Y_M": 3.4,
   "SHOE_PRESS_NIP_LENGTH_M": 0.25,
+  "SHOE_ROLL_RADIUS_M": 1.25,
   "SIZER_ROLL_RADIUS_M": 1.15,
   "SIZER_X_M": 53.2,
   "WALKWAY_Y_M": 3.35,
   "WALKWAY_Z0_M": 5.75,
   "WALKWAY_Z1_M": 7,
   "WEB_WIDTH_M": 8,
-  "WET_PLATFORM_Y_M": [
-   3.4,
-   6.8,
-   10.2
-  ],
-  "WET_PLATFORM_Z0_M": 4.7,
-  "WET_PLATFORM_Z1_M": 7.1
+  "WET_GUIDE_ROLL_RADIUS_M": 0.3,
+  "WIRE_RUN_Y_M": 3.0999999999999996
  },
  "zones": [
   {
@@ -2875,7 +3261,7 @@
    "group": "machine",
    "lightmap": 2048,
    "span": {
-    "from": -26.6,
+    "from": -26.41,
     "to": 0
    }
   },

@@ -2,14 +2,30 @@ import type { SectionId } from '../asset';
 import { DRYER_BEARING_ISO, type IsoClass } from '../iso20816';
 import {
   BEARING_Z_M,
+  BREAST_ROLL_RADIUS_M,
+  BREAST_ROLL_X_M,
+  BREAST_ROLL_Y_M,
   CALENDER_NIP_Y_M,
   CALENDER_ROLL_RADIUS_M,
   CALENDER_X_M,
+  COUCH_ROLL_RADIUS_M,
+  COUCH_ROLL_X_M,
+  COUCH_ROLL_Y_M,
   DRY_SECTION_WEB_Y_M,
   DRYER_BOTTOM_Y_M,
   DRYER_RADIUS_M,
   DRYER_TOP_Y_M,
   dryerPairX,
+  FIRST_PRESS_BOTTOM_Y_M,
+  FIRST_PRESS_ROLL_RADIUS_M,
+  FIRST_PRESS_TOP_Y_M,
+  FIRST_PRESS_X_M,
+  FORMING_ROLL_RADIUS_M,
+  FORMING_ROLL_X_M,
+  FORMING_ROLL_Y_M,
+  PICKUP_ROLL_RADIUS_M,
+  PICKUP_ROLL_X_M,
+  PICKUP_ROLL_Y_M,
   POPE_DRUM_RADIUS_M,
   POPE_DRUM_Y_M,
   POPE_X_M,
@@ -22,6 +38,7 @@ import {
   PRESS_TOP_Y_M,
   PRESS_X_M,
   SCANNER_1_X_M,
+  SHOE_ROLL_RADIUS_M,
   SCANNER_2_X_M,
   SCANNER_2_Y_M,
   SIZER_ROLL_RADIUS_M,
@@ -188,38 +205,117 @@ function dryerCylinders(
   return cylinders;
 }
 
+/**
+ * Formação: os três rolos principais do gap former.
+ *
+ * Supostos todos — o arranjo é o de um gap former genérico, desenhado para a
+ * cena ficar legível, e os diâmetros e posições reais saem do mapa de rolos.
+ */
+const formingSection: MachineSection = {
+  id: 'forming',
+  label: 'Formação',
+  order: 2,
+  assets: withBearings([
+    body({
+      tag: 'MP1-FOR-RCB',
+      kind: 'roll',
+      label: 'Rolo cabeceira',
+      section: 'forming',
+      position: [BREAST_ROLL_X_M, BREAST_ROLL_Y_M, 0],
+      radius: BREAST_ROLL_RADIUS_M,
+      source: 'assumed',
+    }),
+    body({
+      tag: 'MP1-FOR-RFS',
+      kind: 'roll',
+      label: 'Rolo formador de sucção',
+      section: 'forming',
+      position: [FORMING_ROLL_X_M, FORMING_ROLL_Y_M, 0],
+      radius: FORMING_ROLL_RADIUS_M,
+      source: 'assumed',
+    }),
+    body({
+      tag: 'MP1-FOR-RCO',
+      kind: 'roll',
+      label: 'Rolo couch',
+      section: 'forming',
+      position: [COUCH_ROLL_X_M, COUCH_ROLL_Y_M, 0],
+      radius: COUCH_ROLL_RADIUS_M,
+      source: 'assumed',
+    }),
+  ]),
+};
+
 const pressSection: MachineSection = {
   id: 'press',
   label: 'Prensas',
   order: 3,
-  assets: withBearings([
-    body({
-      tag: 'MP1-PRE-R1',
-      kind: 'roll',
-      label: 'Rolo de prensa inferior',
-      section: 'press',
-      position: [PRESS_X_M, PRESS_BOTTOM_Y_M, 0],
-      radius: PRESS_ROLL_RADIUS_M,
-      source: 'assumed',
-    }),
-    body({
-      tag: 'MP1-PRE-R2',
-      kind: 'roll',
-      label: 'Rolo de prensa superior',
-      section: 'press',
-      position: [PRESS_X_M, PRESS_TOP_Y_M, 0],
-      radius: PRESS_ROLL_RADIUS_M,
-      source: 'assumed',
-    }),
-  ]).concat(
+  assets: [
+    ...withBearings([
+      body({
+        tag: 'MP1-PRE-RPU',
+        kind: 'roll',
+        label: 'Rolo pick-up',
+        section: 'press',
+        position: [PICKUP_ROLL_X_M, PICKUP_ROLL_Y_M, 0],
+        radius: PICKUP_ROLL_RADIUS_M,
+        source: 'assumed',
+      }),
+      body({
+        tag: 'MP1-PRE-P1I',
+        kind: 'roll',
+        label: 'Primeira prensa · rolo inferior',
+        section: 'press',
+        position: [FIRST_PRESS_X_M, FIRST_PRESS_BOTTOM_Y_M, 0],
+        radius: FIRST_PRESS_ROLL_RADIUS_M,
+        source: 'assumed',
+      }),
+      body({
+        tag: 'MP1-PRE-P1S',
+        kind: 'roll',
+        label: 'Primeira prensa · rolo superior',
+        section: 'press',
+        position: [FIRST_PRESS_X_M, FIRST_PRESS_TOP_Y_M, 0],
+        radius: FIRST_PRESS_ROLL_RADIUS_M,
+        source: 'assumed',
+      }),
+    ]),
     nip(
-      'MP1-PRE-NIP',
-      'Nip de prensa',
+      'MP1-PRE-NIP1',
+      'Nip da primeira prensa',
       'press',
-      [PRESS_X_M, (PRESS_BOTTOM_Y_M + PRESS_TOP_Y_M) / 2, 0],
+      [FIRST_PRESS_X_M, (FIRST_PRESS_BOTTOM_Y_M + FIRST_PRESS_TOP_Y_M) / 2, 0],
       'assumed',
     ),
-  ),
+    ...withBearings([
+      body({
+        tag: 'MP1-PRE-R1',
+        kind: 'roll',
+        label: 'Contra-rolo da prensa de sapata',
+        section: 'press',
+        position: [PRESS_X_M, PRESS_BOTTOM_Y_M, 0],
+        radius: PRESS_ROLL_RADIUS_M,
+        source: 'assumed',
+      }),
+      body({
+        tag: 'MP1-PRE-R2',
+        kind: 'roll',
+        label: 'Rolo de sapata',
+        section: 'press',
+        position: [PRESS_X_M, PRESS_TOP_Y_M, 0],
+        radius: SHOE_ROLL_RADIUS_M,
+        source: 'assumed',
+      }),
+    ]),
+    nip(
+      'MP1-PRE-NIP',
+      'Nip da prensa de sapata',
+      'press',
+      // os rolos têm raios diferentes: o nip fica no topo do contra-rolo
+      [PRESS_X_M, PRESS_BOTTOM_Y_M + PRESS_ROLL_RADIUS_M, 0],
+      'assumed',
+    ),
+  ],
 };
 
 const sizerSection: MachineSection = {
@@ -294,8 +390,9 @@ const calenderSection: MachineSection = {
 /**
  * A MP1, na ordem do processo.
  *
- * A caixa de entrada e a formação ainda não têm ativos: o protótipo da parte
- * úmida usa um referencial próprio, e amarrar os dois depende do mapa de rolos.
+ * A caixa de entrada não tem ativo: não gira e não tem mancal. Formação e
+ * prensas têm os rolos principais, com dois mancais cada; rolos-guia de tela e
+ * de feltro ficam só no desenho.
  */
 export const MP1: MachineModel = {
   id: 'MP1',
@@ -303,7 +400,7 @@ export const MP1: MachineModel = {
   webWidthM: WEB_WIDTH_M,
   sections: [
     { id: 'headbox', label: 'Caixa de entrada', order: 1, assets: [] },
-    { id: 'forming', label: 'Formação', order: 2, assets: [] },
+    formingSection,
     pressSection,
     {
       id: 'pre-dryer',

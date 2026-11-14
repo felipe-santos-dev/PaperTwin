@@ -149,19 +149,33 @@ def dryer_rows(cylinders, top_y, bottom_y):
     return top, bottom
 
 
+#: Rolos de entrada e de saída de um grupo: recuados para dentro do grupo e
+#: mais afastados da linha de centro que os de meio vão. Entre dois grupos
+#: vizinhos o vão é de um passo só, e a saída de um e a entrada do outro
+#: precisam caber lado a lado nele, sem se tocar.
+EDGE_IN = 0.25
+EDGE_RISE = 0.95
+
+
 def felt_loop(row, upper, radius, rise, roll_radius, clearance, pitch):
     """
     O percurso fechado da tela de uma fileira de cilindros secadores.
 
     Com o passo de 2,2 m e o raio de 1,05 m sobram 10 cm entre dois cilindros do
-    mesmo nível: não cabe rolo no vão. O rolo de retorno sai do vão e vai para
+    mesmo nível: não cabe rolo no vão. O rolo de meio vão sai do vão e vai para
     fora da fileira — acima da linha de centro no nível superior, abaixo dela no
-    inferior —, a meio vão e a `rise` da linha de centro.
+    inferior —, a `rise` da linha de centro.
 
-    Os rolos de entrada e de saída do grupo ficam na **mesma** altura dos de meio
-    vão, meio passo antes do primeiro cilindro e meio passo depois do último. É
-    isso que dá ao primeiro e ao último cilindro o mesmo abraço dos de dentro:
-    pondo-os mais alto, a tela desceria em cima do cilindro e o abraçaria mal.
+    Entrada e saída do grupo ficam meio passo antes do primeiro cilindro e meio
+    passo depois do último, recuadas `EDGE_IN` para dentro e a `EDGE_RISE` da
+    linha de centro. O vão entre dois grupos é o mesmo de dois cilindros
+    vizinhos; recuando, a saída de um grupo e a entrada do seguinte ficam lado
+    a lado, a meio metro uma da outra.
+
+    O retorno sobe reto da saída, volta por cima do grupo e desce reto até a
+    entrada: o laço inteiro fica dentro da faixa do seu grupo, e dois grupos
+    vizinhos nunca se cruzam. Cada tela é um laço só, que passa por todos os
+    cilindros da sua fileira no grupo.
 
     `upper` escolhe de que lado o retorno fica. Devolve a lista de círculos para
     `belt(..., closed=True)`.
@@ -170,27 +184,25 @@ def felt_loop(row, upper, radius, rise, roll_radius, clearance, pitch):
     rf = radius + clearance
     x0, y0 = row[0]
     x1, y1 = row[-1]
+    x_in = x0 - pitch / 2 + EDGE_IN
+    x_out = x1 + pitch / 2 - EDGE_IN
 
-    # entrada do grupo, na altura dos rolos de meio vão
-    circles = [((x0 - pitch / 2, y0 + sg * rise), roll_radius, sg)]
+    circles = [((x_in, y0 + sg * EDGE_RISE), roll_radius, sg)]
     for i, (x, y) in enumerate(row):
         # a tela encosta na face do cilindro pelo lado de fora da fileira
         circles.append(((x, y), rf, -sg))
         if i < len(row) - 1:
             nx = row[i + 1][0]
             circles.append((((x + nx) / 2, y + sg * rise), roll_radius, sg))
-    # saída do grupo, simétrica à entrada
-    circles.append(((x1 + pitch / 2, y1 + sg * rise), roll_radius, sg))
+    circles.append(((x_out, y1 + sg * EDGE_RISE), roll_radius, sg))
 
-    # retorno: sobe (ou desce) e volta por fora, fechando o laço
+    # retorno: sobe (ou desce) reto, volta por fora e desce reto até a entrada
     far = rise + 1.6 * radius
     back = rise + 2.7 * radius
     circles += [
-        ((x1 + pitch / 2 + 0.9 * radius, y1 + sg * far), roll_radius * 1.45, sg),
-        ((x1 + 0.6 * radius, y1 + sg * back), roll_radius * 1.45, sg),
+        ((x_out, y1 + sg * far), roll_radius * 1.45, sg),
         (((x0 + x1) / 2, y1 + sg * (back + 0.3 * radius)), roll_radius * 1.6, sg),
-        ((x0 - 0.6 * radius, y0 + sg * back), roll_radius * 1.45, sg),
-        ((x0 - pitch / 2 - 0.9 * radius, y0 + sg * far), roll_radius * 1.45, sg),
+        ((x_in, y0 + sg * far), roll_radius * 1.45, sg),
     ]
     return circles
 

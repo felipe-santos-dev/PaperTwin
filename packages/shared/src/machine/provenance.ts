@@ -38,7 +38,9 @@ const assumed = (label: string, note: string): Provenance => ({ source: 'assumed
 
 const FROM_PROTOTYPE = 'Tirado do protótipo navegável; falta conferir no mapa de rolos.';
 const WET_PROTOTYPE =
-  'Tirado de reference/prototypes/mp1-parte-umida.html, que serve de referência de forma; a parte úmida entra só como geometria, sem ativo.';
+  'Tirado de reference/prototypes/mp1-parte-umida.html, que serve de referência de forma; falta conferir no mapa de rolos.';
+const WET_LAYOUT =
+  'Arranjo de gap former desenhado para a cena ficar legível, no referencial do protótipo da parte úmida; falta o mapa de rolos.';
 const BUILDING_LAYOUT =
   'Níveis decididos para a cena: piso de operação elevado, térreo 6 m abaixo, sem galpão em volta. Não reproduz o layout da planta além disso.';
 const WALKWAY_NOTE = 'O nível que o protótipo de teste já usa, mantido de propósito.';
@@ -102,9 +104,16 @@ export const MEASUREMENTS = {
   POPE_DRUM_Y_M: assumed('Altura do tambor da enroladeira', FROM_PROTOTYPE),
   POPE_DRUM_RADIUS_M: assumed('Raio do tambor da enroladeira (0,8 m)', FROM_PROTOTYPE),
   PRESS_X_M: assumed('X do par de prensas de saída', FROM_PROTOTYPE),
-  PRESS_ROLL_RADIUS_M: assumed('Raio dos rolos de prensa (0,95 m)', FROM_PROTOTYPE),
-  PRESS_BOTTOM_Y_M: assumed('Altura do rolo de prensa inferior', FROM_PROTOTYPE),
-  PRESS_TOP_Y_M: assumed('Altura do rolo de prensa superior', FROM_PROTOTYPE),
+  PRESS_ROLL_RADIUS_M: assumed('Raio do contra-rolo da prensa de sapata (0,95 m)', FROM_PROTOTYPE),
+  SHOE_ROLL_RADIUS_M: assumed(
+    'Raio do rolo de sapata, com a manta (1,25 m)',
+    'Maior que o contra-rolo, a pedido, para a prensa de sapata se distinguir da primeira prensa; o diâmetro real falta.',
+  ),
+  PRESS_BOTTOM_Y_M: assumed('Altura do contra-rolo da prensa de sapata', FROM_PROTOTYPE),
+  PRESS_TOP_Y_M: assumed(
+    'Altura do rolo de sapata',
+    'Derivada: o rolo de sapata encosta no contra-rolo.',
+  ),
   // --- suposto: telas da secagem ---
   FELT_ROLL_RADIUS_M: assumed(
     'Raio do rolo de retorno das telas (0,15 m)',
@@ -123,22 +132,50 @@ export const MEASUREMENTS = {
     'Afastamento de desenho para a folha ficar entre o cilindro e a tela; não é medida de projeto.',
   ),
 
-  // --- suposto: parte úmida (só geometria, sem ativo) ---
-  HEADBOX_X_M: assumed('X da caixa de entrada', WET_PROTOTYPE),
-  HEADBOX_Y_M: assumed('Altura da caixa de entrada', WET_PROTOTYPE),
-  FORMING_X0_M: assumed('X do rolo de peito do gap former', WET_PROTOTYPE),
-  FORMING_LENGTH_M: assumed('Comprimento do formador de duas telas', WET_PROTOTYPE),
-  FORMING_ROLL_RADIUS_M: assumed('Raio dos rolos do formador (0,55 m)', WET_PROTOTYPE),
-  FORMING_WIRE_Y_M: assumed('Altura da tela de formação', WET_PROTOTYPE),
+  // --- suposto: parte úmida ---
+  HEADBOX_X_M: assumed('X do centro da caixa de entrada', WET_LAYOUT),
+  HEADBOX_Y_M: assumed('Altura do centro da caixa de entrada', WET_LAYOUT),
+  HEADBOX_TILT_DEG: assumed(
+    'Inclinação da caixa de entrada (20,9°)',
+    'Calculada para o bocal entrar na cunha entre a tela de cima e o rolo formador; conferida em tools/scene-bake/wet.py.',
+  ),
+  FORMING_ROLL_X_M: assumed('X do rolo formador de sucção', WET_LAYOUT),
+  FORMING_ROLL_Y_M: assumed('Altura do rolo formador de sucção', WET_LAYOUT),
+  FORMING_ROLL_RADIUS_M: assumed('Raio do rolo formador de sucção (0,8 m)', WET_LAYOUT),
+  WIRE_RUN_Y_M: assumed(
+    'Altura em que as duas telas correm juntas',
+    'Derivada: topo do rolo formador. O couch e o pick-up se apoiam nela.',
+  ),
+  BREAST_ROLL_X_M: assumed('X do rolo cabeceira', WET_LAYOUT),
+  BREAST_ROLL_Y_M: assumed('Altura do rolo cabeceira', WET_LAYOUT),
+  BREAST_ROLL_RADIUS_M: assumed('Raio do rolo cabeceira (0,4 m)', WET_LAYOUT),
+  COUCH_ROLL_X_M: assumed('X do rolo couch', WET_LAYOUT),
+  COUCH_ROLL_RADIUS_M: assumed('Raio do rolo couch (0,8 m)', WET_LAYOUT),
+  COUCH_ROLL_Y_M: assumed(
+    'Altura do rolo couch',
+    'Derivada: o topo do couch fica na linha das telas.',
+  ),
+  PICKUP_ROLL_X_M: assumed('X do rolo pick-up', WET_LAYOUT),
+  PICKUP_ROLL_RADIUS_M: assumed('Raio do rolo pick-up (0,4 m)', WET_LAYOUT),
+  PICKUP_ROLL_Y_M: assumed(
+    'Altura do rolo pick-up',
+    'Derivada: o pick-up encosta na folha sobre a tela, com a folga de desenho das telas.',
+  ),
   FIRST_PRESS_X_M: assumed('X da primeira prensa', WET_PROTOTYPE),
   FIRST_PRESS_ROLL_RADIUS_M: assumed('Raio dos rolos da primeira prensa (0,9 m)', WET_PROTOTYPE),
+  FIRST_PRESS_BOTTOM_Y_M: assumed('Altura do rolo inferior da primeira prensa', WET_PROTOTYPE),
+  FIRST_PRESS_TOP_Y_M: assumed(
+    'Altura do rolo superior da primeira prensa',
+    'Derivada: os dois rolos encostam no nip.',
+  ),
   SHOE_PRESS_NIP_LENGTH_M: assumed(
     'Comprimento do nip da prensa de sapata (0,25 m)',
     'Desenhado como prensa de sapata no par de PRESS_X_M, a pedido; o comprimento real do nip falta.',
   ),
-  WET_PLATFORM_Y_M: assumed('Os três níveis de plataforma da parte úmida', WET_PROTOTYPE),
-  WET_PLATFORM_Z0_M: assumed('Borda interna das plataformas da parte úmida', WET_PROTOTYPE),
-  WET_PLATFORM_Z1_M: assumed('Borda externa das plataformas da parte úmida', WET_PROTOTYPE),
+  WET_GUIDE_ROLL_RADIUS_M: assumed(
+    'Raio dos rolos-guia de telas e feltros da parte úmida (0,3 m)',
+    WET_LAYOUT,
+  ),
 
   // --- suposto: prédio em níveis ---
   GROUND_FLOOR_Y_M: assumed(
@@ -158,9 +195,9 @@ export const MEASUREMENTS = {
   BUILDING_Z_LC_M: assumed('Borda do piso de operação no lado comando', BUILDING_LAYOUT),
   MEZZANINE_COLUMN_PITCH_M: assumed('Passo dos pilares do mezanino', BUILDING_LAYOUT),
   GROUND_STAIR_X_M: assumed('X da escada entre o térreo e o piso de operação', BUILDING_LAYOUT),
-  WALKWAY_Y_M: assumed('Altura da passarela de operação da secagem', WALKWAY_NOTE),
-  WALKWAY_Z0_M: assumed('Borda interna da passarela da secagem', WALKWAY_NOTE),
-  WALKWAY_Z1_M: assumed('Borda externa da passarela da secagem', WALKWAY_NOTE),
+  WALKWAY_Y_M: assumed('Altura da passarela de operação, no lado acionamento', WALKWAY_NOTE),
+  WALKWAY_Z0_M: assumed('Borda interna da passarela, no lado acionamento', WALKWAY_NOTE),
+  WALKWAY_Z1_M: assumed('Borda externa da passarela, no lado acionamento', WALKWAY_NOTE),
 } as const satisfies Record<string, Provenance>;
 
 export type MeasurementId = keyof typeof MEASUREMENTS;

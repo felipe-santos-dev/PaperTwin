@@ -635,7 +635,107 @@ puxada pelo interior da capota, agora muito mais iluminado que o lado de fora
 (ref 0,35–0,62). Sobra menos faixa de bits para o exterior; nas capturas não
 aparece banda, mas é o primeiro lugar a olhar se aparecer.
 
+### Lado comando livre e parte úmida refeita
+
+Duas rodadas de revisão do Felipe, com previews e cortes aprovados antes do
+bake.
+
+**Secagem — lado comando.** A capota não tem mais nada no lado comando: saíram
+portas e painéis dos dois níveis, batentes, molduras e a faixa intermediária.
+Ficam o teto, a parede do lado acionamento e as extremidades; a de entrada da
+pré-secagem tem uma fenda embaixo para o feltro da sapata e a folha. Saíram
+também a passarela, a escada, os guarda-corpos e as colunas e vigas da frente.
+Cada mancal do lado comando tem coluna própria até uma soleira junto ao piso,
+no plano dos mancais; como os níveis são defasados meio passo, nenhuma coluna
+fica na frente de mancal. O piso é aberto sob a secagem, então colunas do lado
+acionamento e pilaretes sob a soleira descem até o térreo. O condensado sai
+por um flexível curto até um tubo rígido que desce ao lado do pedestal e só se
+afasta para o coletor abaixo de 1 m. A passarela, com escada, foi para o lado
+acionamento, contínua da parte úmida ao fim da pré-secagem; a pós-secagem tem
+a sua.
+
+Com isso saiu o controle de portas: `doorsOpen` de `sceneState`, o botão
+"Fechar portas" da tela Máquina, o giro das portas no shader e a dobradiça do
+`scene.json`.
+
+**Telas da secagem.** Os "losangos" entre grupos eram as telas de grupos
+vizinhos se cruzando: a saída de um e a entrada do outro disputavam o mesmo
+ponto, porque o vão entre grupos é de um passo só. Agora ficam lado a lado, a
+0,5 m, e o retorno sobe e desce reto dentro da faixa do próprio grupo — cada
+tela é um laço único pelos cilindros do seu grupo. Custo: o abraço no primeiro
+e no último cilindro de cada grupo cai de 90° para 69°.
+
+**Folha na pré-secagem.** Andava para trás a cada par (CS2 → CS1 → CS4 → CS3…).
+Agora vai sempre para a frente, de CS2 a CS26, e sobe para a linha de
+`DRY_SECTION_WEB_Y_M`, que não mudou. CS1 fica a montante do ponto em que a
+folha entra e só leva a tela.
+
+**Parte úmida.** Os rolos principais viraram ativos supostos, com dois mancais
+cada: `MP1-FOR-RCB`, `MP1-FOR-RFS`, `MP1-FOR-RCO`, `MP1-PRE-RPU`,
+`MP1-PRE-P1S`, `MP1-PRE-P1I`, mais o nip `MP1-PRE-NIP1` — 98 mancais no total.
+O desenho do corte lateral mora em `tools/scene-bake/wet.py`, sem Blender, e
+`python wet.py` é a conferência: nenhum laço cruza outro laço, a folha ou um
+rolo que não é dele, nenhuma caixa de drenagem atravessa uma tela, e o jato da
+caixa de entrada cai na cunha. As 12 telas da secagem entram na mesma
+conferência. Resultado atual: 18 laços, 152 rolos e cilindros, 13 caixas,
+nenhum cruzamento.
+
+- Gap former: as telas se encontram sobre o rolo formador; a de cima chega
+  subindo do rolo cabeceira, que por isso fica baixo e atrás, a (−14,0; 2,0).
+  Vindo de cima ela só tocaria o formador depois do topo e daria a volta nele.
+- Caixa de entrada inclinada 20,9°, embaixo da tela de cima, com o bocal
+  entrando na cunha paralelo a ela. A pose é calculada por `wet.py` e gravada
+  em `HEADBOX_X_M`, `HEADBOX_Y_M` e `HEADBOX_TILT_DEG`.
+- A folha vai colada na face de baixo do feltro pick-up até o nip da 1ª
+  prensa; o feltro de baixo da sapata a recebe logo na saída e a leva pelo nip
+  da sapata até um rolo de transferência dentro da capota; dali pousa na face
+  de montante do primeiro cilindro, entre ele e a tela. Vãos livres: 0,45 m
+  (jato), 1,18 m (entre prensas) e 0,90 m (até o secador).
+- Nos nips os rolos são desenhados 1,2 cm menores que no modelo, para feltro,
+  folha e feltro caberem entre eles.
+- Prensa de sapata: rolo de sapata de 1,25 m (`SHOE_ROLL_RADIUS_M`) com manta
+  verde-azulada, cilindros de carga no cavalete e contra-rolo metálico. Os
+  rótulos de `MP1-PRE-R1` e `R2` viraram "Contra-rolo da prensa de sapata" e
+  "Rolo de sapata"; as tags não mudaram.
+- Cores: tela cinza-azulada, feltro bege, folha clara. Drenagem dentro da
+  largura da tela, encostada nela e apoiada no lado acionamento. Estrutura só
+  nos dois lados; rolos-guia em balanço no lado comando. Caixas azuis viraram
+  motores com base e luva no lado acionamento.
+
+**Piso.** O concreto passou a três escalas de ruído e menos contraste; com o
+ruído a 0,35/m as manchas tinham ~3 m e liam como textura esticada. As poças
+saíram: no estúdio espelhavam o fundo escuro e, de longe, também liam como
+manchas. O lightmap do prédio continua em 2048.
+
+**Medidas.** 59 → 70, nenhuma validada alterada. Saíram as de formação
+antigas e as três das plataformas de três níveis.
+
+**Bake.** Todas as zonas — o export só inclui no GLB as zonas assadas na mesma
+rodada. Total **2553 s (~43 min)**.
+
+| zona           | tempo |
+| -------------- | ----- |
+| umida-formacao | 346 s |
+| umida-prensas  | 274 s |
+| g1             | 192 s |
+| g2             | 190 s |
+| g3             | 200 s |
+| g4             | 177 s |
+| scanner-sizer  | 364 s |
+| g5             | 206 s |
+| g6             | 226 s |
+| acabamento     | 277 s |
+| predio         | 101 s |
+
+`public/scene/` com **3,59 MB**: `mp1.glb` 1,76 MB e 11 WebP com 1,83 MB.
+
+**Verificado.** `python tools/scene-bake/wet.py` sem cruzamento; capturas
+1920 × 1080 das 11 vistas; e2e 8/8; build de produção; lint; testes do
+`shared` (231), da web (102) e da API. Dois testes da tela Processo falharam
+uma vez com a CPU tomada pelo bake e passaram na repetição — a tela não foi
+tocada.
+
 ## Próximo passo exato
 
-Revisão das capturas da direção de estúdio pelo Felipe. Em aberto, de antes:
-cor dos mancais pela zona ISO, que depende de uma busca no back-end.
+Revisão das capturas pelo Felipe. Em aberto, de antes: cor dos mancais pela
+zona ISO, que depende de uma busca no back-end.

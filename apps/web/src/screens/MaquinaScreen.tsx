@@ -39,7 +39,6 @@ export function MaquinaScreen({ gateway, assetTag, onSelect }: MaquinaScreenProp
   );
   const [hoveredTag, setHoveredTag] = useState<AssetTag | null>(null);
   const [playing, setPlaying] = useState(true);
-  const [doorsOpen, setDoorsOpen] = useState(true);
 
   const select = useCallback(
     (tag: AssetTag | null) => {
@@ -55,8 +54,8 @@ export function MaquinaScreen({ gateway, assetTag, onSelect }: MaquinaScreenProp
   }, []);
 
   const sceneState: SceneState = useMemo(
-    () => ({ selectedTag: assetTag, select, hoveredTag, hover, playing, doorsOpen }),
-    [assetTag, select, hoveredTag, hover, playing, doorsOpen],
+    () => ({ selectedTag: assetTag, select, hoveredTag, hover, playing }),
+    [assetTag, select, hoveredTag, hover, playing],
   );
 
   /**
@@ -85,16 +84,6 @@ export function MaquinaScreen({ gateway, assetTag, onSelect }: MaquinaScreenProp
         aside={`· ${String(MP1.sections.length)} seções`}
         actions={
           <div className="flex flex-wrap gap-1.5">
-            <button
-              type="button"
-              onClick={() => {
-                setDoorsOpen((open) => !open);
-              }}
-              aria-pressed={!doorsOpen}
-              className="min-h-11 rounded border border-mill-line px-3 py-1.5 text-sm text-mill-fg transition-colors hover:bg-white/5"
-            >
-              {doorsOpen ? 'Fechar portas' : 'Abrir portas'}
-            </button>
             <button
               type="button"
               onClick={() => {

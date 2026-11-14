@@ -23,7 +23,8 @@ import {
 import type { FloatUniform } from './tsl/materials';
 
 /**
- * O que se mexe na cena: o vapor saindo pelas portas abertas da capota.
+ * O que se mexe na cena: o vapor saindo pelo lado comando da capota, que é
+ * aberto da faixa intermediária para cima.
  *
  * Discreto de propósito. A cena é de estúdio — luz branca, máquina inteira
  * legível — e vapor demais na frente da secagem esconde justamente o que se
@@ -38,8 +39,6 @@ export interface AtmosphereProps {
   readonly name: string;
   /** Tempo da cena, em segundos; congela quando pausado. */
   readonly clock: FloatUniform;
-  /** Portas abertas: sem elas o vapor sai só pelas frestas. */
-  readonly doorsOpen: boolean;
   /** Textura de ruído compartilhada com os materiais. */
   readonly noise: Parameters<typeof texture>[0];
   /** Z da parede da capota no lado comando, por onde o vapor sai. */
@@ -50,8 +49,8 @@ export interface AtmosphereProps {
 
 const DOOR_SPLIT_Y = (DRYER_TOP_Y_M + DRYER_BOTTOM_Y_M) / 2;
 
-/** Onde o vapor sai: uma a cada três portas, para o orçamento render mais. */
-function emitters(doorsOpen: boolean, hoodWallZ: number) {
+/** Onde o vapor sai: um a cada três cilindros de cima, para o orçamento render mais. */
+function emitters(hoodWallZ: number) {
   const xs = allAssets(MP1)
     .filter((asset) => asset.kind === 'dryer-cylinder' && asset.position[1] < DOOR_SPLIT_Y)
     .map((asset) => asset.position[0])
@@ -60,21 +59,13 @@ function emitters(doorsOpen: boolean, hoodWallZ: number) {
 
   return xs.map((x) => ({
     position: [x, DOOR_SPLIT_Y + 2.6, hoodWallZ] as const,
-    // de porta fechada sobra a fresta: menos vapor e mais rente à chapa
-    power: doorsOpen ? 0.45 : 0.15,
+    power: 0.45,
   }));
 }
 
-export function Atmosphere({
-  name,
-  clock,
-  doorsOpen,
-  noise,
-  hoodWallZ,
-  steamBudget = 72,
-}: AtmosphereProps) {
+export function Atmosphere({ name, clock, noise, hoodWallZ, steamBudget = 72 }: AtmosphereProps) {
   const steam = useMemo(() => {
-    const list = emitters(doorsOpen, hoodWallZ);
+    const list = emitters(hoodWallZ);
     const share = Math.max(6, Math.round(steamBudget / Math.max(1, list.length)));
 
     return list.map(({ position, power }) => {
@@ -85,9 +76,17 @@ export function Atmosphere({
       const drift = range(0.6, 1.6);
 
       const offset = vec3(
-        sideways.add(sin(seed.mul(40).add(clock.mul(0.35))).mul(life).mul(0.6)),
+        sideways.add(
+          sin(seed.mul(40).add(clock.mul(0.35)))
+            .mul(life)
+            .mul(0.6),
+        ),
         life.mul(life).mul(5.5).add(life.mul(1.2)),
-        life.mul(drift).add(cos(seed.mul(23).add(clock.mul(0.25))).mul(life).mul(0.5)),
+        life.mul(drift).add(
+          cos(seed.mul(23).add(clock.mul(0.25)))
+            .mul(life)
+            .mul(0.5),
+        ),
       );
       material.positionNode = vec3(...position).add(offset);
       material.scaleNode = mix(float(0.6), float(3.4), life);
@@ -113,7 +112,7 @@ export function Atmosphere({
       mesh.renderOrder = 3;
       return mesh;
     });
-  }, [clock, doorsOpen, noise, hoodWallZ, steamBudget]);
+  }, [clock, noise, hoodWallZ, steamBudget]);
 
   useEffect(
     () => () => {

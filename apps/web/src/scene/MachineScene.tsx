@@ -40,7 +40,14 @@ import { createUniforms, type MaterialContext } from './tsl/materials';
 import { makeNoiseTexture } from './tsl/noise';
 import { SceneProvider, type SceneState } from './sceneState';
 import type { SceneView } from './views';
-import { PRE_DRYER_HOOD, POPE_X_M, type AssetTag, type IsoZone } from '@mp1/shared';
+import {
+  BEARING_Z_M,
+  PRE_DRYER_HOOD,
+  POPE_X_M,
+  WEB_WIDTH_M,
+  type AssetTag,
+  type IsoZone,
+} from '@mp1/shared';
 
 /**
  * A cena 3D da MP1.
@@ -125,8 +132,10 @@ function Pipeline() {
     scenePass.setMRT(mrt(temporal ? { output, emissive, velocity } : { output, emissive }));
 
     const sceneColour = scenePass.getTextureNode('output');
-    const withBloom = sceneColour.add(// bloom baixo: só um halo curto nas luminárias, nada lavado
-      bloom(scenePass.getTextureNode('emissive'), 0.12, 0.3, 0.0));
+    const withBloom = sceneColour.add(
+      // bloom baixo: só um halo curto nas luminárias, nada lavado
+      bloom(scenePass.getTextureNode('emissive'), 0.12, 0.3, 0.0),
+    );
     const antialiased = temporal
       ? traa(
           withBloom,
@@ -354,6 +363,13 @@ const ENVIRONMENT_INTENSITY = 0.8;
 /** Nome do grupo do vapor, para escondê-lo na captura do ambiente. */
 const ATMOSPHERE = 'atmosfera';
 
+/**
+ * Z da parede da capota no lado comando, por onde o vapor sai.
+ *
+ * A parede fica a meio caminho entre a ponta da mesa e o plano dos mancais —
+ * a mesma conta do gerador da cena.
+ */
+const HOOD_WALL_Z = (WEB_WIDTH_M / 2 + BEARING_Z_M) / 2;
 
 interface ContentProps {
   readonly state: SceneState;
@@ -439,25 +455,13 @@ function SceneContent({ state, context, noise, bearingZones }: ContentProps) {
 
   useFrame((_, delta) => {
     if (state.playing) clock.value = (clock.value as number) + delta;
-
-    // as portas chegam ao ângulo pedido em cerca de meio segundo
-    const wanted = state.doorsOpen ? (context.uniforms.doorBaked.value as number) : 0;
-    const angle = context.uniforms.doorAngle;
-    angle.value =
-      (angle.value as number) + (wanted - (angle.value as number)) * Math.min(1, delta * 6);
   });
 
   return (
     <group>
       <primitive object={loaded.root} />
       <Bearings zones={bearingZones} />
-      <Atmosphere
-        name={ATMOSPHERE}
-        clock={clock}
-        doorsOpen={state.doorsOpen}
-        noise={noise}
-        hoodWallZ={loaded.meta.hoodDoorHinge.z - 0.1}
-      />
+      <Atmosphere name={ATMOSPHERE} clock={clock} noise={noise} hoodWallZ={HOOD_WALL_Z} />
     </group>
   );
 }

@@ -6,9 +6,9 @@
    "label": "Caixa de entrada e formação",
    "group": "machine",
    "lightmap": "lm_umida-formacao.webp",
-   "scale": 1.40375,
-   "ref": 0.68564,
-   "coverage": 0.771,
+   "scale": 1.45912,
+   "ref": 0.45496,
+   "coverage": 0.725,
    "size": 2048
   },
   {
@@ -16,9 +16,9 @@
    "label": "Prensas",
    "group": "machine",
    "lightmap": "lm_umida-prensas.webp",
-   "scale": 1.41257,
-   "ref": 0.59813,
-   "coverage": 0.639,
+   "scale": 1.45006,
+   "ref": 0.39713,
+   "coverage": 0.704,
    "size": 2048
   },
   {
@@ -26,9 +26,9 @@
    "label": "Grupo de vapor G1",
    "group": "machine",
    "lightmap": "lm_g1.webp",
-   "scale": 23.45054,
-   "ref": 0.47548,
-   "coverage": 0.58,
+   "scale": 27.76307,
+   "ref": 0.58771,
+   "coverage": 0.649,
    "size": 2048
   },
   {
@@ -36,9 +36,9 @@
    "label": "Grupo de vapor G2",
    "group": "machine",
    "lightmap": "lm_g2.webp",
-   "scale": 14.59675,
-   "ref": 0.35229,
-   "coverage": 0.567,
+   "scale": 19.48579,
+   "ref": 0.46701,
+   "coverage": 0.625,
    "size": 2048
   },
   {
@@ -46,9 +46,9 @@
    "label": "Grupo de vapor G3",
    "group": "machine",
    "lightmap": "lm_g3.webp",
-   "scale": 25.08976,
-   "ref": 0.62261,
-   "coverage": 0.591,
+   "scale": 33.17204,
+   "ref": 0.85938,
+   "coverage": 0.681,
    "size": 2048
   },
   {
@@ -56,9 +56,9 @@
    "label": "Grupo de vapor G4",
    "group": "machine",
    "lightmap": "lm_g4.webp",
-   "scale": 21.09971,
-   "ref": 0.43517,
-   "coverage": 0.566,
+   "scale": 31.21405,
+   "ref": 0.59112,
+   "coverage": 0.64,
    "size": 2048
   },
   {
@@ -66,9 +66,9 @@
    "label": "Scanner 1 e Speed Sizer",
    "group": "machine",
    "lightmap": "lm_scanner-sizer.webp",
-   "scale": 3.73712,
-   "ref": 0.94566,
-   "coverage": 0.67,
+   "scale": 3.46263,
+   "ref": 0.94534,
+   "coverage": 0.71,
    "size": 2048
   },
   {
@@ -76,9 +76,9 @@
    "label": "Grupo de vapor G5",
    "group": "machine",
    "lightmap": "lm_g5.webp",
-   "scale": 24.33904,
-   "ref": 0.57943,
-   "coverage": 0.61,
+   "scale": 30.74981,
+   "ref": 0.79291,
+   "coverage": 0.677,
    "size": 2048
   },
   {
@@ -86,9 +86,9 @@
    "label": "Grupo de vapor G6",
    "group": "machine",
    "lightmap": "lm_g6.webp",
-   "scale": 15.21781,
-   "ref": 0.46167,
-   "coverage": 0.618,
+   "scale": 22.97271,
+   "ref": 0.6227,
+   "coverage": 0.687,
    "size": 2048
   },
   {
@@ -96,8 +96,8 @@
    "label": "Calandra, scanner final e Pope",
    "group": "machine",
    "lightmap": "lm_acabamento.webp",
-   "scale": 3.20065,
-   "ref": 0.99844,
+   "scale": 3.20521,
+   "ref": 1.01521,
    "coverage": 0.755,
    "size": 2048
   },
@@ -106,9 +106,9 @@
    "label": "Prédio",
    "group": "building",
    "lightmap": "lm_predio.webp",
-   "scale": 3.8029,
-   "ref": 1.00012,
-   "coverage": 0.731,
+   "scale": 3.77697,
+   "ref": 1.00018,
+   "coverage": 0.746,
    "size": 2048
   }
  ],
@@ -117,11 +117,6 @@
   -0.817,
   -0.548
  ],
- "hoodDoorHinge": {
-  "y": 10.37,
-  "z": 4.25
- },
  "hoodTop": 10.4,
- "hoodDoorBakedDeg": 68.0,
  "exposure": 0.82
 }

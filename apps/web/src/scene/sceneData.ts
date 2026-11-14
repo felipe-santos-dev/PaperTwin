@@ -35,10 +35,6 @@ export interface SceneMeta {
   readonly zones: readonly ZoneMeta[];
   /** Direção do sol, no referencial da cena. */
   readonly sun: readonly [number, number, number];
-  /** Linha de dobradiça das portas superiores da capota. */
-  readonly hoodDoorHinge: { readonly y: number; readonly z: number };
-  /** Ângulo, em graus, em que as portas superiores foram assadas abertas. */
-  readonly hoodDoorBakedDeg: number;
   readonly hoodTop: number;
   readonly exposure: number;
 }
@@ -76,14 +72,6 @@ async function load(base: string, context: MaterialContext): Promise<LoadedScene
   if (meta.schema !== 1) {
     throw new Error(`scene.json com schema ${String(meta.schema)}; esta cena espera 1.`);
   }
-
-  // a linha de dobradiça é do bake, não do código: as portas giram em torno dela
-  context.uniforms.hingeY.value = meta.hoodDoorHinge.y;
-  context.uniforms.hingeZ.value = meta.hoodDoorHinge.z;
-  // a cena abre com as portas como o bake as deixou
-  const baked = (meta.hoodDoorBakedDeg * Math.PI) / 180;
-  context.uniforms.doorBaked.value = baked;
-  context.uniforms.doorAngle.value = baked;
 
   const loader = new GLTFLoader();
   loader.setMeshoptDecoder(MeshoptDecoder);

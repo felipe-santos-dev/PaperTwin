@@ -1,35 +1,49 @@
 """
 As estações da máquina fora da secagem.
 
-Parte úmida (caixa de entrada, formador de duas telas, prensas com prensa de
+Parte úmida (caixa de entrada, gap former, pick-up, primeira prensa e prensa de
 sapata), scanners, Speed Sizer, calandra e enroladeira Pope.
 
-A parte úmida entra **só como geometria**: nenhuma peça daqui tem tag nem ativo,
-e as seções `headbox` e `forming` do modelo seguem vazias de propósito. As
-formas vêm de `reference/prototypes/mp1-parte-umida.html`, deslocadas para este
-referencial — o terceiro par de prensas daquele protótipo é o par que o modelo
-já tem em `PRESS_X_M`.
+Por onde corre cada tela, feltro e a folha da parte úmida é decidido em
+`wet.py`, sem Blender, e conferido lá mesmo: nenhum laço cruza outro, a folha
+ou um rolo alheio. Aqui o corte lateral vira malha.
+
+Posição de ativo nenhuma é escrita aqui. Os rolos-guia não são ativos: ficam
+em volta dos rolos principais, em afastamentos de desenho.
 """
 
-import geom
-from machine import FACE, Y_COL, split_by_zone
-from parts import M, area_light, box, cyl, poly_tube, ribbon_split, zone_for_x
-from machine import assets
+import bmesh
+from mathutils import Matrix, Vector
 
-#: Rolos do formador de duas telas, em (x, altura, raio).
-#: Os cinco primeiros fecham uma tela, os cinco últimos a outra.
-FORMER_ROLLS = [
-    (-10.2, 2.6, 0.55),
-    (-5.6, 3.4, 0.45),
-    (-4.6, 7.6, 0.40),
-    (-7.8, 9.3, 0.40),
-    (-10.4, 6.2, 0.40),
-    (-8.6, 3.9, 0.45),
-    (-2.8, 4.2, 0.45),
-    (-1.8, 8.8, 0.40),
-    (-5.8, 11.0, 0.40),
-    (-8.2, 7.2, 0.35),
-]
+import geom
+import wet
+from machine import FACE, assets, split_by_zone
+from parts import M, area_light, box, cyl, link, poly_tube, ribbon_split, zone_for_x
+
+#: Plano dos mancais.
+BZ = M["BEARING_Z_M"]
+
+#: Face dos rolos da parte úmida: passa um pouco da tela, que passa da folha.
+ROLL_FACE = FACE + 0.3
+W_WIRE = FACE + 0.1
+W_FELT = FACE
+W_PAPER = FACE - 0.1
+
+#: Raio dos rolos-guia de tela e de feltro.
+RG = wet.RG
+
+#: Onde o montante de apoio do lado acionamento fica, um pouco para fora do
+#: plano dos cavaletes.
+Y_POST = BZ + 0.45
+
+#: Os vãos abertos do piso: um montante sobre eles desce até o térreo.
+OPENINGS = M["OPERATING_FLOOR_OPENINGS"]
+GROUND = M["GROUND_FLOOR_Y_M"]
+
+
+def floor_under(x):
+    """O piso sob um X: o de operação, ou o térreo onde o piso é aberto."""
+    return GROUND if any(o["from"] <= x <= o["to"] for o in OPENINGS) else 0.0
 
 
 def roll_with_housing(name, x, z, r, mat, length=None, housing="mancal_corpo"):
@@ -42,162 +56,261 @@ def roll_with_housing(name, x, z, r, mat, length=None, housing="mancal_corpo"):
         cyl(f"{name}_eixo{sg}", (x, sg * (length / 2 + 0.45), z), r * 0.28, 0.45, "munhao", seg=24, zone=zone)
 
 
-# -------------------------------------------------------------- parte úmida
-def wet_part():
-    """Caixa de entrada, formador e prensas, com a de sapata no par de `PRESS_X_M`."""
-    hx, hy = M["HEADBOX_X_M"], M["HEADBOX_Y_M"]
-
-    box("headbox", (hx, 0, hy), (2.6, FACE + 0.8, 2.2), "estrutura_clara", bevel=0.05)
-    box("headbox_bico", (hx + 1.4, 0, hy - 0.3), (1.2, FACE + 0.4, 1.0), "munhao")
-    cyl("headbox_dist", (hx - 1.4, 0, hy - 0.8), 0.6, FACE + 2, "estrutura_clara", seg=32, r2=0.4)
-
-    for i, (x, z, r) in enumerate(FORMER_ROLLS):
-        roll_with_housing(f"former_{i}", x, z, r, "rolo_feltro" if i % 3 else "rolo_borracha")
-    for name, group in (("tela_form_a", FORMER_ROLLS[:5]), ("tela_form_b", FORMER_ROLLS[5:])):
-        circles = [((x, z), r + 0.01, 1) for x, z, r in group]
-        ribbon_split(name, geom.belt(circles, closed=True), FACE - 0.2, "tela_formacao", 0.005)
-
-    # primeira prensa, antes da de sapata
-    fx, fr = M["FIRST_PRESS_X_M"], M["FIRST_PRESS_ROLL_RADIUS_M"]
-    roll_with_housing("prensa1_inf", fx, M["PRESS_BOTTOM_Y_M"] - 0.6, fr, "rolo_borracha")
-    roll_with_housing("prensa1_sup", fx, M["PRESS_TOP_Y_M"] - 0.6, fr, "rolo_feltro")
-
-    _shoe_press()
-    _press_felts(fx, fr)
-    _wet_platforms()
-
-
-def _shoe_press():
+# ------------------------------------------------------------- parte úmida
+def main_roll(tag, mat, column=True):
     """
-    Prensa de sapata no par que o modelo já tem.
+    Rolo principal: corpo, tampas e munhões até o plano dos mancais.
 
-    O rolo de cima é o rolo de sapata: ganha a correia e, no nip, o trecho
-    achatado de `SHOE_PRESS_NIP_LENGTH_M` que distingue a sapata de um nip comum.
+    A carcaça do mancal é malha viva na cena, como na secagem. Aqui fica o que
+    a sustenta: uma coluna até o piso em cada lado, no plano dos mancais — nada
+    na frente dele. O corpo usa o raio **desenhado** de `wet.py`, que nos nips
+    é um pouco menor que o do modelo para feltro e folha caberem.
     """
-    px = M["PRESS_X_M"]
-    pr = M["PRESS_ROLL_RADIUS_M"]
-    zb, zt = M["PRESS_BOTTOM_Y_M"], M["PRESS_TOP_Y_M"]
-    nip = M["SHOE_PRESS_NIP_LENGTH_M"]
-
-    roll_with_housing("prensa_contra", px, zb, pr, "rolo_borracha")
-    roll_with_housing("prensa_sapata", px, zt, pr, "rolo_feltro")
-    cyl("sapata_correia", (px, 0, zt), pr + 0.06, FACE + 0.3, "sapata_correia", seg=56)
-    box(
-        "sapata_nip",
-        (px, 0, (zb + zt) / 2),
-        (nip, FACE + 0.3, max(0.08, (zt - zb) - 2 * pr + 0.08)),
-        "sapata_correia",
-    )
+    (x, y), r_draw = wet.main_rolls()[tag]
+    r = wet.roll(tag)[2]
+    name = tag.rsplit("-", 1)[1]
+    zone = zone_for_x(x)
+    cyl(name, (x, 0, y), r_draw, ROLL_FACE, mat, seg=72, zone=zone)
+    rb = r * M["BEARING_RADIUS_RATIO"]
     for sg in (-1, 1):
-        box(
-            f"sapata_carga{sg}",
-            (px, sg * (FACE / 2 + 0.9), (zb + zt) / 2),
-            (1.1, 0.5, zt - zb + 1.6),
-            "estrutura_clara",
-            bevel=0.04,
-        )
+        cyl(f"{name}_tampa{sg}", (x, sg * (ROLL_FACE / 2 + 0.02), y), r_draw * 0.96, 0.04, "cil_cabeca", seg=72, zone=zone)
+        cyl(f"{name}_munhao{sg}", (x, sg * (ROLL_FACE / 2 + 0.32), y), max(0.08, r * 0.26), 0.6, "munhao", seg=24, zone=zone)
+        if column:
+            top = y - rb - 0.02
+            box(f"{name}_coluna{sg}", (x, sg * BZ, top / 2), (0.34, 0.4, top), "estrutura", zone=zone, bevel=0.02, section_hidden=sg < 0)
+    return x, y, r
 
 
-def _press_felts(fx, fr):
-    """Os feltros das duas prensas, cada um fechando num par de rolos de retorno."""
-    loops = (
-        ("feltro_p1", [(fx, M["PRESS_TOP_Y_M"] - 0.6, fr + 0.02), (fx - 2.6, 8.6, 0.32), (fx + 2.2, 9.4, 0.32)]),
-        (
-            "feltro_p2",
-            [
-                (M["PRESS_X_M"], M["PRESS_TOP_Y_M"], M["PRESS_ROLL_RADIUS_M"] + 0.08),
-                (M["PRESS_X_M"] - 2.4, 9.2, 0.32),
-                (M["PRESS_X_M"] + 2.6, 9.8, 0.32),
-            ],
-        ),
+def press_stand(x, y_bottom, y_top, r_bottom, r_top, name, load=False):
+    """
+    Cavalete de prensa, um em cada lado, no plano dos mancais.
+
+    Dois montantes flanqueiam os mancais, uma travessa fecha em cima e um
+    braço desce dela até o mancal do rolo de cima. O de baixo assenta na sua
+    própria coluna. Nada fica na frente de mancal nenhum.
+    """
+    zone = zone_for_x(x)
+    rbb = r_bottom * M["BEARING_RADIUS_RATIO"]
+    rbt = r_top * M["BEARING_RADIUS_RATIO"]
+    half = max(rbb, rbt) + 0.35
+    top = y_top + rbt + 0.9
+    for sg in (-1, 1):
+        hidden = sg < 0
+        for dx in (-half, half):
+            box(f"{name}_montante{sg}{dx:+.1f}", (x + dx, sg * BZ, top / 2), (0.3, 0.42, top), "estrutura", zone=zone, bevel=0.02, section_hidden=hidden)
+        box(f"{name}_travessa{sg}", (x, sg * BZ, top - 0.2), (2 * half + 0.3, 0.42, 0.4), "estrutura", zone=zone, bevel=0.02, section_hidden=hidden)
+        hang = top - 0.4 - (y_top + rbt + 0.02)
+        box(f"{name}_braco{sg}", (x, sg * BZ, y_top + rbt + 0.02 + hang / 2), (0.36, 0.36, hang), "estrutura", zone=zone, section_hidden=hidden)
+        if load:
+            # cilindros de carga da sapata, sobre a travessa
+            for dx in (-0.35, 0.35):
+                cyl(f"{name}_carga{sg}{dx:+.1f}", (x + dx, sg * BZ, top + 0.4), 0.18, 0.8, "munhao", axis="Z", seg=24, zone=zone, section_hidden=hidden)
+        box(f"{name}_coluna_inf{sg}", (x, sg * BZ, (y_bottom - rbb - 0.02) / 2), (0.34, 0.4, y_bottom - rbb - 0.02), "estrutura", zone=zone, bevel=0.02, section_hidden=hidden)
+
+
+def la_post(name, x, z, y_from):
+    """Montante do lado acionamento, do piso até `z`, preso por um braço a `y_from`."""
+    zone = zone_for_x(x)
+    base = floor_under(x)
+    box(f"{name}_braco", (x, (y_from + Y_POST) / 2, z), (0.12, Y_POST - y_from + 0.12, 0.12), "estrutura_clara", zone=zone)
+    box(f"{name}_montante", (x, Y_POST, (z + 0.06 + base) / 2), (0.14, 0.14, z + 0.06 - base), "estrutura_clara", zone=zone)
+
+
+def guide_roll(name, x, z, r=RG):
+    """
+    Rolo-guia de tela ou de feltro, com munhão e bloco de mancal nas pontas.
+
+    O apoio fica só no lado acionamento: um montante fino até o piso. No lado
+    comando o rolo fica em balanço, como nas máquinas de troca de tela pelo
+    lado comando.
+    """
+    zone = zone_for_x(x)
+    cyl(name, (x, 0, z), r - 0.006, ROLL_FACE, "rolo_feltro", seg=40, zone=zone)
+    for sg in (-1, 1):
+        cyl(f"{name}_eixo{sg}", (x, sg * (ROLL_FACE / 2 + 0.08), z), 0.07, 0.16, "munhao", seg=16, zone=zone)
+        box(f"{name}_mancal{sg}", (x, sg * (ROLL_FACE / 2 + 0.2), z), (0.24, 0.12, 0.28), "mancal_corpo", zone=zone, bevel=0.015, section_hidden=sg < 0)
+    la_post(name, x, z, ROLL_FACE / 2 + 0.2)
+
+
+def prism(name, outline, width, mat, zone):
+    """Polígono do corte lateral esticado na largura da máquina."""
+    bm = bmesh.new()
+    front = [bm.verts.new((x, -width / 2, z)) for x, z in outline]
+    back = [bm.verts.new((x, width / 2, z)) for x, z in outline]
+    bm.faces.new(front)
+    bm.faces.new(list(reversed(back)))
+    n = len(outline)
+    for i in range(n):
+        j = (i + 1) % n
+        bm.faces.new((front[i], front[j], back[j], back[i]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    return link(name, bm, mat, zone)
+
+
+def motor(name, x, z, side_y):
+    """
+    Motor de acionamento no lado acionamento: base, motor, luva e eixo.
+
+    Coaxial com o rolo, sobre um pedestal até o piso. A luva fica sob uma
+    proteção amarela, que é o que se reconhece de longe.
+    """
+    zone = zone_for_x(x)
+    body_y = side_y + 1.05
+    cyl(f"{name}_corpo", (x, body_y, z), 0.36, 0.62, "motor", seg=40, zone=zone)
+    cyl(f"{name}_tampa", (x, body_y + 0.35, z), 0.3, 0.08, "munhao", seg=32, zone=zone)
+    for k in range(6):
+        cyl(f"{name}_aleta{k}", (x, body_y - 0.24 + k * 0.095, z), 0.39, 0.025, "motor", seg=40, zone=zone)
+    box(f"{name}_luva", (x, side_y + 0.55, z), (0.42, 0.34, 0.42), "protecao_amarela", zone=zone, bevel=0.02)
+    box(f"{name}_pe", (x, body_y, (z - 0.36) / 2), (0.7, 0.7, z - 0.36), "estrutura", zone=zone, bevel=0.02)
+    box(f"{name}_base", (x, body_y, 0.06), (1.0, 0.9, 0.12), "estrutura", zone=zone)
+
+
+def wet_part():
+    """Caixa de entrada, gap former, pick-up, primeira prensa e prensa de sapata."""
+    main_roll("MP1-FOR-RFS", "rolo_feltro")
+    main_roll("MP1-FOR-RCB", "rolo_feltro")
+    main_roll("MP1-FOR-RCO", "rolo_feltro")
+    main_roll("MP1-PRE-RPU", "rolo_borracha")
+    main_roll("MP1-PRE-P1I", "rolo_feltro", column=False)
+    main_roll("MP1-PRE-P1S", "rolo_borracha", column=False)
+    press_stand(wet.P1X, wet.P1I, wet.P1S, wet.P1R, wet.P1R, "prensa1")
+    main_roll("MP1-PRE-R1", "cil_ferro", column=False)
+    _shoe_roll()
+    press_stand(wet.PX, wet.PB, wet.PT, wet.PRB, wet.PRS, "prensa2", load=True)
+
+    _headbox()
+
+    for name, (mat, circles) in wet.loops().items():
+        width = W_WIRE if mat == "tela_formacao" else W_FELT
+        thick = 0.005 if mat == "tela_formacao" else 0.006
+        ribbon_split(name, geom.belt(circles, closed=True), width, mat, thick)
+        for j, (c, r, _s) in enumerate(circles):
+            if abs(r - RG) < 1e-6:
+                guide_roll(f"guia_{name}_{j}", c[0], c[1])
+        _felt_suction(name, circles)
+
+    _drainage()
+
+    for tag in ("MP1-FOR-RFS", "MP1-FOR-RCO", "MP1-PRE-P1I", "MP1-PRE-R1"):
+        x, z, _r = wet.roll(tag)
+        motor(f"motor_{tag.rsplit('-', 1)[1]}", x, z, BZ)
+
+    _sill()
+
+
+def _shoe_roll():
+    """
+    O rolo de sapata: maior que o contra-rolo e coberto pela manta, numa cor
+    própria. Por dentro dela, nas pontas, aparece a viga da sapata.
+    """
+    x, y, r = wet.roll("MP1-PRE-R2")
+    zone = zone_for_x(x)
+    cyl("R2_rolo", (x, 0, y), wet.PRS_D, ROLL_FACE - 0.2, "rolo_borracha", seg=96, zone=zone)
+    cyl("R2_manta", (x, 0, y), wet.PRS_D + wet.SHOE_BELT, ROLL_FACE - 0.1, "manta_sapata", seg=96, zone=zone)
+    for sg in (-1, 1):
+        cyl(f"R2_tampa{sg}", (x, sg * (ROLL_FACE / 2), y), wet.PRS_D + wet.SHOE_BELT, 0.06, "cil_cabeca", seg=96, zone=zone)
+        # viga da sapata: atravessa o rolo e aparece na ponta, sob o munhão
+        box(f"R2_viga{sg}", (x, sg * (ROLL_FACE / 2 + 0.1), y - r * 0.45), (0.5, 0.2, 0.34), "estrutura", zone=zone)
+        cyl(f"R2_munhao{sg}", (x, sg * (ROLL_FACE / 2 + 0.32), y), r * 0.26, 0.6, "munhao", seg=24, zone=zone)
+
+
+def _headbox():
+    """
+    Caixa de entrada: corpo inclinado sob a tela de cima, bocal entrando na
+    cunha entre a tela de cima e o rolo formador, coletor de entrada
+    atravessando a máquina por trás e a alimentação pelo lado acionamento.
+    """
+    zone = zone_for_x(M["HEADBOX_X_M"])
+    body_w = FACE + 0.2
+    body, nozzle = wet.headbox_outline()
+    prism("headbox", body, body_w, "estrutura_clara", zone)
+    prism("headbox_bocal", nozzle, body_w - 0.1, "munhao", zone)
+    (cx, cz), d, n = wet.headbox_frame()
+
+    def at(u, v):
+        return (cx + d[0] * u + n[0] * v, cz + d[1] * u + n[1] * v)
+
+    # coletor de entrada: cônico, atravessando a máquina atrás do corpo
+    hx, hz = at(-wet.HB_L / 2 - 0.55, -0.1)
+    cyl("headbox_coletor", (hx, 0, hz), 0.45, FACE + 1.6, "estrutura_clara", seg=40, zone=zone, r2=0.25)
+    bx, bz = at(-wet.HB_L / 2, -0.1)
+    for k in range(7):
+        yy = -FACE / 2 + 0.6 + k * (FACE - 1.2) / 6
+        poly_tube(f"headbox_tubo{k}", [(hx + 0.3, yy, hz), (bx, yy, bz)], 0.07, "munhao", zone=zone)
+    feed_y = (FACE + 1.6) / 2 + 0.25
+    poly_tube(
+        "headbox_alimentacao",
+        [(hx, feed_y - 0.3, hz), (hx, feed_y, hz), (hx, feed_y, 0.5), (hx - 1.5, feed_y, 0.5)],
+        0.3,
+        "tubo_isolado",
+        zone=zone,
     )
-    for name, loop in loops:
-        circles = [((x, z), r, 1) for x, z, r in loop]
-        ribbon_split(name, geom.belt(circles, closed=True), FACE - 0.2, "feltro", 0.006)
-        for j, (x, z, r) in enumerate(loop):
-            if r < 0.5:
-                roll_with_housing(f"{name}_r{j}", x, z, r, "rolo_feltro")
+    # pés: do canto de baixo do corpo até o piso, nas duas pontas
+    for k, u in enumerate((-wet.HB_L / 2 + 0.25, wet.HB_L / 2 - 0.25)):
+        fx, fz = at(u, -wet.HB_H / 2)
+        for sg in (-1, 1):
+            box(f"headbox_pe{k}{sg}", (fx, sg * (body_w / 2 - 0.25), fz / 2), (0.3, 0.3, fz), "estrutura", zone=zone, section_hidden=sg < 0)
 
 
-def _wet_platforms():
-    """Plataformas em três níveis, guarda-corpo e painéis do lado acionamento."""
-    levels = M["WET_PLATFORM_Y_M"]
-    z0, z1 = -M["WET_PLATFORM_Z0_M"], -M["WET_PLATFORM_Z1_M"]
-    spans = [
-        (M["BUILDING_X0_M"] + 5.6, 12.6, levels[0]),
-        (-12.4, -1.4, levels[1]),
-        (3.6, 12.6, levels[1]),
-        (-10.4, 9.6, levels[2]),
-    ]
-    for k, (x0, x1, y) in enumerate(spans):
+def _drainage():
+    """
+    Caixas de drenagem entre as telas, transversais e dentro da largura da tela.
+
+    Lâminas por dentro do laço de cima, encostadas na tela de cima, e caixas de
+    sucção por dentro do de baixo, encostadas na tela de baixo. Cada fileira se
+    apoia numa viga longitudinal do lado acionamento, presa por braços curtos à
+    ponta de cada caixa, e a viga em dois montantes até o piso.
+    """
+    width = W_WIRE - 0.2
+    rows = {}
+    for name, x, z, length, height in wet.drainage_boxes():
+        zone = zone_for_x(x)
+        box(name, (x, 0, z), (length, width, height), "caixa_drenagem", zone=zone, bevel=0.02)
+        y_end = width / 2
+        box(f"{name}_braco", (x, (y_end + Y_POST) / 2, z), (0.12, Y_POST - y_end, 0.12), "estrutura_clara", zone=zone)
+        rows.setdefault(name.split("_")[0], []).append((x, z))
+        if name.startswith("succao"):
+            poly_tube(f"{name}_tubo", [(x, y_end, z - 0.1), (x, Y_POST - 0.2, z - 0.1), (x, Y_POST - 0.2, 0.4)], 0.07, "tubo_isolado", zone=zone)
+    for row, pts in rows.items():
+        x0 = min(p[0] for p in pts) - 0.3
+        x1 = max(p[0] for p in pts) + 0.3
+        z = pts[0][1]
         for sa, sb in split_by_zone(x0, x1):
-            zone = zone_for_x((sa + sb) / 2)
-            box(
-                f"plat_{k}_{sa:.1f}",
-                ((sa + sb) / 2, (z0 + z1) / 2, y),
-                (sb - sa, abs(z0 - z1) + 0.4, 0.12),
-                "passarela",
-                zone=zone,
-                section_hidden=True,
-            )
-            box(
-                f"plat_viga_{k}_{sa:.1f}",
-                ((sa + sb) / 2, z1, y - 0.15),
-                (sb - sa, 0.3, 0.2),
-                "estrutura_clara",
-                zone=zone,
-                section_hidden=True,
-            )
-            for zz in (y + 1.1, y + 0.55):
-                poly_tube(
-                    f"plat_rail_{k}_{sa:.1f}_{zz:.2f}",
-                    [(sa, z1, zz), (sb, z1, zz)],
-                    0.024,
-                    "guarda_corpo",
-                    zone=zone,
-                    section_hidden=True,
-                )
-        x = x0
-        while x <= x1 + 1e-6:
-            poly_tube(
-                f"plat_post_{k}_{x:.1f}",
-                [(x, z1, y), (x, z1, y + 1.1)],
-                0.024,
-                "guarda_corpo",
-                zone=zone_for_x(x),
-                section_hidden=True,
-            )
-            x += 1.4
-        x = x0 + 0.3
-        while x < x1:
-            box(
-                f"plat_col_{k}_{x:.1f}",
-                (x, (z0 + z1) / 2, y - 0.5),
-                (0.18, 0.18, 0.8),
-                "estrutura_clara",
-                zone=zone_for_x(x),
-                section_hidden=True,
-            )
-            x += 4.0
+            box(f"viga_{row}_{sa:.1f}", ((sa + sb) / 2, Y_POST, z), (sb - sa, 0.16, 0.16), "estrutura_clara", zone=zone_for_x((sa + sb) / 2))
+        for k, x in enumerate((x0, x1)):
+            box(f"viga_{row}_montante{k}", (x, Y_POST, z / 2), (0.14, 0.14, z), "estrutura_clara", zone=zone_for_x(x))
 
-    for x in (-11.0, -6.0, -1.0, 4.0, 9.0):
-        box(
-            f"painel_acion_{x:.0f}",
-            (x, Y_COL + 0.9, 1.1),
-            (3.2, 0.7, 2.2),
-            "painel_acionamento",
-            zone=zone_for_x(x),
-            bevel=0.03,
-        )
-    for x, y, w, h in ((-11.4, levels[0], 1.2, 1.6), (-5.4, levels[0], 1.0, 1.3), (5.6, levels[1], 1.4, 1.6)):
-        box(
-            f"armario_{x:.0f}_{y:.0f}",
-            (x, -M["WET_PLATFORM_Z0_M"] - 0.8, y + h / 2 + 0.06),
-            (w, 0.7, h),
-            "armario_branco",
-            zone=zone_for_x(x),
-            section_hidden=True,
-        )
+
+def _felt_suction(name, circles):
+    """
+    Caixa de sucção do feltro, no trecho de retorno mais longo entre dois
+    rolos-guia, por dentro do laço e encostada nele. Presa a um montante do
+    lado acionamento, como os rolos-guia.
+    """
+    s = wet.felt_suction(name, circles)
+    if s is None:
+        return
+    x, z, ang = s
+    zone = zone_for_x(x)
+    width = W_FELT - 0.2
+    box(f"{name}_uhle", (x, 0, z), (0.4, width, 0.22), "caixa_drenagem", zone=zone, bevel=0.02, rot=Matrix.Rotation(-ang, 4, "Y"))
+    la_post(f"{name}_uhle", x, z, width / 2)
+
+
+def _sill():
+    """Soleiras longitudinais junto ao piso, nos dois lados, sob as colunas."""
+    x0 = min(M["HEADBOX_X_M"] - 1.2, M["BREAST_ROLL_X_M"] - 0.6)
+    x1 = M["PRESS_X_M"] + 1.6
+    for sg in (-1, 1):
+        for sa, sb in split_by_zone(x0, x1):
+            box(
+                f"umida_soleira{sg}_{sa:.1f}",
+                ((sa + sb) / 2, sg * BZ, 0.1),
+                (sb - sa, 0.44, 0.2),
+                "estrutura",
+                zone=zone_for_x((sa + sb) / 2),
+                section_hidden=sg < 0,
+            )
 
 
 # ----------------------------------------------- scanners, sizer, calandra, Pope

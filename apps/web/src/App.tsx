@@ -235,7 +235,14 @@ function Screen(props: ScreenProps) {
         />
       );
     case 'rondas':
-      return <RondasScreen gateway={props.gateway} onOpenBearing={props.openBearing} />;
+      return (
+        <RondasScreen
+          gateway={props.gateway}
+          onOpenBearing={props.openBearing}
+          onOpenTrend={props.openTrend}
+          onOpenNote={props.openNote}
+        />
+      );
     case 'notas':
       return (
         <NotasScreen

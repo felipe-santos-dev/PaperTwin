@@ -1,48 +1,35 @@
 import { useCallback, useMemo, useState } from 'react';
-
 import {
-  bearingTagsOf,
-  classifyIsoZone,
+  assetByTag,
   DRYER_BEARING_ISO,
   DRYER_BEARING_TAGS,
   isoLimitsOf,
+  monitoredAssets,
+  MP1,
+  type AssetTag,
   type IsoZone,
 } from '@mp1/shared';
 
 import type { DataGateway } from '../api/gateway';
-import { Block, ScreenTitle, StatRow } from '../ui/Shell';
-import { Facts, Table } from '../ui/Table';
-import { Trend } from '../ui/chart/Trend';
-import { hhmm, int, num } from '../ui/format';
+import { BearingBar, TemperatureBar } from '../ui/BearingBar';
+import { Sparkline } from '../ui/chart/Sparkline';
+import { num } from '../ui/format';
+import { Panel } from '../ui/Panel';
 import { ResourceState } from '../ui/ResourceState';
 import { useResource } from '../ui/useResource';
+import { BearingDetail } from './mancais/BearingDetail';
+import { rank, visible, zoneOf, type BearingRow } from './mancais/derive';
+import { Scene3DPanel } from './mancais/Scene3DPanel';
 
 /**
- * Mancais — a condição dos 72 mancais dos cilindros secadores.
+ * Mancais — os mancais monitorados, do pior para o melhor.
  *
- * A ordem é **pior primeiro**, e é a única ordem que serve: numa lista de 72
- * linhas ordenada por número de cilindro, o mancal em zona D está na posição 46
- * e ninguém o encontra. Ordenada por vibração, ele é a primeira linha.
- *
- * ## As zonas vêm da norma, não de uma escala inventada
- *
- * As fronteiras A/B, B/C e C/D saem da ISO 20816-3 para grupo 2 com apoio
- * rígido, que é a classe que o modelo declara em cada mancal. Os limites de
- * alarme `H` e `HH` do catálogo são as mesmas fronteiras B/C e C/D — e isso não
- * é coincidência: foi assim que a lista base os escolheu.
+ * Mancal de cilindro secador vem dos valores de processo (`VI-51nn`,
+ * `TI-53nn`); os outros, que não têm TAG no catálogo, vêm da rota do ativo,
+ * que traz a última leitura e a classe ISO. A lista mostra sempre os que estão
+ * em zona B, C ou D e os dez de maior vibração; o resto fica atrás de "mostrar
+ * todos". À direita, o mancal escolhido e a cena 3D sincronizada com a lista.
  */
-
-const LIMITS = isoLimitsOf(DRYER_BEARING_ISO);
-
-/** Quantos mancais a tela acompanha, do modelo. */
-const COUNT = DRYER_BEARING_TAGS.length;
-
-const ZONE_TONE: Readonly<Record<IsoZone, string>> = {
-  A: 'text-mill-fg',
-  B: 'text-mill-fg',
-  C: 'text-mill-attention',
-  D: 'text-mill-critical',
-};
 
 export interface MancaisScreenProps {
   readonly gateway: DataGateway;
@@ -51,340 +38,280 @@ export interface MancaisScreenProps {
   readonly onSelect: (assetTag: string | null) => void;
 }
 
-interface BearingRow {
-  readonly assetTag: string;
-  readonly cylinder: number;
-  readonly side: string;
-  readonly vibrationTag: string;
-  readonly envelopeTag: string;
-  readonly temperatureTag: string;
-  readonly rms: number | null;
-  readonly envelope: number | null;
-  readonly temperature: number | null;
-  readonly zone: IsoZone | null;
-}
+const DRYER_LIMITS = isoLimitsOf(DRYER_BEARING_ISO);
+const DRYER = new Set<string>(DRYER_BEARING_TAGS.map((b) => b.assetTag));
 
 export function MancaisScreen({ gateway, assetTag, onSelect }: MancaisScreenProps) {
-  const values = useResource(
-    useCallback((signal) => gateway.processValues({ area: 'mancais' }, signal), [gateway]),
-    { isEmpty: (data) => data.values.length === 0 },
+  const data = useResource(
+    useCallback(
+      async (signal: AbortSignal) => {
+        const others = monitoredAssets(MP1).filter(
+          (a) => a.kind === 'bearing' && !DRYER.has(a.tag),
+        );
+        const [values, details, rounds, notes] = await Promise.all([
+          gateway.processValues({ area: 'mancais' }, signal),
+          Promise.all(others.map((a) => gateway.asset(a.tag, signal).catch(() => null))),
+          gateway.rounds({ limit: 20 }, signal),
+          gateway.notes({ limit: 100 }, signal),
+        ]);
+        const byTag = new Map(values.values.map((v) => [v.tag, v.value]));
+        const rows: BearingRow[] = [
+          ...DRYER_BEARING_TAGS.map((b) => {
+            const rms = byTag.get(b.vibration) ?? null;
+            return {
+              assetTag: b.assetTag,
+              label: assetByTag(MP1, b.assetTag)?.label ?? b.assetTag,
+              side: b.side,
+              vibrationTag: b.vibration,
+              temperatureTag: b.temperature,
+              rms,
+              temperature: byTag.get(b.temperature) ?? null,
+              limits: DRYER_LIMITS,
+              zone: zoneOf(rms, DRYER_LIMITS),
+            };
+          }),
+          ...others.map((a, i) => {
+            const detail = details[i];
+            const rms = detail?.status.latest?.rmsMmS ?? null;
+            const limits = detail?.limits ?? (a.iso ? isoLimitsOf(a.iso) : null);
+            return {
+              assetTag: a.tag,
+              label: a.label,
+              side: a.side,
+              vibrationTag: null,
+              temperatureTag: null,
+              rms,
+              temperature: detail?.status.latest?.tempC ?? null,
+              limits,
+              zone: zoneOf(rms, limits),
+            };
+          }),
+        ];
+        return { rows: rank(rows), rounds: rounds.rounds, notes: notes.notes };
+      },
+      [gateway],
+    ),
+    { isEmpty: (result) => result.rows.every((row) => row.rms === null) },
   );
 
-  const rows = useMemo<BearingRow[]>(() => {
-    const byTag = new Map(values.data?.values.map((item) => [item.tag, item.value]) ?? []);
-
-    return DRYER_BEARING_TAGS.map((bearing) => {
-      const rms = byTag.get(bearing.vibration) ?? null;
-
-      return {
-        assetTag: bearing.assetTag,
-        cylinder: bearing.cylinder,
-        side: bearing.side,
-        vibrationTag: bearing.vibration,
-        envelopeTag: bearing.envelope,
-        temperatureTag: bearing.temperature,
-        rms,
-        envelope: byTag.get(bearing.envelope) ?? null,
-        temperature: byTag.get(bearing.temperature) ?? null,
-        zone: rms === null ? null : classifyIsoZone(rms, LIMITS),
-      };
-    }).sort((a, b) => (b.rms ?? -1) - (a.rms ?? -1));
-  }, [values.data]);
-
-  const current = rows.find((row) => row.assetTag === assetTag) ?? rows[0] ?? null;
-
-  const inZone = (zone: IsoZone): number => rows.filter((row) => row.zone === zone).length;
-
   return (
-    <>
-      <ScreenTitle
-        eyebrow="Condição · vibração e temperatura"
-        title="Mancais"
-        aside={`· ${String(COUNT)} dos cilindros secadores`}
-      />
-
-      <StatRow
-        stats={[
-          { label: 'Zona A', value: int(inZone('A')), hint: 'máquina nova' },
-          { label: 'Zona B', value: int(inZone('B')), hint: 'operação normal' },
-          {
-            label: 'Zona C',
-            value: int(inZone('C')),
-            tone: inZone('C') > 0 ? 'attention' : 'normal',
-            hint: 'aceitável por tempo limitado',
-          },
-          {
-            label: 'Zona D',
-            value: int(inZone('D')),
-            tone: inZone('D') > 0 ? 'critical' : 'normal',
-            hint: 'dano é provável',
-          },
-          {
-            label: 'Fronteira C→D',
-            value: num(LIMITS.cToD, 1),
-            hint: 'mm/s · grupo 2, apoio rígido',
-          },
-        ]}
-      />
-
-      <ResourceState
-        resource={values}
-        label="os mancais"
-        emptyMessage="Nenhuma leitura de mancal. A simulação precisa rodar um intervalo."
-      >
-        {() => (
-          <>
-            <Block title="Pior primeiro" aside="clique para abrir o mancal">
-              <Table
-                caption="Mancais dos cilindros secadores, do pior para o melhor"
-                rows={rows.slice(0, 20)}
-                keyOf={(row) => row.assetTag}
-                selected={(row) => row.assetTag === current?.assetTag}
-                onSelect={(row) => {
-                  onSelect(row.assetTag);
-                }}
-                columns={[
-                  {
-                    key: 'cil',
-                    header: 'Cilindro',
-                    render: (row) => `${int(row.cylinder)} · ${row.side}`,
-                  },
-                  {
-                    key: 'tag',
-                    header: 'TAG',
-                    hideBelow: 'md',
-                    render: (row) => <span className="font-mono text-xs">{row.vibrationTag}</span>,
-                  },
-                  {
-                    key: 'rms',
-                    header: 'Vibração',
-                    numeric: true,
-                    render: (row) => (
-                      <span className={row.zone ? ZONE_TONE[row.zone] : undefined}>
-                        {num(row.rms, 2)}
-                      </span>
-                    ),
-                  },
-                  {
-                    key: 'zona',
-                    header: 'Zona',
-                    render: (row) =>
-                      row.zone === null ? (
-                        <span className="text-mill-muted">sem dados</span>
-                      ) : (
-                        <span className={ZONE_TONE[row.zone]}>{row.zone}</span>
-                      ),
-                  },
-                  {
-                    key: 'env',
-                    header: 'Envelope',
-                    numeric: true,
-                    hideBelow: 'md',
-                    render: (row) => num(row.envelope, 2),
-                  },
-                  {
-                    key: 'temp',
-                    header: 'Temperatura',
-                    numeric: true,
-                    hideBelow: 'lg',
-                    render: (row) => num(row.temperature, 1),
-                  },
-                ]}
+    <ResourceState
+      resource={data}
+      label="os mancais"
+      emptyMessage="Nenhuma leitura de mancal. A simulação precisa rodar um intervalo."
+    >
+      {({ rows, rounds, notes }) => {
+        const current = rows.find((row) => row.assetTag === assetTag) ?? rows[0] ?? null;
+        const zones = new Map<AssetTag, IsoZone>();
+        for (const row of rows) if (row.zone) zones.set(row.assetTag, row.zone);
+        return (
+          <div className="grid h-[calc(100vh-152px)] min-h-[760px] grid-cols-[minmax(0,1100fr)_minmax(0,716fr)] gap-4">
+            <Ranking
+              gateway={gateway}
+              rows={rows}
+              selected={current?.assetTag ?? null}
+              onSelect={onSelect}
+            />
+            <div className="flex min-h-0 flex-col gap-4">
+              {current ? (
+                <BearingDetail
+                  key={current.assetTag}
+                  gateway={gateway}
+                  row={current}
+                  rounds={rounds}
+                  notes={notes}
+                  className="h-[470px] shrink-0"
+                />
+              ) : null}
+              <Scene3DPanel
+                selected={current?.assetTag ?? null}
+                onSelect={onSelect}
+                zones={zones}
+                className="min-h-0 flex-1"
               />
-              {rows.length > 20 && (
-                <p className="text-xs text-mill-muted">
-                  Mostrando os 20 piores de {String(rows.length)}. Os demais estão em zona A ou B.
-                </p>
-              )}
-            </Block>
-
-            {current && <BearingPanel gateway={gateway} row={current} />}
-          </>
-        )}
-      </ResourceState>
-    </>
+            </div>
+          </div>
+        );
+      }}
+    </ResourceState>
   );
 }
 
-function BearingPanel({
+const GRID =
+  'grid grid-cols-[minmax(150px,200px)_minmax(180px,1fr)_88px_minmax(90px,150px)_48px_minmax(100px,180px)] items-center gap-x-4';
+
+function Ranking({
+  gateway,
+  rows,
+  selected,
+  onSelect,
+}: {
+  readonly gateway: DataGateway;
+  readonly rows: readonly BearingRow[];
+  readonly selected: string | null;
+  readonly onSelect: (assetTag: string | null) => void;
+}) {
+  const [all, setAll] = useState(false);
+  const shortList = useMemo(() => visible(rows), [rows]);
+  const shown = all ? rows : shortList;
+  const count = (zone: IsoZone) => rows.filter((row) => row.zone === zone).length;
+  const hidden = rows.length - shortList.length;
+
+  return (
+    <Panel
+      title={<span className="text-[16px]">Mancais por severidade</span>}
+      label="Mancais por severidade"
+      context={
+        <span>
+          <span className="font-mono text-fg">{rows.length}</span> mancais ·{' '}
+          <span className="font-mono text-fg">{count('B')}</span> em B ·{' '}
+          <span className={`font-mono ${count('C') > 0 ? 'text-alarm-3' : 'text-fg'}`}>
+            {count('C')}
+          </span>{' '}
+          em C ·{' '}
+          <span className={`font-mono ${count('D') > 0 ? 'text-alarm-1' : 'text-fg'}`}>
+            {count('D')}
+          </span>{' '}
+          em D · velocidade RMS 10–1.000 Hz
+        </span>
+      }
+      bodyClassName="flex min-h-0 flex-col"
+    >
+      <div
+        role="table"
+        aria-label="Mancais do pior para o melhor"
+        className="flex min-h-0 flex-1 flex-col"
+      >
+        <div role="row" className={`${GRID} border-b border-line pb-1.5 text-[11px] text-fg-3`}>
+          <span role="columnheader">Mancal</span>
+          <span role="columnheader" className="truncate">
+            ISO 20816-3 · zonas A B C D
+          </span>
+          <span role="columnheader" className="text-right">
+            vibração
+          </span>
+          <span role="columnheader" className="truncate">
+            temperatura · 80 / 90 °C
+          </span>
+          <span role="columnheader" />
+          <span role="columnheader">janela da API</span>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {shown.map((row) => (
+            <Row
+              key={row.assetTag}
+              gateway={gateway}
+              row={row}
+              active={row.assetTag === selected}
+              onSelect={() => {
+                onSelect(row.assetTag);
+              }}
+            />
+          ))}
+        </div>
+        <div className="flex items-center gap-5 border-t border-line pt-2.5 text-[11px] text-fg-3">
+          {hidden > 0 || all ? (
+            <button
+              type="button"
+              onClick={() => {
+                setAll((value) => !value);
+              }}
+              className="text-action hover:text-action-hover"
+            >
+              {all ? 'mostrar só os principais' : `mostrar todos (+${String(hidden)})`}
+            </button>
+          ) : null}
+          <span className="flex items-center gap-1.5">
+            <span className="h-3 w-px bg-fg" /> valor no início da janela
+          </span>
+          <span>sempre visíveis: zona B, C ou D e os 10 de maior vibração</span>
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
+function Row({
   gateway,
   row,
+  active,
+  onSelect,
 }: {
   readonly gateway: DataGateway;
   readonly row: BearingRow;
+  readonly active: boolean;
+  readonly onSelect: () => void;
 }) {
-  const [days, setDays] = useState(3);
-
-  const trend = useResource(
+  const history = useResource(
     useCallback(
-      (signal) => {
-        const to = new Date();
-        return gateway.tagTrend(
-          row.vibrationTag,
-          { from: new Date(to.getTime() - days * 86_400_000), to, buckets: 300 },
-          signal,
-        );
-      },
-      [gateway, row.vibrationTag, days],
-    ),
-    { isEmpty: (data) => data.buckets.length === 0 },
-  );
-
-  const envelope = useResource(
-    useCallback(
-      (signal) => {
-        const to = new Date();
-        return gateway.tagTrend(
-          row.envelopeTag,
-          { from: new Date(to.getTime() - days * 86_400_000), to, buckets: 300 },
-          signal,
-        );
-      },
-      [gateway, row.envelopeTag, days],
-    ),
-    { isEmpty: (data) => data.buckets.length === 0 },
-  );
-
-  const notes = useResource(
-    useCallback(
-      (signal) => gateway.notes({ assetTag: row.assetTag, limit: 10 }, signal),
+      (signal: AbortSignal) => gateway.vibration(row.assetTag, {}, signal),
       [gateway, row.assetTag],
     ),
-    { isEmpty: (data) => data.notes.length === 0 },
   );
-
-  const bearing = bearingTagsOf(row.assetTag);
+  const values = history.data?.buckets.map((b) => b.rmsAvgMmS) ?? [];
+  const color =
+    row.zone === 'D'
+      ? 'var(--color-alarm-1)'
+      : row.zone === 'C'
+        ? 'var(--color-alarm-3)'
+        : 'var(--color-fg)';
 
   return (
-    <Block
-      title={`Cilindro ${int(row.cylinder)} · mancal ${row.side}`}
-      aside={
-        <div className="flex items-center gap-3">
-          <span className="font-mono">{row.vibrationTag}</span>
-          <div className="flex gap-1.5">
-            {[1, 3, 7].map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => {
-                  setDays(option);
-                }}
-                aria-pressed={days === option}
-                className={`min-h-11 rounded border px-2.5 py-1 text-xs transition-colors ${
-                  days === option
-                    ? 'border-mill-accent/50 bg-mill-accent/12 text-mill-fg'
-                    : 'border-mill-line text-mill-muted hover:text-mill-fg'
-                }`}
-              >
-                {option} d
-              </button>
-            ))}
-          </div>
-        </div>
-      }
+    <div
+      role="row"
+      data-asset={row.assetTag}
+      aria-selected={active}
+      onClick={onSelect}
+      className={`${GRID} min-h-14 cursor-pointer border border-b-line px-1 ${
+        active ? 'border-action bg-hover' : 'border-transparent border-b-line hover:bg-hover'
+      }`}
     >
-      <div className="flex flex-col gap-4 border-t border-mill-line pt-3">
-        <Facts
-          columns={4}
-          items={[
-            {
-              label: 'Vibração RMS',
-              value: (
-                <span className={row.zone ? ZONE_TONE[row.zone] : undefined}>
-                  {num(row.rms, 2)} mm/s
-                </span>
-              ),
-            },
-            { label: 'Zona ISO 20816-3', value: row.zone ?? 'sem dados' },
-            { label: 'Envelope', value: `${num(row.envelope, 2)} gE` },
-            { label: 'Temperatura', value: `${num(row.temperature, 1)} °C` },
-            { label: 'Ativo', value: <span className="text-xs">{row.assetTag}</span> },
-            { label: 'Envelope · TAG', value: <span className="text-xs">{row.envelopeTag}</span> },
-            {
-              label: 'Temperatura · TAG',
-              value: <span className="text-xs">{row.temperatureTag}</span>,
-            },
-            {
-              label: 'Fronteiras',
-              value: `${num(LIMITS.aToB, 1)} / ${num(LIMITS.bToC, 1)} / ${num(LIMITS.cToD, 1)}`,
-            },
-          ]}
-        />
-
-        <div>
-          <h3 className="text-sm font-semibold">Vibração</h3>
-          <ResourceState
-            resource={trend}
-            label="a tendência de vibração"
-            emptyMessage="Sem valores arquivados nesta janela."
-          >
-            {(series) => (
-              <Trend
-                buckets={series.buckets}
-                unit={series.unit}
-                limits={series.limits}
-                target={null}
-                height={220}
-                label={`Vibração do mancal ${row.assetTag} nos últimos ${String(days)} dias, com as fronteiras da ISO 20816-3`}
-              />
-            )}
-          </ResourceState>
+      <div role="cell" className="min-w-0">
+        <div className="truncate text-[13px]" title={row.label}>
+          {row.label.replace(/^Mancal (LA|LC) · /, '')}
         </div>
-
-        <div>
-          <h3 className="text-sm font-semibold">Envelope de aceleração</h3>
-          <p className="text-xs text-mill-muted">
-            O envelope pega impacto de rolamento antes de a velocidade sair da faixa normal — é por
-            isso que ele é medido à parte.
-          </p>
-          <ResourceState
-            resource={envelope}
-            label="a tendência de envelope"
-            emptyMessage="Sem valores arquivados nesta janela."
-          >
-            {(series) => (
-              <Trend
-                buckets={series.buckets}
-                unit={series.unit}
-                limits={series.limits}
-                target={null}
-                height={180}
-                label={`Envelope de aceleração do mancal ${row.assetTag} nos últimos ${String(days)} dias`}
-              />
-            )}
-          </ResourceState>
-        </div>
-
-        {bearing && (
-          <p className="text-xs text-mill-muted">
-            As três medições deste mancal no catálogo: {bearing.vibration}, {bearing.envelope} e{' '}
-            {bearing.temperature}.
-          </p>
-        )}
-
-        <div>
-          <h3 className="text-sm font-semibold">Notas deste mancal</h3>
-          <ResourceState
-            resource={notes}
-            label="as notas"
-            emptyMessage="Nenhuma nota aberta para este mancal."
-          >
-            {(data) => (
-              <ul className="mt-1 flex flex-col gap-1 text-sm">
-                {data.notes.map((note) => (
-                  <li key={note.number} className="flex flex-wrap gap-x-3">
-                    <span className="font-mono text-xs">{note.number}</span>
-                    <span className="text-xs text-mill-muted">
-                      prioridade {int(note.priority)} · {note.status} · {hhmm(note.createdAt)}
-                    </span>
-                    <span>{note.symptom}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </ResourceState>
+        <div className="font-mono text-[10px] text-fg-3">
+          {row.vibrationTag ?? row.assetTag}
+          {row.side ? ` · ${row.side}` : ''}
         </div>
       </div>
-    </Block>
+      <div role="cell">
+        {row.limits ? (
+          <BearingBar
+            value={row.rms}
+            limits={row.limits}
+            weekAgo={values[0] ?? null}
+            label={`${row.label}: zona ${row.zone ?? '—'}`}
+          />
+        ) : (
+          <span className="text-[11px] text-fg-3">sem classe ISO</span>
+        )}
+      </div>
+      <div role="cell" className="text-right">
+        <span className="font-mono text-[16px]" style={{ color }}>
+          {row.rms === null ? '—' : num(row.rms, 1)}
+        </span>
+        <span className="ml-1 text-[11px] text-fg-2">mm/s</span>
+      </div>
+      <div role="cell">
+        <TemperatureBar value={row.temperature} />
+      </div>
+      <div role="cell" className="text-right">
+        <span className="font-mono text-[13px]">
+          {row.temperature === null ? '—' : num(row.temperature, 0)}
+        </span>
+        <span className="ml-1 text-[10px] text-fg-2">°C</span>
+      </div>
+      <div role="cell" className="min-w-0">
+        <Sparkline
+          values={values}
+          band={row.limits ? { lo: row.limits.bToC, hi: row.limits.cToD } : null}
+          bandColor="color-mix(in srgb, var(--color-iso-c-line) 22%, transparent)"
+          lastColor={color}
+          className="h-[22px] w-full"
+          label={`${row.label}: vibração na janela`}
+        />
+      </div>
+    </div>
   );
 }

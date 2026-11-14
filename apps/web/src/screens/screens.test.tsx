@@ -5,6 +5,8 @@ import { describe, expect, it, vi } from 'vitest';
 import type { DataGateway } from '../api/gateway';
 import type { ReelView, ShiftDetail, ShiftView } from '../api/process';
 import { LaboratorioScreen } from './LaboratorioScreen';
+import { MancaisScreen } from './MancaisScreen';
+import { RondasScreen } from './RondasScreen';
 import { BobinasScreen } from './BobinasScreen';
 import { NotasScreen } from './NotasScreen';
 import { ProcessoScreen } from './ProcessoScreen';
@@ -283,6 +285,64 @@ describe('Laboratório', () => {
     expect(within(matriz).getByText('412')).toBeInTheDocument();
     expect(within(matriz).getByText('ilustrativo')).toBeInTheDocument();
     expect(within(matriz).getByText('1', { selector: '.text-spec-out' })).toBeInTheDocument();
+  });
+});
+
+describe('Rondas', () => {
+  it('explica o vazio', async () => {
+    render(<RondasScreen gateway={gatewayOf()} onOpenBearing={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toHaveTextContent(/Nenhuma ronda registrada/);
+    });
+  });
+
+  it('marca o achado e leva ao mancal', async () => {
+    const onOpenBearing = vi.fn();
+    const ronda = {
+      id: 'RD-1',
+      shiftId: TURNO.id,
+      startedAt: '2026-06-15T19:00:00Z',
+      finishedAt: '2026-06-15T19:40:00Z',
+      inspector: 'turno B',
+      points: [
+        {
+          assetTag: 'MP1-SEC-G4-CS23-MLC',
+          fieldTempC: 78.9,
+          noise: 'anormal' as const,
+          leak: 'nenhum' as const,
+          note: 'ruído anormal, zunido constante',
+          onlineTag: 'TI-5323B',
+          onlineValue: 81.6,
+        },
+      ],
+    };
+    render(
+      <RondasScreen
+        gateway={gatewayOf({
+          rounds: () => Promise.resolve({ count: 1, rounds: [ronda] }),
+          shifts: () => Promise.resolve({ count: 1, shifts: [TURNO] }),
+        })}
+        onOpenBearing={onOpenBearing}
+      />,
+    );
+
+    expect(await screen.findAllByText('achado')).not.toHaveLength(0);
+    expect(screen.getByText('ruído anormal, zunido constante')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Abrir em Mancais' }));
+    expect(onOpenBearing).toHaveBeenCalledWith('MP1-SEC-G4-CS23-MLC');
+  });
+});
+
+describe('Mancais', () => {
+  it('explica o vazio sem carregar a cena', async () => {
+    render(
+      <MancaisScreen gateway={gatewayOf({ asset: falha })} assetTag={null} onSelect={vi.fn()} />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toHaveTextContent(/Nenhuma leitura de mancal/);
+    });
   });
 });
 

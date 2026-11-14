@@ -4,7 +4,9 @@ import type { WebBreak } from '@mp1/shared';
 import type { ReelView } from '../api/process';
 import { breakMarks, merge, outRuns } from './bobinas/derive';
 import { cellOf, controlChart, stateOf } from './laboratorio/derive';
+import { rank, visible, zoneOf } from './mancais/derive';
 import { variablesFor } from './ProcessoScreen';
+import { stateOfPoint } from './rondas/derive';
 import { accumulate, lanes, production, scrap, type Point } from './turno/derive';
 
 const T0 = Date.parse('2026-06-15T17:00:00Z');
@@ -173,5 +175,62 @@ describe('seções do processo', () => {
     expect(pre.some((v) => v.tag === 'TIC-505')).toBe(true);
     expect(variablesFor('preparo').some((v) => v.tag === 'FIC-107')).toBe(true);
     expect(variablesFor('pré-secagem').some((v) => v.tag === 'FIC-107')).toBe(false);
+  });
+});
+
+describe('ranking de mancais', () => {
+  const limits = { aToB: 2.3, bToC: 4.5, cToD: 7.1 };
+  const row = (tag: string, rms: number) => ({
+    assetTag: tag,
+    label: tag,
+    side: 'LC',
+    vibrationTag: null,
+    temperatureTag: null,
+    rms,
+    temperature: null,
+    limits,
+    zone: zoneOf(rms, limits),
+  });
+
+  it('mostra sempre B, C e D e completa com os 10 de maior vibração', () => {
+    const rows = rank([
+      ...Array.from({ length: 20 }, (_, i) => row(`A${String(i)}`, 1 + i * 0.05)),
+      row('C1', 5),
+      row('B1', 3),
+    ]);
+    const shown = visible(rows);
+    expect(shown[0]?.assetTag).toBe('C1');
+    expect(shown[1]?.assetTag).toBe('B1');
+    expect(shown).toHaveLength(10);
+  });
+
+  it('não esconde um mancal em B mesmo fora dos 10 primeiros', () => {
+    const rows = rank([
+      ...Array.from({ length: 12 }, (_, i) => row(`B${String(i)}`, 3 + i * 0.01)),
+    ]);
+    expect(visible(rows)).toHaveLength(12);
+  });
+});
+
+describe('ronda', () => {
+  const point = (field: number, online: number, noise: 'normal' | 'anormal' = 'normal') => ({
+    assetTag: 'MP1-SEC-G4-CS23-MLC',
+    fieldTempC: field,
+    noise,
+    leak: 'nenhum' as const,
+    note: null,
+    onlineTag: 'TI-5323B',
+    onlineValue: online,
+  });
+
+  it('aceita a carcaça 3 °C mais fria que o sensor', () => {
+    expect(stateOfPoint(point(63, 66))).toBe('feito');
+    expect(stateOfPoint(point(64.5, 66))).toBe('feito');
+  });
+
+  it('acha divergência fora do esperado e ruído anormal', () => {
+    expect(stateOfPoint(point(66, 66))).toBe('achado');
+    expect(stateOfPoint(point(58, 66))).toBe('achado');
+    expect(stateOfPoint(point(63, 66, 'anormal'))).toBe('achado');
   });
 });

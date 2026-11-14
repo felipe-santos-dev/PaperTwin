@@ -67,6 +67,12 @@ export function areaOfTag(tag: string): ProcessArea | null {
   return area && AREA_IDS.has(area) ? (area as ProcessArea) : null;
 }
 
+/** A seção da faixa de um ativo do modelo 3D (mancal, rolo, cilindro). */
+export function areaOfAsset(assetTag: string): ProcessArea | null {
+  const section = assetByTag(MP1, assetTag)?.section;
+  return section ? (AREA_OF_SECTION[section] ?? null) : null;
+}
+
 /** Um alarme ainda em pé: ativo ou reconhecido, sem ter normalizado. */
 export function isStanding(alarm: Alarm): boolean {
   return alarm.state !== 'normalizado' && alarm.clearedAt === null;

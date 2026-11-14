@@ -918,9 +918,54 @@ painel do laboratório leva selo.
 Capturas em 1920×1080 e 1440×900 sem rolagem horizontal e com o console
 limpo.
 
+### Fase (d) — Mancais e Rondas
+
+**Mancais.** Os 98 mancais monitorados. Os 72 dos secadores vêm dos valores
+de processo (`VI-51nn`, `TI-53nn`) com a classe ISO dos secadores; os outros
+26, que não têm TAG no catálogo, vêm da rota do ativo (`/assets/:tag`), que
+traz a última leitura e a classe ISO de cada um. Não existe rota que liste o
+estado de todos — a tela faz uma busca por mancal sem instrumento no DCS.
+Ordem por severidade = vibração / fronteira C→D, que compara classes ISO
+diferentes. Sempre visíveis: zona B, C ou D e os dez de maior vibração; o
+resto atrás de "mostrar todos". Na demonstração ao vivo, 51 dos 98 estão em B
+(a linha de base sai do hash da tag), então a lista curta fica longa — é a
+regra pedida, aplicada. Minigráfico e marca "início da janela" vêm da rota de
+vibração, na janela que ela devolve (72 h), sem fingir 30 dias.
+
+O mancal escolhido: vibração sobre as zonas ISO e temperatura embaixo, com a
+projeção linear pela inclinação do `rul.ts` do `shared` (a mesma regressão e
+o mesmo critério de significância do servidor). A temperatura passa pela mesma
+função, com 80 °C no lugar da fronteira C→D. A projeção vai para a frente o
+mesmo tanto que a janela tem para trás. Rondas (temperatura de campo) e notas
+marcadas no tempo.
+
+**Vista 3D.** A cena real, a mesma da tela Máquina, em tamanho reduzido e
+carregada por `lazy` só quando o painel aparece (o carregamento inicial
+continua sem three). A cena já aceitava `bearingZones`; a tela passa a zona
+de cada mancal, então a pendência "cor dos mancais pela zona ISO" está
+resolvida sem tocar no código da cena. Clicar na lista enquadra o mancal
+(`viewForAsset`); clicar num mancal na cena escolhe na lista. Novo e2e
+`e2e/mancais.spec.ts` cobre os dois sentidos; o da cena não mudou.
+
+**Rondas.** A ronda escolhida com o roteiro (estado por ponto), um cartão por
+ponto com campo × online na mesma escala, e o ponto em detalhe com a
+divergência, a observação de campo e os botões "Abrir nota" (quando há nota
+com aquela ronda entre as evidências), "Ver tendência da TAG" e "Abrir em
+Mancais". A API assume que o pirômetro lê a carcaça 3 °C abaixo do sensor
+(`FIELD_PYROMETER_OFFSET_C`); a tela usa o mesmo desvio como esperado e chama
+de achado o que passar de ±2 °C em torno dele (suposição), além de ruído e
+vazamento. Sem ponto "pendente": a API manda só os pontos registrados, não o
+roteiro inteiro. Rondas do turno em curso; se ele ainda não tem nenhuma, as
+mais recentes.
+
+**Verificado.** Testes da web (152), typecheck, lint, build e e2e (8 da cena +
+2 de Mancais). Capturas em 1920×1080 e 1440×900 sem rolagem horizontal e com
+o console limpo.
+
 ## Próximo passo exato
 
-Revisão da fase (c) pelo Felipe. Depois, fase (d): Mancais (com o painel 3D)
-e Rondas.
+Revisão da fase (d) pelo Felipe. Depois, fase (e): limpeza do que ficou sem
+uso (tokens `mill-*`, `Shell` antigo, `Table`, `Trend`, `AssetPanel` se a
+Máquina não precisar), testes, lint, typecheck, build e e2e verdes.
 Em aberto, de antes: cor dos mancais pela zona ISO, que depende de uma busca
 no back-end.

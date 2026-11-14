@@ -1,275 +1,514 @@
 import { useCallback, useState } from 'react';
-
-import type { Round, RoundPoint } from '@mp1/shared';
+import { assetByTag, MP1, type MaintenanceNote, type Round, type RoundPoint } from '@mp1/shared';
 
 import type { DataGateway } from '../api/gateway';
-import { Block, ScreenTitle, StatRow } from '../ui/Shell';
-import { Table } from '../ui/Table';
-import { hhmm, int, num, span } from '../ui/format';
+import { fraction } from '../ui/chart/scale';
+import { hhmm, num } from '../ui/format';
+import { Panel } from '../ui/Panel';
 import { ResourceState } from '../ui/ResourceState';
+import { areaOfAsset, PROCESS_AREAS } from '../ui/sections';
 import { useResource } from '../ui/useResource';
+import { bearingShort } from './turno/Support';
+import {
+  deltaOf,
+  divergent,
+  EXPECTED_OFFSET_C,
+  findings,
+  noteOf,
+  stateOfPoint,
+  TEMP_TOLERANCE_C,
+} from './rondas/derive';
 
 /**
- * Rondas — o que a pessoa vê e o instrumento não vê.
+ * Rondas — o roteiro de inspeção, ponto a ponto.
  *
- * Esta é a tela que justifica a ronda existir num gêmeo digital. Um mancal com
- * 2,1 mm/s no sistema e ruído anormal na ronda é um caso diferente de um mancal
- * com 2,1 mm/s e ronda limpa, **e a diferença não está em nenhuma tag**.
- *
- * Por isso a coluna central é o par campo × online, com a diferença calculada.
- * Em operação normal ela fica pequena e constante — o pirômetro lê a carcaça por
- * fora, uns três graus abaixo do sensor que está dentro. Quando ela abre, ou o
- * sensor está mentindo ou o mancal está esquentando por fora, e as duas coisas
- * importam.
+ * Em cima, o roteiro da ronda escolhida com o estado de cada ponto; embaixo, um
+ * cartão por ponto com campo × online na mesma escala. À direita, o ponto
+ * escolhido em detalhe e as rondas do turno. Tudo vem da API: a ronda é uma
+ * lista de pontos já registrados, então não há ponto "pendente" a mostrar —
+ * a API não manda o roteiro inteiro, só o que foi feito.
  */
 
 export interface RondasScreenProps {
   readonly gateway: DataGateway;
   /** Abre o mancal na tela de Mancais. */
   readonly onOpenBearing: (assetTag: string) => void;
+  readonly onOpenTrend?: (tag: string) => void;
+  readonly onOpenNote?: (number: string) => void;
 }
 
-export function RondasScreen({ gateway, onOpenBearing }: RondasScreenProps) {
-  const [selected, setSelected] = useState<string | null>(null);
+/** A escala das barras de temperatura de todos os cartões: a mesma, para comparar. */
+const SCALE: readonly [number, number] = [30, 100];
 
-  const rounds = useResource(
-    useCallback((signal) => gateway.rounds({ limit: 20 }, signal), [gateway]),
-    { isEmpty: (data) => data.rounds.length === 0 },
-  );
-
-  const current =
-    rounds.data?.rounds.find((round) => round.id === selected) ?? rounds.data?.rounds[0] ?? null;
-
-  return (
-    <>
-      <ScreenTitle
-        eyebrow="Ronda de inspeção · elétrica e mecânica"
-        title={current ? `Ronda das ${hhmm(current.startedAt)}` : 'Rondas'}
-        aside={
-          current
-            ? `· ${current.inspector} · ${String(current.points.length)} pontos · ${span(
-                current.startedAt,
-                current.finishedAt,
-              )}`
-            : undefined
-        }
-      />
-
-      <ResourceState
-        resource={rounds}
-        label="as rondas"
-        emptyMessage="Nenhuma ronda registrada. Há uma por turno, duas horas depois do começo."
-      >
-        {(data) => (
-          <>
-            {current && <RoundSummary round={current} />}
-
-            <Block title="Rondas recentes" aside="clique para abrir">
-              <Table
-                caption="Rondas recentes"
-                rows={data.rounds}
-                keyOf={(round) => round.id}
-                selected={(round) => round.id === current?.id}
-                onSelect={(round) => {
-                  setSelected(round.id);
-                }}
-                columns={[
-                  { key: 'hora', header: 'Início', render: (r) => hhmm(r.startedAt) },
-                  { key: 'turno', header: 'Turno', hideBelow: 'md', render: (r) => r.shiftId },
-                  { key: 'exec', header: 'Executante', render: (r) => r.inspector },
-                  {
-                    key: 'pontos',
-                    header: 'Pontos',
-                    numeric: true,
-                    render: (r) => int(r.points.length),
-                  },
-                  {
-                    key: 'atencao',
-                    header: 'Com nota',
-                    numeric: true,
-                    render: (r) => {
-                      const count = needingAttention(r).length;
-                      return count === 0 ? (
-                        <span className="text-mill-muted">0</span>
-                      ) : (
-                        <span className="text-mill-attention">{int(count)}</span>
-                      );
-                    },
-                  },
-                  {
-                    key: 'dur',
-                    header: 'Duração',
-                    hideBelow: 'lg',
-                    render: (r) => span(r.startedAt, r.finishedAt),
-                  },
-                ]}
-              />
-            </Block>
-
-            {current && <RoundPoints round={current} onOpenBearing={onOpenBearing} />}
-          </>
-        )}
-      </ResourceState>
-    </>
-  );
-}
-
-function RoundSummary({ round }: { readonly round: Round }) {
-  const attention = needingAttention(round);
-  const gaps = round.points
-    .map((point) => gapOf(point))
-    .filter((gap): gap is number => gap !== null);
-
-  const widest = gaps.length === 0 ? null : Math.max(...gaps.map(Math.abs));
-
-  return (
-    <StatRow
-      stats={[
-        { label: 'Pontos', value: int(round.points.length) },
-        {
-          label: 'Com algo a relatar',
-          value: int(attention.length),
-          tone: attention.length > 0 ? 'attention' : 'normal',
-          hint: attention.length === 0 ? 'ronda limpa' : 'ruído ou vazamento',
-        },
-        {
-          label: 'Maior diferença campo × online',
-          value: widest === null ? '—' : num(widest, 1),
-          hint: '°C',
-        },
-        {
-          label: 'Duração',
-          value: span(round.startedAt, round.finishedAt),
-        },
-      ]}
-    />
-  );
-}
-
-function RoundPoints({
-  round,
+export function RondasScreen({
+  gateway,
   onOpenBearing,
+  onOpenTrend,
+  onOpenNote,
+}: RondasScreenProps) {
+  const data = useResource(
+    useCallback(
+      async (signal: AbortSignal) => {
+        const [rounds, notes, shifts] = await Promise.all([
+          gateway.rounds({ limit: 30 }, signal),
+          gateway.notes({ limit: 100 }, signal),
+          gateway.shifts({ limit: 1 }, signal),
+        ]);
+        return { rounds: rounds.rounds, notes: notes.notes, shift: shifts.shifts[0] ?? null };
+      },
+      [gateway],
+    ),
+    { isEmpty: (result) => result.rounds.length === 0 },
+  );
+
+  return (
+    <ResourceState
+      resource={data}
+      label="as rondas"
+      emptyMessage="Nenhuma ronda registrada. A primeira sai no meio do turno."
+    >
+      {({ rounds, notes, shift }) => (
+        <RoundsView
+          rounds={rounds}
+          notes={notes}
+          shiftId={shift?.id ?? null}
+          shiftLetter={shift?.letter ?? null}
+          onOpenBearing={onOpenBearing}
+          onOpenTrend={onOpenTrend}
+          onOpenNote={onOpenNote}
+        />
+      )}
+    </ResourceState>
+  );
+}
+
+function RoundsView({
+  rounds,
+  notes,
+  shiftId,
+  shiftLetter,
+  onOpenBearing,
+  onOpenTrend,
+  onOpenNote,
 }: {
-  readonly round: Round;
+  readonly rounds: readonly Round[];
+  readonly notes: readonly MaintenanceNote[];
+  readonly shiftId: string | null;
+  readonly shiftLetter: string | null;
   readonly onOpenBearing: (assetTag: string) => void;
+  readonly onOpenTrend: ((tag: string) => void) | undefined;
+  readonly onOpenNote: ((number: string) => void) | undefined;
+}) {
+  const sorted = [...rounds].sort((a, b) => Date.parse(b.startedAt) - Date.parse(a.startedAt));
+  const ofShift = sorted.filter((round) => round.shiftId === shiftId);
+  const list = ofShift.length > 0 ? ofShift : sorted.slice(0, 3);
+  const [roundId, setRoundId] = useState(list[0]?.id ?? '');
+  const round = list.find((item) => item.id === roundId) ?? list[0];
+  const firstFinding = round?.points.findIndex((p) => stateOfPoint(p) === 'achado') ?? -1;
+  const [pointIndex, setPointIndex] = useState(Math.max(0, firstFinding));
+  if (!round) return null;
+  const point = round.points[pointIndex] ?? round.points[0];
+  const flagged = round.points.filter((p) => stateOfPoint(p) === 'achado').length;
+  const number = [...list].reverse().indexOf(round) + 1;
+
+  return (
+    <div className="grid h-[calc(100vh-152px)] min-h-[760px] grid-cols-[minmax(0,1180fr)_minmax(0,636fr)] gap-4">
+      <Panel
+        title={
+          <span className="text-[16px]">
+            Ronda {number} · {hhmm(round.startedAt)}
+          </span>
+        }
+        label="Roteiro da ronda"
+        context={
+          <span>
+            {round.inspector} ·{' '}
+            {round.finishedAt ? `concluída ${hhmm(round.finishedAt)}` : 'em andamento'} ·{' '}
+            <span className="font-mono text-fg">{round.points.length}</span> pontos ·{' '}
+            <span className={`font-mono ${flagged > 0 ? 'text-spec-out' : 'text-fg'}`}>
+              {flagged}
+            </span>{' '}
+            com achado
+          </span>
+        }
+        aside={
+          <span className="flex items-center gap-3 text-fg-2">
+            <span className="flex items-center gap-1.5">
+              <span className="size-2 rounded-full bg-fg-3" />
+              feito
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="size-2 rounded-full bg-spec-out" />
+              com achado
+            </span>
+          </span>
+        }
+        bodyClassName="flex min-h-0 flex-col"
+      >
+        <ol aria-label="Pontos da ronda" className="relative mb-4 flex items-start justify-between">
+          <span
+            aria-hidden="true"
+            className="absolute top-3.5 right-4 left-4 h-px bg-line-strong"
+          />
+          {round.points.map((p, index) => {
+            const achado = stateOfPoint(p) === 'achado';
+            const active = index === pointIndex;
+            return (
+              <li key={p.assetTag} className="relative flex flex-col items-center gap-1">
+                <button
+                  type="button"
+                  aria-label={`Ponto ${String(index + 1)}: ${bearingShort(p.assetTag)}${achado ? ' (achado)' : ''}`}
+                  aria-pressed={active}
+                  onClick={() => {
+                    setPointIndex(index);
+                  }}
+                  className={`flex size-7 items-center justify-center rounded-full font-mono text-[11px] font-semibold ${
+                    achado ? 'bg-spec-out text-[#1a0a14]' : 'bg-band text-fg'
+                  } ${active ? 'outline-2 outline-offset-2 outline-action' : ''}`}
+                >
+                  {String(index + 1).padStart(2, '0')}
+                </button>
+                <span className="text-[10px] text-fg-3">{areaShort(p.assetTag)}</span>
+              </li>
+            );
+          })}
+        </ol>
+        <ul className="grid min-h-0 flex-1 auto-rows-min grid-cols-4 gap-3 overflow-y-auto">
+          {round.points.map((p, index) => (
+            <li key={p.assetTag}>
+              <PointCard
+                point={p}
+                index={index}
+                active={index === pointIndex}
+                onClick={() => {
+                  setPointIndex(index);
+                }}
+              />
+            </li>
+          ))}
+        </ul>
+      </Panel>
+
+      <div className="flex min-h-0 flex-col gap-4">
+        {point ? (
+          <PointDetail
+            round={round}
+            point={point}
+            index={pointIndex}
+            note={noteOf(round, point, notes)}
+            onOpenBearing={onOpenBearing}
+            onOpenTrend={onOpenTrend}
+            onOpenNote={onOpenNote}
+          />
+        ) : null}
+        <Panel
+          title={
+            shiftLetter && ofShift.length > 0 ? `Rondas do turno ${shiftLetter}` : 'Rondas recentes'
+          }
+          className="shrink-0"
+        >
+          <ul>
+            {list.map((item, i) => {
+              const marks = item.points.map(stateOfPoint);
+              const count = marks.filter((m) => m === 'achado').length;
+              const withNote = item.points.filter(
+                (p) => stateOfPoint(p) === 'achado' && noteOf(item, p, notes),
+              ).length;
+              return (
+                <li key={item.id}>
+                  <button
+                    type="button"
+                    aria-pressed={item.id === round.id}
+                    onClick={() => {
+                      setRoundId(item.id);
+                      setPointIndex(0);
+                    }}
+                    className={`grid w-full grid-cols-[110px_minmax(0,1fr)_130px] items-center gap-4 border-t border-line px-1 py-3 text-left ${
+                      item.id === round.id ? 'bg-hover' : 'hover:bg-hover'
+                    }`}
+                  >
+                    <span>
+                      <span className="block text-[13px]">Ronda {list.length - i}</span>
+                      <span className="font-mono text-[10px] text-fg-3">
+                        {hhmm(item.startedAt)}–{item.finishedAt ? hhmm(item.finishedAt) : 'agora'}
+                      </span>
+                    </span>
+                    <span className="flex gap-1">
+                      {marks.map((m, k) => (
+                        <span
+                          key={k}
+                          className={`h-3 w-4 ${m === 'achado' ? 'bg-spec-out' : 'bg-band'}`}
+                        />
+                      ))}
+                    </span>
+                    <span className="text-right text-[11px] text-fg-2">
+                      <span className="block text-[12px] text-fg">
+                        {item.finishedAt ? 'concluída' : 'em andamento'}
+                      </span>
+                      {count === 0
+                        ? 'sem achados'
+                        : `${String(count)} achado${count > 1 ? 's' : ''} · ${count - withNote > 0 ? `${String(count - withNote)} sem nota` : 'com nota'}`}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </Panel>
+      </div>
+    </div>
+  );
+}
+
+function areaShort(assetTag: string): string {
+  const area = areaOfAsset(assetTag);
+  const label = PROCESS_AREAS.find((a) => a.id === area)?.label ?? '—';
+  return label.length > 6 ? `${label.slice(0, 4)}.` : label;
+}
+
+function PointCard({
+  point,
+  index,
+  active,
+  onClick,
+}: {
+  readonly point: RoundPoint;
+  readonly index: number;
+  readonly active: boolean;
+  readonly onClick: () => void;
+}) {
+  const achado = stateOfPoint(point) === 'achado';
+  const delta = deltaOf(point);
+  const area = PROCESS_AREAS.find((a) => a.id === areaOfAsset(point.assetTag))?.label ?? '—';
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={`flex w-full flex-col gap-2 border px-3.5 py-3 text-left ${
+        active
+          ? 'border-action bg-hover'
+          : achado
+            ? 'border-spec-out'
+            : 'border-line hover:bg-hover'
+      }`}
+    >
+      <span className="flex items-center gap-2">
+        <span className="font-mono text-[12px] text-fg-2">
+          {String(index + 1).padStart(2, '0')}
+        </span>
+        <span className="text-[11px] text-fg-3">{area}</span>
+        <span
+          className={`ml-auto px-1.5 text-[10px] ${achado ? 'bg-spec-out text-[#1a0a14]' : 'border border-line-strong text-fg-2'}`}
+        >
+          {achado ? 'achado' : 'feito'}
+        </span>
+      </span>
+      <span>
+        <span className="block text-[13px]">
+          {assetByTag(MP1, point.assetTag)?.label ?? point.assetTag}
+        </span>
+        <span className="font-mono text-[10px] text-fg-3">{point.onlineTag ?? point.assetTag}</span>
+      </span>
+      <Bar label="campo" value={point.fieldTempC} out={divergent(delta)} />
+      <Bar label="online" value={point.onlineValue} out={false} />
+      <span className="text-[11px] text-fg-3">
+        Δ{' '}
+        <span className={`font-mono ${divergent(delta) ? 'text-spec-out' : 'text-fg'}`}>
+          {delta === null ? '—' : `${delta >= 0 ? '+' : '−'}${num(Math.abs(delta), 1)}`}
+        </span>{' '}
+        °C · esperado {EXPECTED_OFFSET_C} ±{TEMP_TOLERANCE_C}
+        {point.noise !== 'normal' ? ` · ruído ${point.noise}` : ''}
+        {point.leak !== 'nenhum' ? ` · ${point.leak}` : ''}
+      </span>
+    </button>
+  );
+}
+
+function Bar({
+  label,
+  value,
+  out,
+}: {
+  readonly label: string;
+  readonly value: number | null;
+  readonly out: boolean;
 }) {
   return (
-    <Block
-      title="Roteiro"
-      aside="o valor online é o que a tela mostrava no momento da ronda, guardado junto"
-    >
-      <Table
-        caption={`Pontos da ronda das ${hhmm(round.startedAt)}`}
-        rows={round.points}
-        keyOf={(point) => point.assetTag}
-        onSelect={(point) => {
-          onOpenBearing(point.assetTag);
-        }}
-        columns={[
-          {
-            key: 'ativo',
-            header: 'Ponto',
-            render: (p) => <span className="font-mono text-xs">{p.assetTag}</span>,
-          },
-          {
-            key: 'campo',
-            header: 'Campo',
-            numeric: true,
-            render: (p) => (p.fieldTempC === null ? '—' : `${num(p.fieldTempC, 1)} °C`),
-          },
-          {
-            key: 'online',
-            header: 'Online',
-            numeric: true,
-            render: (p) => (p.onlineValue === null ? '—' : `${num(p.onlineValue, 1)} °C`),
-          },
-          {
-            key: 'dif',
-            header: 'Diferença',
-            numeric: true,
-            render: (p) => <Gap point={p} />,
-          },
-          {
-            key: 'tag',
-            header: 'TAG online',
-            hideBelow: 'lg',
-            render: (p) => <span className="font-mono text-xs">{p.onlineTag ?? '—'}</span>,
-          },
-          {
-            key: 'ruido',
-            header: 'Ruído',
-            render: (p) =>
-              p.noise === 'normal' ? (
-                <span className="text-mill-muted">normal</span>
-              ) : (
-                <span
-                  className={p.noise === 'anormal' ? 'text-mill-critical' : 'text-mill-attention'}
-                >
-                  {p.noise}
-                </span>
-              ),
-          },
-          {
-            key: 'vaz',
-            header: 'Vazamento',
-            render: (p) =>
-              p.leak === 'nenhum' ? (
-                <span className="text-mill-muted">nenhum</span>
-              ) : (
-                <span className="text-mill-attention">{p.leak}</span>
-              ),
-          },
-          {
-            key: 'obs',
-            header: 'Observação',
-            hideBelow: 'md',
-            render: (p) => (p.note === null ? <span className="text-mill-muted">—</span> : p.note),
-          },
-        ]}
-      />
-    </Block>
-  );
-}
-
-/**
- * A diferença entre campo e online.
- *
- * `null` quando falta um dos dois — e a ausência importa: uma ronda sem
- * temperatura de campo não contradiz nem confirma o instrumento, e mostrar zero
- * ali diria que eles concordam.
- */
-function gapOf(point: RoundPoint): number | null {
-  if (point.fieldTempC === null || point.onlineValue === null) return null;
-  return point.fieldTempC - point.onlineValue;
-}
-
-/**
- * Quanto a diferença pode abrir antes de valer uma olhada, em °C.
- *
- * **Suposição.** O pirômetro lê a carcaça por fora e o sensor está dentro, então
- * uma diferença de alguns graus é o normal. Oito graus é o ponto em que ela deixa
- * de ser geometria e passa a ser notícia — ou o sensor está mentindo, ou o mancal
- * está esquentando por fora.
- */
-const GAP_ATTENTION_C = 8;
-
-function Gap({ point }: { readonly point: RoundPoint }) {
-  const gap = gapOf(point);
-  if (gap === null) return <span className="text-mill-muted">—</span>;
-
-  const wide = Math.abs(gap) > GAP_ATTENTION_C;
-  const text = `${gap > 0 ? '+' : ''}${num(gap, 1)}`;
-
-  if (!wide) return <>{text}</>;
-
-  return (
-    <span className="text-mill-attention" title="diferença grande entre campo e online">
-      {text}
-      <span className="sr-only"> — diferença grande</span>
+    <span className="grid grid-cols-[44px_minmax(0,1fr)_40px] items-center gap-2 text-[11px] text-fg-3">
+      {label}
+      <span className="relative h-1.5 bg-line">
+        {value !== null ? (
+          <span
+            className={`absolute inset-y-0 left-0 ${out ? 'bg-spec-out' : 'bg-fg-3'}`}
+            style={{ width: `${(fraction(value, SCALE[0], SCALE[1]) * 100).toFixed(1)}%` }}
+          />
+        ) : null}
+      </span>
+      <span className={`text-right font-mono text-[12px] ${out ? 'text-spec-out' : 'text-fg'}`}>
+        {value === null ? '—' : num(value, 1)}
+      </span>
     </span>
   );
 }
 
-function needingAttention(round: Round): readonly RoundPoint[] {
-  return round.points.filter((point) => point.noise !== 'normal' || point.leak !== 'nenhum');
+function PointDetail({
+  round,
+  point,
+  index,
+  note,
+  onOpenBearing,
+  onOpenTrend,
+  onOpenNote,
+}: {
+  readonly round: Round;
+  readonly point: RoundPoint;
+  readonly index: number;
+  readonly note: MaintenanceNote | null;
+  readonly onOpenBearing: (assetTag: string) => void;
+  readonly onOpenTrend: ((tag: string) => void) | undefined;
+  readonly onOpenNote: ((number: string) => void) | undefined;
+}) {
+  const achado = stateOfPoint(point) === 'achado';
+  const delta = deltaOf(point);
+  const label = assetByTag(MP1, point.assetTag)?.label ?? point.assetTag;
+  const values = [point.fieldTempC, point.onlineValue].filter((v): v is number => v !== null);
+  const lo = Math.min(...values, 40) - 5;
+  const hi = Math.max(...values, 60) + 5;
+  const H = 200;
+  const y = (v: number) => H - fraction(v, lo, hi) * H;
+  const list = findings(point);
+
+  return (
+    <Panel
+      title={
+        <span>
+          <span className="mr-2 font-mono text-fg-2">{String(index + 1).padStart(2, '0')}</span>
+          {label}
+        </span>
+      }
+      label="Ponto da ronda"
+      aside={
+        <span
+          className={`px-1.5 text-[11px] ${achado ? 'bg-spec-out text-[#1a0a14]' : 'border border-line-strong text-fg-2'}`}
+        >
+          {achado ? 'achado' : 'feito'}
+        </span>
+      }
+      className="min-h-0 flex-1"
+      bodyClassName="flex min-h-0 flex-col overflow-y-auto"
+    >
+      <p className="mb-3 font-mono text-[11px] text-fg-3">
+        {point.onlineTag ?? '—'} · ronda de {hhmm(round.startedAt)} · {round.inspector}
+      </p>
+      <div className="flex items-end gap-8 border-b border-line pb-4">
+        <svg role="img" aria-label="Campo × online" width={260} height={H + 20}>
+          <rect
+            x={0}
+            width={260}
+            y={y(
+              point.onlineValue !== null
+                ? point.onlineValue + EXPECTED_OFFSET_C + TEMP_TOLERANCE_C
+                : 0,
+            )}
+            height={(TEMP_TOLERANCE_C * 2 * H) / (hi - lo)}
+            fill="none"
+            stroke="var(--color-action)"
+            strokeDasharray="3 3"
+            opacity={point.onlineValue !== null ? 1 : 0}
+          />
+          {[
+            {
+              v: point.fieldTempC,
+              x: 30,
+              label: 'campo',
+              fill: divergent(delta) ? 'var(--color-spec-out)' : 'var(--color-fg-3)',
+            },
+            { v: point.onlineValue, x: 150, label: 'online', fill: '#8b94a3' },
+          ].map((bar) =>
+            bar.v === null ? null : (
+              <g key={bar.label}>
+                <rect x={bar.x} width={70} y={y(bar.v)} height={H - y(bar.v)} fill={bar.fill} />
+                <text
+                  x={bar.x + 35}
+                  y={y(bar.v) - 6}
+                  textAnchor="middle"
+                  fill="var(--color-fg)"
+                  fontSize={16}
+                  fontFamily="JetBrains Mono, monospace"
+                >
+                  {num(bar.v, 1)}
+                </text>
+                <text
+                  x={bar.x + 35}
+                  y={H + 16}
+                  textAnchor="middle"
+                  fill="var(--color-fg-2)"
+                  fontSize={11}
+                >
+                  {bar.label}
+                </text>
+              </g>
+            ),
+          )}
+        </svg>
+        <div className="flex flex-col gap-1 pb-6 text-[11px] text-fg-3">
+          divergência
+          <span
+            className={`font-mono text-[22px] ${divergent(delta) ? 'text-spec-out' : 'text-fg'}`}
+          >
+            {delta === null ? '—' : `${delta >= 0 ? '+' : '−'}${num(Math.abs(delta), 1)}`}
+            <span className="ml-1 text-[11px] text-fg-2">°C</span>
+          </span>
+          <span>
+            esperado {EXPECTED_OFFSET_C} ±{TEMP_TOLERANCE_C} °C: a carcaça é mais fria que o sensor
+            (suposição)
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="h-2.5 w-3.5 border border-dashed border-action" /> faixa aceita
+          </span>
+        </div>
+      </div>
+      <h3 className="mt-3 text-[11px] text-fg-3">Observação de campo</h3>
+      <p className="mt-1 text-[13px]">{point.note ?? 'Sem observação escrita.'}</p>
+      {list.length > 0 ? (
+        <p className="mt-1 text-[12px] text-spec-out">{list.join(' · ')}</p>
+      ) : null}
+      <div className="mt-4 flex flex-wrap gap-2">
+        {note ? (
+          <button
+            type="button"
+            onClick={() => onOpenNote?.(note.number)}
+            className="h-8 border border-action px-3 text-[13px] text-action-hover hover:text-fg"
+          >
+            Abrir nota {note.number}
+          </button>
+        ) : achado ? (
+          <span className="flex h-8 items-center border border-dashed border-line-strong px-3 text-[12px] text-fg-3">
+            achado sem nota registrada
+          </span>
+        ) : null}
+        {point.onlineTag ? (
+          <button
+            type="button"
+            onClick={() => {
+              if (point.onlineTag) onOpenTrend?.(point.onlineTag);
+            }}
+            className="h-8 border border-line-strong px-3 text-[13px] text-fg-2 hover:text-fg"
+          >
+            Ver tendência da TAG
+          </button>
+        ) : null}
+        <button
+          type="button"
+          onClick={() => {
+            onOpenBearing(point.assetTag);
+          }}
+          className="h-8 border border-line-strong px-3 text-[13px] text-fg-2 hover:text-fg"
+        >
+          Abrir em Mancais
+        </button>
+      </div>
+    </Panel>
+  );
 }

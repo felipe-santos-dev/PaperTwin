@@ -250,9 +250,29 @@ export function toSimState(row: SimStateRow): SimState {
     seed: num(row.seed),
     // bigint volta como string no postgres.js, para não perder precisão
     lastTick: num(row.last_tick),
-    state: row.state ?? null,
+    state: parseState(row.state),
     updatedAt: new Date(ms(row.updated_at)).toISOString(),
   };
+}
+
+/**
+ * O estado como objeto, mesmo que tenha sido gravado como texto JSON.
+ *
+ * Até esta correção, o postgres.js gravava o estado duas vezes codificado: o
+ * parâmetro já ia como texto JSON e o driver, vendo `$3::jsonb`, passava de novo
+ * pelo `JSON.stringify`. O banco guardava uma *string* JSON, e a leitura
+ * devolvia essa string — sem `version`, sem nada. O PGlite não faz isso, por
+ * isso os testes não pegaram. Ler a string aqui cura as linhas antigas sem
+ * precisar mexer no banco; texto que não é JSON vira nulo, que força
+ * reancoragem.
+ */
+function parseState(value: unknown): unknown {
+  if (typeof value !== 'string') return value ?? null;
+  try {
+    return JSON.parse(value) as unknown;
+  } catch {
+    return null;
+  }
 }
 
 export const FIND_SIM_STATE = `
@@ -261,7 +281,7 @@ export const FIND_SIM_STATE = `
 
 export const SAVE_SIM_STATE = `
   insert into sim_state (id, seed, last_tick, state, updated_at)
-  values (1, $1, $2, $3::jsonb, $4::timestamptz)
+  values (1, $1, $2, $3::text::jsonb, $4::timestamptz)
   on conflict (id) do update set
     seed = excluded.seed,
     last_tick = excluded.last_tick,

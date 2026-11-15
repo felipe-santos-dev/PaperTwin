@@ -485,6 +485,31 @@ for (const driver of DRIVERS) {
         });
       });
     });
+
+    describe('marcador da simulação', () => {
+      const estado = { version: 1, tick: 10, seed: 7, setpoints: { 'AIC-902': 75 } };
+
+      it('devolve o estado como objeto, e não como texto JSON', async () => {
+        await db.saveSimState({ seed: 7, lastTick: 10, state: estado, updatedAt: new Date(T0) });
+
+        const lido = await db.findSimState();
+        expect(lido?.state).toEqual(estado);
+
+        // no banco, um objeto jsonb: a versão é consultável pelo próprio Postgres
+        const [linha] = await sql.rows<{ tipo: string }>(
+          'select jsonb_typeof(state) as tipo from sim_state where id = 1',
+        );
+        expect(linha?.tipo).toBe('object');
+      });
+
+      it('lê como objeto o estado gravado duas vezes codificado', async () => {
+        await db.saveSimState({ seed: 7, lastTick: 10, state: estado, updatedAt: new Date(T0) });
+        // como o postgres.js gravava antes da correção: uma string JSON dentro do jsonb
+        await sql.rows('update sim_state set state = to_jsonb(state::text) where id = 1');
+
+        expect((await db.findSimState())?.state).toEqual(estado);
+      });
+    });
   });
 }
 

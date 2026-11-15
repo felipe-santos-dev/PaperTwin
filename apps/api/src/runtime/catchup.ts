@@ -18,7 +18,12 @@ import {
   tickTime,
   TICKS_PER_HOUR,
 } from '../simulation/clock';
-import { processEngine, type EngineState, type ProcessEngine } from '../simulation/process-engine';
+import {
+  ENGINE_STATE_VERSION,
+  processEngine,
+  type EngineState,
+  type ProcessEngine,
+} from '../simulation/process-engine';
 import { gradeInEffectAt, planAt, type BreakPlan, type ShiftPlan } from '../simulation/scenarios';
 import { harvestEntities, persistHarvest } from './entities';
 import { HISTORIAN_SCAN_TICKS, historianRecorder, type RecorderStats } from './recorder';
@@ -196,6 +201,20 @@ export function bearingValuesAt(
   return values;
 }
 
+/**
+ * O estado gravado, se esta build souber retomá-lo.
+ *
+ * Um estado de outro formato não é motivo para derrubar a API: é o caso que o
+ * próprio motor manda resolver reancorando. Devolver `undefined` aqui faz a
+ * retomada arrancar a rede em regime, como faz quando a semente muda.
+ */
+function engineStateOf(state: unknown): EngineState | undefined {
+  if (state === null || typeof state !== 'object') return undefined;
+  return (state as { version?: unknown }).version === ENGINE_STATE_VERSION
+    ? (state as EngineState)
+    : undefined;
+}
+
 /** Aplica os eventos do plano que caem neste passo. */
 function applyPlan(engine: ProcessEngine, plan: ShiftPlan, tick: number): void {
   if (plan.gradeChange?.startTick === tick) {
@@ -242,10 +261,8 @@ export async function catchUp(db: Database, options: CatchupOptions = {}): Promi
    * dele seria saltar horas de processo sem dizer. Aí a rede arranca em regime,
    * que é o que `reanchored` significa.
    */
-  const restored =
-    !range.reanchored && saved !== null && !seedChanged && saved.state !== null
-      ? (saved.state as EngineState)
-      : undefined;
+  const usable = engineStateOf(saved?.state);
+  const restored = !range.reanchored && !seedChanged ? usable : undefined;
 
   if (range.ticks === 0) {
     return {
@@ -275,7 +292,7 @@ export async function catchUp(db: Database, options: CatchupOptions = {}): Promi
       values: valuesAt(
         seed,
         range.toTick,
-        saved?.state ? (saved.state as EngineState) : undefined,
+        seedChanged ? undefined : usable,
         degradationScenarioAt(now),
       ),
     };

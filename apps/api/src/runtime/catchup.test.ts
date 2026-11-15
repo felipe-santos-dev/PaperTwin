@@ -175,6 +175,25 @@ describe('retomada', () => {
     LENTO,
   );
 
+  it(
+    'reancora em vez de cair quando o estado gravado é de outro formato',
+    async () => {
+      await marcarEm(20);
+      await catchUp(db, { seed: SEED, now: minutosAntes(10) });
+      // um estado sem `version`, como o de um formato antigo
+      await sql.rows("update sim_state set state = state - 'version' where id = 1");
+
+      const retomada = await catchUp(db, { seed: SEED, now: NOW });
+      expect(retomada.resumedFromState).toBe(false);
+      expect(retomada.ticks).toBeGreaterThan(0);
+
+      // e a próxima já retoma do estado novo, com versão
+      const seguinte = await catchUp(db, { seed: SEED, now: new Date(NOW.getTime() + 60_000) });
+      expect(seguinte.resumedFromState).toBe(true);
+    },
+    LENTO,
+  );
+
   /**
    * A rede tem estado, e retomar precisa continuar dele.
    *

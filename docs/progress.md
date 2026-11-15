@@ -978,10 +978,22 @@ typecheck, lint, Prettier, build e e2e 10/10 (8 da cena, sem mudança, e 2 de
 Mancais). three continua fora do carregamento inicial (chunk próprio,
 baixado por Máquina ou pelo painel 3D de Mancais).
 
+### Limpeza das referências antigas
+
+Saíram de `reference/prototypes/`: `secagem-teste/` (o teste do Blender que o
+`tools/scene-bake` substituiu, com os binários de saída), `papertwin-telas.html`
+(o protótipo de telas que o design novo aposentou) e
+`papermill-twin-monitoramento.png` (sem referência em lugar nenhum). As regras
+do `.gitignore` do `secagem-teste` foram junto. Ficam `mp1-parte-seca-3d.html`
+e `mp1-parte-umida.html`, citados como fonte das medidas em
+`packages/shared/src/machine/`. As menções a eles mais acima neste arquivo são
+histórico. No código não sobrou arquivo sem uso: todo módulo de `apps/` e
+`packages/` é importado, e todo arquivo de `public/scene` é referenciado pela
+cena.
+
 ## Próximo passo exato
 
-Revisão da fase (e) pelo Felipe; o porte das telas para o design novo está
-completo. Ideia para depois, fora do pedido: a tela Máquina também pode pintar
+O porte das telas para o design novo está completo. Ideia para depois, fora do pedido: a tela Máquina também pode pintar
 os mancais pela zona ISO, como o painel de Mancais já faz.
 Em aberto, de antes: cor dos mancais pela zona ISO, que depende de uma busca
 no back-end.

@@ -6,7 +6,6 @@ import type { DataGateway } from '../api/gateway';
 import { DEFAULT_VIEW, SCENE_VIEWS, viewForAsset, type SceneView } from '../scene/views';
 import type { SceneState } from '../scene/sceneState';
 import { AssetPanel } from '../ui/AssetPanel';
-import { ScreenTitle } from '../ui/Shell';
 import { useAssetDetail, type AssetFetchers } from '../ui/useAssetDetail';
 
 /**
@@ -78,25 +77,23 @@ export function MaquinaScreen({ gateway, assetTag, onSelect }: MaquinaScreenProp
 
   return (
     <>
-      <ScreenTitle
-        eyebrow="Cena navegável · gerada do modelo declarativo"
-        title="MP1"
-        aside={`· ${String(MP1.sections.length)} seções`}
-        actions={
-          <div className="flex flex-wrap gap-1.5">
-            <button
-              type="button"
-              onClick={() => {
-                setPlaying((running) => !running);
-              }}
-              aria-pressed={!playing}
-              className="min-h-11 rounded border border-mill-line px-3 py-1.5 text-sm text-mill-fg transition-colors hover:bg-white/5"
-            >
-              {playing ? 'Pausar' : 'Animar'}
-            </button>
-          </div>
-        }
-      />
+      <header className="mb-3 flex items-center gap-4">
+        <h1 className="text-[17px] font-semibold">Máquina</h1>
+        <span className="text-[12px] text-fg-2">
+          cena navegável · gerada do modelo declarativo ·{' '}
+          <span className="font-mono text-fg">{MP1.sections.length}</span> seções
+        </span>
+        <button
+          type="button"
+          onClick={() => {
+            setPlaying((running) => !running);
+          }}
+          aria-pressed={!playing}
+          className="ml-auto h-8 border border-line-strong px-3 text-[13px] text-fg-2 hover:border-action hover:text-fg"
+        >
+          {playing ? 'Pausar' : 'Animar'}
+        </button>
+      </header>
 
       <div className="flex min-h-0 flex-1 gap-4 max-lg:flex-col">
         <nav
@@ -111,34 +108,34 @@ export function MaquinaScreen({ gateway, assetTag, onSelect }: MaquinaScreenProp
                 setView(candidate);
               }}
               aria-current={candidate.id === view.id}
-              className={`flex min-h-11 items-center justify-between gap-3 rounded px-2.5 py-1.5 text-left transition-colors ${
+              className={`flex min-h-10 items-center justify-between gap-3 border-l-2 px-2.5 py-1.5 text-left text-[13px] ${
                 candidate.id === view.id
-                  ? 'bg-white/6 text-mill-fg'
-                  : 'text-mill-muted hover:text-mill-fg'
+                  ? 'border-action bg-hover text-fg'
+                  : 'border-transparent text-fg-2 hover:bg-hover hover:text-fg'
               }`}
             >
               {candidate.label}
               {candidate.hint && (
-                <small className="font-mono text-[11px] text-mill-dim">{candidate.hint}</small>
+                <small className="font-mono text-[11px] text-fg-3">{candidate.hint}</small>
               )}
             </button>
           ))}
         </nav>
 
-        <div className="relative min-h-80 min-w-0 flex-1 overflow-hidden rounded border border-mill-line">
+        <div className="relative min-h-80 min-w-0 flex-1 overflow-hidden border border-line">
           <Suspense fallback={<SceneLoading />}>
             <MachineScene view={view} state={sceneState} />
           </Suspense>
 
           {!selected && (
-            <p className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 rounded border border-mill-line bg-mill-panel/85 px-3 py-1.5 text-xs text-mill-muted backdrop-blur">
+            <p className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 border border-line bg-panel/90 px-3 py-1.5 text-[12px] text-fg-2">
               Arraste para girar · role para zoom · clique num mancal
             </p>
           )}
         </div>
 
         {selected && (
-          <div className="w-96 shrink-0 overflow-auto border-l border-mill-line pl-4 max-lg:w-full max-lg:border-l-0 max-lg:pl-0">
+          <div className="w-96 shrink-0 overflow-auto border-l border-line pl-4 max-lg:w-full max-lg:border-l-0 max-lg:pl-0">
             <AssetPanel
               asset={selected}
               data={assetData}
@@ -155,7 +152,7 @@ export function MaquinaScreen({ gateway, assetTag, onSelect }: MaquinaScreenProp
 
 function SceneLoading() {
   return (
-    <div role="status" className="grid h-full place-items-center text-sm text-mill-muted">
+    <div role="status" className="grid h-full place-items-center text-sm text-fg-2">
       Carregando a cena 3D…
     </div>
   );

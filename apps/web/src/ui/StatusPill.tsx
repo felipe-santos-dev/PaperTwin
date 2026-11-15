@@ -8,15 +8,15 @@ interface Style {
 const STYLES: Record<AssetHealth, Style> = {
   normal: {
     label: 'Normal',
-    className: 'bg-mill-normal/12 text-mill-normal ring-mill-normal/30',
+    className: 'bg-fg/12 text-fg ring-fg/30',
   },
   attention: {
     label: 'Atenção',
-    className: 'bg-mill-attention/12 text-mill-attention ring-mill-attention/30',
+    className: 'bg-alarm-2/12 text-alarm-2 ring-alarm-2/30',
   },
   critical: {
     label: 'Crítico',
-    className: 'bg-mill-critical/12 text-mill-critical ring-mill-critical/35',
+    className: 'bg-alarm-1/12 text-alarm-1 ring-alarm-1/35',
   },
 };
 
@@ -27,7 +27,7 @@ const STYLES: Record<AssetHealth, Style> = {
  */
 const NO_DATA: Style = {
   label: 'Sem dados',
-  className: 'bg-white/5 text-mill-muted ring-white/10',
+  className: 'bg-white/5 text-fg-2 ring-white/10',
 };
 
 export interface StatusPillProps {
@@ -42,7 +42,7 @@ export function StatusPill({ health }: StatusPillProps) {
   return (
     <span
       role="status"
-      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${style.className}`}
+      className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${style.className}`}
     >
       <span className="size-1.5 rounded-full bg-current" aria-hidden="true" />
       {style.label}

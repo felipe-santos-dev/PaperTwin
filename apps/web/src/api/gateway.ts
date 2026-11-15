@@ -9,7 +9,6 @@ import type {
 } from '@mp1/shared';
 
 import {
-  ApiError,
   fetchAsset,
   fetchVibration,
   type AssetDetail,
@@ -165,12 +164,3 @@ export const LIVE_GATEWAY: DataGateway = {
   writeSetpoint,
   acknowledgeAlarm,
 };
-
-/** Um erro que diz que a fonte é somente leitura, sem fingir outra coisa. */
-export function readOnlySource(): ApiError {
-  return new ApiError(
-    405,
-    'O modo de demonstração é um instantâneo: ele não aceita escrita. ' +
-      'Suba a API para mexer no processo.',
-  );
-}

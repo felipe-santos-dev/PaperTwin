@@ -11,10 +11,7 @@
       3 amarelo), especificação de laboratório (dentro, no limite, fora) e as
       quatro zonas da ISO 20816-3. Nenhuma cor decora.
    3. **Azul só para interação.** `action` é o que se clica, o que está
-      selecionado e o foco — nunca um estado da máquina.
-
-   Os tokens `mill-*` da Fase 6 continuam aqui, apontando para a paleta nova,
-   até as telas antigas serem portadas; a limpeza da fase (e) os tira. */
+      selecionado e o foco — nunca um estado da máquina. */
 @theme {
   --font-sans: Inter, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
@@ -61,21 +58,6 @@
   --color-iso-c-line: #d6a23a;
   --color-iso-d: #4a1e22;
   --color-iso-d-line: #f2555a;
-
-  /* tokens da Fase 6, apontando para a paleta nova até a fase (e) */
-  --color-mill-bg: #0d1015;
-  --color-mill-panel: #12161c;
-  --color-mill-line: #1d232b;
-  --color-mill-fg: #d5dae1;
-  --color-mill-muted: #9aa3af;
-  --color-mill-dim: #7c8592;
-  --color-mill-accent: #4f8cff;
-  --color-mill-normal: #d5dae1;
-  --color-mill-attention: #f5a524;
-  --color-mill-critical: #f2555a;
-  --color-series-1: #d5dae1;
-  --color-series-2: #4f8cff;
-  --color-series-3: #f5a524;
 }
 
 @layer base {

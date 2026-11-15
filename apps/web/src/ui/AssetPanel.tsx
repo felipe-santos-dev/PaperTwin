@@ -63,31 +63,31 @@ export function AssetPanel({ asset, data, onClose }: AssetPanelProps) {
   const zone = detail?.status.zone ?? null;
 
   return (
-    <aside className="absolute top-4 right-4 flex max-h-[calc(100%-2rem)] w-80 flex-col overflow-y-auto rounded-xl border border-mill-line bg-mill-panel/92 p-4 backdrop-blur">
+    <aside className="absolute top-4 right-4 flex max-h-[calc(100%-2rem)] w-80 flex-col overflow-y-auto border border-line bg-panel/92 p-4 backdrop-blur">
       <div className="flex items-start gap-3">
         <div className="min-w-0">
           {zone && (
             <div className="mb-1.5 flex items-center gap-2">
               <StatusPill health={healthFromZone(zone)} />
-              <span className="font-mono text-[10px] tracking-wide text-mill-muted uppercase">
+              <span className="font-mono text-[10px] tracking-wide text-fg-2 uppercase">
                 ISO 20816 · zona {zone}
               </span>
             </div>
           )}
           <h2 className="text-sm font-semibold">{asset.label}</h2>
-          <p className="mt-0.5 font-mono text-[11px] break-all text-mill-muted">{asset.tag}</p>
+          <p className="mt-0.5 font-mono text-[11px] break-all text-fg-2">{asset.tag}</p>
         </div>
         <button
           type="button"
           onClick={onClose}
           aria-label="Fechar"
-          className="ml-auto rounded-md px-2 py-0.5 text-mill-muted hover:bg-white/5"
+          className="ml-auto px-2 py-0.5 text-fg-2 hover:bg-hover"
         >
           ×
         </button>
       </div>
 
-      {zone && <p className="mt-2 text-[11px] text-mill-muted">{ZONE_NOTE[zone]}</p>}
+      {zone && <p className="mt-2 text-[11px] text-fg-2">{ZONE_NOTE[zone]}</p>}
 
       <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
         <Field label="Tipo" value={KIND_LABEL[asset.kind]} />
@@ -97,11 +97,11 @@ export function AssetPanel({ asset, data, onClose }: AssetPanelProps) {
       </dl>
 
       {data.phase === 'loading' && asset.iso && (
-        <p className="mt-3 text-xs text-mill-muted">Consultando a API…</p>
+        <p className="mt-3 text-xs text-fg-2">Consultando a API…</p>
       )}
 
       {data.phase === 'error' && (
-        <p className="mt-3 rounded-lg border border-mill-critical/30 bg-mill-critical/8 px-2.5 py-2 text-[11px] text-mill-critical">
+        <p className="mt-3 border border-alarm-1/30 bg-alarm-1/8 px-2.5 py-2 text-[11px] text-alarm-1">
           {data.error}
         </p>
       )}
@@ -122,7 +122,7 @@ export function AssetPanel({ asset, data, onClose }: AssetPanelProps) {
               setShowTable((open) => !open);
             }}
             aria-expanded={showTable}
-            className="mt-1 self-start rounded-md px-1.5 py-1 text-[11px] text-mill-muted underline decoration-dotted underline-offset-2 hover:bg-white/5"
+            className="mt-1 self-start px-1.5 py-1 text-[11px] text-fg-2 underline decoration-dotted underline-offset-2 hover:bg-hover"
           >
             {showTable ? 'Ocultar tabela' : 'Ver como tabela'}
           </button>
@@ -134,7 +134,7 @@ export function AssetPanel({ asset, data, onClose }: AssetPanelProps) {
       {series?.remainingLife && <RemainingLifeNote life={series.remainingLife} />}
 
       {asset.source === 'assumed' && (
-        <p className="mt-3 rounded-lg border border-mill-attention/25 bg-mill-attention/8 px-2.5 py-2 text-[11px] text-mill-attention">
+        <p className="mt-3 border border-alarm-2/25 bg-alarm-2/8 px-2.5 py-2 text-[11px] text-alarm-2">
           Posição e existência deste ativo ainda são suposição do protótipo, à espera do mapa de
           rolos.
         </p>
@@ -175,11 +175,11 @@ function Tile({
   emphasis?: boolean;
 }) {
   return (
-    <div className="rounded-lg border border-mill-line bg-black/20 px-2.5 py-2">
-      <p className="text-[10px] text-mill-muted">{label}</p>
+    <div className="border border-line bg-base/40 px-2.5 py-2">
+      <p className="text-[10px] text-fg-2">{label}</p>
       <p className={emphasis ? 'text-xl font-semibold' : 'text-base'}>
         {value}
-        {unit && <span className="ml-1 font-mono text-[10px] text-mill-muted">{unit}</span>}
+        {unit && <span className="ml-1 font-mono text-[10px] text-fg-2">{unit}</span>}
       </p>
     </div>
   );
@@ -195,18 +195,18 @@ function Tile({
  */
 function RemainingLifeNote({ life }: { life: RemainingLife }) {
   return (
-    <details className="mt-3 text-[11px] text-mill-muted">
+    <details className="mt-3 text-[11px] text-fg-2">
       <summary className="cursor-pointer list-none">
-        <span className="rounded bg-white/5 px-1.5 py-0.5 tracking-wide uppercase">estimativa</span>{' '}
+        <span className="bg-white/5 px-1.5 py-0.5 tracking-wide uppercase">estimativa</span>{' '}
         tendência de{' '}
-        <span className="font-mono text-mill-fg">
+        <span className="font-mono text-fg">
           {life.trendMmSPerDay >= 0 ? '+' : ''}
           {life.trendMmSPerDay.toFixed(2)} mm/s por dia
         </span>{' '}
         · como foi calculado
       </summary>
 
-      <div className="mt-1.5 space-y-1.5 border-l border-mill-line pl-2.5">
+      <div className="mt-1.5 space-y-1.5 border-l border-line pl-2.5">
         <p>
           Reta por mínimos quadrados sobre {life.samples} janelas da vibração RMS, estendida até a
           fronteira C→D da ISO 20816-3.
@@ -215,8 +215,8 @@ function RemainingLifeNote({ life }: { life: RemainingLife }) {
           <p>A tendência é plana ou de queda, então não cruza a fronteira: não há prazo a dar.</p>
         ) : (
           <p>
-            A reta <strong className="font-medium text-mill-fg">subestima</strong>: defeito de
-            rolamento acelera, então a data real chega antes da estimada.
+            A reta <strong className="font-medium text-fg">subestima</strong>: defeito de rolamento
+            acelera, então a data real chega antes da estimada.
           </p>
         )}
         <p>Não é medição nem previsão de falha — é extrapolação da tendência recente.</p>
@@ -235,10 +235,10 @@ function BucketTable({ buckets }: { buckets: readonly VibrationBucket[] }) {
   });
 
   return (
-    <div className="mt-2 max-h-44 overflow-y-auto rounded-lg border border-mill-line">
+    <div className="mt-2 max-h-44 overflow-y-auto border border-line">
       <table className="w-full text-[10px] tabular-nums">
         <caption className="sr-only">Vibração RMS média e de pico por janela</caption>
-        <thead className="sticky top-0 bg-mill-panel text-mill-muted">
+        <thead className="sticky top-0 bg-panel text-fg-2">
           <tr>
             <th scope="col" className="px-2 py-1 text-left font-medium">
               Janela
@@ -253,7 +253,7 @@ function BucketTable({ buckets }: { buckets: readonly VibrationBucket[] }) {
         </thead>
         <tbody>
           {buckets.map((bucket) => (
-            <tr key={bucket.bucketStart} className="border-t border-mill-line/60">
+            <tr key={bucket.bucketStart} className="border-t border-line/60">
               <td className="px-2 py-1">{formato.format(new Date(bucket.bucketStart))}</td>
               <td className="px-2 py-1 text-right">{bucket.rmsAvgMmS.toFixed(2)}</td>
               <td className="px-2 py-1 text-right">{bucket.rmsMaxMmS.toFixed(2)}</td>
@@ -268,7 +268,7 @@ function BucketTable({ buckets }: { buckets: readonly VibrationBucket[] }) {
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <dt className="text-[11px] text-mill-muted">{label}</dt>
+      <dt className="text-[11px] text-fg-2">{label}</dt>
       <dd className="font-mono text-xs">{value}</dd>
     </div>
   );

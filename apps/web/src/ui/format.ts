@@ -98,41 +98,6 @@ export function hhmm(iso: string | null | undefined): string {
   return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
 
-/** `DD/MM · HH:MM`, que é como o protótipo escreve o instante no cabeçalho. */
-export function dayTime(iso: string | null | undefined): string {
-  if (!iso) return '—';
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return '—';
-
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  return `${day}/${month} · ${hhmm(iso)}`;
-}
-
-/** Uma duração em segundos como `22 min` ou `1 h 05`. */
-export function duration(seconds: number | null | undefined): string {
-  if (seconds === null || seconds === undefined || !Number.isFinite(seconds)) return '—';
-  if (seconds < 60) return `${String(Math.round(seconds))} s`;
-
-  const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `${String(minutes)} min`;
-
-  const hours = Math.floor(minutes / 60);
-  return `${String(hours)} h ${String(minutes % 60).padStart(2, '0')}`;
-}
-
-/**
- * O intervalo entre dois instantes, em texto curto.
- *
- * `null` no fim significa "ainda está acontecendo", e aí a resposta é "em
- * andamento" — não a duração até agora, que mudaria a cada render e daria a
- * impressão de um cronômetro que a tela não tem.
- */
-export function span(from: string, to: string | null): string {
-  if (to === null) return 'em andamento';
-  return duration((Date.parse(to) - Date.parse(from)) / 1000);
-}
-
 /** `HH:MM:SS` no fuso de quem está olhando: o relógio da barra superior. */
 export function clockTime(iso: string | null | undefined): string {
   if (!iso) return '—';

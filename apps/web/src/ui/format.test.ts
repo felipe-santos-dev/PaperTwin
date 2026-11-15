@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { dayTime, duration, hhmm, int, num, span, tagValue } from './format';
+import { clockTime, hhmm, hourWindow, int, num, tagValue } from './format';
 
 describe('números em português', () => {
   /**
@@ -66,38 +66,14 @@ describe('instantes', () => {
     expect(hhmm(iso)).toBe('13:32');
   });
 
-  it('mostra dia e hora no formato do protótipo', () => {
-    expect(dayTime(iso)).toBe('15/06 · 13:32');
+  it('mostra o relógio com segundos e a janela do turno', () => {
+    expect(clockTime(iso)).toBe('13:32:00');
+    expect(hourWindow(iso, null)).toBe('13:32–—');
   });
 
   it('não inventa hora para entrada inválida', () => {
     expect(hhmm(null)).toBe('—');
     expect(hhmm('nem data')).toBe('—');
-    expect(dayTime(undefined)).toBe('—');
-  });
-});
-
-describe('durações', () => {
-  it('usa segundos, minutos e horas conforme a escala', () => {
-    expect(duration(42)).toBe('42 s');
-    expect(duration(22 * 60)).toBe('22 min');
-    expect(duration(3 * 3600 + 5 * 60)).toBe('3 h 05');
-  });
-
-  it('não inventa duração sem dado', () => {
-    expect(duration(null)).toBe('—');
-  });
-
-  /**
-   * `null` no fim significa "ainda está acontecendo", e a resposta é isso — não
-   * a duração até agora, que mudaria a cada render e daria a impressão de um
-   * cronômetro que a tela não tem.
-   */
-  it('diz "em andamento" quando não há fim', () => {
-    expect(span('2026-06-15T10:00:00Z', null)).toBe('em andamento');
-  });
-
-  it('mede o intervalo entre dois instantes', () => {
-    expect(span('2026-06-15T10:00:00Z', '2026-06-15T10:53:00Z')).toBe('53 min');
+    expect(clockTime(undefined)).toBe('—');
   });
 });

@@ -64,7 +64,7 @@ export function VibrationTrend({ buckets, limits, label }: VibrationTrendProps) 
 
   if (!chart) {
     return (
-      <p className="py-6 text-center text-xs text-mill-muted">
+      <p className="py-6 text-center text-xs text-fg-2">
         Sem leituras suficientes para traçar a tendência.
       </p>
     );
@@ -86,7 +86,7 @@ export function VibrationTrend({ buckets, limits, label }: VibrationTrendProps) 
 
   return (
     <figure className="mt-1">
-      <figcaption id={titleId} className="mb-1 text-[11px] text-mill-muted">
+      <figcaption id={titleId} className="mb-1 text-[11px] text-fg-2">
         {label}
       </figcaption>
 
@@ -108,7 +108,7 @@ export function VibrationTrend({ buckets, limits, label }: VibrationTrendProps) 
               x2={WIDTH - PAD_RIGHT}
               y1={chart.y(limits.cToD)}
               y2={chart.y(limits.cToD)}
-              stroke="var(--color-mill-critical)"
+              stroke="var(--color-alarm-1)"
               strokeWidth="1"
               strokeDasharray="3 3"
             />
@@ -116,7 +116,7 @@ export function VibrationTrend({ buckets, limits, label }: VibrationTrendProps) 
               x={WIDTH - PAD_RIGHT}
               y={chart.y(limits.cToD) - 3}
               textAnchor="end"
-              className="fill-mill-critical text-[8px]"
+              className="fill-alarm-1 text-[8px]"
             >
               C|D {limits.cToD}
             </text>
@@ -129,7 +129,7 @@ export function VibrationTrend({ buckets, limits, label }: VibrationTrendProps) 
               x2={WIDTH - PAD_RIGHT}
               y1={chart.y(limits.bToC)}
               y2={chart.y(limits.bToC)}
-              stroke="var(--color-mill-attention)"
+              stroke="var(--color-alarm-2)"
               strokeWidth="1"
               strokeDasharray="3 3"
             />
@@ -137,7 +137,7 @@ export function VibrationTrend({ buckets, limits, label }: VibrationTrendProps) 
               x={WIDTH - PAD_RIGHT}
               y={chart.y(limits.bToC) - 3}
               textAnchor="end"
-              className="fill-mill-attention text-[8px]"
+              className="fill-alarm-2 text-[8px]"
             >
               B|C {limits.bToC}
             </text>
@@ -150,21 +150,21 @@ export function VibrationTrend({ buckets, limits, label }: VibrationTrendProps) 
           x2={WIDTH - PAD_RIGHT}
           y1={PLOT_HEIGHT}
           y2={PLOT_HEIGHT}
-          stroke="var(--color-mill-line)"
+          stroke="var(--color-line)"
           strokeWidth="1"
         />
-        <text x={0} y={PAD_TOP + 7} className="fill-mill-muted text-[8px] tabular-nums">
+        <text x={0} y={PAD_TOP + 7} className="fill-fg-2 text-[8px] tabular-nums">
           {chart.ceiling.toFixed(1)}
         </text>
-        <text x={0} y={PLOT_HEIGHT - 1} className="fill-mill-muted text-[8px] tabular-nums">
+        <text x={0} y={PLOT_HEIGHT - 1} className="fill-fg-2 text-[8px] tabular-nums">
           0
         </text>
 
-        <path d={chart.area} fill="var(--color-mill-accent)" opacity="0.14" />
+        <path d={chart.area} fill="var(--color-action)" opacity="0.14" />
         <path
           d={chart.line}
           fill="none"
-          stroke="var(--color-mill-accent)"
+          stroke="var(--color-action)"
           strokeWidth="2"
           strokeLinejoin="round"
           strokeLinecap="round"
@@ -176,8 +176,8 @@ export function VibrationTrend({ buckets, limits, label }: VibrationTrendProps) 
             cx={chart.x(buckets.length - 1)}
             cy={chart.y(last.rmsAvgMmS)}
             r="3"
-            fill="var(--color-mill-accent)"
-            stroke="var(--color-mill-panel)"
+            fill="var(--color-action)"
+            stroke="var(--color-panel)"
             strokeWidth="2"
           />
         )}
@@ -189,34 +189,34 @@ export function VibrationTrend({ buckets, limits, label }: VibrationTrendProps) 
               x2={chart.x(hovered)}
               y1={PAD_TOP}
               y2={PLOT_HEIGHT}
-              stroke="var(--color-mill-muted)"
+              stroke="var(--color-fg-2)"
               strokeWidth="1"
             />
             <circle
               cx={chart.x(hovered)}
               cy={chart.y(active.rmsAvgMmS)}
               r="3.5"
-              fill="var(--color-mill-fg)"
-              stroke="var(--color-mill-panel)"
+              fill="var(--color-fg)"
+              stroke="var(--color-panel)"
               strokeWidth="2"
             />
           </g>
         )}
 
-        <text x={PAD_LEFT} y={HEIGHT - 3} className="fill-mill-muted text-[8px] tabular-nums">
+        <text x={PAD_LEFT} y={HEIGHT - 3} className="fill-fg-2 text-[8px] tabular-nums">
           {first ? hora.format(new Date(first.bucketStart)) : ''}
         </text>
         <text
           x={WIDTH - PAD_RIGHT}
           y={HEIGHT - 3}
           textAnchor="end"
-          className="fill-mill-muted text-[8px] tabular-nums"
+          className="fill-fg-2 text-[8px] tabular-nums"
         >
           {last ? hora.format(new Date(last.bucketStart)) : ''}
         </text>
       </svg>
 
-      <p className="mt-0.5 h-4 text-center font-mono text-[10px] text-mill-muted">
+      <p className="mt-0.5 h-4 text-center font-mono text-[10px] text-fg-2">
         {active
           ? `${dataHora.format(new Date(active.bucketStart))} · ${active.rmsAvgMmS.toFixed(2)} mm/s · pico ${active.rmsMaxMmS.toFixed(2)}`
           : last

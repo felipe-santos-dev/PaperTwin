@@ -98,11 +98,3 @@ export function breakMarks(breaks: readonly WebBreak[], span: Span): number[] {
     .filter((t) => t >= span.from && t <= span.to && width > 0)
     .map((t) => (t - span.from) / width);
 }
-
-/** Média e 2σ de uma lista de números. */
-export function stats(values: readonly number[]): { mean: number; twoSigma: number } {
-  if (values.length === 0) return { mean: Number.NaN, twoSigma: Number.NaN };
-  const mean = values.reduce((a, b) => a + b, 0) / values.length;
-  const variance = values.reduce((a, b) => a + (b - mean) ** 2, 0) / values.length;
-  return { mean, twoSigma: 2 * Math.sqrt(variance) };
-}

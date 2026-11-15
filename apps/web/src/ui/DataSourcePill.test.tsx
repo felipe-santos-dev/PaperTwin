@@ -29,8 +29,8 @@ describe('DataSourcePill', () => {
       const { unmount } = render(<DataSourcePill source={source} />);
       const classes = screen.getByRole('status').className;
 
-      expect(classes, source).not.toContain('mill-critical');
-      expect(classes, source).not.toContain('mill-normal');
+      // o semáforo de vibração são as zonas ISO; a fonte de dados não usa as cores delas
+      expect(classes, source).not.toContain('iso-');
       unmount();
     }
   });

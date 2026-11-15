@@ -962,10 +962,26 @@ mais recentes.
 2 de Mancais). Capturas em 1920×1080 e 1440×900 sem rolagem horizontal e com
 o console limpo.
 
+### Fase (e) — limpeza
+
+Os tokens `mill-*` e `series-*` saíram do tema; as classes que ainda os usavam
+(tela Máquina, `AssetPanel`, `StatusPill`, `VibrationTrend`, `ResourceState`)
+passaram para os tokens do design, sem cantos arredondados. A tela Máquina
+ganhou o cabeçalho no estilo das outras. Removidos por falta de uso:
+`ui/Table.tsx`, `ui/chart/Trend.tsx`, `ScreenTitle`/`StatRow`/`Block` do
+`Shell`, `dayTime`/`span`/`duration` de `format.ts` (e os testes deles),
+`readOnlySource` do portão e `stats` das contas de Bobinas. O `AssetPanel`
+continua: é o painel do ativo na tela Máquina.
+
+**Verificado.** Testes do `shared` (231), da API (404) e da web (148);
+typecheck, lint, Prettier, build e e2e 10/10 (8 da cena, sem mudança, e 2 de
+Mancais). three continua fora do carregamento inicial (chunk próprio,
+baixado por Máquina ou pelo painel 3D de Mancais).
+
 ## Próximo passo exato
 
-Revisão da fase (d) pelo Felipe. Depois, fase (e): limpeza do que ficou sem
-uso (tokens `mill-*`, `Shell` antigo, `Table`, `Trend`, `AssetPanel` se a
-Máquina não precisar), testes, lint, typecheck, build e e2e verdes.
+Revisão da fase (e) pelo Felipe; o porte das telas para o design novo está
+completo. Ideia para depois, fora do pedido: a tela Máquina também pode pintar
+os mancais pela zona ISO, como o painel de Mancais já faz.
 Em aberto, de antes: cor dos mancais pela zona ISO, que depende de uma busca
 no back-end.

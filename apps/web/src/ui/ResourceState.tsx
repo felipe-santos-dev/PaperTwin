@@ -32,7 +32,7 @@ export function ResourceState<T>({
 }: ResourceStateProps<T>) {
   if (resource.phase === 'loading') {
     return (
-      <p role="status" className="px-1 py-6 text-sm text-mill-muted">
+      <p role="status" className="px-1 py-6 text-sm text-fg-2">
         Carregando {label ?? 'dados'}…
       </p>
     );
@@ -41,11 +41,11 @@ export function ResourceState<T>({
   if (resource.phase === 'error') {
     return (
       <div role="alert" className="px-1 py-6 text-sm">
-        <p className="text-mill-critical">{resource.error}</p>
+        <p className="text-alarm-1">{resource.error}</p>
         <button
           type="button"
           onClick={resource.reload}
-          className="mt-3 min-h-11 rounded border border-mill-line px-3 py-1.5 text-mill-fg transition-colors hover:bg-white/5"
+          className="mt-3 min-h-11 border border-line px-3 py-1.5 text-fg transition-colors hover:bg-white/5"
         >
           Tentar de novo
         </button>
@@ -55,7 +55,7 @@ export function ResourceState<T>({
 
   if (resource.phase === 'empty') {
     return (
-      <p role="status" className="px-1 py-6 text-sm text-mill-muted">
+      <p role="status" className="px-1 py-6 text-sm text-fg-2">
         {emptyMessage ?? 'Nada para mostrar neste recorte.'}
       </p>
     );

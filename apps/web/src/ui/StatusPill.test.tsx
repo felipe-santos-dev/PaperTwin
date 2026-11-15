@@ -27,7 +27,7 @@ describe('StatusPill', () => {
     const selo = screen.getByRole('status');
     expect(selo).toHaveTextContent('Sem dados');
     expect(selo.textContent).not.toMatch(/crítico|atenção|normal/i);
-    expect(selo.className).not.toContain('mill-critical');
+    expect(selo.className).not.toContain('alarm-1');
   });
 
   it('acompanha a leitura de 7,8 mm/s do mancal CS23 até o selo de crítico', () => {

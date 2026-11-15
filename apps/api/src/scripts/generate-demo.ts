@@ -156,7 +156,7 @@ async function main(): Promise<void> {
 
     bytes += await writeJson(
       `assets/${asset.tag}/vibration.json`,
-      await capture(app, `/assets/${tag}/vibration`),
+      await capture(app, `/assets/${tag}/vibration?to=${encodeURIComponent(NOW.toISOString())}`),
     );
     files += 1;
   }

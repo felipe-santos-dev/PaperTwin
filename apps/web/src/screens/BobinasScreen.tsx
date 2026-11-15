@@ -166,7 +166,9 @@ function ReelList({
   const scaleM = Math.ceil((longest * 1.02) / 20_000) * 20_000;
   const ticks = Array.from({ length: scaleM / 20_000 + 1 }, (_, i) => i * 20_000);
   const closed = reels.filter((reel) => reel.endedAt !== null);
-  const count = (d: string) => closed.filter((reel) => reel.disposition === d).length;
+  // o mesmo destino que a coluna mostra: a retenção da qualidade vence a disposição do QCS
+  const destinoOf = (reel: ReelView) => holdOf.get(reel.number)?.status ?? reel.disposition;
+  const count = (d: string) => closed.filter((reel) => destinoOf(reel) === d).length;
   const held = holds.filter((hold) => hold.status === 'retida').length;
   const day = reels[0] ? new Date(reels[0].startedAt) : null;
 

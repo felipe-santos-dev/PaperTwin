@@ -997,3 +997,398 @@ O porte das telas para o design novo está completo. Ideia para depois, fora do 
 os mancais pela zona ISO, como o painel de Mancais já faz.
 Em aberto, de antes: cor dos mancais pela zona ISO, que depende de uma busca
 no back-end.
+
+# Feedback do engenheiro de processo — fases 0 a 7
+
+Sete entregas tiradas da avaliação de um engenheiro de processo de papel. Uma
+fase por vez, com revisão do Felipe ao fim de cada uma. Branch
+`dev/feedback-processo`, tirada de `main` em 54587dd (o porte das telas, acima,
+está fechado). Sem push na `main`, sem PR, sem deploy.
+
+## Fase 0 — reconhecimento
+
+Sem código. O que segue é o que eu li, o que medi e o que preciso que tu decidas
+antes da Fase 1.
+
+### Por fase: o que já está pronto e o que vou tocar
+
+#### Fase 1 — ajuda por bloco e busca
+
+**Pronto.** `ui/Panel.tsx` já é o bloco único das telas, com título, contexto e
+canto direito (`aside`) — tem onde encaixar o "?" sem componente novo. A
+navegação por tela já mora na âncora (`ui/screens.ts`, teclas 1–8,
+`hashchange`), e `ui/useAssetUrl.ts` espelha o ativo em `?asset=`. O índice da
+busca tem de onde sair sem fonte nova: `SCREENS` (telas), `PROCESS_CATALOG` (320
+variáveis, com tag e nome), `monitoredAssets(MP1)` (98 mancais), `areaOfTag`
+(`ui/sections.ts`) e as rotas de bobinas e notas do portão. `App.tsx` já tem os
+cinco abridores que um resultado precisa chamar — `openTrend`, `openBearing`,
+`openReel`, `openNote`, `openArea`.
+
+**Vou tocar.** `ui/Panel.tsx`; `ui/help.ts` (novo, uma chave por bloco); os 20
+pontos que montam `Panel` hoje — `BobinasScreen` (3), `LaboratorioScreen` (4),
+`MancaisScreen` (1), `mancais/BearingDetail` (1), `mancais/Scene3DPanel` (1),
+`NotasScreen` (1), `processo/RefiningEffect` (1), `processo/SetpointPanel` (1),
+`processo/TrendStack` (1), `RondasScreen` (3) e `turno/Support` (3);
+`ui/Shell.tsx` (o campo de busca na barra de 48 px); dois arquivos novos para a
+busca (índice em memória e a lista de resultados); `App.tsx` (ligar o resultado
+ao abridor certo); e os testes — `ui/components.test.tsx`, o teste novo do
+índice e o teste que falha se existir `Panel` sem chave de ajuda.
+
+**Achado que vira decisão.** Quatro blocos das telas **não** são `Panel`: a
+lista de variáveis de `ProcessoScreen` (`<section>` escrita à mão), a linha do
+tempo de `turno/Timeline.tsx`, o quadro de `NotasScreen` e as amostras de
+`SistemaScreen` (esta só existe nos builds de desenvolvimento e de teste). O
+teste "nenhum painel sem ajuda" só alcança o que passa por `Panel` — dúvida 2.
+
+#### Fase 2 — Mancais mais leve
+
+**Pronto.** O modelo da máquina tem tudo que o mapa 2D precisa, e em
+`packages/shared/src/machine/`: posição em metros dos 153 ativos, seção com
+ordem de processo, lado (`MLA`/`MLC`), `parentTag` do mancal para o corpo
+girante e a classe ISO. `screens/mancais/derive.ts` já calcula a zona ISO de
+cada um dos 98 mancais, e a tela já passa esse mapa para a cena. `viewForAsset`
+já enquadra um ativo. `Scene3DPanel` já carrega a cena por `lazy()`.
+
+**Vou tocar.** `screens/mancais/Scene3DPanel.tsx` (passa a ser o painel do mapa,
+com o botão "ver em 3D"); um arquivo novo com o mapa em SVG;
+`screens/MancaisScreen.tsx`; `scene/Atmosphere.tsx` e `scene/MachineScene.tsx`
+(vapor desligado por padrão); `screens/SistemaScreen.tsx` (a opção, se ela ficar
+ali — dúvida 5); `e2e/mancais.spec.ts` (os dois caminhos) e `e2e/scene.spec.ts`
+(hoje o teste do pedaço do three só confere a tela de abertura; passa a cobrar
+também que Mancais não baixe o three sem pedir).
+
+**Achado.** Hoje Mancais baixa o pedaço do three e a cena inteira assim que a
+lista aparece: medido, 236 ms para o `three-*.js` e 677 ms até o último
+lightmap, 2,3 MB e ~200 MB de memória de GPU numa tela cujo conteúdo próprio
+está pronto aos 276 ms. É o custo que a fase tira.
+
+#### Fase 3 — variáveis de processo que faltam
+
+**Pronto.** O catálogo tem **320 variáveis** — 68 TAGs próprias mais 252
+expandidas dos 7 padrões por cilindro —, **55 malhas**, **24 relações** FOPDT e
+**13 ensaios** de laboratório. O gerador lê o CSV
+(`npm run generate -w @mp1/shared`) e o `catalog.generated.ts` nunca é escrito à
+mão. O historiador tem orçamento explícito: 320 pontos, 300 MB, 7 dias, 1.521
+linhas por ponto por dia, uma a cada ~57 s; a compressão medida na Fase 5 foi de
+198–202 para 1 e sete dias couberam em ~17 MB (6 % do orçamento). O selo
+"ilustrativo" e as sete TAGs fixas do preparo (`AIC-102`, `JI-111`, `ZIC-112`,
+`FIC-107`, `FIC-108`, `FIC-110`, `LIC-103`) já existem em
+`apps/web/src/api/fixtures/`.
+
+**Distribuição de hoje por área:** mancais 216 · secagem 36 · pré-secagem 16 ·
+QCS 10 · Speed Sizer 8 · pós-secagem 6 · preparo 5 · prensas 4 · calandra 4 ·
+Pope 4 · utilidades 4 · geral 3 · caixa 3 · formação 1. A lista da fase pede
+justamente onde o catálogo é magro: preparo, parte úmida, laboratório e
+manutenção.
+
+**Vou tocar.** `reference/research/catalogo-base.csv` e `relacoes-fopdt.csv`; os
+dois geradores e os dois `*.generated.ts`; `process/types.ts` (o nível novo:
+ligada / autônoma / ilustrativa); `simulation/process-engine.ts` e
+`operating-point.ts` (autônomas e calculadas); `historian/points.ts` e
+`retention.ts`; uma migration; `routes/process.ts`; `screens/ProcessoScreen.tsx`;
+`api/fixtures/process.ts` (as fixas saem onde nascer TAG de verdade);
+`process/lab.ts`, `screens/LaboratorioScreen.tsx` e `api/fixtures/lab.ts`.
+
+**Dos 13 ensaios de hoje**, a lista do rolo jumbo já cobre gramatura, umidade,
+espessura, aspereza, tração, rasgo, cinzas, alvura/brancura e Cobb. Faltam
+**cor, dureza, rigidez, arrebentamento, Scott Bond, desprendimento de pó e
+sujidade** — sete. A tela mostra 12 colunas (o 13º é a razão MD/CD, derivada).
+
+#### Fase 4 — modo "e se"
+
+**Pronto, e é mais do que eu esperava.** O motor já é separável: `EngineState`
+(versionado) com verdade, setpoints, integrais e as linhas de atraso;
+`processEngine(tick, { state })` retoma exatamente de um estado; `setSetpoint` /
+`resetSetpoint` / `runTo` / `measured` / `truth` são a API inteira de que o "e
+se" precisa. O grafo de relações já responde `relationsForInput`,
+`relationsForOutput` e `drivenOutputs` (hoje 12 saídas dirigidas). O ajuste SIMC
+das malhas já está lá, e a rota real de setpoint com motivo obrigatório também.
+
+**Falta no motor, e é pouco:** duas opções novas — ruído desligado e malhas
+abertas (manual). Nenhuma das duas mexe na física; são um ramo no passo.
+
+**Vou tocar.** Mover
+`simulation/{clock,fopdt,noise,operating-point,pi,cd-profile,process-engine}.ts`
+para `packages/shared/src/simulation/`; os imports da API;
+`packages/shared/package.json` (o subcaminho, ver abaixo); `routes/process.ts` e
+`routes/process-route-schemas.ts` (a rota `POST` nova); um Web Worker novo na
+web; `screens/processo/SetpointPanel.tsx` e um painel novo ao lado dele;
+`scripts/generate-demo.ts` (gravar o estado do motor no instantâneo) e
+`api/demo-gateway.ts`.
+
+#### Fase 5 — replay de quebra de folha
+
+**Pronto.** A entidade `WebBreak` já guarda os precursores com `leadTimeS`
+contado para trás dentro da janela de 10 min (`PRECURSOR_WINDOW_S = 600`), e os
+sinais são **lidos do arquivo**, não acumulados em memória. O `excDev` por tag —
+a régua da fase — está no catálogo. O grafo de relações responde quem depende de
+quem. O historiador entrega janelas por tag, e os eventos do período (alarmes,
+alterações de setpoint, trocas de gramatura) já têm rota.
+
+**Vou tocar.** Um módulo puro novo no `shared` (comparação com a linha de base e
+ordenação por quem desviou primeiro); `operations/web-break.ts`;
+`routes/operations.ts` (o `GET` do replay); as consultas do historiador e das
+operações; `screens/turno/Timeline.tsx` e `screens/BobinasScreen.tsx` (a porta
+de entrada); a tela do replay; e o mapa 2D da Fase 2, reaproveitado para marcar
+a posição da quebra.
+
+#### Fase 6 — ciclo fechado de manutenção
+
+**Pronto.** `rul.ts` já faz a regressão e já tem o critério de significância que
+a fase pede (inclinação contra o erro padrão dela mesma, duas vezes, com piso
+absoluto e mínimo de três amostras) — é dele que sai o prazo até a fronteira
+C→D. As zonas ISO, os alarmes, as rondas com leitura de campo e as evidências
+por referência já existem. A auditoria das alterações de setpoint é o molde
+pronto para a auditoria das sugestões.
+
+**Vou tocar.** Um módulo puro novo no `shared` (a regra que vira sugestão);
+`operations/maintenance.ts` (situação `sugerida` antes de `aberta`, origem
+`tendência`, motivo obrigatório na dispensa); uma migration e o teste que lê a
+migration e cobra que as enumerações do SQL e as do `@mp1/shared` sejam a mesma
+lista; o repositório e as consultas de operações; `routes/operations.ts`;
+`runtime/catchup.ts` (gerar na retomada, idempotente);
+`screens/mancais/BearingDetail.tsx`, `screens/NotasScreen.tsx`, `ui/Shell.tsx`
+(o contador) e `screens/turno/Support.tsx`; `db/seed.ts` e
+`scripts/generate-demo.ts` (o CS23 lado comando já é o mancal que degrada).
+
+#### Fase 7 — sensor virtual de qualidade
+
+Custo estimado mais abaixo. Não implemento sem tua confirmação.
+
+### O núcleo puro do simulador pode ir para `packages/shared`?
+
+**Pode, e sem quebrar a API.** O que sustenta a resposta:
+
+1. **Não há dependência para fora.** Fora os testes, os onze arquivos de
+   `apps/api/src/simulation/` importam **só** `@mp1/shared` e uns aos outros.
+   Zero `node:*`, zero `fastify`, zero banco, zero `process.env`.
+2. **O `shared` já é consumido pelo navegador** e é publicado como código-fonte
+   (`exports: "./src/index.ts"`, sem build), então não há passo de empacotamento
+   novo para o Worker da Fase 4.
+3. **A API muda só de import.** Os consumidores são dez arquivos
+   (`routes/process.ts`, `routes/stream.ts`, `routes/alarms.ts`,
+   `routes/health.ts`, `routes/assets.ts`,
+   `runtime/{catchup,entities,recorder,service}.ts`, `db/seed.ts`,
+   `scripts/generate-demo.ts`) e os testes.
+
+**Três condições, e são elas que decidem como fazer:**
+
+- **Sai por subcaminho, não pelo barril.** `packages/shared/src/index.ts` é
+  `export *` de tudo, e é o que cada tela importa. O motor ali dentro corre o
+  risco de entrar no pedaço inicial da web — e `relations.ts` e
+  `machine/steam-groups.ts` fazem validação em tempo de carga, que é exatamente
+  o tipo de efeito que o empacotador não descarta sozinho. Então:
+  `@mp1/shared/simulation`, com entrada própria em `exports`, e o motor só no
+  pedaço do Worker.
+- **Vai um grupo, não tudo.** `clock`, `fopdt`, `noise`, `operating-point`,
+  `pi`, `cd-profile` e `process-engine` são o que o "e se" precisa. `scenarios`,
+  `bearings`, `alarm-engine` e `vibration` ficam na API — são puros também, mas
+  não têm por que atravessar agora. Um nó a desatar se algum dia forem:
+  `simulation/vibration.test.ts` importa `DEGRADING_TAG` de `db/seed.ts`, e
+  `db/seed.ts` importa `simulation/vibration` — com `vibration` no `shared`, o
+  teste faria o `shared` depender da API, e a constante teria de mudar de casa
+  junto.
+- **O modo de demonstração precisa do estado no instantâneo.** Hoje
+  `generate-demo.ts` grava só respostas de rota; o estado do motor (~1.300
+  números, ~25 kB) não vai junto. Sem ele, o navegador remontaria a rede no
+  ponto de operação e daria outra trajetória — é o mesmo erro que a Fase 5
+  registrou acima ("a rede tem estado"). Com ele, "idêntico nos dois" é
+  alcançável de verdade.
+
+### Medição de base
+
+**Como foi medido.** Build de produção (`npm run build -w @mp1/web`) servido por
+`vite preview`, aberto no navegador embutido do app — Chromium com **WebGPU** e
+GPU de verdade —, janela emulada em 1920 × 1080 com `devicePixelRatio` 1,25,
+cache quente e a API local no ar (fonte ao vivo, não o instantâneo). `?perf=1`
+publica `window.__twinPerf`. Antes de cada medida, uma navegação para uma página
+vazia, para o custo de desmontar a cena anterior não entrar na conta da próxima;
+os tempos são contados do início da primeira requisição.
+
+**É a primeira medição de fps que vale neste projeto.** As anteriores ficaram em
+~1 Hz porque a aba do navegador embutido estava oculta, e aba oculta não recebe
+quadro.
+
+**Pedaços do build** (bruto · gzip):
+
+| arquivo               |    bruto |   gzip |
+| --------------------- | -------: | -----: |
+| `three-*.js`          | 1.673 kB | 456 kB |
+| `react-*.js`          |   222 kB |  69 kB |
+| `index-*.js`          |   220 kB |  63 kB |
+| `index-*.css`         |    39 kB |   8 kB |
+| `MachineScene-*.js`   |    15 kB |   7 kB |
+| `preload-helper-*.js` |     1 kB |   1 kB |
+
+Fora do JavaScript: `public/scene/` com ~3,7 MB (`mp1.glb` 1,8 MB e 11 lightmaps
+WebP) e `public/demo/` com ~4,0 MB em 912 arquivos, dos quais cada tela baixa só
+o que usa.
+
+**As duas telas, e uma tela 2D como referência:**
+
+| medida                    |     Máquina |      Mancais | Processo (2D) |
+| ------------------------- | ----------: | -----------: | ------------: |
+| primeira pintura          |       68 ms |        68 ms |         80 ms |
+| conteúdo próprio da tela  |           — |       276 ms |        203 ms |
+| pedaço do `three` baixado |      161 ms |       236 ms |     não baixa |
+| `mp1.glb`                 |      536 ms |       664 ms |             — |
+| último lightmap           |      547 ms |       677 ms |             — |
+| canvas no DOM             |      471 ms |       578 ms |             — |
+| primeiro quadro medido    |    1.054 ms |     1.155 ms |             — |
+| até o fps estabilizar     |      ~6,0 s |       ~6,3 s |             — |
+| requisições               |          26 | 107 (85 API) |   44 (37 API) |
+| bytes                     |    2.354 kB |     2.354 kB |         79 kB |
+| canvas                    | 1989 × 1093 |    840 × 463 |             — |
+| chamadas de desenho       |         300 |          128 |             — |
+| triângulos                |     277.511 |      148.511 |             — |
+| memória de GPU · total    |    383,4 MB |     201,1 MB |             0 |
+| memória de GPU · texturas |    375,1 MB |     196,5 MB |             0 |
+| fps estável               |          60 |           60 |             — |
+
+**Três leituras destes números.**
+
+1. **O fps estável é 60 nas duas, travado na sincronia vertical** — não há folga
+   visível por cima. O que dói não é o regime: são os **primeiros ~6 segundos**,
+   em que o fps fica entre 1 e 16 enquanto as 121 configurações de desenho do
+   pipeline são compiladas. É isso que faz a tela parecer pesada.
+2. **A memória de GPU é quase toda textura.** Os 11 lightmaps a 2048², sem
+   compressão de GPU, dão 176 MB (4 bytes por pixel); o resto são os 16 alvos de
+   renderização do pipeline com TRAA e bloom, que escalam com o tamanho do
+   canvas — é por isso que Mancais, com canvas pequeno, fica em 201 MB e a tela
+   cheia em 383 MB.
+3. **Mancais paga a cena inteira para mostrar um painel de 840 × 463.** O
+   conteúdo próprio da tela está pronto aos 276 ms; a cena custa mais 2,3 MB,
+   ~200 MB de GPU e os ~6 s de engasgo. E as 85 requisições à API da tela (uma
+   por mancal sem instrumento no catálogo) são um segundo assunto, que não é
+   desta fase.
+
+**Com e sem `Atmosphere.tsx`.** A 60 fps travados não dá para comparar, então a
+cena foi empurrada para fora da sincronia aumentando a janela até o canvas ficar
+em 4389 × 2443, e o vapor foi ligado e desligado em tempo de execução pelo
+`visible` do grupo (sem tocar no código), três vezes alternadas:
+
+| vapor     | fps (mediana de 8 amostras) | chamadas de desenho | triângulos |
+| --------- | --------------------------: | ------------------: | ---------: |
+| ligado    |                     32 · 32 |                 300 |    277.511 |
+| desligado |                          33 |                 294 |    277.367 |
+
+Um quadro de ~31 ms contra um de ~30 ms: **o vapor é da ordem de 3 % do custo do
+quadro** — 6 sprites, 6 chamadas de desenho e 144 triângulos. Ele **não** é a
+maior parte do custo; a maior parte é pixel, ou seja, resolução e
+pós-processamento. Pela regra da Fase 2 ("se a medição mostrar que eles são a
+maior parte do custo, remova; senão, deixe atrás de uma opção"), ele **fica**,
+desligado por padrão, atrás de uma opção — e aí vem a dúvida 5, porque a tela
+Sistema não existe no build de produção.
+
+O método tem um limite que vale dizer: desligar pelo `visible` tira o custo de
+desenhar, não o de existir (a memória dos sprites e a montagem do material
+continuam). Como são 6 sprites, isso não muda a conclusão.
+
+### Fase 7 — quanto custa
+
+A fase depende de o laboratório estar no simulador, e ele está pela metade:
+**três dos 13 ensaios já são saídas do motor** (`LAB-1206` tração MD por
+`JIC-101`, `LAB-1206R` razão MD/CD por `XHIC-202`, `LAB-1212` curl por
+`PDIC-702`), e todos os 13 já têm ponto de operação em `operating-point.ts`. O
+que não existe é o **ensaio como evento**: hoje os resultados são dado fixo no
+front (`api/fixtures/lab.ts`), sem entidade, sem tabela e sem fila de análise.
+
+Para a tração MD, o caminho mínimo é:
+
+1. **Resultado de laboratório como entidade** — tipo no `shared`, tabela,
+   repositório, rota e geração por bobina com o atraso de análise. É o pedaço
+   grande: ~1 a 1,5 dia, e é pré-requisito tanto da Fase 7 quanto de o
+   Laboratório deixar de ser ilustrativo.
+2. **O estimador** — regressão sobre as variáveis de processo da janela da
+   bobina, com a faixa de incerteza saindo do erro padrão do próprio ajuste (o
+   `rul.ts` já é o precedente de como escrever isso com honestidade), e correção
+   por deslocamento a cada resultado novo do laboratório: ~0,5 dia.
+3. **Rota e tela** — a estimativa entre duas análises, com a faixa, e o pulo
+   quando o laboratório chega: ~0,5 dia.
+
+**Total: ~2 a 2,5 dias**, dos quais mais da metade é o item 1, que vale por si.
+Sem o item 1 a fase não existe; com ele feito, o sensor virtual é barato.
+
+### Dúvidas que precisam da tua resposta
+
+1. **Busca e URL.** "Usando a navegação por URL que já existe" — hoje só a tela
+   (âncora) e o ativo da cena (`?asset=`) estão na URL; bobina, TAG, mancal,
+   nota e seção são estado do React em `App.tsx`. Duas leituras: (a) o resultado
+   chama os abridores que já existem (`openTrend`, `openBearing`, `openReel`,
+   `openNote`, `openArea`) e a URL fica como está; (b) a seleção passa a morar
+   na URL, e aí todo resultado vira link que se cola numa conversa. (b) é mais
+   trabalho e mexe em todas as telas. Qual?
+2. **Blocos que não são `Panel`.** Lista de variáveis do Processo, linha do
+   tempo do Turno, quadro de Notas e amostras do Sistema. Levo os três primeiros
+   para `Panel` (e aí o teste cobre tudo), ou eles ficam de fora da regra?
+3. **O design de Mancais perde para a instrução.** `5-mancais.png` reserva o
+   painel de baixo à direita para o 3D ("Área reservada para o modelo 3D"). A
+   Fase 2 põe ali o mapa 2D e manda o 3D para um botão. Confirmo que a instrução
+   vence o desenho?
+4. **O mapa 2D não tem referência de design.** Vou desenhá-lo na língua do
+   sistema: fundo de painel, sem cantos arredondados, cor pela zona ISO com os
+   tokens que já existem, vista lateral na mesma convenção do corte de
+   `tools/scene-bake/wet.py`. Serve?
+5. **Onde fica a opção do vapor.** `SistemaScreen` só entra nos builds de
+   desenvolvimento e de teste — uma opção ali não existiria em produção.
+   Alternativas: pôr a opção nos controles da própria tela Máquina, ou passar a
+   publicar a tela Sistema. Qual?
+6. **Tamanho da Fase 3.** A lista pede algo como 90 a 100 TAGs novas contra as
+   68 próprias de hoje. O orçamento do historiador aguenta (com ~440 pontos, os
+   7 dias continuam cabendo: a compressão medida foi de ~200 para 1 e sete dias
+   deram ~17 MB de 300), mas eu queria tua confirmação da ordem de grandeza
+   antes de mexer no CSV e na migration.
+7. **O que as "autônomas" gravam.** Uma TAG autônoma (alvo + ruído + deriva
+   lenta) não tem física por trás. Ela entra no historiador como as outras, ou
+   só é calculada na hora da leitura? Guardar custa orçamento; não guardar
+   impede tendência de 7 dias.
+8. **Estado do motor no instantâneo.** A Fase 4 em demonstração precisa de
+   `demo/sim-state.json` (~25 kB) para o navegador dar a mesma série que a API.
+   Confirmo?
+9. **Número da nota sugerida.** A sugestão já nasce com número `NM-…`, ou só
+   ganha número quando é confirmada? Nascer com número gasta sequência em
+   sugestão dispensada; não nascer exige uma chave própria para a sugestão.
+10. **Base da branch.** `dev/feedback-processo` saiu de 54587dd, que é a ponta
+    de `main` (e de `origin/main`). Confirmo que é a base certa.
+
+### Respostas do Felipe, e o que elas fixam
+
+1. **Busca (a).** O resultado chama os abridores que já existem em `App.tsx`; a
+   URL fica como está. Seleção na URL fica para depois, fora deste pedido.
+2. **Três blocos viram `Panel`:** a lista de variáveis do Processo, a linha do
+   tempo do Turno e o quadro de Notas. Aí o teste "nenhum painel sem ajuda"
+   cobre tudo. `SistemaScreen` fica fora da regra.
+3. **A instrução vence o desenho** em Mancais: mapa 2D no painel, 3D atrás do
+   botão.
+4. **O mapa 2D sai na língua do sistema**, e a captura vai para revisão **antes**
+   de ligar a interação. Se não servir, o Felipe desenha e eu refaço.
+5. **A opção do vapor fica nos controles da própria tela Máquina.** A tela
+   Sistema continua fora do build de produção.
+6. **Teto de 50 TAGs novas no historiador.** A tabela da Fase 3 leva uma coluna
+   de prioridade — 1 entra, 2 entra como ilustrativa, 3 fica de fora — e
+   prioriza o que é ligado ou calculado. O corte é na aprovação do Felipe.
+7. **A autônoma não grava.** Ela é função pura de (semente, passo, canal),
+   deriva lenta inclusive, igual ao ruído do motor, e é calculada na leitura:
+   assim a tendência de 7 dias existe sem gastar arquivo. Se isso complicar as
+   rotas de histórico, eu paro e aviso **antes** de gravar.
+8. **`demo/sim-state.json` entra no instantâneo.**
+9. **A sugestão de nota só ganha número `NM-…` quando é confirmada.** A chave
+   própria dela é (mancal + início da tendência); sugestão dispensada não gasta
+   sequência.
+10. **Base da branch confirmada.**
+
+### Correção de processo, a partir daqui
+
+A regra 1 não foi seguida: eu criei a branch `dev/feedback-processo` e commitei
+a Fase 0 nela (a6e1d40, que fica). Daqui para a frente, **nada de commit, nada
+de branch, nada de worktree**: a edição é direta na pasta principal do projeto,
+na branch ativa (`main`), e cada fase termina com a **lista de arquivos agrupada
+por commit sugerido** — quem commita é o Felipe.
+
+Consequência a resolver quando o Felipe quiser: o texto da Fase 0 existe em dois
+lugares — commitado em `dev/feedback-processo` e, agora, como mudança não
+commitada na pasta principal. É o mesmo conteúdo; juntar as duas pontas mais
+tarde dá conflito. O caminho mais simples é tratar o arquivo da pasta principal
+como o que vale e deixar a branch onde está, como registro.
+
+Pare aqui. A Fase 1 começa quando o Felipe escrever "fase 1".

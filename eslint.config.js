@@ -7,7 +7,10 @@ import globals from 'globals';
 export default tseslint.config(
   {
     // `tools/scene-bake` é Python; o que há de .js lá dentro é do ambiente virtual.
-    ignores: ['**/dist/**', '**/coverage/**', 'reference/**', 'tools/scene-bake/**'],
+    // `.claude/` é espaço de trabalho da ferramenta — inclusive cópias inteiras do
+    // repositório em `.claude/worktrees/`, que lintadas de novo dariam o mesmo
+    // erro várias vezes, num código que não é o desta árvore.
+    ignores: ['**/dist/**', '**/coverage/**', 'reference/**', 'tools/scene-bake/**', '.claude/**'],
   },
   js.configs.recommended,
   tseslint.configs.recommended,

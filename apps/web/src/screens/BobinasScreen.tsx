@@ -174,6 +174,7 @@ function ReelList({
 
   return (
     <Panel
+      help="bobinas.lista"
       title={
         <span className="text-[16px]">
           Bobinas jumbo
@@ -403,6 +404,7 @@ function CdPanel({
 
   return (
     <Panel
+      help="bobinas.mapa"
       title="Umidade CD × MD"
       label="Umidade CD × MD"
       context={
@@ -535,6 +537,7 @@ function MdProfile({
 
   return (
     <Panel
+      help="bobinas.perfil"
       title="Perfil MD · média CD"
       aside="QCS · banda = tolerância"
       bodyClassName="flex min-h-0 flex-col"

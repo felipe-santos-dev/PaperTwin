@@ -1,0 +1,205 @@
+From a4e23cce0baeac254ffcb93857f0b1803ff1c558 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sat, 14 Nov 2026 22:49:19 -0300
+Subject: [PATCH 1/2] =?UTF-8?q?Corrige=20o=20estado=20da=20simula=C3=A7?=
+ =?UTF-8?q?=C3=A3o=20gravado=20duas=20vezes=20codificado=20no=20Postgres?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+O SAVE_SIM_STATE mandava o estado já como texto JSON em `$3::jsonb`. O
+postgres.js descobre o tipo do parâmetro pelo servidor e passa de novo pelo
+JSON.stringify, então o Postgres guardava uma string JSON. Na leitura voltava
+essa string, sem `version`, e a segunda retomada derrubava a API com
+"Estado da rede na versão undefined". O PGlite não codifica duas vezes, por
+isso os testes não pegaram.
+
+- grava com `$3::text::jsonb`, que o driver não reserializa
+- a leitura aceita o estado em texto e o converte, o que cura a linha já
+  gravada no Neon sem mexer no banco
+- estado de outro formato reancora em vez de lançar erro
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01BpxoBYwQr8kTw9snFHM2xS
+---
+ apps/api/src/db/historian-queries.ts | 24 +++++++++++++++++++++--
+ apps/api/src/db/historian.test.ts    | 25 ++++++++++++++++++++++++
+ apps/api/src/runtime/catchup.test.ts | 19 ++++++++++++++++++
+ apps/api/src/runtime/catchup.ts      | 29 ++++++++++++++++++++++------
+ 4 files changed, 89 insertions(+), 8 deletions(-)
+
+diff --git a/apps/api/src/db/historian-queries.ts b/apps/api/src/db/historian-queries.ts
+index 8f051ae..f59454d 100644
+--- a/apps/api/src/db/historian-queries.ts
++++ b/apps/api/src/db/historian-queries.ts
+@@ -250,18 +250,38 @@ export function toSimState(row: SimStateRow): SimState {
+     seed: num(row.seed),
+     // bigint volta como string no postgres.js, para não perder precisão
+     lastTick: num(row.last_tick),
+-    state: row.state ?? null,
++    state: parseState(row.state),
+     updatedAt: new Date(ms(row.updated_at)).toISOString(),
+   };
+ }
+ 
++/**
++ * O estado como objeto, mesmo que tenha sido gravado como texto JSON.
++ *
++ * Até esta correção, o postgres.js gravava o estado duas vezes codificado: o
++ * parâmetro já ia como texto JSON e o driver, vendo `$3::jsonb`, passava de novo
++ * pelo `JSON.stringify`. O banco guardava uma *string* JSON, e a leitura
++ * devolvia essa string — sem `version`, sem nada. O PGlite não faz isso, por
++ * isso os testes não pegaram. Ler a string aqui cura as linhas antigas sem
++ * precisar mexer no banco; texto que não é JSON vira nulo, que força
++ * reancoragem.
++ */
++function parseState(value: unknown): unknown {
++  if (typeof value !== 'string') return value ?? null;
++  try {
++    return JSON.parse(value) as unknown;
++  } catch {
++    return null;
++  }
++}
++
+ export const FIND_SIM_STATE = `
+   select seed, last_tick, state, updated_at from sim_state where id = 1
+ `;
+ 
+ export const SAVE_SIM_STATE = `
+   insert into sim_state (id, seed, last_tick, state, updated_at)
+-  values (1, $1, $2, $3::jsonb, $4::timestamptz)
++  values (1, $1, $2, $3::text::jsonb, $4::timestamptz)
+   on conflict (id) do update set
+     seed = excluded.seed,
+     last_tick = excluded.last_tick,
+diff --git a/apps/api/src/db/historian.test.ts b/apps/api/src/db/historian.test.ts
+index bbf85b6..5823de0 100644
+--- a/apps/api/src/db/historian.test.ts
++++ b/apps/api/src/db/historian.test.ts
+@@ -485,6 +485,31 @@ for (const driver of DRIVERS) {
+         });
+       });
+     });
++
++    describe('marcador da simulação', () => {
++      const estado = { version: 1, tick: 10, seed: 7, setpoints: { 'AIC-902': 75 } };
++
++      it('devolve o estado como objeto, e não como texto JSON', async () => {
++        await db.saveSimState({ seed: 7, lastTick: 10, state: estado, updatedAt: new Date(T0) });
++
++        const lido = await db.findSimState();
++        expect(lido?.state).toEqual(estado);
++
++        // no banco, um objeto jsonb: a versão é consultável pelo próprio Postgres
++        const [linha] = await sql.rows<{ tipo: string }>(
++          'select jsonb_typeof(state) as tipo from sim_state where id = 1',
++        );
++        expect(linha?.tipo).toBe('object');
++      });
++
++      it('lê como objeto o estado gravado duas vezes codificado', async () => {
++        await db.saveSimState({ seed: 7, lastTick: 10, state: estado, updatedAt: new Date(T0) });
++        // como o postgres.js gravava antes da correção: uma string JSON dentro do jsonb
++        await sql.rows('update sim_state set state = to_jsonb(state::text) where id = 1');
++
++        expect((await db.findSimState())?.state).toEqual(estado);
++      });
++    });
+   });
+ }
+ 
+diff --git a/apps/api/src/runtime/catchup.test.ts b/apps/api/src/runtime/catchup.test.ts
+index d0dd8dc..e34c1b1 100644
+--- a/apps/api/src/runtime/catchup.test.ts
++++ b/apps/api/src/runtime/catchup.test.ts
+@@ -175,6 +175,25 @@ describe('retomada', () => {
+     LENTO,
+   );
+ 
++  it(
++    'reancora em vez de cair quando o estado gravado é de outro formato',
++    async () => {
++      await marcarEm(20);
++      await catchUp(db, { seed: SEED, now: minutosAntes(10) });
++      // um estado sem `version`, como o de um formato antigo
++      await sql.rows("update sim_state set state = state - 'version' where id = 1");
++
++      const retomada = await catchUp(db, { seed: SEED, now: NOW });
++      expect(retomada.resumedFromState).toBe(false);
++      expect(retomada.ticks).toBeGreaterThan(0);
++
++      // e a próxima já retoma do estado novo, com versão
++      const seguinte = await catchUp(db, { seed: SEED, now: new Date(NOW.getTime() + 60_000) });
++      expect(seguinte.resumedFromState).toBe(true);
++    },
++    LENTO,
++  );
++
+   /**
+    * A rede tem estado, e retomar precisa continuar dele.
+    *
+diff --git a/apps/api/src/runtime/catchup.ts b/apps/api/src/runtime/catchup.ts
+index d3650f7..f561e4c 100644
+--- a/apps/api/src/runtime/catchup.ts
++++ b/apps/api/src/runtime/catchup.ts
+@@ -18,7 +18,12 @@ import {
+   tickTime,
+   TICKS_PER_HOUR,
+ } from '../simulation/clock';
+-import { processEngine, type EngineState, type ProcessEngine } from '../simulation/process-engine';
++import {
++  ENGINE_STATE_VERSION,
++  processEngine,
++  type EngineState,
++  type ProcessEngine,
++} from '../simulation/process-engine';
+ import { gradeInEffectAt, planAt, type BreakPlan, type ShiftPlan } from '../simulation/scenarios';
+ import { harvestEntities, persistHarvest } from './entities';
+ import { HISTORIAN_SCAN_TICKS, historianRecorder, type RecorderStats } from './recorder';
+@@ -196,6 +201,20 @@ export function bearingValuesAt(
+   return values;
+ }
+ 
++/**
++ * O estado gravado, se esta build souber retomá-lo.
++ *
++ * Um estado de outro formato não é motivo para derrubar a API: é o caso que o
++ * próprio motor manda resolver reancorando. Devolver `undefined` aqui faz a
++ * retomada arrancar a rede em regime, como faz quando a semente muda.
++ */
++function engineStateOf(state: unknown): EngineState | undefined {
++  if (state === null || typeof state !== 'object') return undefined;
++  return (state as { version?: unknown }).version === ENGINE_STATE_VERSION
++    ? (state as EngineState)
++    : undefined;
++}
++
+ /** Aplica os eventos do plano que caem neste passo. */
+ function applyPlan(engine: ProcessEngine, plan: ShiftPlan, tick: number): void {
+   if (plan.gradeChange?.startTick === tick) {
+@@ -242,10 +261,8 @@ export async function catchUp(db: Database, options: CatchupOptions = {}): Promi
+    * dele seria saltar horas de processo sem dizer. Aí a rede arranca em regime,
+    * que é o que `reanchored` significa.
+    */
+-  const restored =
+-    !range.reanchored && saved !== null && !seedChanged && saved.state !== null
+-      ? (saved.state as EngineState)
+-      : undefined;
++  const usable = engineStateOf(saved?.state);
++  const restored = !range.reanchored && !seedChanged ? usable : undefined;
+ 
+   if (range.ticks === 0) {
+     return {
+@@ -275,7 +292,7 @@ export async function catchUp(db: Database, options: CatchupOptions = {}): Promi
+       values: valuesAt(
+         seed,
+         range.toTick,
+-        saved?.state ? (saved.state as EngineState) : undefined,
++        seedChanged ? undefined : usable,
+         degradationScenarioAt(now),
+       ),
+     };
+-- 
+2.43.0
+

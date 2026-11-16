@@ -6,7 +6,8 @@ import { BearingBar, TemperatureBar } from './BearingBar';
 import { fraction, linear } from './chart/scale';
 import { Sparkline } from './chart/Sparkline';
 import { Num } from './Num';
-import { Illustrative } from './Panel';
+import { HELP } from './help';
+import { Illustrative, Panel } from './Panel';
 import { RangeBar } from './RangeBar';
 import { SectionBlock } from './SectionBlock';
 
@@ -100,6 +101,60 @@ describe('bloco de seção', () => {
 
     await userEvent.click(block);
     expect(onClick).toHaveBeenCalledOnce();
+  });
+});
+
+describe('ajuda do bloco', () => {
+  const texto = HELP['turno.placar'];
+
+  function abrir() {
+    render(
+      <Panel help="turno.placar" title="Placar do turno">
+        <p>conteúdo</p>
+      </Panel>,
+    );
+    return screen.getByRole('button', { name: 'Ajuda: Placar do turno' });
+  }
+
+  it('o "?" abre as três linhas do bloco', async () => {
+    const botao = abrir();
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+
+    await userEvent.click(botao);
+
+    const ajuda = screen.getByRole('dialog', { name: 'Ajuda: Placar do turno' });
+    expect(ajuda).toHaveTextContent(texto.shows);
+    expect(ajuda).toHaveTextContent(texto.read);
+    expect(ajuda).toHaveTextContent(texto.click);
+    expect(botao).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('abre pelo teclado, sem mouse', async () => {
+    abrir();
+
+    await userEvent.tab();
+    await userEvent.keyboard('{Enter}');
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('Esc fecha e devolve o foco ao "?"', async () => {
+    const botao = abrir();
+    await userEvent.click(botao);
+
+    await userEvent.keyboard('{Escape}');
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(botao).toHaveFocus();
+  });
+
+  it('clique fora fecha', async () => {
+    const botao = abrir();
+    await userEvent.click(botao);
+
+    await userEvent.click(document.body);
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });
 

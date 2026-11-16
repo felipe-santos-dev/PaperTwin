@@ -159,6 +159,7 @@ function Ranking({
 
   return (
     <Panel
+      help="mancais.ranking"
       title={<span className="text-[16px]">Mancais por severidade</span>}
       label="Mancais por severidade"
       context={

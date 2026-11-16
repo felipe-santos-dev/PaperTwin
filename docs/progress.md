@@ -1385,10 +1385,189 @@ de branch, nada de worktree**: a edição é direta na pasta principal do projet
 na branch ativa (`main`), e cada fase termina com a **lista de arquivos agrupada
 por commit sugerido** — quem commita é o Felipe.
 
-Consequência a resolver quando o Felipe quiser: o texto da Fase 0 existe em dois
-lugares — commitado em `dev/feedback-processo` e, agora, como mudança não
-commitada na pasta principal. É o mesmo conteúdo; juntar as duas pontas mais
-tarde dá conflito. O caminho mais simples é tratar o arquivo da pasta principal
-como o que vale e deixar a branch onde está, como registro.
+A duplicação que isso ameaçava criar — o mesmo texto commitado numa branch e
+solto na pasta principal — acabou não existindo: a ferramenta recolheu o
+worktree para a pasta principal e o conteúdo da Fase 0 ficou num commit só,
+`4c19908`, com a pasta principal na branch `dev/feedback-processo`. É dessa
+ponta que a Fase 1 parte.
 
-Pare aqui. A Fase 1 começa quando o Felipe escrever "fase 1".
+## Fase 1 — ajuda por bloco e busca
+
+Feita na pasta principal, na branch ativa (`dev/feedback-processo`), **sem
+commit**: a entrega é a árvore de trabalho mais a lista por commit sugerido, no
+fim desta seção.
+
+### Ajuda
+
+**O "?" mora no `Panel`, e a prop `help` é obrigatória no tipo.** Essa foi a
+decisão que mais rendeu: não existe painel sem texto porque painel sem texto não
+compila. O teste cobra o que o tipo não alcança — chave que não existe no
+`help.ts`, texto que sobrou sem dono quando um painel saiu, e bloco desenhado à
+mão com a borda e o fundo do painel, que por não passar pelo `Panel` escaparia
+da regra inteira. Esse último teste lê o código-fonte, de propósito: o que se
+quer provar é uma propriedade do repositório, não do que uma tela renderizou.
+
+**Três linhas, sempre as mesmas três** (`apps/web/src/ui/help.ts`, 23 blocos): o
+que o bloco mostra, como ler, o que dá para clicar. Quando não há clique nenhum,
+a terceira linha diz isso em vez de ficar em branco — "Nada aqui é clicável: é
+leitura" é informação, um campo vazio é dúvida. A redação completa está em
+`docs/notas-para-readme.md` §15, gerada do próprio arquivo, para o Felipe
+revisar.
+
+O painel fecha com Esc e com clique fora, e o foco volta para o "?" — quem abriu
+pelo teclado não fica perdido no meio da página. Não é modal: a ajuda é para ser
+lida **olhando** para o bloco.
+
+**Os três blocos soltos viraram `Panel`**, como combinado na resposta 2: a lista
+de variáveis do Processo, a linha do tempo do Turno e o detalhe da nota em
+Notas. Duas coisas que o `Panel` precisou ganhar para isso, e só:
+
+- `heading`, porque o bloco principal de uma tela é o `h1` dela — a linha do
+  tempo no Turno, a lista de variáveis no Processo, o número da nota em Notas. O
+  e2e espera esse `h1` na tela de abertura;
+- `style`, para o detalhe da nota manter a borda de cima na cor da prioridade,
+  que é valor calculado e não classe.
+
+**Correção da Fase 0.** Eu tinha anotado que o quadro de Notas era um bloco
+solto; ele já era `Panel` desde a fase (b). O bloco solto daquela tela é o
+**detalhe da nota**, e foi ele que migrou. Os outros dois estavam certos.
+
+**Fora da regra, e dito aqui para não parecer esquecimento:** `SistemaScreen`
+(que só existe nos builds de desenvolvimento e de teste, por decisão do Felipe)
+e o painel do ativo da tela Máquina — aquele é um sobreposto na cena, não um
+bloco da grade, e o e2e o encontra pelo papel de complementar.
+
+### Busca
+
+Campo fixo no alto da moldura, com `/` e `Ctrl+K`. A barra é ignorada quando se
+está digitando num campo, pela mesma razão que as teclas 1–8 já eram: digitar
+"/" no motivo de uma alteração de setpoint não pode saltar para outro lugar.
+
+**Índice em memória, sem biblioteca nova.** São 433 itens de texto curto — 8
+telas, 327 TAGs (as 320 do catálogo mais as 7 fixas do preparo) e 98 mancais —,
+e varrer isso a cada tecla custa menos do que o navegador leva para desenhar a
+lista. Bobinas e notas entram na primeira vez que alguém abre a busca: são duas
+requisições que as telas já fazem, e quem nunca busca não paga por elas. Se elas
+falharem, a busca continua valendo para o resto — meia busca é melhor que um
+erro na moldura.
+
+**A regra de casamento é simples de explicar**, que é o que importa quando
+alguém reclama de um resultado: minúsculas e sem acento (quem digita
+"pre-secagem" acha a pré-secagem), **todos** os pedaços da consulta têm de
+aparecer em algum lugar do item ("vapor g4" devolve só o `PIC-514`), e quem casa
+pelo começo da TAG vem antes de quem casa no meio de uma descrição.
+
+**Escolher um resultado chama os abridores que já existem** (resposta 1a):
+`openTrend`, `openBearing`, `openReel`, `openNote` e a troca de tela. A busca
+não ganhou um jeito próprio de navegar, e a URL ficou como estava.
+
+Um conserto que veio de carona: `openTrend` não achava a área das sete variáveis
+fixas do preparo, porque elas não estão no catálogo — e sem área a tela de
+Processo abria na seção errada. Agora a área vem da própria variável fixa. Isso
+já valia para quem clicava no alarme da cola AKD na tela de Turno.
+
+### Medido
+
+- **Testes**: `shared` 231, API 407 (111 pulados por falta de `DATABASE_URL`),
+  web **181** — eram 148, mais 33 novos: 8 da regra da ajuda, 12 do índice da
+  busca, 9 do campo e 4 do "?" do painel.
+- **e2e**: **13**, de 10 — três novos em `e2e/busca.spec.ts`, que é o único
+  lugar onde a ligação inteira (moldura → busca → abridor → tela certa) é
+  exercitada no aplicativo de verdade.
+- **Build**: o pedaço da aplicação foi de 219,88 kB para **235,32 kB**
+  (gzip 63,13 → 68,94) e o CSS de 38,99 para 40,05 kB. São os 23 textos de
+  ajuda, o índice e o campo. **O pedaço do `three` não mudou** e continua fora
+  do carregamento inicial.
+- **Capturas** em 1920×1080 e 1440×900 das oito telas, mais o "?" aberto e a
+  busca com resultados. A tela Máquina fica sem PNG: o canvas é WebGPU, a
+  superfície é apresentada e some, e uma captura de fora espera para sempre por
+  um quadro que ela nunca enxerga — é a mesma razão pela qual a cena tem o
+  gancho `__grabNext` por dentro. Os dois exames que importam, rolagem e
+  console, valeram para ela também.
+
+### Dois achados das capturas, nenhum desta fase
+
+1. **O campo de busca ficava espremido a nada em 1440×900.** A barra superior
+   tem itens demais que não encolhem. Resolvido com um piso de 200 px no campo e
+   a lista de resultados centralizada abaixo dele. Este era meu, e está
+   consertado.
+2. **Em 1440×900, o gráfico do "Efeito do refino" é cortado pela borda do
+   painel** — sobra de 157 px. **Não é da Fase 1**: medi com o "?" escondido e a
+   sobra é exatamente a mesma. A causa é o SVG ficar com os 560 px do valor de
+   partida de `useWidth` em vez da largura medida do container, que ali é ~400.
+   Em 1920 a coluna é larga o bastante para os 560 caberem, e por isso nunca
+   apareceu. Não há rolagem horizontal em lugar nenhum (o `main` é
+   `overflow-x-hidden`), então o que acontece é corte, não barra. Fica para o
+   Felipe decidir se entra agora ou vira linha da Fase 2.
+
+Laboratório e Mancais acusam 3 px de sobra em 1440×900 — arredondamento de
+grade, invisível.
+
+### Em aberto
+
+- `npm run format:check` acusa dois arquivos: `PROMPT-VIDEO.md` e
+  `PROMPT-VIDEO-30S.md`. São rascunhos locais, não versionados (estão no
+  `.git/info/exclude`), e não os toquei. Ou entram no `.prettierignore`, ou
+  passam pelo Prettier — é texto teu.
+- `.claude/` entrou no `.prettierignore` e nos `ignores` do ESLint. Sem isso,
+  as cópias inteiras do repositório que a ferramenta deixa em
+  `.claude/worktrees/` eram lintadas junto, e o `npm run lint` acusava 12 erros
+  de código que não é o desta árvore — inclusive de um ambiente virtual de
+  Python.
+
+### Arquivos, por commit sugerido
+
+**1. Ajuda por bloco: o "?" no Panel e os textos**
+
+```
+apps/web/src/ui/help.ts            (novo)
+apps/web/src/ui/Panel.tsx
+apps/web/src/ui/help.test.ts       (novo)
+apps/web/src/ui/components.test.tsx
+apps/web/src/screens/BobinasScreen.tsx
+apps/web/src/screens/LaboratorioScreen.tsx
+apps/web/src/screens/MancaisScreen.tsx
+apps/web/src/screens/RondasScreen.tsx
+apps/web/src/screens/mancais/BearingDetail.tsx
+apps/web/src/screens/mancais/Scene3DPanel.tsx
+apps/web/src/screens/processo/RefiningEffect.tsx
+apps/web/src/screens/processo/SetpointPanel.tsx
+apps/web/src/screens/processo/TrendStack.tsx
+apps/web/src/screens/turno/Support.tsx
+```
+
+**2. Os três blocos soltos viram Panel**
+
+```
+apps/web/src/screens/ProcessoScreen.tsx
+apps/web/src/screens/turno/Timeline.tsx
+apps/web/src/screens/NotasScreen.tsx
+```
+
+**3. Busca na moldura**
+
+```
+apps/web/src/ui/search.ts          (novo)
+apps/web/src/ui/SearchBox.tsx      (novo)
+apps/web/src/ui/search.test.ts     (novo)
+apps/web/src/ui/SearchBox.test.tsx (novo)
+apps/web/src/ui/Shell.tsx
+apps/web/src/App.tsx
+apps/web/e2e/busca.spec.ts         (novo)
+```
+
+**4. Lint e Prettier ignoram `.claude/`**
+
+```
+eslint.config.js
+.prettierignore
+```
+
+**5. Documentação da fase**
+
+```
+docs/progress.md
+docs/notas-para-readme.md
+```
+
+Pare aqui. A Fase 2 começa quando o Felipe escrever "fase 2".

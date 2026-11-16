@@ -1,0 +1,55 @@
+From da3c2c4903694fe4f7618375f9c9387b79e67ca8 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sat, 14 Nov 2026 22:49:19 -0300
+Subject: [PATCH 2/2] =?UTF-8?q?Corrige=20a=20janela=20de=20vibra=C3=A7?=
+ =?UTF-8?q?=C3=A3o=20do=20modo=20demonstra=C3=A7=C3=A3o=20e=20a=20contagem?=
+ =?UTF-8?q?=20de=20bobinas?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+O gerador do instantâneo pedia a vibração sem `to=`, e a rota usava a hora do
+build em vez da do cenário: a janela de 72 h voltava vazia e Mancais, Notas e o
+painel do 3D mostravam "Sem leitura de vibração na janela".
+
+O cabeçalho de Bobinas contava a disposição do QCS e ignorava a retenção da
+qualidade que a coluna Destino mostra (4 rebaixadas contra 2 na lista).
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01BpxoBYwQr8kTw9snFHM2xS
+---
+ apps/api/src/scripts/generate-demo.ts  | 2 +-
+ apps/web/src/screens/BobinasScreen.tsx | 4 +++-
+ 2 files changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/apps/api/src/scripts/generate-demo.ts b/apps/api/src/scripts/generate-demo.ts
+index 26d2f1d..615b6fd 100644
+--- a/apps/api/src/scripts/generate-demo.ts
++++ b/apps/api/src/scripts/generate-demo.ts
+@@ -156,7 +156,7 @@ async function main(): Promise<void> {
+ 
+     bytes += await writeJson(
+       `assets/${asset.tag}/vibration.json`,
+-      await capture(app, `/assets/${tag}/vibration`),
++      await capture(app, `/assets/${tag}/vibration?to=${encodeURIComponent(NOW.toISOString())}`),
+     );
+     files += 1;
+   }
+diff --git a/apps/web/src/screens/BobinasScreen.tsx b/apps/web/src/screens/BobinasScreen.tsx
+index 1d0d696..3c82fd5 100644
+--- a/apps/web/src/screens/BobinasScreen.tsx
++++ b/apps/web/src/screens/BobinasScreen.tsx
+@@ -166,7 +166,9 @@ function ReelList({
+   const scaleM = Math.ceil((longest * 1.02) / 20_000) * 20_000;
+   const ticks = Array.from({ length: scaleM / 20_000 + 1 }, (_, i) => i * 20_000);
+   const closed = reels.filter((reel) => reel.endedAt !== null);
+-  const count = (d: string) => closed.filter((reel) => reel.disposition === d).length;
++  // o mesmo destino que a coluna mostra: a retenção da qualidade vence a disposição do QCS
++  const destinoOf = (reel: ReelView) => holdOf.get(reel.number)?.status ?? reel.disposition;
++  const count = (d: string) => closed.filter((reel) => destinoOf(reel) === d).length;
+   const held = holds.filter((hold) => hold.status === 'retida').length;
+   const day = reels[0] ? new Date(reels[0].startedAt) : null;
+ 
+-- 
+2.43.0
+

@@ -52,6 +52,7 @@ export function SetpointPanel(props: SetpointPanelProps) {
 
   return (
     <Panel
+      help="processo.setpoint"
       title="Alteração de setpoint"
       aside="motivo obrigatório · registro auditado"
       className={props.className ?? ''}

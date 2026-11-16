@@ -47,6 +47,7 @@ export function Scoreboard({
 
   return (
     <Panel
+      help="turno.placar"
       title="Placar do turno"
       aside={
         <span>
@@ -280,6 +281,7 @@ export function ActiveAlarms({
 }) {
   return (
     <Panel
+      help="turno.alarmes"
       title="Alarmes ativos"
       aside="por prioridade e tempo ativo"
       bodyClassName="flex min-h-0 flex-col"
@@ -385,6 +387,7 @@ export function Handover({
   const [done, setDone] = useState<ReadonlySet<string>>(new Set());
   return (
     <Panel
+      help="turno.passagem"
       title="Passagem de turno"
       label="Pendências da passagem de turno"
       aside={

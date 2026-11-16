@@ -78,6 +78,7 @@ export function TrendStack(props: TrendStackProps) {
 
   return (
     <Panel
+      help="processo.tendencia"
       title="Tendência"
       className={props.className ?? ''}
       aside={

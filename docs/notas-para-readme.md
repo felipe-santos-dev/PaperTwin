@@ -589,3 +589,204 @@ Se algum número do README divergir do código, o código está certo.
 - **O que está conferido em campo é pouco e está marcado.** Diâmetro e passo dos
   cilindros, alturas das fileiras, a linha do papel entre as secagens, os rolos
   do Speed Sizer e a ordem das seções. Todo o resto é protótipo.
+
+---
+
+## 15. Ajuda por bloco e busca
+
+### O "?" de cada bloco
+
+Todo bloco da interface tem um "?" discreto no cabeçalho. Ele abre três linhas,
+sempre as mesmas três: **o que o bloco mostra**, **como ler** e **o que dá para
+clicar**. Fecha com Esc e com clique fora, e funciona pelo teclado.
+
+Os textos moram num arquivo só, `apps/web/src/ui/help.ts`, com uma chave por
+bloco. A prop `help` do `Panel` é **obrigatória no tipo** — painel novo sem texto
+não compila — e um teste cobra o resto: chave que não existe, texto que sobrou
+sem dono e bloco desenhado à mão que não passou pelo `Panel`.
+
+**A redação abaixo é para o Felipe revisar.** A lista é gerada do próprio
+arquivo, então o que está aqui é exatamente o que a interface mostra.
+
+### Turno
+
+**`turno.linha-do-tempo`**
+
+- _O que mostra._ Velocidade, produção acumulada e as bobinas do turno no mesmo eixo de horas, com os eventos marcados em cima.
+- _Como ler._ A faixa vermelha é o tempo parado por quebra. A área mais clara à direita ainda não aconteceu. A produção é a integral de XI-0001, então ela anda durante a bobina em curso.
+- _O que dá para clicar._ Um evento abre o que ele é; uma bobina abre a tela de Bobinas. Os botões à direita trocam a janela.
+
+**`turno.placar`**
+
+- _O que mostra._ Produção, eficiência, quebras e refugo do turno, até agora.
+- _Como ler._ Na produção, a barra é o acumulado e o traço é o ritmo da meta neste instante: atrás do traço, o turno está devendo. Refugo e eficiência têm a meta marcada na própria barra.
+- _O que dá para clicar._ Nada aqui é clicável: é leitura.
+
+**`turno.alarmes`**
+
+- _O que mostra._ Os alarmes em pé, um por TAG, do mais grave para o mais antigo.
+- _Como ler._ O quadradinho é a prioridade, sendo 1 a pior. Ao lado vem há quanto tempo o alarme está em pé e onde o PV está na faixa.
+- _O que dá para clicar._ Clicar no alarme abre a tendência daquela TAG em Processo.
+
+**`turno.passagem`**
+
+- _O que mostra._ O que fica para o próximo turno: bobina retida, nota aberta, ponto de ronda com achado e o que o turno anotou.
+- _Como ler._ Cada linha diz de onde a pendência veio. A contagem no alto é o que ainda não foi marcado.
+- _O que dá para clicar._ A caixinha risca a pendência só na tua tela, não manda nada para a API. Onde há nota ou TAG, a linha abre o registro.
+
+### Processo
+
+**`processo.variaveis`**
+
+- _O que mostra._ As variáveis da seção escolhida: faixa, PV, setpoint e a última hora.
+- _Como ler._ Na barra, a parte clara é a faixa L–H e as marcas altas são LL e HH; a barra vertical é o PV e o triângulo é o SP. Fora da faixa, o PV ganha a cor da prioridade.
+- _O que dá para clicar._ Clicar numa linha põe a TAG na tendência ao lado. "Só fora da faixa" esconde o que está em ordem.
+
+**`processo.tendencia`**
+
+- _O que mostra._ Até quatro TAGs no mesmo eixo de tempo, cada uma na sua faixa.
+- _Como ler._ Cada faixa tem escala própria — as curvas não se comparam entre si. A banda clara é L–H, a marca azul é uma alteração de setpoint e a colorida é alarme.
+- _O que dá para clicar._ O × tira a TAG. Os botões escolhem a janela; a tela mostra o que a fonte cobrir.
+
+**`processo.setpoint`**
+
+- _O que mostra._ A escrita de setpoint da malha escolhida e o histórico da seção.
+- _Como ler._ O motivo é obrigatório e fica gravado com quem escreveu e quando. Malha escrava de cascata e modo de demonstração não aceitam escrita, e a tela diz por quê.
+- _O que dá para clicar._ Escrever grava de verdade na simulação. O histórico abaixo é só leitura.
+
+**`processo.refino`**
+
+- _O que mostra._ A energia de refino das últimas horas e, embaixo, o que o laboratório mediu nas bobinas do período.
+- _Como ler._ As duas faixas têm escalas diferentes: o que vale é o formato, não a altura. O efeito do refino é lento — minutos entre mexer e aparecer na folha.
+- _O que dá para clicar._ Nada aqui é clicável: é leitura.
+
+### Laboratório
+
+**`laboratorio.matriz`**
+
+- _O que mostra._ As últimas bobinas fechadas contra cada ensaio do laboratório.
+- _Como ler._ O ponto fica onde o resultado caiu dentro da especificação, e nos 10 % das pontas ele vira "no limite". Vazio é ensaio que não era daquela bobina; contorno é ensaio atrasado.
+- _O que dá para clicar._ Clicar no nome do ensaio abre a carta de controle dele ao lado.
+
+**`laboratorio.carta`**
+
+- _O que mostra._ A carta de controle do ensaio escolhido, bobina a bobina.
+- _Como ler._ LSC e LIC são a média ± 3σ de uma base que deixa as cinco últimas bobinas de fora — senão o desvio recente alargaria o próprio limite. O Cpk sai da mesma base.
+- _O que dá para clicar._ Nada aqui é clicável: a escolha do ensaio é na matriz ao lado.
+
+**`laboratorio.fila`**
+
+- _O que mostra._ Os ensaios que passaram do prazo e os que estão por vir.
+- _Como ler._ A barra é tempo decorrido contra prazo. "Na fila" é bobina ainda em formação, com a troca prevista pela mediana das últimas.
+- _O que dá para clicar._ Nada aqui é clicável: é leitura.
+
+**`laboratorio.lab-qcs`**
+
+- _O que mostra._ O que o laboratório mediu contra o que o scanner mediu na mesma bobina.
+- _Como ler._ O ponto cheio é o laboratório e o vazado é a média do QCS na janela da bobina. A banda é o quanto de diferença ainda é normal entre os dois métodos.
+- _O que dá para clicar._ Nada aqui é clicável: é leitura.
+
+### Bobinas
+
+**`bobinas.lista`**
+
+- _O que mostra._ Uma faixa por bobina jumbo do dia, no comprimento que ela tem.
+- _Como ler._ A parte escura é o papel dentro da tolerância do QCS e a clara é o que saiu dela. O traço vertical é quebra. A bobina em formação tem o comprimento estimado por tempo × velocidade.
+- _O que dá para clicar._ Clicar na faixa abre a bobina nos painéis ao lado.
+
+**`bobinas.mapa`**
+
+- _O que mostra._ A umidade da bobina escolhida ao longo da largura e do comprimento.
+- _Como ler._ Cada coluna é uma posição na largura e cada linha é um trecho da bobina. A escala sai da média e do 2σ CD reais da bobina.
+- _O que dá para clicar._ Nada aqui é clicável: é leitura.
+
+**`bobinas.perfil`**
+
+- _O que mostra._ Gramatura, umidade e espessura da bobina ao longo do comprimento.
+- _Como ler._ A linha é a média na largura, a cada instante. A banda é a tolerância da TAG e o número à direita é a média da bobina inteira.
+- _O que dá para clicar._ Nada aqui é clicável: é leitura.
+
+### Mancais
+
+**`mancais.ranking`**
+
+- _O que mostra._ Os mancais monitorados, do pior para o melhor.
+- _Como ler._ A ordem é a vibração dividida pela fronteira C→D do próprio mancal, o que deixa comparar mancais de classes diferentes. A barra mostra as quatro zonas da ISO 20816-3 e o traço é o valor no início da janela.
+- _O que dá para clicar._ Clicar escolhe o mancal nos painéis ao lado. "Mostrar todos" abre os que estão em ordem.
+
+**`mancais.detalhe`**
+
+- _O que mostra._ A vibração e a temperatura do mancal escolhido, na janela que a API devolve.
+- _Como ler._ As faixas de fundo são as zonas da ISO. A linha pontilhada é projeção da tendência, e ela só aparece quando a inclinação passa do próprio ruído do ajuste. Rolamento degrada acelerando, então a data real chega antes da projetada.
+- _O que dá para clicar._ As marcas na linha do tempo abrem a nota e a ronda daquele ponto.
+
+**`mancais.cena`**
+
+- _O que mostra._ A máquina em 3D com os mancais pintados pela zona da ISO.
+- _Como ler._ A cor é a mesma da lista ao lado, e tracejado é mancal sem leitura. O enquadramento segue o mancal escolhido.
+- _O que dá para clicar._ Clicar num mancal na cena escolhe ele na lista, e escolher na lista enquadra ele aqui.
+
+### Rondas
+
+**`rondas.roteiro`**
+
+- _O que mostra._ Os pontos da ronda escolhida, na ordem em que foram percorridos.
+- _Como ler._ Cada cartão compara a leitura de campo com o valor online do mesmo instante, na mesma escala. "Achado" é divergência, ruído anormal ou vazamento.
+- _O que dá para clicar._ Clicar no cartão abre o ponto em detalhe embaixo.
+
+**`rondas.ponto`**
+
+- _O que mostra._ O ponto escolhido: campo contra online, a observação de quem passou e o que isso gerou.
+- _Como ler._ O pirômetro de campo lê a carcaça alguns graus abaixo do sensor do mancal; o esperado já conta com isso, e só vira achado o que passa da folga.
+- _O que dá para clicar._ Os botões levam à nota, à tendência da TAG e ao mancal em Mancais.
+
+**`rondas.lista`**
+
+- _O que mostra._ As rondas do turno em curso, ou as mais recentes quando o turno ainda não teve nenhuma.
+- _Como ler._ Os pontinhos resumem a ronda: um por ponto, marcado quando houve achado. À direita, quantos achados viraram nota.
+- _O que dá para clicar._ Clicar troca a ronda mostrada no roteiro acima.
+
+### Notas
+
+**`notas.quadro`**
+
+- _O que mostra._ As notas de manutenção em quatro colunas, pela situação de cada uma.
+- _Como ler._ A cor da borda de cima é a prioridade, de 1 (parada imediata) a 4 (quando houver oportunidade). "PARADA" é nota que exige máquina parada.
+- _O que dá para clicar._ Clicar no cartão abre a nota ao lado.
+
+**`notas.detalhe`**
+
+- _O que mostra._ A nota escolhida: equipamento, sintoma, prioridade e o sinal que a originou.
+- _Como ler._ O gráfico é a evidência da nota — a vibração do mancal sobre as zonas da ISO, ou a tendência da TAG com a faixa L–H —, com a nota marcada no instante em que nasceu.
+- _O que dá para clicar._ As evidências levam ao registro de onde vieram: o alarme, a ronda, a tendência.
+
+### A busca da moldura
+
+Campo fixo no alto da moldura, em todas as telas. Atalhos: **`/`** e
+**`Ctrl+K`** — a barra é ignorada quando se está digitando num campo, para não
+roubar o caractere de quem escreve o motivo de uma alteração de setpoint.
+
+Procura em cinco lugares, e cada resultado abre onde o item mora:
+
+| O que acha                | Quantos                         | O que abre                        |
+| ------------------------- | ------------------------------- | --------------------------------- |
+| Telas                     | 8                               | a tela                            |
+| TAGs (por tag e por nome) | 327 (320 do catálogo + 7 fixas) | a tendência da TAG, na seção dela |
+| Mancais                   | 98                              | o mancal em Mancais               |
+| Bobinas                   | as últimas 40                   | a bobina em Bobinas               |
+| Notas                     | as últimas 100                  | a nota em Notas                   |
+
+Como ela casa: minúsculas e sem acento (quem digita "pre-secagem" acha a
+pré-secagem), **todos** os pedaços da consulta têm de aparecer ("vapor g4" acha
+só o `PIC-514`), e quem casa pelo começo da TAG vem antes de quem casa no meio
+de uma descrição.
+
+Sem biblioteca nova: o índice é uma lista em memória. A metade estática (telas,
+TAGs, mancais) sai do que já está no pacote; bobinas e notas entram na primeira
+vez que alguém abre a busca, e se essas duas requisições falharem a busca
+continua valendo para o resto.
+
+**O que ela não faz, de propósito:** não põe a seleção na URL. Escolher um
+resultado chama os mesmos abridores que as telas já usam entre si — o alarme que
+abre a tendência, a ronda que abre o mancal. Transformar cada resultado num link
+que se cola numa conversa é outro trabalho, e ficou fora.

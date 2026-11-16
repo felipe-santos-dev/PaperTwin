@@ -54,6 +54,7 @@ export function RefiningEffect({
 
   return (
     <Panel
+      help="processo.refino"
       title="Efeito do refino na folha"
       aside={
         <span className="flex items-center gap-2">

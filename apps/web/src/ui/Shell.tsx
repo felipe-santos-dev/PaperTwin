@@ -49,6 +49,14 @@ export interface ShellProps {
   readonly top: FrameTop;
   /** O selo da fonte de dados. */
   readonly source: ReactNode;
+  /**
+   * O campo de busca, no meio da barra.
+   *
+   * Entra como nó pronto, como o selo da fonte: a moldura não sabe de onde os
+   * resultados saem nem para onde cada um leva — quem sabe disso é a aplicação,
+   * que já tem os abridores de tela.
+   */
+  readonly search?: ReactNode;
   readonly sections: readonly SectionState[];
   /** A seção aberta em Processo, para marcar na faixa. */
   readonly area: string | null;
@@ -63,6 +71,7 @@ export function Shell({
   go,
   top,
   source,
+  search,
   sections,
   area,
   onArea,
@@ -75,6 +84,7 @@ export function Shell({
       <TopBar
         top={top}
         source={source}
+        search={search}
         onAlarms={() => {
           go('turno');
         }}
@@ -161,10 +171,12 @@ function Divider() {
 function TopBar({
   top,
   source,
+  search,
   onAlarms,
 }: {
   readonly top: FrameTop;
   readonly source: ReactNode;
+  readonly search: ReactNode;
   readonly onAlarms: () => void;
 }) {
   return (
@@ -206,7 +218,7 @@ function TopBar({
         ) : null}
       </div>
 
-      <div className="flex-1" />
+      {search ?? <div className="flex-1" />}
 
       <div className="flex shrink-0 items-center gap-1.5">
         <span className="mr-1 text-[11px] text-fg-3 max-xl:hidden">Alarmes</span>

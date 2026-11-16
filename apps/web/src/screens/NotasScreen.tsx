@@ -96,6 +96,7 @@ export function NotasScreen({
         return (
           <div className="grid h-[calc(100vh-152px)] min-h-[720px] grid-cols-[minmax(0,1fr)_556px] gap-4">
             <Panel
+              help="notas.quadro"
               title="Notas de manutenção · MP1"
               context={
                 <span>
@@ -297,18 +298,21 @@ function NoteDetail({
   );
 
   return (
-    <section
-      aria-label={`Nota ${note.number}`}
-      className="flex min-h-0 flex-col overflow-y-auto border border-line border-t-[3px] bg-panel px-5 py-4"
-      style={{ borderTopColor: PRIORITY_BAR[note.priority] }}
-    >
-      <header className="flex items-center gap-2.5">
-        <h1 className="font-mono text-[16px] font-semibold">{note.number}</h1>
+    <Panel
+      help="notas.detalhe"
+      heading={1}
+      label={`Nota ${note.number}`}
+      title={<span className="font-mono text-[16px]">{note.number}</span>}
+      context={
         <span className="border border-line-strong px-1.5 text-[11px] text-fg-2">
           {COLUMN_LABEL[note.status].toLowerCase()}
         </span>
-      </header>
-      <h2 className="mt-2 text-[18px] font-semibold">{note.symptom}</h2>
+      }
+      className="overflow-y-auto border-t-[3px]"
+      bodyClassName="flex min-h-0 flex-col"
+      style={{ borderTopColor: PRIORITY_BAR[note.priority] }}
+    >
+      <h2 className="text-[18px] font-semibold">{note.symptom}</h2>
 
       <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-2.5 border-b border-line pb-4 text-[13px]">
         <Fact label="Equipamento">{asset ? `${asset.label}` : note.assetTag}</Fact>
@@ -410,7 +414,7 @@ function NoteDetail({
           </button>
         ) : null}
       </div>
-    </section>
+    </Panel>
   );
 }
 

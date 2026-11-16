@@ -114,6 +114,7 @@ function RoundsView({
   return (
     <div className="grid h-[calc(100vh-152px)] min-h-[760px] grid-cols-[minmax(0,1180fr)_minmax(0,636fr)] gap-4">
       <Panel
+        help="rondas.roteiro"
         title={
           <span className="text-[16px]">
             Ronda {number} · {hhmm(round.startedAt)}
@@ -202,6 +203,7 @@ function RoundsView({
           />
         ) : null}
         <Panel
+          help="rondas.lista"
           title={
             shiftLetter && ofShift.length > 0 ? `Rondas do turno ${shiftLetter}` : 'Rondas recentes'
           }
@@ -381,6 +383,7 @@ function PointDetail({
 
   return (
     <Panel
+      help="rondas.ponto"
       title={
         <span>
           <span className="mr-2 font-mono text-fg-2">{String(index + 1).padStart(2, '0')}</span>

@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 
 import { DEMO_GATEWAY } from './api/demo-gateway';
+import { FIXED_VARIABLES } from './api/fixtures';
 import { fetchDemoHealth } from './api/demo';
 import { fetchHealth } from './api/client';
 import { LIVE_GATEWAY, type DataGateway } from './api/gateway';
@@ -13,6 +14,7 @@ import { RondasScreen } from './screens/RondasScreen';
 import { TurnoScreen } from './screens/TurnoScreen';
 import { LaboratorioScreen } from './screens/LaboratorioScreen';
 import { DataSourcePill } from './ui/DataSourcePill';
+import { SearchBox } from './ui/SearchBox';
 import { Shell } from './ui/Shell';
 import { useScreen } from './ui/screens';
 import { areaOfTag } from './ui/sections';
@@ -71,11 +73,18 @@ export function App() {
     go('maquina');
   }
 
-  /** Abre a tendência de uma tag na tela de Processo. */
+  /**
+   * Abre a tendência de uma tag na tela de Processo.
+   *
+   * As sete variáveis fixas do preparo não estão no catálogo, então `areaOfTag`
+   * não acha a área delas — e sem área a tela abriria na seção errada. A área
+   * vem da própria variável fixa, que a declara.
+   */
   const openTrend = useCallback(
     (which: string) => {
       setTag(which);
-      setArea(areaOfTag(which));
+      const fixed = FIXED_VARIABLES.find((variable) => variable.tag === which);
+      setArea(areaOfTag(which) ?? fixed?.area ?? null);
       go('processo');
     },
     [go],
@@ -127,6 +136,16 @@ export function App() {
       area={area}
       onArea={openArea}
       source={<DataSourcePill source={source} />}
+      search={
+        <SearchBox
+          gateway={gateway}
+          onScreen={go}
+          onTag={openTrend}
+          onBearing={openBearing}
+          onReel={openReel}
+          onNote={openNote}
+        />
+      }
       banner={
         /**
          * Só o aviso que pede ação fica numa faixa: a API voltou e dá para

@@ -12,7 +12,7 @@ import type { TagTrend } from '../api/process';
 import { seriesOf, valueAt } from '../ui/chart/series';
 import { tagValue } from '../ui/format';
 import { INSTRUMENT_GRID, InstrumentRow } from '../ui/InstrumentRow';
-import { Illustrative } from '../ui/Panel';
+import { Illustrative, Panel } from '../ui/Panel';
 import { designPriority, worst, type DesignPriority } from '../ui/priority';
 import { ResourceState } from '../ui/ResourceState';
 import { areaOfTag, isStanding, PROCESS_AREAS } from '../ui/sections';
@@ -186,13 +186,14 @@ function AreaView({
 
         return (
           <div className="grid h-[calc(100vh-152px)] min-h-[760px] grid-cols-[minmax(0,1100fr)_minmax(0,716fr)] gap-4">
-            <section
-              aria-label={label}
-              className="flex min-h-0 flex-col border border-line bg-panel px-5 pt-4"
-            >
-              <header className="mb-3 flex items-baseline gap-4">
-                <h1 className="text-[17px] font-semibold">{label}</h1>
-                <span className="text-[12px] text-fg-2">
+            <Panel
+              help="processo.variaveis"
+              heading={1}
+              label={label}
+              title={<span className="text-[17px]">{label}</span>}
+              bodyClassName="flex min-h-0 flex-col"
+              context={
+                <span>
                   <span className="font-mono text-fg">{variables.length}</span> variáveis ·{' '}
                   <span className={`font-mono ${outCount > 0 ? 'text-alarm-2' : 'text-fg'}`}>
                     {outCount}
@@ -218,21 +219,26 @@ function AreaView({
                     );
                   })}
                 </span>
-                {area === 'preparo' ? (
-                  <Illustrative title="Sete variáveis do preparo não estão no catálogo e vêm do dado fixo; cada uma leva o selo." />
-                ) : null}
-                <label className="ml-auto flex items-center gap-2 text-[12px] text-fg-2">
-                  <input
-                    type="checkbox"
-                    checked={onlyOut}
-                    onChange={(event) => {
-                      setOnlyOut(event.target.checked);
-                    }}
-                    className="size-4 accent-action"
-                  />
-                  Só fora da faixa
-                </label>
-              </header>
+              }
+              aside={
+                <>
+                  {area === 'preparo' ? (
+                    <Illustrative title="Sete variáveis do preparo não estão no catálogo e vêm do dado fixo; cada uma leva o selo." />
+                  ) : null}
+                  <label className="flex items-center gap-2 text-[12px] text-fg-2">
+                    <input
+                      type="checkbox"
+                      checked={onlyOut}
+                      onChange={(event) => {
+                        setOnlyOut(event.target.checked);
+                      }}
+                      className="size-4 accent-action"
+                    />
+                    Só fora da faixa
+                  </label>
+                </>
+              }
+            >
               <div
                 role="table"
                 aria-label={`Variáveis de ${label}`}
@@ -302,7 +308,7 @@ function AreaView({
                   Faixa clara = L–H · marcas = LL/HH · ▾ = SP · minigráfico com a banda L–H
                 </p>
               </div>
-            </section>
+            </Panel>
 
             <Side
               gateway={gateway}

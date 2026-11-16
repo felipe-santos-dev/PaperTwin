@@ -158,6 +158,7 @@ function Matrix({
 
   return (
     <Panel
+      help="laboratorio.matriz"
       title={<span className="text-[16px]">Bobinas × ensaios</span>}
       label="Bobinas × ensaios"
       context={
@@ -298,6 +299,7 @@ function Chart({
 
   return (
     <Panel
+      help="laboratorio.carta"
       title="Carta de controle"
       context={
         <span>
@@ -537,6 +539,7 @@ function Queue({
 
   return (
     <Panel
+      help="laboratorio.fila"
       title="Ensaios em atraso e na fila"
       aside={
         <span className="flex items-center gap-2">
@@ -623,6 +626,7 @@ function LabVsQcs({
 
   return (
     <Panel
+      help="laboratorio.lab-qcs"
       title="Laboratório × QCS online"
       aside={
         <span className="flex items-center gap-2">

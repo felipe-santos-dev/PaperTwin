@@ -51,6 +51,7 @@ export function BearingDetail({
 
   return (
     <Panel
+      help="mancais.detalhe"
       title={title}
       context={
         <span className="font-mono text-[11px] text-fg-3">

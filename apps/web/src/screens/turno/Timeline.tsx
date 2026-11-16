@@ -5,7 +5,7 @@ import type { ReelView } from '../../api/process';
 import { linear } from '../../ui/chart/scale';
 import { EVENT_LABEL, EventGlyph, type EventKind } from '../../ui/EventMarker';
 import { hhmm, int, num, tagValue } from '../../ui/format';
-import { Illustrative } from '../../ui/Panel';
+import { Illustrative, Panel } from '../../ui/Panel';
 import { RangeBar } from '../../ui/RangeBar';
 import { isOut, tagScale } from '../../ui/tagScale';
 import { useWidth } from '../../ui/useWidth';
@@ -77,12 +77,12 @@ export function Timeline(props: TimelineProps) {
   const pick = events.find((event) => event.id === selected) ?? null;
 
   return (
-    <section
-      aria-label="Linha do tempo do turno"
-      className="flex min-w-0 flex-col border border-line bg-panel px-4"
-    >
-      <header className="flex h-13 shrink-0 items-center gap-5">
-        <h1 className="text-[14px] font-semibold">Linha do tempo do turno</h1>
+    <Panel
+      help="turno.linha-do-tempo"
+      heading={1}
+      title="Linha do tempo do turno"
+      label="Linha do tempo do turno"
+      context={
         <ul
           className="flex items-center gap-3.5 text-[12px] text-fg-2"
           aria-label="Eventos na janela"
@@ -94,45 +94,48 @@ export function Timeline(props: TimelineProps) {
             </li>
           ))}
         </ul>
-        <div className="flex-1" />
-        {props.mode === 'turno' ? (
-          <span className="text-[12px] text-fg-3">
-            restam <span className="font-mono text-fg">{remainingText(remaining)}</span>
-          </span>
-        ) : null}
-        <div
-          role="group"
-          aria-label="Janela"
-          className="flex overflow-hidden border border-line-strong"
-        >
-          {(Object.keys(WINDOW_LABEL) as TimelineWindow[]).map((mode, index) => {
-            const off = props.unavailable.includes(mode);
-            const active = props.mode === mode;
-            return (
-              <button
-                key={mode}
-                type="button"
-                aria-pressed={active}
-                disabled={off}
-                title={off ? 'O instantâneo de demonstração tem só o turno em curso.' : undefined}
-                onClick={() => {
-                  props.onMode(mode);
-                }}
-                className={`h-7 px-3 text-[12px] ${index > 0 ? 'border-l border-line-strong' : ''} ${
-                  active
-                    ? 'bg-[#1b2a44] text-[#cfe0ff]'
-                    : off
-                      ? 'cursor-not-allowed text-fg-3/60'
-                      : 'text-fg-2 hover:bg-hover hover:text-fg'
-                }`}
-              >
-                {WINDOW_LABEL[mode]}
-              </button>
-            );
-          })}
-        </div>
-      </header>
-
+      }
+      aside={
+        <>
+          {props.mode === 'turno' ? (
+            <span className="text-[12px] text-fg-3">
+              restam <span className="font-mono text-fg">{remainingText(remaining)}</span>
+            </span>
+          ) : null}
+          <div
+            role="group"
+            aria-label="Janela"
+            className="flex overflow-hidden border border-line-strong"
+          >
+            {(Object.keys(WINDOW_LABEL) as TimelineWindow[]).map((mode, index) => {
+              const off = props.unavailable.includes(mode);
+              const active = props.mode === mode;
+              return (
+                <button
+                  key={mode}
+                  type="button"
+                  aria-pressed={active}
+                  disabled={off}
+                  title={off ? 'O instantâneo de demonstração tem só o turno em curso.' : undefined}
+                  onClick={() => {
+                    props.onMode(mode);
+                  }}
+                  className={`h-7 px-3 text-[12px] ${index > 0 ? 'border-l border-line-strong' : ''} ${
+                    active
+                      ? 'bg-[#1b2a44] text-[#cfe0ff]'
+                      : off
+                        ? 'cursor-not-allowed text-fg-3/60'
+                        : 'text-fg-2 hover:bg-hover hover:text-fg'
+                  }`}
+                >
+                  {WINDOW_LABEL[mode]}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      }
+    >
       <div className="flex min-w-0 pb-5">
         <Labels speed={props.speedScale} prod={props.prod} />
 
@@ -216,7 +219,7 @@ export function Timeline(props: TimelineProps) {
           ) : null}
         </div>
       </div>
-    </section>
+    </Panel>
   );
 }
 

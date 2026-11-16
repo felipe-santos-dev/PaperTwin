@@ -61,6 +61,7 @@ export function Scene3DPanel({
 
   return (
     <Panel
+      help="mancais.cena"
       title="Vista 3D da máquina"
       aside={
         <span className="font-mono">mancais pela zona ISO · clique sincroniza com a lista</span>

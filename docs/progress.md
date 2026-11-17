@@ -1629,4 +1629,134 @@ docs/progress.md
 .prettierignore
 ```
 
-Pare aqui. A Fase 2 começa quando o Felipe escrever "fase 2".
+## Fase 2 — Mancais mais leve
+
+### O mapa 2D
+
+**Duas faixas, uma por lado.** Numa vista lateral o mancal do lado comando e o
+do lado acionamento caem no mesmo ponto — são as duas pontas do mesmo rolo.
+Empilhar os dois num ponto só esconderia metade dos 98 mancais, e separá-los por
+um deslocamento vertical inventaria uma altura que não existe. Então a máquina é
+desenhada duas vezes, uma faixa por lado, cada uma rotulada. É também como se
+pensa o problema na fábrica: o lado comando é onde se anda, o lado acionamento é
+onde estão os motores.
+
+**O X é a posição real em metros; o Y é esticado.** A escala horizontal é a do
+modelo, e é por isso que os secadores aparecem como duas fileiras de cilindros
+encostados, como estão na máquina. O vertical é esticado de 1,5 a 4 vezes,
+conforme a altura que o painel tem — sem isso a máquina (98 m por 7) vira um fio
+de 30 px e as duas fileiras se sobrepõem. O desenho ocupa a altura disponível:
+674 × 353 em 1920, 485 × 204 em 1440.
+
+**A cor é a da barra de mancal:** cinza em A e B, âmbar em C, vermelho em D,
+tracejado para quem não tem leitura. Não é semáforo de quatro cores de
+propósito — A e B são "em ordem", e pintar de verde faria o olho procurar verde.
+
+**Os rótulos de seção aparecem onde cabem.** Speed Sizer, calandra e Pope são um
+corpo cada uma e o nome tem mais pixels que a seção; ali fica só o traço, que já
+diz que começa outra coisa. Em 1440 "Pós-secagem" também vira traço.
+
+**O clique é do mouse, não do teclado.** Cada ponto é um botão com rótulo
+("Cilindro secador 23 · lado comando · zona D"), e a área de clique é maior que
+o ponto — 3 px de alvo é exercício de pontaria — e menor que meio vão entre dois
+cilindros, senão um alvo rouba o clique do vizinho. Os 98 pontos **não** entram
+na ordem do Tab: 98 paradas a mais atrapalhariam muito mais do que ajudam, e a
+lista ao lado já dá a mesma escolha pelo teclado, com nome e número à vista.
+
+**`useSize`** entrou em `ui/useWidth.ts` ao lado do `useWidth`, com a mesma
+mecânica da função de ref: o mapa precisa saber a altura para decidir o quanto
+estica o eixo vertical.
+
+### O 3D atrás do botão
+
+O painel é o mesmo — "Máquina · mancais" — com o mapa por padrão e o botão
+"ver em 3D" ao lado da legenda. O `lazy` do three só é exercido quando a cena
+entra, então **abrir Mancais não baixa mais nada de 3D**. A tela de Máquina
+continua com a cena em tela cheia; é lá que ela é o assunto.
+
+Isso contraria o desenho (`reference/design/5-mancais.png` reserva aquele painel
+ao 3D), e é a decisão que o Felipe tomou na resposta 3 da Fase 0.
+
+### O vapor
+
+Medido na Fase 0: **~3 % do custo do quadro** — 6 sprites, 6 chamadas de desenho
+e 144 triângulos de 300 e 277.511. Não é a maior parte do custo (a maior parte é
+pixel: resolução e pós-processamento), então, pela regra da fase, ele **fica** —
+desligado por padrão, atrás de uma opção. A opção é o botão "Vapor" na própria
+tela de Máquina, e não na tela Sistema, porque a Sistema não existe no build de
+produção (resposta 5).
+
+`steam` entrou no `SceneState` ao lado de `playing`. A captura do ambiente, que
+escondia o vapor para ele não entrar no reflexo de todo metal, já tratava a
+ausência dele — continua valendo.
+
+### Antes e depois
+
+**Bytes e requisições ao abrir Mancais** (navegador embutido, 1920 × 1080, cache
+quente, API local no ar — a mesma medida da Fase 0):
+
+| medida                   |     Fase 0 |                     agora |
+| ------------------------ | ---------: | ------------------------: |
+| requisições              |        107 |                        93 |
+| bytes                    |   2.354 kB |                 **79 kB** |
+| pedaço do `three`        | aos 236 ms |             não é baixado |
+| `mp1.glb` + 11 lightmaps | aos 677 ms |          não são baixados |
+| memória de GPU           |   201,1 MB |                     **0** |
+| engasgo ao abrir         |     ~6,3 s | não há cena para compilar |
+
+**Os dois caminhos, na mesma rodada** (Playwright, 1920 × 1080, cache frio,
+WebGL2 por software — por isso os números de GPU não se comparam com os da
+Fase 0, que são de GPU de verdade):
+
+| medida              | mapa (padrão) |  mapa + "ver em 3D" |
+| ------------------- | ------------: | ------------------: |
+| requisições         |            92 |                 109 |
+| bytes               |        262 kB |            4.005 kB |
+| memória de GPU      |             0 |            263,7 MB |
+| até a cena aparecer |             — | 6,7 s após o clique |
+
+O custo não sumiu: **mudou de lugar**. Quem quer o 3D paga por ele no momento em
+que pede; quem abriu Mancais para ver vibração não paga nada.
+
+**O e2e confirma por outro caminho:** os três testes de Mancais que não tocam no
+3D rodam em ~0,9 a 1,5 s cada; os dois que abrem a cena, em 9,6 s e 21,7 s. Na
+Fase 1 os dois testes da tela custavam 19,5 s e 30,2 s, porque todos
+carregavam a cena.
+
+### Verificado
+
+Testes da web **186** (eram 181; cinco novos do mapa), e2e **23** (eram 20;
+Mancais foi de 2 para 5 testes, cobrindo os dois caminhos), typecheck, lint,
+`format:check` e build. O pedaço da aplicação foi de 235,40 para **240,26 kB** —
+os 4,9 kB do mapa. Capturas em 1920 × 1080 e 1440 × 900, sem rolagem horizontal.
+
+### Arquivos, por commit sugerido
+
+**8. Mapa 2D da máquina na tela de Mancais**
+
+```
+apps/web/src/screens/mancais/MachineMap2D.tsx       (novo)
+apps/web/src/screens/mancais/MachineMap2D.test.tsx  (novo)
+apps/web/src/screens/mancais/MachinePanel.tsx       (novo)
+apps/web/src/screens/mancais/Scene3DPanel.tsx       (removido)
+apps/web/src/screens/MancaisScreen.tsx
+apps/web/src/ui/useWidth.ts
+apps/web/src/ui/help.ts
+apps/web/e2e/mancais.spec.ts
+```
+
+**9. Vapor desligado por padrão, com botão na tela Máquina**
+
+```
+apps/web/src/scene/sceneState.tsx
+apps/web/src/scene/MachineScene.tsx
+apps/web/src/screens/MaquinaScreen.tsx
+```
+
+**10. Documentação da fase**
+
+```
+docs/progress.md
+```
+
+Pare aqui. A Fase 3 começa quando o Felipe escrever "fase 3".

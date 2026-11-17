@@ -19,7 +19,7 @@ import { ResourceState } from '../ui/ResourceState';
 import { useResource } from '../ui/useResource';
 import { BearingDetail } from './mancais/BearingDetail';
 import { rank, visible, zoneOf, type BearingRow } from './mancais/derive';
-import { Scene3DPanel } from './mancais/Scene3DPanel';
+import { MachinePanel } from './mancais/MachinePanel';
 
 /**
  * Mancais — os mancais monitorados, do pior para o melhor.
@@ -123,7 +123,8 @@ export function MancaisScreen({ gateway, assetTag, onSelect }: MancaisScreenProp
                   className="h-[470px] shrink-0"
                 />
               ) : null}
-              <Scene3DPanel
+              <MachinePanel
+                rows={rows}
                 selected={current?.assetTag ?? null}
                 onSelect={onSelect}
                 zones={zones}

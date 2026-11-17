@@ -30,8 +30,23 @@ import { useCallback, useLayoutEffect, useState } from 'react';
  * em 1440 × 900.
  */
 export function useWidth<T extends HTMLElement>(initial = 1000) {
+  const [ref, width] = useSize<T>(initial, 0);
+  return [ref, width] as const;
+}
+
+/**
+ * A largura **e a altura**, para o desenho que precisa ocupar o espaço que tem.
+ *
+ * O mapa da máquina é o caso: a largura dele é a posição real em metros, mas a
+ * altura é escolhida — quanto mais alto o painel, mais as duas faixas podem se
+ * separar. Sem saber a altura disponível, ou sobra espaço vazio embaixo, ou o
+ * desenho estoura o painel.
+ *
+ * Mesma mecânica do `useWidth`, e pelas mesmas razões; veja acima.
+ */
+export function useSize<T extends HTMLElement>(initialWidth = 1000, initialHeight = 200) {
   const [node, setNode] = useState<T | null>(null);
-  const [width, setWidth] = useState(initial);
+  const [size, setSize] = useState({ width: initialWidth, height: initialHeight });
 
   const ref = useCallback((element: T | null) => {
     setNode(element);
@@ -41,8 +56,17 @@ export function useWidth<T extends HTMLElement>(initial = 1000) {
     if (!node) return;
 
     const measure = () => {
-      const next = Math.round(node.getBoundingClientRect().width);
-      if (next > 0) setWidth(next);
+      const caixa = node.getBoundingClientRect();
+      const width = Math.round(caixa.width);
+      const height = Math.round(caixa.height);
+      setSize((atual) => {
+        const proximo = {
+          width: width > 0 ? width : atual.width,
+          height: height > 0 ? height : atual.height,
+        };
+        // sem isto, cada medição cria um objeto novo e o React redesenha à toa
+        return proximo.width === atual.width && proximo.height === atual.height ? atual : proximo;
+      });
     };
     measure();
     if (typeof ResizeObserver === 'undefined') return;
@@ -53,5 +77,5 @@ export function useWidth<T extends HTMLElement>(initial = 1000) {
     };
   }, [node]);
 
-  return [ref, width] as const;
+  return [ref, size.width, size.height] as const;
 }

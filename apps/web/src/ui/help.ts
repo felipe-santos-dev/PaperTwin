@@ -130,10 +130,12 @@ export const HELP = {
     read: 'As faixas de fundo são as zonas da ISO. A linha pontilhada é projeção da tendência, e ela só aparece quando a inclinação passa do próprio ruído do ajuste. Rolamento degrada acelerando, então a data real chega antes da projetada.',
     click: 'As marcas na linha do tempo abrem a nota e a ronda daquele ponto.',
   },
-  'mancais.cena': {
-    shows: 'A máquina em 3D com os mancais pintados pela zona da ISO.',
-    read: 'A cor é a mesma da lista ao lado, e tracejado é mancal sem leitura. O enquadramento segue o mancal escolhido.',
-    click: 'Clicar num mancal na cena escolhe ele na lista, e escolher na lista enquadra ele aqui.',
+  'mancais.mapa': {
+    shows:
+      'A máquina de lado, com um ponto por mancal: a faixa de cima é o lado comando e a de baixo o lado acionamento.',
+    read: 'O ponto tem a cor da zona da ISO, a mesma da lista ao lado; tracejado é mancal sem leitura. O comprimento é a posição real na máquina; a altura é esticada, senão as duas fileiras de secadores se sobrepõem.',
+    click:
+      '"Ver em 3D" troca o mapa pela cena, e é só aí que o 3D é baixado. O mancal escolhido na lista aparece destacado aqui.',
   },
 
   // Rondas

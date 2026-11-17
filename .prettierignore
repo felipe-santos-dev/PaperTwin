@@ -7,6 +7,10 @@ package-lock.json
 # Espaço de trabalho da ferramenta, com cópias inteiras do repositório.
 .claude/
 
+# Rascunhos do Felipe: texto dele, do jeito que ele escreveu.
+PROMPT-VIDEO.md
+PROMPT-VIDEO-30S.md
+
 # Gerado pelo exportador e ambiente do Blender.
 tools/scene-bake/
 

@@ -13,6 +13,15 @@ export interface SceneState {
   readonly hover: (tag: AssetTag | null) => void;
   /** Falso congela a máquina, para examinar um ponto parado. */
   readonly playing: boolean;
+  /**
+   * O vapor saindo da capota.
+   *
+   * Desligado por padrão. Medido na Fase 0: são ~3 % do custo do quadro, o que
+   * não o condena — mas também não paga o que ele esconde, que é justamente a
+   * secagem, a parte da máquina que mais se olha. Quem quiser ver liga na tela
+   * de Máquina.
+   */
+  readonly steam: boolean;
 }
 
 const SceneContext = createContext<SceneState>({
@@ -21,6 +30,7 @@ const SceneContext = createContext<SceneState>({
   hoveredTag: null,
   hover: () => undefined,
   playing: true,
+  steam: false,
 });
 
 export function SceneProvider({ value, children }: { value: SceneState; children: ReactNode }) {

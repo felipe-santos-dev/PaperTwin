@@ -461,7 +461,9 @@ function SceneContent({ state, context, noise, bearingZones }: ContentProps) {
     <group>
       <primitive object={loaded.root} />
       <Bearings zones={bearingZones} />
-      <Atmosphere name={ATMOSPHERE} clock={clock} noise={noise} hoodWallZ={HOOD_WALL_Z} />
+      {state.steam ? (
+        <Atmosphere name={ATMOSPHERE} clock={clock} noise={noise} hoodWallZ={HOOD_WALL_Z} />
+      ) : null}
     </group>
   );
 }

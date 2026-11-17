@@ -38,6 +38,7 @@ export function MaquinaScreen({ gateway, assetTag, onSelect }: MaquinaScreenProp
   );
   const [hoveredTag, setHoveredTag] = useState<AssetTag | null>(null);
   const [playing, setPlaying] = useState(true);
+  const [steam, setSteam] = useState(false);
 
   const select = useCallback(
     (tag: AssetTag | null) => {
@@ -53,8 +54,8 @@ export function MaquinaScreen({ gateway, assetTag, onSelect }: MaquinaScreenProp
   }, []);
 
   const sceneState: SceneState = useMemo(
-    () => ({ selectedTag: assetTag, select, hoveredTag, hover, playing }),
-    [assetTag, select, hoveredTag, hover, playing],
+    () => ({ selectedTag: assetTag, select, hoveredTag, hover, playing, steam }),
+    [assetTag, select, hoveredTag, hover, playing, steam],
   );
 
   /**
@@ -86,10 +87,25 @@ export function MaquinaScreen({ gateway, assetTag, onSelect }: MaquinaScreenProp
         <button
           type="button"
           onClick={() => {
+            setSteam((ligado) => !ligado);
+          }}
+          aria-pressed={steam}
+          title="O vapor da capota esconde a secagem, que é o que mais se olha. Fica desligado até alguém pedir."
+          className={`ml-auto h-8 border px-3 text-[13px] ${
+            steam
+              ? 'border-action text-fg'
+              : 'border-line-strong text-fg-2 hover:border-action hover:text-fg'
+          }`}
+        >
+          Vapor
+        </button>
+        <button
+          type="button"
+          onClick={() => {
             setPlaying((running) => !running);
           }}
           aria-pressed={!playing}
-          className="ml-auto h-8 border border-line-strong px-3 text-[13px] text-fg-2 hover:border-action hover:text-fg"
+          className="h-8 border border-line-strong px-3 text-[13px] text-fg-2 hover:border-action hover:text-fg"
         >
           {playing ? 'Pausar' : 'Animar'}
         </button>

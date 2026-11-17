@@ -1570,4 +1570,63 @@ docs/progress.md
 docs/notas-para-readme.md
 ```
 
+### Conserto: o gráfico cortado em 1440 × 900
+
+**A causa não era a que eu tinha suposto.** O `useWidth` media certo — o
+container do "Efeito do refino" tinha os 381 px corretos do seu lugar na grade.
+O que não acontecia era a medição. O hook guardava o elemento num `useRef` e
+media num `useLayoutEffect([])`, que roda uma vez, no mount; o container daquele
+gráfico só nasce depois, dentro do `ResourceState`, quando a resposta da API
+chega. No mount o `ref.current` é `null`, o efeito desiste — e nunca mais roda.
+A largura fica no valor de partida do hook para sempre.
+
+Agora o `useWidth` devolve uma **função de ref**. Quem avisa que o elemento
+chegou é o React, no instante em que ele entra na árvore; o nó vira estado e o
+efeito depende dele. Medir passa a acontecer sempre: tarde, cedo, ou de novo se
+o elemento for trocado.
+
+**A varredura dos outros sete.** Dos oito pontos que chamam `useWidth`, seis
+anexam o `ref` no mesmo render em que o componente monta — os dados chegam por
+prop — e por isso mediam certo desde sempre. Dois ficavam atrás de condição: o
+do refino, dentro do `ResourceState`, e o da carta de controle do Laboratório,
+atrás do `if` de "poucos resultados para uma carta". O do Laboratório só não
+quebrava porque, na prática, os resultados já estão lá quando o painel monta —
+sorte, não desenho. Com a função de ref, os dois deixam de depender disso.
+
+Medido no "Efeito do refino" em 1440 × 900: o SVG foi de **560 para 381 px**,
+exatamente a largura do container, dentro de um painel de 527.
+
+**A rede embaixo é `e2e/largura.spec.ts`**, uma tela por teste: para cada `svg`
+da página, compara a borda direita dele com a do `section` que o contém, com 1
+px de folga para arredondamento de grade. É e2e e não Vitest porque o jsdom não
+calcula layout — lá toda largura vale zero, e um teste de unidade passaria
+sorrindo com o gráfico cortado. O recorte é 1440 × 900, a tela mais estreita que
+o projeto promete: em 1920 os valores de partida cabem por acidente, que é
+exatamente como isso passou despercebido até agora. Rodado contra o código de
+antes, ele acusa os três SVGs do refino; depois do conserto, **7 de 7**.
+
+**Verificado:** e2e **20** (eram 13), testes da web 181 sem mudança, typecheck,
+lint, `format:check` e build. O pedaço da aplicação ficou em 235,40 kB, contra
+235,32 — o hook não engorda nada.
+
+**`.prettierignore`** ganhou `PROMPT-VIDEO.md` e `PROMPT-VIDEO-30S.md`: são
+rascunhos do Felipe, e o Prettier não tem o que fazer com eles. Com isso o
+`npm run format:check` fica limpo de ponta a ponta.
+
+#### Arquivos, por commit sugerido
+
+**6. O gráfico usa a largura medida**
+
+```
+apps/web/src/ui/useWidth.ts
+apps/web/e2e/largura.spec.ts   (novo)
+docs/progress.md
+```
+
+**7. Prettier não toca nos rascunhos**
+
+```
+.prettierignore
+```
+
 Pare aqui. A Fase 2 começa quando o Felipe escrever "fase 2".

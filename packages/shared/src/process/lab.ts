@@ -22,6 +22,7 @@ export const LAB_VARIABLES: readonly LabVariable[] = [
     instrument: 'Módulo gravimétrico L&W Autoline / balança',
     sampling: 'A cada bobina mãe (~45 min)',
     correction: 'Válvula de massa (FV-105) / offset do QCS (AIC-902)',
+    source: 'B',
     derivedFrom: null,
   },
   {
@@ -33,6 +34,7 @@ export const LAB_VARIABLES: readonly LabVariable[] = [
     instrument: 'Estufa 105 °C / balança termogravimétrica',
     sampling: '1x por turno (auditoria do QCS)',
     correction: 'Vapor da pós-secagem (PIC-711/712) / offset da AIC-903',
+    source: 'B',
     derivedFrom: null,
   },
   {
@@ -44,6 +46,7 @@ export const LAB_VARIABLES: readonly LabVariable[] = [
     instrument: 'Micrômetro motorizado (100 kPa)',
     sampling: 'A cada bobina mãe (~45 min)',
     correction: 'Carga linear da calandra soft (WIC-801)',
+    source: 'B',
     derivedFrom: null,
   },
   {
@@ -55,6 +58,7 @@ export const LAB_VARIABLES: readonly LabVariable[] = [
     instrument: 'Rugosímetro Bendtsen automático',
     sampling: 'A cada bobina mãe (~45 min)',
     correction: 'Carga (WIC-801) e temperatura (TIC-802) da calandra',
+    source: 'B',
     derivedFrom: null,
   },
   {
@@ -66,6 +70,7 @@ export const LAB_VARIABLES: readonly LabVariable[] = [
     instrument: 'Porosímetro Gurley / módulo de permeância',
     sampling: 'A cada bobina mãe (~45 min)',
     correction: 'Potência de refinação (JIC-101) e amido no film press',
+    source: 'B',
     derivedFrom: null,
   },
   {
@@ -77,6 +82,7 @@ export const LAB_VARIABLES: readonly LabVariable[] = [
     instrument: 'Dinamômetro de tração horizontal',
     sampling: 'A cada 1–2 bobinas (~60 min)',
     correction: 'Refinação (JIC-101), jato/tela (XHIC-202) e amido',
+    source: 'B',
     derivedFrom: null,
   },
   {
@@ -88,6 +94,7 @@ export const LAB_VARIABLES: readonly LabVariable[] = [
     instrument: 'Pêndulo de rasgo Elmendorf digital',
     sampling: '2x por turno (~4 h)',
     correction: 'Intensidade de refinação (JIC-101) e receita de fibras',
+    source: 'B',
     derivedFrom: null,
   },
   {
@@ -99,6 +106,7 @@ export const LAB_VARIABLES: readonly LabVariable[] = [
     instrument: 'Mufla a 525 °C / analisador TGA',
     sampling: '2x por turno (~4 h)',
     correction: 'Dosagem de PCC (FIC-106) / calibração da AIC-904',
+    source: 'B',
     derivedFrom: null,
   },
   {
@@ -110,6 +118,7 @@ export const LAB_VARIABLES: readonly LabVariable[] = [
     instrument: 'Espectrofotômetro Elrepho (D65/10°)',
     sampling: 'A cada bobina mãe (~45 min)',
     correction: 'Dosagem de OBA e corantes de matização',
+    source: 'B',
     derivedFrom: null,
   },
   {
@@ -121,6 +130,7 @@ export const LAB_VARIABLES: readonly LabVariable[] = [
     instrument: 'Espectrofotômetro Elrepho (R₀/R∞)',
     sampling: 'A cada bobina mãe (~45 min)',
     correction: 'Dosagem de PCC (FIC-106), corante e calandra (WIC-801)',
+    source: 'B',
     derivedFrom: null,
   },
   {
@@ -132,6 +142,7 @@ export const LAB_VARIABLES: readonly LabVariable[] = [
     instrument: 'Anel Cobb 100 cm² + rolo 10 kg + balança',
     sampling: 'A cada bobina mãe (~45 min)',
     correction: 'Dosagem de cola AKD/ASA e aditivo superficial',
+    source: 'B',
     derivedFrom: null,
   },
   {
@@ -143,6 +154,7 @@ export const LAB_VARIABLES: readonly LabVariable[] = [
     instrument: 'Gabarito ISO 11556 + copiadora de teste',
     sampling: 'A cada 1–2 bobinas (~60 min)',
     correction: 'Diferencial de vapor da pós-secagem (PDIC-702) e barras (PIC-604A/B)',
+    source: 'B',
     derivedFrom: null,
   },
 
@@ -163,7 +175,105 @@ export const LAB_VARIABLES: readonly LabVariable[] = [
     instrument: 'Dinamômetro de tração horizontal',
     sampling: 'A cada 1–2 bobinas (~60 min)',
     correction: 'Relação jato/tela (XHIC-202)',
+    source: 'B',
     derivedFrom: 'LAB-1206',
+  },
+  /**
+   * Os sete da Fase 3, que a §12.2 não tem.
+   *
+   * O engenheiro de processo lista, para o rolo jumbo, ensaios que a pesquisa B
+   * não cobre. Eles entram com `source: 'assumed'` — faixa e alvo saem de
+   * literatura pública de papel para imprimir e escrever, não da pesquisa — e é
+   * esse campo que mantém o teste da §12.2 honesto: ele compara a tabela da
+   * pesquisa com os ensaios de fonte `B`, e estes sete ficam de fora da
+   * comparação em vez de afrouxá-la.
+   *
+   * Nenhum deles é movido por relação: são dado fixo no laboratório, com selo,
+   * até alguém ter física para colocar atrás deles.
+   */
+  {
+    tag: 'LAB-1213',
+    name: 'Cor L*a*b*',
+    unit: 'adim.',
+    range: 'L* 92–96 (alvo 94)',
+    standard: 'ISO 5631 / TAPPI T 527',
+    instrument: 'Espectrofotômetro de bancada, D65/10°',
+    sampling: 'A cada 4 bobinas (~3 h)',
+    correction: 'Dosagem de OBA (FIC-110) e carga mineral',
+    source: 'assumed',
+    derivedFrom: null,
+  },
+  {
+    tag: 'LAB-1214',
+    name: 'Dureza superficial',
+    unit: 'N',
+    range: '120–260 (alvo 190)',
+    standard: 'TAPPI T 834',
+    instrument: 'Durômetro de bancada com esfera',
+    sampling: 'A cada 4 bobinas (~3 h)',
+    correction: 'Carga do nip da calandra (WIC-801)',
+    source: 'assumed',
+    derivedFrom: null,
+  },
+  {
+    tag: 'LAB-1215',
+    name: 'Rigidez Taber',
+    unit: 'mN·m',
+    range: '0,8–2,2 (alvo 1,4)',
+    standard: 'ISO 2493 / TAPPI T 489',
+    instrument: 'Rigidímetro Taber, 15°',
+    sampling: 'A cada 4 bobinas (~3 h)',
+    correction: 'Gramatura (AIC-902) e calandragem (WIC-801)',
+    source: 'assumed',
+    derivedFrom: null,
+  },
+  {
+    tag: 'LAB-1216',
+    name: 'Resistência ao arrebentamento',
+    unit: 'kPa',
+    range: '180–320 (alvo 240)',
+    standard: 'ISO 2758 / TAPPI T 403',
+    instrument: 'Mullen de diafragma',
+    sampling: 'A cada 2 bobinas (~1,5 h)',
+    correction: 'Energia de refino (JIC-101)',
+    source: 'assumed',
+    derivedFrom: null,
+  },
+  {
+    tag: 'LAB-1217',
+    name: 'Ligação interna Scott Bond',
+    unit: 'J/m²',
+    range: '120–280 (alvo 190)',
+    standard: 'TAPPI T 569',
+    instrument: 'Scott Bond de pêndulo',
+    sampling: 'A cada 4 bobinas (~3 h)',
+    correction: 'Energia de refino (JIC-101) e amido de superfície (XI-606A/B)',
+    source: 'assumed',
+    derivedFrom: null,
+  },
+  {
+    tag: 'LAB-1218',
+    name: 'Desprendimento de pó',
+    unit: 'adim.',
+    range: '0–5 (alvo 1,8)',
+    standard: 'IGT A2 (escala 0–5)',
+    instrument: 'IGT com tinta de alta pega',
+    sampling: 'A cada 8 bobinas (~6 h)',
+    correction: 'Amido de superfície (XI-606A/B) e carga mineral',
+    source: 'assumed',
+    derivedFrom: null,
+  },
+  {
+    tag: 'LAB-1219',
+    name: 'Sujidade',
+    unit: 'mm²/m²',
+    range: '0–8 (alvo 2,0)',
+    standard: 'ISO 5350-2 / TAPPI T 437',
+    instrument: 'Mesa de contagem com gabarito',
+    sampling: 'A cada 8 bobinas (~6 h)',
+    correction: 'Depuração (JI-151) e troca de telas',
+    source: 'assumed',
+    derivedFrom: null,
   },
 ];
 

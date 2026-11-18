@@ -101,6 +101,15 @@ export interface LabVariable {
   readonly sampling: string;
   /** Variável de processo usada para corrigir o ensaio. */
   readonly correction: string;
+  /**
+   * De onde o ensaio vem: `B` é a §12.2 da pesquisa, `assumed` é nosso.
+   *
+   * O campo existe para o teste da §12.2 continuar valendo depois de a Fase 3
+   * acrescentar sete ensaios que a pesquisa não tem. Sem ele, a única saída
+   * seria afrouxar a comparação com a tabela — e aí ela deixaria de pegar o
+   * caso que ela existe para pegar: a pesquisa mudar e a lista não.
+   */
+  readonly source: 'B' | 'assumed';
   /** TAG de onde esta é derivada; `null` nas medidas direto. */
   readonly derivedFrom: string | null;
 }

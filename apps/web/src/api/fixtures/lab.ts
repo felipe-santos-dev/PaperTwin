@@ -6,7 +6,8 @@ import type { LabResult, LabSpec, ReelHold } from './types';
 /**
  * Resultados de laboratório por bobina — dado fixo, ancorado nas bobinas reais.
  *
- * A API não tem laboratório. Os ensaios são os doze de `LAB_VARIABLES`; a
+ * A API não tem laboratório. Os ensaios são os dezenove de `LAB_VARIABLES`
+ * que se medem direto — os doze da pesquisa mais os sete da Fase 3; a
  * especificação numérica sai da faixa escrita lá, e onde ela não é uma faixa
  * (tração, rasgo, alvura, curl) os limites abaixo são **suposição** desta
  * demonstração. A frequência segue a amostragem de cada ensaio.
@@ -64,6 +65,39 @@ export const LAB_SPECS: readonly LabSpec[] = [
   { tag: 'LAB-1210', label: 'Opacidade', unit: '%', lo: 90, hi: 93.5, target: 91.5, everyReels: 1 },
   { tag: 'LAB-1211', label: 'Cobb₆₀', unit: 'g/m²', lo: 22, hi: 28, target: 25, everyReels: 1 },
   { tag: 'LAB-1212', label: 'Curl', unit: 'mm', lo: -10, hi: 10, target: 0, everyReels: 2 },
+
+  // os sete da Fase 3: completam a matriz do rolo jumbo, todos `assumed`
+  { tag: 'LAB-1213', label: 'Cor L*', unit: 'adim.', lo: 92, hi: 96, target: 94, everyReels: 4 },
+  { tag: 'LAB-1214', label: 'Dureza', unit: 'N', lo: 120, hi: 260, target: 190, everyReels: 4 },
+  {
+    tag: 'LAB-1215',
+    label: 'Rigidez',
+    unit: 'mN·m',
+    lo: 0.8,
+    hi: 2.2,
+    target: 1.4,
+    everyReels: 4,
+  },
+  {
+    tag: 'LAB-1216',
+    label: 'Arrebentamento',
+    unit: 'kPa',
+    lo: 180,
+    hi: 320,
+    target: 240,
+    everyReels: 2,
+  },
+  {
+    tag: 'LAB-1217',
+    label: 'Scott Bond',
+    unit: 'J/m²',
+    lo: 120,
+    hi: 280,
+    target: 190,
+    everyReels: 4,
+  },
+  { tag: 'LAB-1218', label: 'Pó', unit: 'adim.', lo: 0, hi: 5, target: 1.8, everyReels: 8 },
+  { tag: 'LAB-1219', label: 'Sujidade', unit: 'mm²/m²', lo: 0, hi: 8, target: 2, everyReels: 8 },
 ];
 
 /** Quanto tempo depois do fim da bobina o ensaio sai. */
@@ -82,9 +116,13 @@ const REFINING_EDGE = [7, 8, 9, 10, 11];
  * `now` é o instante da leitura da API: ensaio que sairia depois dele ainda
  * não existe, e é assim que a última bobina fica com ensaio atrasado.
  */
-export function labResults(reels: readonly ReelView[], now: string): LabResult[] {
+export function labResults(
+  reels: readonly ReelView[],
+  now: string,
+  akdSince: string | null,
+): LabResult[] {
   const closed = closedReels(reels);
-  const scenario = scenarioOf(reels);
+  const scenario = scenarioOf(reels, akdSince);
   const nowMs = Date.parse(now);
   const out: LabResult[] = [];
 
@@ -148,8 +186,8 @@ const key = (spec: LabSpec, reel: ReelView) => `${spec.tag}:${String(reel.number
 const round = (value: number) => Math.round(value * 100) / 100;
 
 /** As bobinas paradas pela qualidade: as duas do cenário da cola AKD. */
-export function reelHolds(reels: readonly ReelView[]): ReelHold[] {
-  const scenario = scenarioOf(reels);
+export function reelHolds(reels: readonly ReelView[], akdSince: string | null): ReelHold[] {
+  const scenario = scenarioOf(reels, akdSince);
   if (!scenario) return [];
   const cobb = LAB_SPECS.find((spec) => spec.tag === 'LAB-1211');
   const unitOf = cobb?.unit ?? 'g/m²';

@@ -1,5 +1,6 @@
 import {
   controlledVariables,
+  DERIVED_IN_ORDER,
   dryerCylinders,
   MP1,
   PROCESS_CATALOG,
@@ -11,6 +12,7 @@ import {
   type FopdtRelation,
 } from '@mp1/shared';
 
+import { autonomousBand, autonomousTruth, type AutonomousBand } from './autonomous';
 import { DEFAULT_SEED, TICK_MS } from './clock';
 import { fopdtRunner, type FopdtRunner, type FopdtState } from './fopdt';
 import { correlatedNoise, streamOf } from './noise';
@@ -333,27 +335,32 @@ export function processEngine(
   const surfaceTags = new Set(cylinders.map((item) => item.tag));
 
   /**
-   * O que a rede não move.
+   * As autônomas: o que a rede não move.
    *
-   * São as variáveis sem relação que chegue nelas e sem setpoint: viscosidade
-   * do amido, dispersão 2σ do perfil CD, pressão do ar de instrumentação,
-   * temperatura da capa do rolo macio. Elas oscilam em torno do ponto de
-   * operação, e o simulador não finge saber mais do que isso.
+   * São as variáveis sem relação que chegue nelas e sem setpoint — o vácuo de
+   * uma caixa, a tensão de um feltro, a viscosidade do amido. Elas passeiam em
+   * torno do alvo, com ruído e uma deriva de horas, e o simulador não finge
+   * saber mais do que isso.
    *
-   * As tags por cilindro de vibração, envelope e temperatura de mancal ficam de
-   * fora daqui: quem as produz é o simulador de mancal, que tem a sua própria
-   * dinâmica de degradação.
+   * Quem decide quem é autônoma é o **nível declarado no catálogo**, e não mais
+   * uma dedução por exclusão: as tags por cilindro, a produção e a largura são
+   * calculadas, e os mancais têm o seu próprio simulador de degradação.
    */
-  const freeTags = PROCESS_CATALOG.filter(
-    (variable) =>
-      !outputTags.has(variable.tag) &&
-      !loopTags.has(variable.tag) &&
-      !cascadedPvs.has(variable.tag) &&
-      !surfaceTags.has(variable.tag) &&
-      variable.area !== 'mancais' &&
-      variable.tag !== 'XI-0001' &&
-      variable.tag !== 'XI-0002',
-  ).map((variable) => variable.tag);
+  const wanderers = PROCESS_CATALOG.filter((variable) => variable.level === 'autônoma').map(
+    (variable) => ({ variable, band: autonomousBand(variable) }),
+  );
+
+  const conflicting = wanderers.filter(
+    ({ variable }) =>
+      outputTags.has(variable.tag) || loopTags.has(variable.tag) || surfaceTags.has(variable.tag),
+  );
+  if (conflicting.length > 0) {
+    throw new Error(
+      'Variáveis marcadas como autônomas que a rede também move: ' +
+        `${conflicting.map(({ variable }) => variable.tag).join(', ')}. ` +
+        'Dois donos do mesmo número dão o valor do último que escreveu.',
+    );
+  }
 
   // --- setpoints ---
 
@@ -422,13 +429,32 @@ export function processEngine(
 
   // --- estado inicial: tudo no ponto de operação ---
 
-  function publish(tag: string, value: number): void {
+  const clamp = (value: number, min: number, max: number): number =>
+    Math.min(Math.max(value, min), max);
+
+  function publish(tag: string, value: number, band?: AutonomousBand): void {
     truth.set(tag, value);
     const sd = instrumentNoiseSd(tag);
-    measured.set(
-      tag,
-      sd === 0 ? value : value + sd * correlatedNoise(seed, tick, stream(tag), NOISE_TAU_TICKS),
-    );
+    const read =
+      sd === 0 ? value : value + sd * correlatedNoise(seed, tick, stream(tag), NOISE_TAU_TICKS);
+    /**
+     * A medida da autônoma é presa à faixa; a das outras, não.
+     *
+     * É a única exceção, e ela existe porque uma variável sem física não pode
+     * acender um alarme sozinha. Nas demais, estar fora da faixa é exatamente
+     * onde o alarme vive, e prender a medida apagaria o evento.
+     */
+    measured.set(tag, band ? clamp(read, band.low, band.high) : read);
+  }
+
+  /** As calculadas do instante, na ordem em que uma depende da outra. */
+  function publishDerived(): void {
+    for (const item of DERIVED_IN_ORDER) {
+      publish(
+        item.tag,
+        item.compute((tag) => truth.get(tag) ?? requireOperatingPoint(tag)),
+      );
+    }
   }
 
   for (const variable of PROCESS_CATALOG) {
@@ -465,6 +491,11 @@ export function processEngine(
   publish('XI-0002', WEB_WIDTH_M);
   publish('XI-0001', production());
 
+  for (const { variable, band } of wanderers) {
+    publish(variable.tag, autonomousTruth(variable, band, seed, tick), band);
+  }
+  publishDerived();
+
   /**
    * A verdade gravada substitui o ponto de operação, e a medida é recalculada.
    *
@@ -474,9 +505,6 @@ export function processEngine(
   if (restored) {
     for (const [tag, value] of Object.entries(restored.truth)) publish(tag, value);
   }
-
-  const clamp = (value: number, min: number, max: number): number =>
-    Math.min(Math.max(value, min), max);
 
   /** Quanto do desvio anterior sobrevive a um passo, na dinâmica da MV. */
   const mvDecay = Math.exp(-DT_S / MV_LAG_S);
@@ -515,14 +543,17 @@ export function processEngine(
       publish(cylinder.tag, cylinderSurfaceTempC(pressure));
     }
 
-    // 5. derivadas
+    // 5. produção e largura
     publish('XI-0001', production());
     publish('XI-0002', WEB_WIDTH_M);
 
-    // 6. o que a rede não move oscila em torno do ponto de operação
-    for (const tag of freeTags) {
-      publish(tag, requireOperatingPoint(tag));
+    // 6. as autônomas passeiam dentro da faixa delas
+    for (const { variable, band } of wanderers) {
+      publish(variable.tag, autonomousTruth(variable, band, seed, tick), band);
     }
+
+    // 7. as calculadas, que leem o que os seis passos acima deixaram pronto
+    publishDerived();
   }
 
   return {

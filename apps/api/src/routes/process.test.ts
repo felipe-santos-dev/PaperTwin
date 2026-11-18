@@ -123,6 +123,10 @@ describe('GET /process/values', () => {
       'PIC-512',
       'PIC-513',
       'PIC-514',
+      'TI-541',
+      'TI-542',
+      'TI-543',
+      'TI-544',
     ]);
   });
 

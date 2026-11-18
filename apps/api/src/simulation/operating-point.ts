@@ -37,14 +37,16 @@ const LAB_OPERATING_POINTS: readonly { readonly tag: string; readonly value: num
   { tag: 'LAB-1206R', value: 2.17 },
   // "−10 a +10 (alvo 0)" — curl nulo é folha plana
   { tag: 'LAB-1212', value: 0 },
+  // "22,0–28,0 (alvo 25,0)" — Cobb₆₀ de papel colado para imprimir
+  { tag: 'LAB-1211', value: 25 },
 ];
 
 /**
  * Todos os pontos de operação, por tag.
  *
- * Inclui as 320 do catálogo e os três ensaios que as relações movem. Os outros
- * dez ensaios ficam de fora: nenhuma relação chega neles, então o simulador não
- * tem o que dizer sobre eles além do que a pesquisa já diz.
+ * Inclui as do catálogo e os quatro ensaios que as relações movem. Os outros
+ * ficam de fora: nenhuma relação chega neles, então o simulador não tem o que
+ * dizer sobre eles além do que a pesquisa já diz.
  */
 function build(): Map<string, number> {
   const points = new Map<string, number>();

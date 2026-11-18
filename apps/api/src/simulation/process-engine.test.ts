@@ -243,10 +243,11 @@ describe('montagem da rede', () => {
     expect(networkInputs()).not.toContain('ZIC-205');
   });
 
-  it('move as doze saídas que as relações alcançam', () => {
+  it('move as catorze saídas que as relações alcançam', () => {
     expect(drivenTags()).toEqual([
       'AI-407',
       'AI-907',
+      'AIC-102',
       'AIC-306',
       'AIC-901',
       'AIC-902',
@@ -255,6 +256,7 @@ describe('montagem da rede', () => {
       'AIC-905',
       'LAB-1206',
       'LAB-1206R',
+      'LAB-1211',
       'LAB-1212',
       'XI-606A',
     ]);

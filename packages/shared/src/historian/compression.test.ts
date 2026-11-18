@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { PROCESS_CATALOG } from '../process/catalog';
+import { levelIsArchived } from '../process/types';
 import { isLabTag } from '../process/lab';
 import { exceptionFilter, recordSeries, swingingDoor } from './compression';
 import {
@@ -46,11 +47,30 @@ function runStage<T extends Sample>(
 }
 
 describe('pontos do historiador', () => {
-  it('tem um ponto por variável do catálogo que não é de laboratório', () => {
-    const esperados = PROCESS_CATALOG.filter((v) => !isLabTag(v.tag)).length;
+  /**
+   * Nem toda variável é ponto: só as de nível `ligada` e `calculada`.
+   *
+   * A autônoma é função pura do passo e a `calculada-na-leitura` é conta sobre
+   * quem já grava — as duas se reconstroem sem arquivo, e guardá-las seria
+   * pagar linha pelo mesmo número duas vezes.
+   */
+  it('tem um ponto por variável arquivada, e só por ela', () => {
+    const esperados = PROCESS_CATALOG.filter(
+      (v) => !isLabTag(v.tag) && levelIsArchived(v.level),
+    ).length;
 
     expect(HISTORIAN_POINTS).toHaveLength(esperados);
     expect(HISTORIAN_POINT_COUNT).toBe(esperados);
+  });
+
+  it('deixa de fora quem não grava', () => {
+    const pontos = new Set(HISTORIAN_POINTS.map((point) => point.tag));
+
+    for (const variable of PROCESS_CATALOG) {
+      expect(pontos.has(variable.tag), `${variable.tag} (${variable.level})`).toBe(
+        levelIsArchived(variable.level),
+      );
+    }
   });
 
   it('numera de 1 em diante, na ordem do catálogo', () => {

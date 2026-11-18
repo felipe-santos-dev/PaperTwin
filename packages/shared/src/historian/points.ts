@@ -1,5 +1,6 @@
 import { PROCESS_CATALOG } from '../process/catalog';
 import { isLabTag } from '../process/lab';
+import { levelIsArchived } from '../process/types';
 import type { HistorianPoint } from './types';
 
 /**
@@ -15,6 +16,12 @@ import type { HistorianPoint } from './types';
  *   do modo de demonstração — gerado numa máquina, servido de outra — passaria
  *   a apontar para os pontos errados.
  *
+ * **Nem toda variável é ponto.** Só as de nível `ligada` e `calculada`: a
+ * autônoma é função pura do passo e a `calculada-na-leitura` é conta sobre
+ * quem já grava, então as duas se reconstroem sem arquivo. Guardá-las seria
+ * pagar linha por um número que se recalcula — e, no caso da calculada, pelo
+ * mesmo número duas vezes.
+ *
  * Os ensaios de laboratório **não** são pontos. A lista base diz: "sem malha,
  * sem compressão". Eles têm valor real e contínuo na simulação, mas o que o
  * laboratório conhece é a amostra do ensaio, não uma série arquivada.
@@ -29,6 +36,7 @@ function build(): HistorianPoint[] {
 
   for (const variable of PROCESS_CATALOG) {
     if (isLabTag(variable.tag)) continue;
+    if (!levelIsArchived(variable.level)) continue;
 
     points.push({
       pointId: points.length + 1,

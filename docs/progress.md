@@ -1759,4 +1759,431 @@ apps/web/src/screens/MaquinaScreen.tsx
 docs/progress.md
 ```
 
-Pare aqui. A Fase 3 começa quando o Felipe escrever "fase 3".
+## Fase 3 — a tabela, para aprovação
+
+Nada de código ainda. Esta seção é a tabela que a fase pede: cada item da lista
+do engenheiro, cruzado com `catalogo-base.csv`, com a proposta e a coluna de
+prioridade da resposta 6.
+
+**Como ler as colunas.**
+
+- **Hoje** — a TAG que já existe no catálogo, "fixa" para as sete do preparo que
+  hoje são dado fixo no front, ou **falta**.
+- **Nível** — o que a fase define, com uma distinção a mais que o orçamento
+  obrigou:
+  - **ligada** — tem relação FOPDT com outra TAG. Coeficientes novos entram
+    `assumed`.
+  - **calculada · arquivada** — sai de um balanço e vai para o historiador.
+  - **calculada · na leitura** — sai de uma conta sobre TAGs que já estão
+    arquivadas, no mesmo instante. **Não ocupa arquivo**: a série de 7 dias é
+    reconstruída da série de quem ela depende.
+  - **autônoma** — alvo + ruído + deriva lenta, função pura de (semente, passo,
+    canal), como o ruído do motor. **Não ocupa arquivo** (resposta 7).
+  - **ilustrativa** — dado fixo no front, com o selo. É o que prioridade 2
+    quer dizer.
+- **Prio** — 1 entra no simulador · 2 entra como ilustrativa · 3 fica de fora.
+
+**Faixas, alvos e coeficientes de toda TAG nova entram `assumed`, confiança
+baixa**, tirados de literatura pública de papel para imprimir e escrever. Nenhum
+número vem de planta.
+
+### Preparo de massa · 1xx
+
+| Item pedido                       | Hoje             | TAG nova | Faixa     | Alvo | Un.   | Nível                      | Prio |
+| --------------------------------- | ---------------- | -------- | --------- | ---- | ----- | -------------------------- | ---- |
+| Freeness / grau Schopper          | fixa AIC-102     | —        | 20–36     | 28   | °SR   | **ligada** a JIC-101       | 1    |
+| Potência de refinação             | JIC-101          | —        | —         | —    | —     | pronta                     | —    |
+| Carga do refinador                | fixa JI-111      | —        | 1500–2400 | 1950 | kW    | autônoma                   | 1    |
+| Posição dos discos                | fixa ZIC-112     | —        | 0,2–0,6   | 0,4  | mm    | autônoma (MV do refino)    | 1    |
+| Cola AKD                          | fixa FIC-107     | —        | 0–2,4     | 1,4  | kg/t  | **ligada** a LAB-1211      | 1    |
+| Amido de massa                    | fixa FIC-108     | —        | 4–12      | 8    | kg/t  | autônoma                   | 1    |
+| Branqueador OBA                   | fixa FIC-110     | —        | 0–6       | 3    | kg/t  | ilustrativa (segue fixa)   | 2    |
+| PCC e polímero de retenção        | FIC-106, FIC-109 | —        | —         | —    | —     | prontas                    | —    |
+| Nível do tanque de mistura        | fixa LIC-103     | —        | 0–100     | 62   | %     | autônoma                   | 1    |
+| Nível da tina da máquina          | falta            | LIC-131  | 30–85     | 60   | %     | autônoma                   | 1    |
+| Nível do silo de água branca      | falta            | LIC-132  | 30–85     | 55   | %     | ilustrativa                | 2    |
+| Consistência da tina da máquina   | falta            | AIC-133  | 2,6–3,8   | 3,2  | %     | ilustrativa                | 2    |
+| Consistência da massa grossa      | AIC-104          | —        | —         | —    | —     | pronta                     | —    |
+| Consistência da água branca       | AIC-306          | —        | —         | —    | —     | pronta                     | —    |
+| Pressão de entrada do desaerador  | falta            | PI-141   | 30–70     | 50   | kPa a | autônoma                   | 1    |
+| Pressão de saída do desaerador    | falta            | PI-142   | 20–45     | 33   | kPa a | autônoma                   | 1    |
+| Torque do depurador primário      | falta            | JI-151   | 20–80     | 45   | %     | autônoma                   | 1    |
+| ΔP do depurador primário          | falta            | PDI-152  | 40–120    | 70   | kPa   | ilustrativa                | 2    |
+| Morfologia · comprimento de fibra | falta            | QI-121   | 0,8–2,4   | 1,55 | mm    | ilustrativa                | 2    |
+| Viscosidade da celulose           | falta            | QI-122   | 600–900   | 750  | cm³/g | ilustrativa                | 2    |
+| Alvura da celulose                | falta            | QI-123   | 86–92     | 89   | % ISO | ilustrativa                | 2    |
+| Eficiência do filtro a disco      | falta            | XI-171   | 92–99,5   | 97   | %     | ilustrativa                | 2    |
+| Percentual de refugo              | falta            | XI-0003  | 0–12      | 4,5  | %     | **calculada · arquivada**  | 1    |
+| Fibra nova na receita             | falta            | XI-161   | 60–100    | 82   | %     | **calculada · na leitura** | 1    |
+| Massa recuperada na receita       | falta            | XI-162   | 0–40      | 18   | %     | **calculada · na leitura** | 1    |
+
+### Caixa de entrada e formação · 2xx e 3xx
+
+| Item pedido                      | Hoje                 | TAG nova | Faixa     | Alvo | Un.  | Nível                      | Prio |
+| -------------------------------- | -------------------- | -------- | --------- | ---- | ---- | -------------------------- | ---- |
+| Consistência na caixa de entrada | falta                | AIC-203  | 0,6–1,2   | 0,9  | %    | **calculada · arquivada**  | 1    |
+| Abertura do lábio                | falta                | ZIC-204  | 8–16      | 11,5 | mm   | autônoma                   | 1    |
+| Posição dos atuadores CD         | ZIC-205              | —        | —         | —    | —    | pronta                     | —    |
+| Orientação de fibras             | XHIC-202 + LAB-1206R | —        | —         | —    | —    | coberta                    | —    |
+| Tensão da tela formadora         | falta                | WIC-301  | 4–9       | 6,5  | kN/m | autônoma                   | 1    |
+| Vácuo do rolo de sucção          | falta                | PI-302   | −60 a −20 | −45  | kPa  | autônoma                   | 1    |
+| Vácuo das caixas de vácuo        | falta                | PI-303   | −45 a −12 | −28  | kPa  | autônoma                   | 1    |
+| Vazão das calhas e caixas        | falta                | FI-304   | 200–900   | 520  | m³/h | **calculada · na leitura** | 1    |
+| Teor seco na saída do formador   | falta                | AI-305   | 15–23     | 19   | %    | **calculada · arquivada**  | 1    |
+| Draw formador → prensa           | falta                | SDIC-307 | 0,5–2,5   | 1,4  | %    | ilustrativa                | 2    |
+
+### Prensas · 4xx
+
+| Item pedido                       | Hoje     | TAG nova | Faixa     | Alvo | Un.  | Nível               | Prio |
+| --------------------------------- | -------- | -------- | --------- | ---- | ---- | ------------------- | ---- |
+| Carga do nip da sapata            | WIC-401  | —        | —         | —    | —    | pronta              | —    |
+| Carga do nip da 1ª prensa         | falta    | WIC-405  | 200–600   | 420  | kN/m | **ligada** a AI-407 | 1    |
+| Tensão do feltro                  | falta    | WIC-402  | 3–7       | 5    | kN/m | autônoma            | 1    |
+| Vácuo do rolo de sucção da prensa | falta    | PI-404   | −70 a −30 | −55  | kPa  | autônoma            | 1    |
+| Teor seco na saída da prensa      | AI-407   | —        | —         | —    | —    | pronta              | —    |
+| Caixa de vapor da prensa          | PIC-403  | —        | —         | —    | —    | pronta              | —    |
+| Draw prensa → secagem             | SDIC-406 | —        | —         | —    | —    | pronta              | —    |
+
+### Secagem · 5xx e 7xx
+
+| Item pedido                       | Hoje                               | TAG nova                                | Faixa   | Alvo  | Un. | Nível                      | Prio |
+| --------------------------------- | ---------------------------------- | --------------------------------------- | ------- | ----- | --- | -------------------------- | ---- |
+| Pressão de vapor por grupo        | PIC-511…514, 711, 712              | —                                       | —       | —     | —   | prontas                    | —    |
+| Temperatura de vapor por grupo    | falta                              | TI-541…544 (pré) · TI-741, TI-742 (pós) | 100–150 | varia | °C  | **calculada · na leitura** | 1    |
+| Temperatura dos cilindros         | TI-52nn                            | —                                       | —       | —     | —   | pronta                     | —    |
+| Consumo de vapor                  | falta                              | FI-551                                  | 20–60   | 38    | t/h | **calculada · na leitura** | 1    |
+| Geração de condensado             | falta                              | FI-552                                  | 18–57   | 36    | t/h | **calculada · na leitura** | 1    |
+| ΔP dos sifões e nível dos tanques | PDIC-52x, LIC-53x, PDIC-72x        | —                                       | —       | —     | —   | prontas                    | —    |
+| Teor seco na saída da pré-secagem | falta                              | AI-528                                  | 55–75   | 66    | %   | **calculada · arquivada**  | 1    |
+| Velocidade dos grupos (draw)      | SDIC-703                           | SDIC-527                                | 0–1,2   | 0,4   | %   | ilustrativa                | 2    |
+| Capota e telas                    | TIC-505, AIC-506, PIC-507, WIC-508 | —                                       | —       | —     | —   | prontas                    | —    |
+
+### Speed Sizer · 6xx
+
+| Item pedido              | Hoje      | TAG nova | Faixa  | Alvo | Un.  | Nível       | Prio |
+| ------------------------ | --------- | -------- | ------ | ---- | ---- | ----------- | ---- |
+| Aplicação de amido       | XI-606A/B | —        | —      | —    | —    | pronta      | —    |
+| Pressão do nip           | WIC-605   | —        | —      | —    | —    | pronta      | —    |
+| Outros químicos do sizer | falta     | FIC-607  | 0–1,2  | 0,4  | kg/t | ilustrativa | 2    |
+| Desgaste dos rolos       | falta     | XI-608   | 0–2000 | —    | h    | ilustrativa | 2    |
+
+### Calandra e enroladeira · 8xx e 10xx
+
+| Item pedido                           | Hoje                      | TAG nova | Faixa      | Alvo | Un.      | Nível                      | Prio |
+| ------------------------------------- | ------------------------- | -------- | ---------- | ---- | -------- | -------------------------- | ---- |
+| Pressão da calandra                   | WIC-801                   | —        | —          | —    | —        | pronta                     | —    |
+| Abaulamento do rolo                   | falta                     | ZIC-805  | −100 a 100 | 0    | %        | autônoma                   | 1    |
+| Perfis de umidade/espessura/gramatura | AI-912, AI-913, AI-915    | —        | —          | —    | —        | prontos (2σ CD)            | —    |
+| Porosidade online                     | LAB-1205 (só laboratório) | AI-908   | 8–40       | 20   | s/100 mL | ilustrativa                | 2    |
+| Eletricidade estática                 | falta                     | EI-806   | 0–60       | 12   | kV/m     | ilustrativa                | 2    |
+| Perdas por mantas e refugo            | falta                     | XI-1005  | 0–4        | 1,2  | %        | **calculada · na leitura** | 1    |
+
+### Rolo jumbo · laboratório, LAB-12xx
+
+Os treze ensaios de hoje cobrem gramatura, umidade, espessura, aspereza, tração,
+rasgo, cinzas, alvura, opacidade, Cobb e curl. Nenhum ensaio ocupa arquivo do
+historiador: resultado de laboratório é por bobina, não é série.
+
+| Ensaio pedido        | Hoje  | TAG nova | Faixa     | Alvo | Un.    | Nível       | Prio |
+| -------------------- | ----- | -------- | --------- | ---- | ------ | ----------- | ---- |
+| Cor (L\*a\*b\*)      | falta | LAB-1213 | 92–96 L\* | 94   | adim.  | ilustrativa | 2    |
+| Dureza               | falta | LAB-1214 | 120–260   | 190  | N      | ilustrativa | 2    |
+| Rigidez (Taber)      | falta | LAB-1215 | 0,8–2,2   | 1,4  | mN·m   | ilustrativa | 2    |
+| Arrebentamento       | falta | LAB-1216 | 180–320   | 240  | kPa    | ilustrativa | 2    |
+| Scott Bond           | falta | LAB-1217 | 120–280   | 190  | J/m²   | ilustrativa | 2    |
+| Desprendimento de pó | falta | LAB-1218 | 0–5       | 1,8  | adim.  | ilustrativa | 2    |
+| Sujidade             | falta | LAB-1219 | 0–8       | 2    | mm²/m² | ilustrativa | 2    |
+
+### Manutenção · 11xx
+
+| Item pedido                         | Hoje                      | TAG nova | Faixa | Alvo | Un. | Nível               | Prio |
+| ----------------------------------- | ------------------------- | -------- | ----- | ---- | --- | ------------------- | ---- |
+| Vibração e temperatura de mancal    | VI-51nn, VE-51nn, TI-53nn | —        | —     | —    | —   | prontas (72 dos 98) | —    |
+| Os 26 mancais fora dos secadores    | rota do ativo             | —        | —     | —    | —   | —                   | 3    |
+| Nível de óleo da unidade hidráulica | falta                     | LI-1108  | 40–90 | 70   | %   | autônoma            | 1    |
+| Temperatura do óleo hidráulico      | falta                     | TI-1109  | 25–65 | 45   | °C  | autônoma            | 1    |
+| Vazão de óleo por mancal            | FIC-1105                  | —        | —     | —    | —   | pronta              | —    |
+| Rotina de inspeção                  | entidade Ronda            | —        | —     | —    | —   | coberta             | —    |
+
+### O que isso custa
+
+| Nível                      |  TAGs | Ocupa arquivo |
+| -------------------------- | ----: | ------------- |
+| ligada (relação nova)      |     3 | sim           |
+| calculada · arquivada      |     4 | sim           |
+| calculada · na leitura     |    12 | não           |
+| autônoma                   |    17 | não           |
+| ilustrativa (prioridade 2) |    21 | não           |
+| **no historiador**         | **7** | **teto: 50**  |
+
+São **7 TAGs novas no historiador** contra o teto de 50 — e isso não é proposta
+frouxa, é consequência da resposta 7. A autônoma não grava porque é função pura
+do passo; a **calculada · na leitura** não grava porque é conta sobre quem já
+grava — temperatura de vapor sai da pressão do grupo, consumo e condensado saem
+da evaporação, a receita sai do refugo. Guardar qualquer uma delas seria guardar
+duas vezes o mesmo número.
+
+**Em números de catálogo:** 320 → **356 variáveis** (36 novas, nenhuma por
+cilindro), das quais **6 são promoções** das sete fixas de hoje (AIC-102,
+FIC-107, FIC-108, JI-111, ZIC-112 e LIC-103 saem do dado fixo e passam a ser
+simuladas; a FIC-110 continua fixa). O laboratório vai de 13 para **20 ensaios**
+e as fixas do front, de 7 para **14** (saem as 6 promovidas, entram 13 novas). Pontos do historiador: 320 → **327**, com
+o orçamento de 7 dias folgado (a compressão medida foi de ~200 para 1, e sete
+dias deram 17 MB dos 300 reservados).
+
+### As três relações FOPDT novas
+
+Coeficientes `assumed`, na forma das 24 que já existem:
+
+| #   | Entrada | Saída    | Ganho               | Tempo morto | τ     | Por quê                                                         |
+| --- | ------- | -------- | ------------------- | ----------- | ----- | --------------------------------------------------------------- |
+| 16  | JIC-101 | AIC-102  | +0,18 °SR por kWh/t | 270 s       | 450 s | mais energia fecha a fibra; mesmo atraso da relação 9 (tanques) |
+| 17  | FIC-107 | LAB-1211 | −6 g/m² por kg/t    | 420 s       | 900 s | a cola AKD cura devagar — é o cenário que hoje é fixo           |
+| 18  | WIC-405 | AI-407   | +0,004 % por kN/m   | 30 s        | 12 s  | mesma família da relação 6, com ganho menor                     |
+
+A 17 tem uma consequência boa: o cenário da cola AKD, que hoje é teatro fixo no
+front (a cola cai, a bobina é retida), passaria a acontecer no simulador.
+
+### Uma consequência de desenho, para decidir junto
+
+A resposta 7 pediu que a autônoma não grave e seja calculada na leitura, e
+mandou avisar se isso complicasse as rotas de histórico. **Complica um ponto
+só**, e tem solução limpa:
+
+- **O valor de agora e os alarmes** não mudam: o motor calcula a autônoma a cada
+  passo, como já faz com o ruído, e quem lê o instante lê dela.
+- **A tendência** (`/process/tags/:tag/trend`) hoje lê o arquivo. Para uma TAG
+  que não grava, a rota passa a reconstruir a série avaliando a mesma função
+  pura nos instantes da janela. Dá o mesmo resultado — é função de (semente,
+  passo, canal), não depende de quando se pergunta — e custa uma conta por ponto
+  desenhado.
+
+É uma ramificação na rota de tendência e no portão de demonstração, não um
+mecanismo novo. Só quero isso dito antes, e não depois.
+
+### O que eu já cortei
+
+**Prioridade 2 é o meu corte**: 21 itens que entram como dado fixo porque não
+têm física no simulador para sustentá-los — 13 TAGs de processo novas (as três
+da celulose, porosidade online, desgaste de rolo, estática, ΔP do depurador,
+consistência da tina, nível do silo, eficiência do filtro, os dois draws e os
+químicos do sizer), os 7 ensaios novos de laboratório e a FIC-110, que já era
+fixa e continua.
+
+**Prioridade 3 tem um item só**, e vale explicar: dar TAG de catálogo aos 26
+mancais que não são de cilindro secador custaria 52 TAGs — mais que tudo o resto
+desta fase junto — para entregar uniformidade, não informação. Eles já têm
+leitura pela rota do ativo, que é de onde a tela de Mancais os lê hoje.
+
+### Fase 3 — feita
+
+A tabela acima foi aprovada com quatro ajustes, e os quatro entraram.
+
+#### 1. Um número só
+
+O corpo da tabela e o resumo divergiam na contagem porque contam coisas
+diferentes. Fica assim, e é esta a conta que vale:
+
+| onde                      | antes |  depois | diferença |
+| ------------------------- | ----: | ------: | --------- |
+| catálogo de processo      |   320 | **356** | +36       |
+| **pontos do historiador** |   320 | **321** | **+1**    |
+| ensaios de laboratório    |    13 |      20 | +7        |
+| TAGs fixas no front       |     7 |       1 | −6        |
+| relações FOPDT            |    24 |      27 | +3        |
+
+O catálogo cresceu 36 e o **historiador cresceu um ponto**. Não é erro de
+conta: entraram 7 TAGs que gravam (3 ligadas e 4 calculadas) e saíram 6 que
+gravavam sem precisar — as autônomas que já existiam (viscosidade do amido,
+temperatura da capa do rolo macio, pressão do ar de instrumentação, amido do
+lado inferior, diâmetro da bobina) e a largura útil, que é constante.
+
+Dos 36 novos: 61 ligadas, 260 calculadas, 13 calculadas na leitura e 22
+autônomas é a composição do catálogo inteiro; das novas, 3 são ligadas, 4
+calculadas arquivadas, 12 calculadas na leitura e 17 autônomas.
+
+#### 2. A temperatura do vapor sai da pressão do grupo
+
+A faixa 100–150 °C não cobria o G1, que opera de −30 a +60 kPa rel e satura por
+volta dos 92 °C. Cada `TI-54x` e `TI-74x` agora tem a faixa derivada da faixa de
+pressão do **seu** grupo, pela mesma aproximação de saturação que a superfície
+do cilindro usa:
+
+| TAG    | grupo | pressão (kPa rel) | faixa (°C) | alvo |
+| ------ | ----- | ----------------- | ---------- | ---- |
+| TI-541 | G1    | −30 a 60          | 92–112     | 104  |
+| TI-542 | G2    | 80 a 250          | 116–137    | 126  |
+| TI-543 | G3    | 120 a 320         | 122–143    | 133  |
+| TI-544 | G4    | 120 a 350         | 122–145    | 134  |
+| TI-741 | G5    | 40 a 250          | 109–137    | 122  |
+| TI-742 | G6    | 40 a 250          | 109–137    | 124  |
+
+No instantâneo, a `TI-541` lê 103,6 °C — a saturação dos 15 kPa do G1.
+
+#### 3. A autônoma não alarma sozinha
+
+A deriva é calculada para caber **dentro de L–H**, com quatro desvios de ruído
+reservados de folga, e a medida da autônoma é presa à faixa no fim. É a única
+exceção à regra de que a medida não se prende, e ela existe exatamente por
+isto: uma variável sem física por trás não pode acender um alarme que ninguém
+sabe explicar.
+
+A deriva em si é duas ondas de períodos incomensuráveis (~4 h e ~11 h) com fase
+tirada do canal da tag — função pura de (semente, passo, canal), como o ruído.
+Sem estado: recalcular um trecho dá o que rodar contínuo deu, que é a regra que
+sustenta a retomada e, agora, a reconstrução da tendência.
+
+#### 4. A cola AKD acontece no simulador
+
+O cenário que termina na bobina retida era encenado no front: a curva da cola
+era escrita à mão, o alarme era um objeto montado em TypeScript e o Cobb era um
+número fixo. Agora:
+
+- `FIC-107` é **malha do catálogo**, com L em 0,9 kg/t;
+- o cenário `akdDipOf` derruba o setpoint para 0,6 kg/t duas horas e meia depois
+  do início do turno B, e a malha **fica lá** até o turno virar — é assim que
+  esse problema se comporta quando ninguém percebe;
+- o alarme de L sobe pelo motor de alarmes, como o de qualquer outra TAG;
+- a relação 17 (`FIC-107 → LAB-1211`) leva o Cobb de 25 para perto de 30 g/m²,
+  acima dos 28 da especificação;
+- a retenção da bobina, que continua sendo dado fixo porque não existe rota de
+  laboratório, passou a se ancorar no **instante do alarme real**. Sem alarme,
+  não há bobina retida — antes havia sempre, porque o front inventava o
+  instante da queda.
+
+No instantâneo: `FIC-107` em **0,597 kg/t com alarme de L ativo**, e a tendência
+mostra a queda às 16:30 com a marca do limite.
+
+#### O mecanismo novo: calculada na leitura
+
+Foi o que permitiu 36 TAGs novas com um ponto a mais de arquivo. Uma
+`calculada-na-leitura` é conta sobre TAGs que já gravam, no mesmo instante —
+temperatura de vapor a partir da pressão, consumo e condensado a partir da
+evaporação, receita a partir do refugo. Guardá-la seria guardar duas vezes o
+mesmo número.
+
+As fórmulas moram em `packages/shared/src/process/derived.ts`, cada uma com as
+entradas **declaradas**. A declaração não é documentação: é o que deixa a rota
+de tendência reconstruir a série de quem não grava, resolvendo a cadeia até
+chegar em quem tem arquivo (ou em quem é autônoma, que se recalcula sozinha).
+Uma fórmula que lesse uma tag fora de `inputs` daria série errada no gráfico e
+certa no instante — o pior dos dois mundos.
+
+Quase toda fórmula é linear em torno do ponto de operação, com coeficiente
+`assumed`, pela mesma razão das relações FOPDT: é o que se pode sustentar.
+As exceções são as que têm fórmula exata — a saturação do vapor e a receita,
+que fecha em 100.
+
+#### Três correções que eu fiz na minha própria tabela
+
+1. **`FI-551`/`FI-552` viraram `FI-1110`/`FI-1111`.** Consumo e condensado são
+   da máquina inteira; um número 5xx os poria na pré-secagem, contra a regra de
+   numeração por área da LISTA-BASE.
+2. **`AI-528` virou "teor seco após o G2".** "Saída da pré-secagem" com alvo
+   66 % estava errado: ali a folha já está perto de 95 %, que é a `AIC-901` por
+   outro nome. Depois do G2 é onde 66 % faz sentido, e é um ponto que a tela não
+   tinha.
+3. **As três TAGs de 2σ CD continuam arquivadas.** Eu as tinha marcado como
+   autônomas; elas alimentam a média de 2σ **de uma bobina**, que é colhida do
+   arquivo. Uma medida que alimenta entidade colhida do arquivo precisa ter
+   arquivo. Viraram calculadas, com uma fórmula que piora o perfil quando a MD
+   sai do alvo.
+
+#### Medido
+
+- **Compressão 201:1**, contra 202:1 antes — praticamente a mesma, com 36
+  variáveis a mais no catálogo.
+- **Sete dias de arquivo: 17,0 MB dos 300 reservados (5,7 %)**, a partir de
+  85,9 linhas por ponto por dia medidas no instantâneo.
+- Testes: `shared` **233**, API **407** (111 pulados sem `DATABASE_URL`), web
+  **186**, e2e **23**. Typecheck, lint, `format:check` e build.
+- O pedaço da aplicação foi de 240,26 para **258,93 kB** — o catálogo maior.
+- Capturas em 1920 × 1080 e 1440 × 900 de Processo, Laboratório e Turno, sem
+  rolagem horizontal.
+
+**Uma observação sobre as capturas:** elas foram tiradas no modo de
+demonstração, com a API local bloqueada de propósito. O processo da API que
+estava no ar é de um build anterior à Fase 3 e não conhece as TAGs novas — nele
+as linhas aparecem sem valor. O instantâneo é gerado pelo código desta fase e
+mostra o estado certo. Quem subir a API de novo vê o mesmo.
+
+#### Alarmes novos que aparecem no instantâneo
+
+Dois, e os dois durante a troca de gramatura: `XI-0003` (refugo) cruza o H de
+8 % e `AI-912` (2σ CD de gramatura) cruza o HH. É consequência das fórmulas —
+quando a máquina está fora do alvo, o refugo sobe e o perfil piora —, os dois
+normalizam quando a troca estabiliza, e me parece mais certo do que errado. Se
+tu achares que é ruído, o lugar de mexer é o coeficiente das duas fórmulas em
+`derived.ts`.
+
+#### Arquivos, por commit sugerido
+
+**11. Nível no catálogo, 36 TAGs novas e três relações**
+
+```
+reference/research/catalogo-base.csv
+reference/research/relacoes-fopdt.csv
+packages/shared/src/process/types.ts
+packages/shared/src/process/catalog.generated.ts
+packages/shared/src/process/relations.generated.ts
+packages/shared/scripts/catalog-csv.ts
+packages/shared/scripts/generate-process-catalog.ts
+packages/shared/src/process/relations.test.ts
+```
+
+**12. O que grava e o que se recalcula**
+
+```
+packages/shared/src/process/derived.ts        (novo)
+packages/shared/src/process/index.ts
+packages/shared/src/historian/points.ts
+packages/shared/src/historian/compression.test.ts
+apps/api/src/simulation/autonomous.ts         (novo)
+apps/api/src/simulation/process-engine.ts
+apps/api/src/simulation/process-engine.test.ts
+apps/api/src/simulation/operating-point.ts
+apps/api/src/runtime/reconstruct.ts           (novo)
+apps/api/src/routes/process.ts
+apps/api/src/routes/process.test.ts
+```
+
+**13. A cola AKD no simulador, e o dado fixo que ela substitui**
+
+```
+apps/api/src/simulation/scenarios.ts
+apps/api/src/runtime/catchup.ts
+apps/web/src/api/fixtures/process.ts
+apps/web/src/api/fixtures/scenario.ts
+apps/web/src/api/fixtures/index.ts
+apps/web/src/api/fixtures/fixtures.test.ts
+apps/web/src/api/gateway.ts
+apps/web/src/screens/TurnoScreen.tsx
+apps/web/src/screens/screens.test.tsx
+apps/web/src/ui/search.test.ts
+```
+
+**14. Os sete ensaios que faltavam na matriz**
+
+```
+packages/shared/src/process/lab.ts
+packages/shared/src/process/relation-types.ts
+apps/web/src/api/fixtures/lab.ts
+```
+
+**15. Limpeza: o painel 3D antigo**
+
+```
+apps/web/src/screens/mancais/Scene3DPanel.tsx   (removido)
+```
+
+O `Scene3DPanel.tsx` tinha saído na Fase 2 — o `MachinePanel` o substituiu —,
+mas sobreviveu ao commit e voltou a quebrar o typecheck, porque referencia a
+chave de ajuda antiga e um `SceneState` sem o vapor. Ninguém o importa.
+
+**16. Documentação da fase**
+
+```
+docs/progress.md
+```
+
+Pare aqui. A Fase 4 começa quando o Felipe escrever "fase 4".

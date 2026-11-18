@@ -1,3 +1,6 @@
+import type { WhatIfOptions } from '@mp1/shared/simulation';
+
+import type { WhatIfResponse } from './whatif';
 import type {
   Alarm,
   AlarmLimits,
@@ -203,6 +206,33 @@ export async function writeSetpoint(
   if (response.status === 422) {
     return { ok: false, rejected: (await response.json()) as SetpointRejection };
   }
+
+  const detail = await response
+    .json()
+    .then((payload: { message?: string }) => payload.message)
+    .catch(() => undefined);
+  throw new ApiError(response.status, detail ?? `A API respondeu ${String(response.status)}`);
+}
+
+/**
+ * Pede a previsão à API.
+ *
+ * A recusa de domínio — tag fora do catálogo, horizonte alto, escrava de
+ * cascata — vem como 400 com mensagem, e vira exceção aqui: diferente do
+ * setpoint, não há campo para corrigir na tela, há uma frase para mostrar.
+ */
+export async function fetchWhatIf(
+  body: WhatIfOptions,
+  signal?: AbortSignal,
+): Promise<WhatIfResponse> {
+  const response = await fetch(`${API_URL}/process/what-if`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    ...(signal ? { signal } : {}),
+  });
+
+  if (response.ok) return (await response.json()) as WhatIfResponse;
 
   const detail = await response
     .json()

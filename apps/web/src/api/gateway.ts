@@ -1,3 +1,4 @@
+import type { WhatIfOptions } from '@mp1/shared/simulation';
 import type {
   Alarm,
   GradeChange,
@@ -21,6 +22,7 @@ import {
   fetchGradeChanges,
   fetchNotes,
   fetchProcessValues,
+  fetchWhatIf,
   fetchReel,
   fetchReels,
   fetchRounds,
@@ -46,6 +48,7 @@ import {
   type TrendQuery,
 } from './process';
 import { fixtureRoutes, type FixtureRoutes } from './fixtures';
+import type { WhatIfResponse } from './whatif';
 
 /**
  * A porta de entrada dos dados, numa interface só.
@@ -135,6 +138,16 @@ export interface DataGateway extends FixtureRoutes {
       >)
     | null;
 
+  /**
+   * A previsão de uma mudança, antes de aplicar.
+   *
+   * **Não** é `null` no instantâneo: esta é a primeira coisa que o modo de
+   * demonstração faz de verdade em vez de mostrar dado guardado. O estado do
+   * motor viaja no instantâneo e a conta roda num Web Worker, com o mesmo
+   * núcleo que o servidor usa.
+   */
+  whatIf(request: WhatIfOptions, signal?: AbortSignal): Promise<WhatIfResponse>;
+
   /** `null` quando a fonte não aceita reconhecimento. */
   readonly acknowledgeAlarm:
     | ((id: string, acknowledgedBy: string, signal?: AbortSignal) => Promise<{ alarm: Alarm }>)
@@ -152,6 +165,7 @@ export const LIVE_GATEWAY: DataGateway = {
   asset: fetchAsset,
   vibration: fetchVibration,
   processValues: fetchProcessValues,
+  whatIf: fetchWhatIf,
   tag: fetchTag,
   tagTrend: fetchTagTrend,
   steamGroups: fetchSteamGroups,

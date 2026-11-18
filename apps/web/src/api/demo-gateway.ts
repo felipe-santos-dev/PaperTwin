@@ -10,6 +10,7 @@ import {
 import { ApiError } from './client';
 import { fetchDemoAsset, fetchDemoVibration } from './demo';
 import { fixtureRoutes, type FixtureRoutes } from './fixtures';
+import { runWhatIfInBrowser } from './whatif';
 import type { DataGateway } from './gateway';
 import type { AlarmList, ProcessValues, ReelView, ShiftView } from './process';
 
@@ -110,6 +111,16 @@ function byShift<T extends { readonly shiftId: string }>(
 
 const DEMO_ROUTES: Omit<DataGateway, keyof FixtureRoutes> = {
   kind: 'demo',
+
+  /**
+   * A previsão roda aqui mesmo, no navegador.
+   *
+   * É a única coisa que o modo de demonstração **calcula** em vez de servir de
+   * arquivo: o estado do motor viaja no instantâneo e um Web Worker roda o
+   * mesmo núcleo do servidor. Por isso `whatIf` não é `null` como a escrita de
+   * setpoint — prever não muda nada, então não há o que fingir.
+   */
+  whatIf: (request, signal) => runWhatIfInBrowser(request, signal),
 
   // as duas rotas da Fase 3 já tinham instantâneo próprio, com o caminho
   // espelhando a rota; `demo.ts` continua sendo quem as lê

@@ -306,6 +306,47 @@ export function roundOf(shift: ShiftWindow): RoundPlan {
 }
 
 /** Tudo que um turno tem planejado. */
+/* -------------------------------------------------------------- cola AKD */
+
+/**
+ * A queda da cola: o cenário que termina numa bobina retida pelo Cobb.
+ *
+ * É a história mais útil que o gêmeo conta, porque atravessa tudo: a dosagem
+ * cai no preparo, o alarme sobe no painel, o Cobb do laboratório passa da
+ * especificação uma hora depois, e a bobina que estava sendo formada fica
+ * retida para reteste. Quem olha vê o caminho inteiro de uma causa a uma
+ * consequência — que é a coisa que uma tela de valores instantâneos nunca
+ * mostra.
+ *
+ * Ela acontece **no simulador**: a dosagem é a `FIC-107`, que é malha de
+ * verdade, e o Cobb é a `LAB-1211`, que a relação 17 move. Até a Fase 3 isso
+ * era encenado no front com número escrito à mão.
+ *
+ * A cola cai e **fica caída** até o fim do turno: é assim que esse problema se
+ * comporta quando ninguém percebe — uma dosadora entupida não se desentope
+ * sozinha — e é o que dá ao turno seguinte algo para receber na passagem.
+ */
+export const AKD_SHIFT = 'B';
+export const AKD_HOUR_INTO_SHIFT = 2.5;
+
+/** Para onde a dosagem cai, em kg/t. Abaixo do L de 0,9 do catálogo. */
+export const AKD_LOW_KG_T = 0.6;
+
+export interface AkdPlan {
+  readonly startTick: number;
+  readonly value: number;
+}
+
+/** A queda de cola do turno, ou `null` se este turno não tem. */
+export function akdDipOf(shift: ShiftWindow): AkdPlan | null {
+  if (shift.letter !== AKD_SHIFT) return null;
+
+  return {
+    startTick: tickAt(new Date(shift.startedAt)) + AKD_HOUR_INTO_SHIFT * TICKS_PER_HOUR,
+    value: AKD_LOW_KG_T,
+  };
+}
+
 export interface ShiftPlan {
   readonly shift: ShiftWindow;
   readonly startTick: number;
@@ -314,6 +355,7 @@ export interface ShiftPlan {
   readonly gradeChange: GradeChangePlan | null;
   readonly webBreak: BreakPlan | null;
   readonly round: RoundPlan;
+  readonly akd: AkdPlan | null;
 }
 
 /** O plano de um turno, calculado do dia e da letra. */
@@ -336,6 +378,7 @@ export function shiftPlan(seed: number, shift: ShiftWindow): ShiftPlan {
     gradeChange: gradeChangeOf(shift),
     webBreak: webBreakOf(seed, shift),
     round: roundOf(shift),
+    akd: akdDipOf(shift),
   };
 }
 

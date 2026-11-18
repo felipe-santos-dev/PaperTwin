@@ -144,7 +144,11 @@ export interface DataGateway extends FixtureRoutes {
 /** O portão que fala com a API. */
 export const LIVE_GATEWAY: DataGateway = {
   kind: 'live',
-  ...fixtureRoutes({ reels: fetchReels, processValues: fetchProcessValues }),
+  ...fixtureRoutes({
+    reels: fetchReels,
+    processValues: fetchProcessValues,
+    alarms: fetchAlarms,
+  }),
   asset: fetchAsset,
   vibration: fetchVibration,
   processValues: fetchProcessValues,

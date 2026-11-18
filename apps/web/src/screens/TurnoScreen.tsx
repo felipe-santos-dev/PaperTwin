@@ -1,6 +1,8 @@
 import { useCallback, useState } from 'react';
 import { processVariable } from '@mp1/shared';
 
+import { isStanding } from '../ui/sections';
+
 import type { DataGateway } from '../api/gateway';
 import type { ProcessValues, ShiftDetail } from '../api/process';
 import { ResourceState } from '../ui/ResourceState';
@@ -39,6 +41,9 @@ export interface TurnoScreenProps {
 }
 
 const HOUR = 3_600_000;
+
+/** A dosagem de cola: a TAG do cenário que termina na bobina retida. */
+const AKD_TAG = 'FIC-107';
 
 export function TurnoScreen({ gateway, onSelectReel, onOpenTag, onOpenNote }: TurnoScreenProps) {
   const [mode, setMode] = useState<TimelineWindow>('turno');
@@ -154,9 +159,20 @@ function ShiftBody({
         const prodShift = production(prodSeries, shiftWin, now);
         const shiftBreaks = data.breaks.webBreaks.filter((item) => item.shiftId === shift.id);
         const shiftReels = data.reels.reels.filter((reel) => reel.shiftId === shift.id);
-        const fixedValues = new Map(data.fixed.values.map((v) => [v.tag, v]));
-        const akd = fixedValues.get('FIC-107');
-        const akdAlarm = data.fixed.alarms[0];
+        /**
+         * A cola agora é TAG de verdade, e o alarme dela é do motor.
+         *
+         * Até a Fase 3 os dois vinham do dado fixo: o valor era uma curva
+         * escrita à mão e o alarme, um objeto montado no front. Hoje a
+         * `FIC-107` é malha do catálogo, a queda é um cenário do simulador e o
+         * alarme de `L` sobe como o de qualquer outra — então a pendência da
+         * passagem só aparece quando a queda realmente aconteceu.
+         */
+        const akd = values.values.find((v) => v.tag === AKD_TAG) ?? null;
+        const akdAlarm =
+          data.alarms.alarms.find(
+            (alarm) => alarm.tag === AKD_TAG && alarm.limit === 'L' && isStanding(alarm),
+          ) ?? null;
 
         const events = timelineEvents({
           window,
@@ -184,7 +200,12 @@ function ShiftBody({
           holds: data.holds.holds,
           akd:
             akd && akdAlarm
-              ? { since: akdAlarm.raisedAt, value: akd.value, sp: akd.setpoint }
+              ? {
+                  since: akdAlarm.raisedAt,
+                  value: akd.value,
+                  // a rota de lista não traz setpoint; o alvo do catálogo é o que a malha persegue
+                  sp: akd.setpoint ?? processVariable(AKD_TAG)?.target ?? null,
+                }
               : null,
           notes: data.notes.notes
             .filter((note) => note.status !== 'encerrada' && note.priority <= 2)

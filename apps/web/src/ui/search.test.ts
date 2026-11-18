@@ -57,8 +57,8 @@ describe('índice', () => {
 
   it('traz as oito telas, o catálogo com as fixas e os 98 mancais', () => {
     expect(items.filter((item) => item.kind === 'tela')).toHaveLength(8);
-    // 320 do catálogo + as 7 fixas do preparo
-    expect(items.filter((item) => item.kind === 'tag')).toHaveLength(327);
+    // 356 do catálogo + a fixa que sobrou no preparo depois da Fase 3
+    expect(items.filter((item) => item.kind === 'tag')).toHaveLength(357);
     expect(items.filter((item) => item.kind === 'mancal')).toHaveLength(98);
   });
 });
@@ -81,9 +81,9 @@ describe('busca', () => {
   });
 
   it('exige todos os pedaços da consulta', () => {
-    // "vapor" sozinho traz os seis grupos; com "g4" sobra o do grupo principal
+    // "vapor" sozinho traz muita coisa; com "g4" sobram as duas do grupo principal
     expect(ids('vapor').length).toBeGreaterThan(1);
-    expect(ids('vapor g4')).toEqual(['PIC-514']);
+    expect(ids('vapor g4')).toEqual(['PIC-514', 'TI-544']);
   });
 
   it('acha o mancal pelo cilindro', () => {

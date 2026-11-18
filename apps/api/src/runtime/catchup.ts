@@ -221,6 +221,16 @@ function applyPlan(engine: ProcessEngine, plan: ShiftPlan, tick: number): void {
     engine.setSetpoint('AIC-902', plan.gradeChange.toGsm);
   }
 
+  /**
+   * A cola cai e fica caída até o turno virar.
+   *
+   * O `resetSetpoint` no primeiro passo do turno é o que impede a queda de
+   * atravessar para o turno seguinte: sem ele, a malha ficaria no valor baixo
+   * para sempre, porque ninguém no simulador a corrige.
+   */
+  if (plan.startTick === tick) engine.resetSetpoint('FIC-107');
+  if (plan.akd?.startTick === tick) engine.setSetpoint('FIC-107', plan.akd.value);
+
   const quebra: BreakPlan | null = plan.webBreak;
   if (!quebra) return;
 

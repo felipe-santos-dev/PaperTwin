@@ -524,6 +524,7 @@ describe('Processo · escrita de setpoint', () => {
       target: 140,
       limits: { ll: null, l: null, h: 230, hh: null },
       controlled: true,
+      level: 'ligada' as const,
       mv: 'PV-712',
       compression: { excDev: 1, compDev: 2 },
       source: 'B' as const,

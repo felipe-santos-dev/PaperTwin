@@ -1,4 +1,14 @@
 import {
+  ENGINE_STATE_VERSION,
+  isCascadeSlave,
+  processEngine,
+  runWhatIf,
+  tickAt,
+  tickTime,
+  type EngineState,
+  type LoopMode,
+} from '@mp1/shared/simulation';
+import {
   historianPoint,
   PROCESS_CATALOG,
   processVariable,
@@ -9,14 +19,13 @@ import {
 import type { FastifyInstance } from 'fastify';
 
 import { reconstructTrend } from '../runtime/reconstruct';
-import { tickTime } from '../simulation/clock';
-import { isCascadeSlave } from '../simulation/process-engine';
 import { notFound, badRequest } from './errors';
 import {
   getTagSchema,
   getTagTrendSchema,
   listProcessValuesSchema,
   listSteamGroupsSchema,
+  whatIfSchema,
   writeSetpointSchema,
 } from './process-route-schemas';
 
@@ -136,6 +145,60 @@ export async function processRoutes(app: FastifyInstance): Promise<void> {
    * nenhuma tela tem tantos pixels; mandar tudo seria tráfego que o navegador
    * joga fora, e agregar com média apagaria os picos.
    */
+  /**
+   * A previsão: duas trajetórias do estado de agora, uma com a mudança.
+   *
+   * `POST` porque o corpo tem uma lista de mudanças, e não porque escreve algo
+   * — esta rota **não escreve nada**: nem setpoint, nem arquivo, nem alarme.
+   * Quem aplica é a rota de setpoint, com motivo obrigatório, como sempre foi.
+   *
+   * O estado de partida é o que está gravado, depois de a simulação chegar até
+   * agora. Se não houver estado gravado — primeiro arranque —, a previsão sai
+   * da rede em regime, e o cabeçalho da resposta diz isso.
+   */
+  app.post<{
+    Body: {
+      changes: { tag: string; value: number }[];
+      horizonS?: number;
+      mode?: LoopMode;
+      points?: number;
+    };
+  }>('/process/what-if', { schema: whatIfSchema }, async (request, reply) => {
+    await app.simulation.ensureCurrent();
+
+    const saved = await app.db.findSimState();
+    const state =
+      saved?.state && (saved.state as { version?: unknown }).version === ENGINE_STATE_VERSION
+        ? (saved.state as EngineState)
+        : null;
+
+    const engine = state
+      ? null
+      : processEngine(tickAt(new Date()), { noise: false, loops: request.body.mode ?? 'auto' });
+    const início = state ?? engine?.snapshotState();
+    if (!início) {
+      return reply.code(503).send(notFound('A simulação ainda não tem estado para prever.'));
+    }
+
+    try {
+      const result = runWhatIf(início, {
+        changes: request.body.changes,
+        horizonS: request.body.horizonS ?? 600,
+        mode: request.body.mode ?? 'auto',
+        ...(request.body.points === undefined ? {} : { points: request.body.points }),
+      });
+
+      return {
+        ...result,
+        ts: tickTime(result.fromTick).toISOString(),
+        /** Falso quando não havia estado gravado e a rede arrancou em regime. */
+        fromSavedState: state !== null,
+      };
+    } catch (error) {
+      return reply.code(400).send(badRequest((error as Error).message));
+    }
+  });
+
   app.get<{
     Params: { tag: string };
     Querystring: { from?: string; to?: string; buckets?: number };

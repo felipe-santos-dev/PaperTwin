@@ -1,4 +1,5 @@
 import { ALARM_PRIORITIES, ALARM_STATES, NOTE_STATUSES } from '@mp1/shared';
+import { WHAT_IF_MAX_HORIZON_S, WHAT_IF_MAX_POINTS } from '@mp1/shared/simulation';
 
 import { MAX_PLOT_BUCKETS } from '../db/historian-store';
 import { MAX_LIST_LIMIT } from '../db/operations-store';
@@ -134,6 +135,50 @@ export const getTagTrendSchema = {
       required: ['tag', 'unit', 'from', 'to', 'bucketS', 'buckets', 'timeWeightedAverage'],
     },
     ...errors,
+  },
+} as const;
+
+/**
+ * O "e se": lista de mudanças, horizonte e modo das malhas.
+ *
+ * O teto do horizonte está no esquema, e não só no núcleo, porque é aqui que
+ * ele protege o servidor: cada segundo de previsão são dois passos de motor
+ * (a linha de base e a proposta), e uma requisição pedindo oito horas pararia
+ * a API para todo mundo.
+ */
+export const whatIfSchema = {
+  tags: ['Processo'],
+  summary: 'Prevê a resposta a uma mudança, sem aplicar nada',
+  description: [
+    'Roda duas trajetórias do estado atual — uma sem a mudança e uma com ela —',
+    'e devolve as duas séries de cada variável que a mudança alcança, com a',
+    'variação final, o tempo morto, o tempo até 63 %, os cruzamentos de limite',
+    'e se alguma válvula saturou. Não escreve setpoint, não grava no',
+    'historiador e não levanta alarme: aplicar é a rota de setpoint.',
+  ].join(' '),
+  body: {
+    type: 'object',
+    required: ['changes'],
+    additionalProperties: false,
+    properties: {
+      changes: {
+        type: 'array',
+        minItems: 1,
+        maxItems: 4,
+        items: {
+          type: 'object',
+          required: ['tag', 'value'],
+          additionalProperties: false,
+          properties: {
+            tag: { type: 'string', minLength: 1, maxLength: 24 },
+            value: { type: 'number' },
+          },
+        },
+      },
+      horizonS: { type: 'integer', minimum: 10, maximum: WHAT_IF_MAX_HORIZON_S },
+      mode: { type: 'string', enum: ['auto', 'manual'] },
+      points: { type: 'integer', minimum: 10, maximum: WHAT_IF_MAX_POINTS },
+    },
   },
 } as const;
 

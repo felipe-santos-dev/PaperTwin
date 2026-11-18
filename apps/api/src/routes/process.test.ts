@@ -1,3 +1,14 @@
+import { readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
+
+import {
+  ENGINE_STATE_VERSION,
+  runWhatIf,
+  tickAt,
+  TICKS_PER_HOUR,
+  tickTime,
+  type EngineState,
+} from '@mp1/shared/simulation';
 import {
   allAssets,
   ALARM_FLOOD_THRESHOLD,
@@ -20,7 +31,6 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildApp } from '../app';
 import { openPglite } from '../db/sql-database';
 import { loadEnv } from '../env';
-import { TICKS_PER_HOUR, tickAt, tickTime } from '../simulation/clock';
 import { shiftPlan } from '../simulation/scenarios';
 import { catchUp } from '../runtime/catchup';
 
@@ -669,5 +679,146 @@ describe('coerência do cenário do teste', () => {
   it('rodou até o fim da janela planejada', () => {
     expect(tickAt(NOW)).toBe(PLANO.startTick + 4 * TICKS_PER_HOUR);
     expect(app.simulation.lastReport()?.toTick).toBe(tickAt(NOW));
+  });
+});
+
+describe('POST /process/what-if', () => {
+  /**
+   * A rota é previsão, não escrita. O que ela promete é: duas séries por
+   * variável alcançada, as métricas que a tela desenha, e **nada** mudado no
+   * processo — nem setpoint, nem arquivo, nem alarme.
+   */
+  it('devolve as duas trajetórias e as métricas', async () => {
+    const antes = (await get('/process/tags/AIC-902')).json<{ value: { value: number } }>();
+
+    const response = await post('/process/what-if', {
+      changes: [{ tag: 'AIC-902', value: 78 }],
+      horizonS: 300,
+      mode: 'auto',
+      points: 60,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json<{
+      stepS: number;
+      mode: string;
+      variables: {
+        tag: string;
+        base: number[];
+        proposed: number[];
+        finalDelta: number;
+        manipulated: boolean;
+      }[];
+    }>();
+
+    expect(body.mode).toBe('auto');
+    const gramatura = body.variables.find((item) => item.tag === 'AIC-902');
+    expect(gramatura?.manipulated).toBe(true);
+    expect(gramatura?.base.length).toBeGreaterThan(10);
+    expect(gramatura?.base).toHaveLength(gramatura?.proposed.length ?? 0);
+    // a gramatura sobe na trajetória proposta e não na linha de base
+    expect(gramatura?.finalDelta ?? 0).toBeGreaterThan(1);
+
+    // e o processo de verdade continua onde estava
+    const depois = (await get('/process/tags/AIC-902')).json<{ value: { value: number } }>();
+    expect(depois.value.value).toBeCloseTo(antes.value.value, 1);
+  });
+
+  it('recusa tag fora do catálogo, horizonte alto e escrava de cascata', async () => {
+    const inventada = await post('/process/what-if', {
+      changes: [{ tag: 'XX-999', value: 1 }],
+      horizonS: 300,
+    });
+    expect(inventada.statusCode).toBe(400);
+
+    const horizonte = await post('/process/what-if', {
+      changes: [{ tag: 'AIC-902', value: 78 }],
+      horizonS: 99_999,
+    });
+    expect(horizonte.statusCode).toBe(400);
+
+    const escrava = await post('/process/what-if', {
+      changes: [{ tag: 'PIC-514', value: 300 }],
+      horizonS: 300,
+      mode: 'auto',
+    });
+    expect(escrava.statusCode).toBe(400);
+    expect(escrava.json<{ message: string }>().message).toMatch(/cascata/);
+  });
+
+  it('em malha aberta, mostra a resposta pura do processo', async () => {
+    const response = await post('/process/what-if', {
+      changes: [{ tag: 'PIC-514', value: 300 }],
+      horizonS: 400,
+      mode: 'manual',
+      points: 60,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json<{ variables: { tag: string; finalDelta: number }[] }>();
+    // mais vapor no grupo principal seca mais: a umidade antes da colagem cai
+    const umidade = body.variables.find((item) => item.tag === 'AIC-901');
+    expect(umidade?.finalDelta ?? 0).toBeLessThan(0);
+  });
+});
+
+describe('a mesma conta nos dois lados', () => {
+  /**
+   * O navegador e a API têm de dar a **mesma** série.
+   *
+   * Eles chamam o mesmo `runWhatIf`, do mesmo pacote — não há duas
+   * implementações para divergir. O que ainda poderia divergir é o que cada
+   * lado faz em volta: um horizonte padrão diferente, um número de pontos
+   * diferente, uma transformação na resposta. É isso que este teste pega:
+   * roda o núcleo direto, com o estado que a rota usaria, e exige resposta
+   * igual à da rota.
+   */
+  it('a rota não acrescenta nem muda nada no que o núcleo devolveu', async () => {
+    await app.simulation.ensureCurrent();
+
+    const saved = await app.db.findSimState();
+    expect(saved?.state, 'a simulação precisa ter estado gravado').toBeDefined();
+    const state = saved?.state as EngineState;
+
+    const options = {
+      changes: [{ tag: 'AIC-902', value: 77 }],
+      horizonS: 300,
+      mode: 'auto' as const,
+      points: 40,
+    };
+
+    const noNúcleo = runWhatIf(structuredClone(state), options);
+    const naRota = (await post('/process/what-if', options)).json<typeof noNúcleo>();
+
+    expect(naRota.variables).toEqual(noNúcleo.variables);
+    expect(naRota.stepS).toBe(noNúcleo.stepS);
+    expect(naRota.fromTick).toBe(noNúcleo.fromTick);
+  });
+
+  /**
+   * E o instantâneo carrega o estado de que o navegador precisa.
+   *
+   * Sem este arquivo o modo de demonstração não teria de onde partir, e a
+   * previsão sairia da rede em regime — de um lugar que não é onde a máquina
+   * está. O teste lê o arquivo que o gerador escreveu e roda o núcleo sobre
+   * ele, que é exatamente o que o Web Worker faz.
+   */
+  it('o estado do instantâneo serve de ponto de partida', async () => {
+    const caminho = fileURLToPath(
+      new URL('../../../web/public/demo/sim-state.json', import.meta.url),
+    );
+    const doInstantâneo = JSON.parse(await readFile(caminho, 'utf8')) as EngineState;
+
+    expect(doInstantâneo.version).toBe(ENGINE_STATE_VERSION);
+
+    const previsão = runWhatIf(doInstantâneo, {
+      changes: [{ tag: 'AIC-902', value: 77 }],
+      horizonS: 300,
+      mode: 'auto',
+      points: 40,
+    });
+
+    expect(previsão.fromTick).toBe(doInstantâneo.tick);
+    expect(previsão.variables.length).toBeGreaterThan(1);
   });
 });

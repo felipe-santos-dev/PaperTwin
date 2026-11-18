@@ -3,6 +3,7 @@ import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { allAssets, HISTORIAN_POINTS, MP1, PROCESS_CATALOG, shiftWindowAt } from '@mp1/shared';
+import { DEFAULT_SEED, tickAt, TICKS_PER_HOUR, tickTime } from '@mp1/shared/simulation';
 import type { FastifyInstance } from 'fastify';
 
 import { buildApp } from '../app';
@@ -10,7 +11,6 @@ import { openPglite } from '../db/sql-database';
 import { seedDatabase } from '../db/seed';
 import { loadEnv } from '../env';
 import { catchUp } from '../runtime/catchup';
-import { DEFAULT_SEED, TICKS_PER_HOUR, tickAt, tickTime } from '../simulation/clock';
 import { shiftPlan } from '../simulation/scenarios';
 
 /**
@@ -219,6 +219,20 @@ async function main(): Promise<void> {
           `&buckets=${String(TREND_BUCKETS)}`,
       ),
     );
+    files += 1;
+  }
+
+  /**
+   * O estado do motor vai junto, e é o que faz o "e se" existir sem API.
+   *
+   * Sem ele, o navegador teria de remontar a rede no ponto de operação para
+   * prever — e aí a previsão sairia de um lugar que não é onde a máquina está.
+   * São ~1.300 números: as linhas de atraso das relações, os integrais das
+   * malhas e a verdade de cada tag no instante do instantâneo.
+   */
+  const simState = await app.db.findSimState();
+  if (simState?.state) {
+    bytes += await writeJson('sim-state.json', simState.state);
     files += 1;
   }
 

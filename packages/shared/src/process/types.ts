@@ -20,6 +20,37 @@ export type VariableSource = 'B' | 'ISO 20816-3' | 'assumed';
 export type Confidence = 'alta' | 'média' | 'baixa';
 
 /**
+ * Como o simulador produz o valor desta variável.
+ *
+ * A distinção não é cosmética: ela decide **o que vai para o historiador**.
+ *
+ * - `ligada` — a rede move: é saída de uma relação FOPDT, é malha que segue o
+ *   próprio setpoint, ou é escrava de cascata. Grava.
+ * - `calculada` — sai de um balanço ou de um modelo a cada passo (a superfície
+ *   do cilindro, a produção, a vibração do mancal, o teor seco por ponto).
+ *   Grava.
+ * - `calculada-na-leitura` — é conta sobre TAGs que já gravam, no mesmo
+ *   instante: temperatura de vapor a partir da pressão do grupo, consumo a
+ *   partir da evaporação, receita a partir do refugo. **Não grava** — guardar
+ *   seria guardar duas vezes o mesmo número, e a série se reconstrói de quem
+ *   ela depende.
+ * - `autônoma` — alvo, ruído e uma deriva lenta, tudo função pura de (semente,
+ *   passo, canal). **Não grava**: a série de sete dias se recalcula sem
+ *   arquivo nenhum.
+ *
+ * Dado fixo do front (o selo "ilustrativo") não aparece aqui: ele não é
+ * variável do catálogo.
+ */
+export const VARIABLE_LEVELS = ['ligada', 'calculada', 'calculada-na-leitura', 'autônoma'] as const;
+
+export type VariableLevel = (typeof VARIABLE_LEVELS)[number];
+
+/** Se o nível ocupa linha no historiador. */
+export function levelIsArchived(level: VariableLevel): boolean {
+  return level === 'ligada' || level === 'calculada';
+}
+
+/**
  * Limites de alarme, no padrão de quatro níveis.
  *
  * `null` quando a variável não tem aquele nível. Eles **não** ficam presos à
@@ -65,6 +96,8 @@ export interface ProcessVariable {
   readonly limits: AlarmLimits;
   /** Se é uma malha de controle (tem setpoint) ou só uma medição. */
   readonly controlled: boolean;
+  /** Como o simulador produz o valor, e se ele vai para o historiador. */
+  readonly level: VariableLevel;
   /** Variável manipulada da malha, em texto livre; `null` quando não há. */
   readonly mv: string | null;
   readonly compression: Compression;

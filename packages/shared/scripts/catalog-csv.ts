@@ -6,8 +6,10 @@ import type {
   Confidence,
   PerCylinderPattern,
   ProcessVariable,
+  VariableLevel,
   VariableSource,
 } from '../src/process/types';
+import { levelIsArchived, VARIABLE_LEVELS } from '../src/process/types';
 
 /**
  * Leitura de `catalogo-base.csv`.
@@ -50,6 +52,7 @@ const HEADER = [
   'fonte',
   'confianca',
   'observacao',
+  'nivel',
 ] as const;
 
 const SOURCES: readonly VariableSource[] = ['B', 'ISO 20816-3', 'assumed'];
@@ -123,6 +126,13 @@ function parseConfidence(raw: string, line: number): Confidence {
   return found;
 }
 
+function parseLevel(raw: string, line: number): VariableLevel {
+  const value = raw.trim();
+  const found = VARIABLE_LEVELS.find((level) => level === value);
+  if (!found) fail(line, `nível desconhecido: ${value}. Use ${VARIABLE_LEVELS.join(', ')}`);
+  return found;
+}
+
 function parseControlled(raw: string, line: number): boolean {
   const value = raw.trim();
   if (value === 'sim') return true;
@@ -137,9 +147,29 @@ function parseControlled(raw: string, line: number): boolean {
  * única coisa exigida deles é a ordem entre os que existem.
  */
 function validate(variable: ProcessVariable, line: number): void {
-  const { min, max, target, limits, tag } = variable;
+  const { min, max, target, limits, tag, level, compression } = variable;
 
   if (min > max) fail(line, `${tag}: min ${String(min)} acima de max ${String(max)}`);
+
+  /**
+   * `exc_dev` vale para todas; `comp_dev` só para quem grava.
+   *
+   * O `exc_dev` não é só do historiador: é dele que sai o ruído de instrumento
+   * da TAG, metade dele como desvio. Uma variável sem `exc_dev` seria uma
+   * leitura perfeitamente limpa, que nenhum instrumento dá. Já o `comp_dev` é
+   * o erro que a reta da porta oscilante pode cometer — só faz sentido em quem
+   * tem linha no arquivo.
+   *
+   * A exceção é a constante, de faixa com um ponto só (a largura útil): ela não
+   * treme, então não tem ruído para dimensionar.
+   */
+  const constante = min === max;
+  if (compression.excDev === null && !constante) {
+    fail(line, `${tag}: exc_dev é obrigatório — é dele que sai o ruído de instrumento`);
+  }
+  if (levelIsArchived(level) && compression.compDev === null) {
+    fail(line, `${tag}: nível ${level} grava no historiador e precisa de comp_dev`);
+  }
 
   if (target !== null && (target < min || target > max)) {
     fail(line, `${tag}: alvo ${String(target)} fora da faixa ${String(min)}–${String(max)}`);
@@ -203,6 +233,7 @@ export async function readCatalog(): Promise<Catalog> {
         hh: number(field(fields, 'HH'), line, 'HH'),
       },
       controlled: parseControlled(field(fields, 'controlada'), line),
+      level: parseLevel(field(fields, 'nivel'), line),
       mv: text(field(fields, 'mv')),
       compression: {
         excDev: number(field(fields, 'exc_dev'), line, 'exc_dev'),

@@ -22,3 +22,6 @@ id,entrada,saida,degrau_entrada,kp_por_unidade,unidade_kp,tempo_morto_s,tau_s,ob
 14,WIC-801,AIC-905,+20 kN/m,-0.11,µm por kN/m,6,4.5,calandragem
 14b,WIC-801,AI-907,+20 kN/m,-0.015,% por kN/m,6,4.5,
 15,PDIC-702,LAB-1212,+20 kPa,-0.225,mm de curl por kPa,16,50,secagem assimétrica entre faces
+16,JIC-101,AIC-102,+10 kWh/t,0.18,°SR por kWh/t,270,450,mais energia de refino fecha a fibra; mesmo atraso da nº 9 (tanques)
+17,FIC-107,LAB-1211,+0.5 kg/t,-6,g/m² por kg/t,420,900,cola AKD: menos cola e o Cobb sobe; a cura é lenta
+18,WIC-405,AI-407,+50 kN/m,0.004,% por kN/m,30,12,prensagem tira mais água; mesma família da nº 6 com ganho menor

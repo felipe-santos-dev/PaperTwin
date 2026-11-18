@@ -53,11 +53,11 @@ describe('relations.generated.ts bate com o CSV', () => {
     expect(CSV_RELATIONS).toEqual(relations);
   });
 
-  it('traz as 23 linhas das 15 relações da pesquisa', () => {
-    expect(CSV_RELATIONS).toHaveLength(23);
+  it('traz as 26 linhas das 18 relações: 15 da pesquisa e 3 da Fase 3', () => {
+    expect(CSV_RELATIONS).toHaveLength(26);
 
     const baseIds = new Set(CSV_RELATIONS.map((item) => /^\d+/.exec(item.id)?.[0]));
-    expect(baseIds.size).toBe(15);
+    expect(baseIds.size).toBe(18);
   });
 
   it('avisa que é gerado, para ninguém editar à mão', async () => {
@@ -98,7 +98,12 @@ describe('integridade referencial', () => {
       tag.startsWith('LAB-'),
     );
 
-    expect([...new Set(labOutputs)].sort()).toEqual(['LAB-1206', 'LAB-1206R', 'LAB-1212']);
+    expect([...new Set(labOutputs)].sort()).toEqual([
+      'LAB-1206',
+      'LAB-1206R',
+      'LAB-1211',
+      'LAB-1212',
+    ]);
     for (const tag of labOutputs) {
       expect(labVariable(tag)).not.toBeNull();
     }
@@ -130,7 +135,32 @@ describe('laboratório · seção 12.2 da pesquisa B', () => {
     const fromSection = await labTagsFromSection122();
 
     expect(fromSection).toHaveLength(12);
-    expect(measuredLabVariables().map((item) => item.tag)).toEqual(fromSection);
+    expect(
+      measuredLabVariables()
+        .filter((item) => item.source === 'B')
+        .map((item) => item.tag),
+    ).toEqual(fromSection);
+  });
+
+  /**
+   * Os sete da Fase 3 entram marcados, e é isso que mantém a comparação acima
+   * apertada: eles não se misturam com a tabela da pesquisa.
+   */
+  it('separa os sete ensaios que a pesquisa não tem', () => {
+    const nossos = LAB_VARIABLES.filter((item) => item.source === 'assumed');
+
+    expect(nossos.map((item) => item.tag)).toEqual([
+      'LAB-1213',
+      'LAB-1214',
+      'LAB-1215',
+      'LAB-1216',
+      'LAB-1217',
+      'LAB-1218',
+      'LAB-1219',
+    ]);
+    // nenhum deles é movido por relação: são dado fixo no laboratório
+    const saídas = new Set(PROCESS_RELATIONS.map((item) => item.output));
+    for (const item of nossos) expect(saídas.has(item.tag), item.tag).toBe(false);
   });
 
   it('marca a LAB-1206R como derivada, fora da lista medida', () => {

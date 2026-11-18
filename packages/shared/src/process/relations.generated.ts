@@ -6,7 +6,7 @@
  *
  *     npm run generate --workspace @mp1/shared
  *
- * 23 linhas, que são 15 relações da pesquisa B contando os desdobramentos
+ * 26 linhas, que são 18 relações da pesquisa B contando os desdobramentos
  * b/c sobre a mesma entrada. Toda ponta foi resolvida contra o catálogo de
  * processo ou a lista de laboratório na hora de gerar.
  */
@@ -334,6 +334,48 @@ export const CSV_RELATIONS: readonly FopdtRelation[] = [
     deadTimeS: 16,
     tauS: 50,
     note: 'secagem assimétrica entre faces',
+    derivedFrom: null,
+    source: 'B',
+  },
+  {
+    id: '16',
+    input: 'JIC-101',
+    output: 'AIC-102',
+    zoned: false,
+    step: { value: 10, unit: 'kWh/t' },
+    kp: 0.18,
+    kpUnit: '°SR por kWh/t',
+    deadTimeS: 270,
+    tauS: 450,
+    note: 'mais energia de refino fecha a fibra; mesmo atraso da nº 9 (tanques)',
+    derivedFrom: null,
+    source: 'B',
+  },
+  {
+    id: '17',
+    input: 'FIC-107',
+    output: 'LAB-1211',
+    zoned: false,
+    step: { value: 0.5, unit: 'kg/t' },
+    kp: -6,
+    kpUnit: 'g/m² por kg/t',
+    deadTimeS: 420,
+    tauS: 900,
+    note: 'cola AKD: menos cola e o Cobb sobe; a cura é lenta',
+    derivedFrom: null,
+    source: 'B',
+  },
+  {
+    id: '18',
+    input: 'WIC-405',
+    output: 'AI-407',
+    zoned: false,
+    step: { value: 50, unit: 'kN/m' },
+    kp: 0.004,
+    kpUnit: '% por kN/m',
+    deadTimeS: 30,
+    tauS: 12,
+    note: 'prensagem tira mais água; mesma família da nº 6 com ganho menor',
     derivedFrom: null,
     source: 'B',
   },

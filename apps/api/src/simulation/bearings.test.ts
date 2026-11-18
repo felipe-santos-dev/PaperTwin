@@ -1,3 +1,4 @@
+import { DEFAULT_SEED, TICKS_PER_HOUR, tickTime } from '@mp1/shared/simulation';
 import {
   alarmThreshold,
   classifyIsoZone,
@@ -17,7 +18,6 @@ import {
   simulateVibration,
   type DegradationScenario,
 } from './bearings';
-import { DEFAULT_SEED, TICKS_PER_HOUR, tickTime } from './clock';
 
 const limits = isoLimitsOf(DRYER_BEARING_ISO);
 

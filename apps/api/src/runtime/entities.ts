@@ -1,3 +1,4 @@
+import { SIM_EPOCH_MS, streamOf, tickAt, tickTime, unitNoise } from '@mp1/shared/simulation';
 import {
   bearingTagsOf,
   classifyIsoZone,
@@ -25,8 +26,6 @@ import {
 
 import type { Database } from '../db';
 import type { StoredShift } from '../db/operations-queries';
-import { SIM_EPOCH_MS, tickAt, tickTime } from '../simulation/clock';
-import { unitNoise, streamOf } from '../simulation/noise';
 import {
   nominalShiftProductionT,
   reelDiameterMm,

@@ -1,4 +1,15 @@
 import {
+  requireOperatingPoint,
+  secondsToTicks,
+  SIM_EPOCH_MS,
+  streamOf,
+  TICK_MS,
+  tickAt,
+  TICKS_PER_HOUR,
+  tickTime,
+  unitNoise,
+} from '@mp1/shared/simulation';
+import {
   plantOffsetSuffix,
   processVariable,
   REEL_CHANGE_DIAMETER_MM,
@@ -7,10 +18,6 @@ import {
   type SectionId,
   type ShiftWindow,
 } from '@mp1/shared';
-
-import { secondsToTicks, SIM_EPOCH_MS, TICK_MS, tickAt, tickTime, TICKS_PER_HOUR } from './clock';
-import { streamOf, unitNoise } from './noise';
-import { requireOperatingPoint } from './operating-point';
 
 /**
  * Os cenários do turno: o que acontece, e quando, sem nada guardado.

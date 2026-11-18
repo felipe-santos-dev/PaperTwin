@@ -1,7 +1,12 @@
 import type { AssetTag, MachineAsset, VibrationReading } from '@mp1/shared';
-
-import { DEFAULT_SEED, TICK_MS, tickAt, tickTime } from './clock';
-import { correlatedNoise, streamOf } from './noise';
+import {
+  correlatedNoise,
+  DEFAULT_SEED,
+  streamOf,
+  TICK_MS,
+  tickAt,
+  tickTime,
+} from '@mp1/shared/simulation';
 
 /**
  * O mancal: assinatura, degradação e ruído, como função do passo.

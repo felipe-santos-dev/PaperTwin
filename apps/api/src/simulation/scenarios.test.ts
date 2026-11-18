@@ -1,7 +1,13 @@
 import { REEL_CHANGE_DIAMETER_MM, shiftWindowAt } from '@mp1/shared';
+import {
+  DEFAULT_SEED,
+  SIM_EPOCH_MS,
+  tickAt,
+  TICKS_PER_HOUR,
+  tickTime,
+} from '@mp1/shared/simulation';
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_SEED, SIM_EPOCH_MS, tickAt, tickTime, TICKS_PER_HOUR } from './clock';
 import {
   ALTERNATE_GSM,
   BREAK_DURATION_S,

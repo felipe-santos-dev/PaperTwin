@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Tipos e regras de domínio compartilhados entre a API e a web.",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./simulation": "./src/simulation/index.ts"
   },
   "scripts": {
     "generate": "tsx scripts/generate-process-catalog.ts && tsx scripts/generate-process-relations.ts",

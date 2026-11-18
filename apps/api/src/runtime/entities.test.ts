@@ -1,3 +1,4 @@
+import { TICKS_PER_HOUR, tickTime } from '@mp1/shared/simulation';
 import {
   allAssets,
   HISTORIAN_POINTS,
@@ -16,7 +17,6 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { SqlExecutor } from '../db/executor';
 import type { Database } from '../db/repository';
 import { clearOperations, DRIVERS } from '../db/test-drivers';
-import { tickTime, TICKS_PER_HOUR } from '../simulation/clock';
 import { shiftPlan } from '../simulation/scenarios';
 import { catchUp } from './catchup';
 import { noteNumberFor, notesFromAlarms, reelWeightT, shiftsInRange } from './entities';

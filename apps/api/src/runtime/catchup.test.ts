@@ -1,4 +1,11 @@
 import {
+  MAX_CATCHUP_TICKS,
+  tickAt,
+  TICKS_PER_HOUR,
+  TICKS_PER_MINUTE,
+  tickTime,
+} from '@mp1/shared/simulation';
+import {
   allAssets,
   ARCHIVE_RETENTION_DAYS,
   HISTORIAN_POINTS,
@@ -12,13 +19,6 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { SqlExecutor } from '../db/executor';
 import type { Database } from '../db/repository';
 import { clearOperations, DRIVERS } from '../db/test-drivers';
-import {
-  MAX_CATCHUP_TICKS,
-  TICKS_PER_HOUR,
-  TICKS_PER_MINUTE,
-  tickAt,
-  tickTime,
-} from '../simulation/clock';
 import { shiftPlan } from '../simulation/scenarios';
 import { bearingValuesAt, catchUp, degradationScenarioAt, MAX_CATCHUP_HOURS } from './catchup';
 import { HISTORIAN_SCAN_TICKS, RAW_TAGS } from './recorder';

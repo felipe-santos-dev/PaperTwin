@@ -1,4 +1,4 @@
-import { CD_SIGMA_MM, CD_ZONE_COUNT, CD_ZONE_WIDTH_MM } from '@mp1/shared';
+import { CD_SIGMA_MM, CD_ZONE_COUNT, CD_ZONE_WIDTH_MM } from '../process/relations';
 
 /**
  * O espalhamento lateral do controle CD.

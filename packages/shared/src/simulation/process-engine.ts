@@ -1,16 +1,11 @@
-import {
-  controlledVariables,
-  DERIVED_IN_ORDER,
-  dryerCylinders,
-  MP1,
-  PROCESS_CATALOG,
-  PROCESS_RELATIONS,
-  processVariable,
-  relation,
-  steamGroup,
-  WEB_WIDTH_M,
-  type FopdtRelation,
-} from '@mp1/shared';
+import { WEB_WIDTH_M } from '../machine/geometry';
+import { MP1 } from '../machine/mp1';
+import { dryerCylinders } from '../machine/query';
+import { controlledVariables, PROCESS_CATALOG, processVariable } from '../process/catalog';
+import { DERIVED_IN_ORDER } from '../process/derived';
+import { type FopdtRelation } from '../process/relation-types';
+import { PROCESS_RELATIONS, relation } from '../process/relations';
+import { steamGroup } from '../process/steam-groups';
 
 import { autonomousBand, autonomousTruth, type AutonomousBand } from './autonomous';
 import { DEFAULT_SEED, TICK_MS } from './clock';
@@ -171,8 +166,30 @@ export interface EngineState {
 
 export const ENGINE_STATE_VERSION = 1 as const;
 
+/** Como as malhas se comportam durante a corrida. */
+export type LoopMode = 'auto' | 'manual';
+
 export interface ProcessEngineOptions {
   readonly seed?: number;
+  /**
+   * Ruído de instrumento. Ligado por padrão; desligado na previsão.
+   *
+   * Na máquina, a medida treme — é o que o historiador comprime e o que o
+   * alarme tem de aguentar. Numa previsão, o tremor só atrapalha: quem olha
+   * quer ver a resposta do processo, e duas curvas com ruído diferente dariam
+   * uma diferença que não é da mudança proposta.
+   */
+  readonly noise?: boolean;
+  /**
+   * `manual` abre as malhas.
+   *
+   * Em `auto` a rede é a da máquina: o PI reage, a cascata escreve na escrava e
+   * o processo volta para o setpoint. Em `manual` ninguém persegue setpoint
+   * nenhum, e o que aparece é a **resposta pura** do processo ao degrau — o
+   * ganho, o tempo morto e o τ que o CSV mediu. É o que torna a tela didática:
+   * em automático se vê o que a máquina faria, em manual se vê por quê.
+   */
+  readonly loops?: LoopMode;
   /** Setpoints iniciais. O que faltar vem do ponto de operação. */
   readonly setpoints?: Readonly<Record<string, number>>;
   /**
@@ -223,6 +240,14 @@ export interface ProcessEngine {
   resetSetpoint(tag: string): void;
   /** As tags que aceitam setpoint. */
   settableTags(): string[];
+  /**
+   * Põe a verdade de uma malha direto, sem passar pelo setpoint.
+   *
+   * É o degrau de malha aberta: a válvula vai para onde se mandou e fica lá,
+   * porque não há controlador para trazê-la de volta. Só faz sentido com
+   * `loops: 'manual'` — em automático, o PI desfaria isto no passo seguinte.
+   */
+  force(tag: string, value: number): void;
 }
 
 const DT_S = TICK_MS / 1000;
@@ -240,6 +265,11 @@ export function processEngine(
 ): ProcessEngine {
   const seed = options.seed ?? DEFAULT_SEED;
   const restored = options.state;
+  const withNoise = options.noise ?? true;
+  const loopMode: LoopMode = options.loops ?? 'auto';
+
+  /** Malhas forçadas em malha aberta, por `force`. */
+  const forced = new Map<string, number>();
 
   if (restored) {
     if (restored.version !== ENGINE_STATE_VERSION) {
@@ -436,7 +466,9 @@ export function processEngine(
     truth.set(tag, value);
     const sd = instrumentNoiseSd(tag);
     const read =
-      sd === 0 ? value : value + sd * correlatedNoise(seed, tick, stream(tag), NOISE_TAU_TICKS);
+      sd === 0 || !withNoise
+        ? value
+        : value + sd * correlatedNoise(seed, tick, stream(tag), NOISE_TAU_TICKS);
     /**
      * A medida da autônoma é presa à faixa; a das outras, não.
      *
@@ -513,18 +545,29 @@ export function processEngine(
     tick += 1;
 
     // 1. as cascatas escrevem o setpoint das escravas, lendo a MEDIDA da PV
-    for (const cascade of cascades) {
-      const pv = measured.get(cascade.pv) ?? 0;
-      const sp = setpoints.get(cascade.pv) ?? 0;
-      slaveSetpoints.set(cascade.mv, cascade.controller.step(sp, pv, DT_S));
-    }
+    if (loopMode === 'auto')
+      for (const cascade of cascades) {
+        const pv = measured.get(cascade.pv) ?? 0;
+        const sp = setpoints.get(cascade.pv) ?? 0;
+        slaveSetpoints.set(cascade.mv, cascade.controller.step(sp, pv, DT_S));
+      }
 
-    // 2. as malhas caminham para o seu setpoint
+    /**
+     * 2. as malhas caminham para o seu setpoint — ou ficam onde estão.
+     *
+     * Em malha aberta a válvula não persegue nada: ela fica no valor forçado,
+     * ou no último que teve. É daí que sai a resposta pura do processo.
+     */
     for (const loop of loops) {
-      const target = slaveSetpoints.get(loop.tag) ?? setpoints.get(loop.tag) ?? loop.base;
       const current = truth.get(loop.tag) ?? loop.base;
-      const next = clamp(target + (current - target) * mvDecay, loop.min, loop.max);
-      publish(loop.tag, next);
+      const next =
+        loopMode === 'manual'
+          ? (forced.get(loop.tag) ?? current)
+          : (() => {
+              const target = slaveSetpoints.get(loop.tag) ?? setpoints.get(loop.tag) ?? loop.base;
+              return target + (current - target) * mvDecay;
+            })();
+      publish(loop.tag, clamp(next, loop.min, loop.max));
     }
 
     // 3. as relações integram o desvio da VERDADE da entrada
@@ -621,6 +664,16 @@ export function processEngine(
         throw new Error(`${tag} não aceita setpoint, então não há o que devolver.`);
       }
       setpoints.set(tag, requireOperatingPoint(tag));
+    },
+
+    force(tag: string, value: number): void {
+      if (!loopTags.has(tag)) {
+        throw new Error(
+          `${tag} não é malha de campo: em malha aberta só se força o que tem válvula. ` +
+            'Medições e PVs de cascata são resultado, não comando.',
+        );
+      }
+      forced.set(tag, value);
     },
 
     settableTags(): string[] {

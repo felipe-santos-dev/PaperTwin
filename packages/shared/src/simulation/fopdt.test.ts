@@ -1,4 +1,4 @@
-import { PROCESS_RELATIONS, relation } from '@mp1/shared';
+import { PROCESS_RELATIONS, relation } from '../process/relations';
 import { describe, expect, it } from 'vitest';
 
 import { cdKernel, cdSteadyState, spreadAcrossZones } from './cd-profile';

@@ -1,3 +1,4 @@
+import { tickTime } from '@mp1/shared/simulation';
 import {
   ALARM_FLOOD_THRESHOLD,
   ALARM_FLOOD_WINDOW_S,
@@ -7,7 +8,6 @@ import {
 } from '@mp1/shared';
 import type { FastifyInstance } from 'fastify';
 
-import { tickTime } from '../simulation/clock';
 import { conflict, notFound, unprocessable } from './errors';
 import {
   acknowledgeAlarmSchema,

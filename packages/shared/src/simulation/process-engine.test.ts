@@ -1,4 +1,5 @@
-import { processVariable, relation } from '@mp1/shared';
+import { processVariable } from '../process/catalog';
+import { relation } from '../process/relations';
 import { describe, expect, it } from 'vitest';
 
 import { TICKS_PER_HOUR, TICKS_PER_MINUTE } from './clock';

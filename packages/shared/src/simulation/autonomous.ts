@@ -1,4 +1,4 @@
-import { type ProcessVariable } from '@mp1/shared';
+import { type ProcessVariable } from '../process/types';
 
 import { streamOf } from './noise';
 import { instrumentNoiseSd } from './operating-point';

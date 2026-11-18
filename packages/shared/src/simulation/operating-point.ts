@@ -1,4 +1,6 @@
-import { LAB_VARIABLES, PROCESS_CATALOG, processVariable, type ProcessVariable } from '@mp1/shared';
+import { PROCESS_CATALOG, processVariable } from '../process/catalog';
+import { LAB_VARIABLES } from '../process/lab';
+import { type ProcessVariable } from '../process/types';
 
 /**
  * O ponto de operação: o valor de cada variável quando nada está sendo mexido.

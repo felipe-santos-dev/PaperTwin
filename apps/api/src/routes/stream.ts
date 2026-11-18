@@ -1,7 +1,6 @@
 import { PROCESS_CATALOG, processVariable } from '@mp1/shared';
+import { tickTime } from '@mp1/shared/simulation';
 import type { FastifyInstance, FastifyReply } from 'fastify';
-
-import { tickTime } from '../simulation/clock';
 
 /**
  * O stream ao vivo, por SSE.

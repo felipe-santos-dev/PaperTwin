@@ -1,4 +1,15 @@
 import {
+  autonomousBand,
+  autonomousTruth,
+  correlatedNoise,
+  DEFAULT_SEED,
+  instrumentNoiseSd,
+  NOISE_TAU_TICKS,
+  streamOf,
+  tickAt,
+  tickTime,
+} from '@mp1/shared/simulation';
+import {
   derivedVariable,
   historianPoint,
   processVariable,
@@ -8,11 +19,6 @@ import {
 import type { Database } from '../db';
 import type { PlotBucket } from '../db/historian-queries';
 import type { Trend } from '../db/historian-store';
-import { autonomousBand, autonomousTruth } from '../simulation/autonomous';
-import { DEFAULT_SEED, tickAt, tickTime } from '../simulation/clock';
-import { correlatedNoise, streamOf } from '../simulation/noise';
-import { instrumentNoiseSd } from '../simulation/operating-point';
-import { NOISE_TAU_TICKS } from '../simulation/process-engine';
 
 /**
  * A tendência de quem não grava no historiador.

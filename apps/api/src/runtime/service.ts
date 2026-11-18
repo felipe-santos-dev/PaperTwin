@@ -1,8 +1,7 @@
 import { checkSetpoint, historianPoint, processVariable, type SetpointChange } from '@mp1/shared';
+import { cascadePairs, DEFAULT_SEED, isCascadeSlave, tickTime } from '@mp1/shared/simulation';
 
 import type { Database } from '../db';
-import { DEFAULT_SEED, tickTime } from '../simulation/clock';
-import { cascadePairs, isCascadeSlave } from '../simulation/process-engine';
 import { catchUp, type CatchupOptions, type CatchupReport } from './catchup';
 
 /**

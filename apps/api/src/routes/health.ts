@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import type { HealthResponse } from '@mp1/shared';
+import { DEFAULT_SEED, tickTime } from '@mp1/shared/simulation';
 import { SERVICE_VERSION } from '../env';
-import { DEFAULT_SEED, tickTime } from '../simulation/clock';
 
 /**
  * `GET /health` — sonda de liveness usada pelo dev server e pelo deploy.

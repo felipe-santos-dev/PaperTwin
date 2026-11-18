@@ -1,3 +1,4 @@
+import { TICK_MS, tickTime } from '@mp1/shared/simulation';
 import {
   exceptionFilter,
   HISTORIAN_POINTS,
@@ -7,8 +8,6 @@ import {
   type PointArchivedSample,
   type PointSample,
 } from '@mp1/shared';
-
-import { TICK_MS, tickTime } from '../simulation/clock';
 
 /**
  * O gravador do historiador: liga o motor de simulação às duas tabelas.

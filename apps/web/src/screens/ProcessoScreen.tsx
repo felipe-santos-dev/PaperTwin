@@ -20,6 +20,7 @@ import { isOut, tagScale } from '../ui/tagScale';
 import { useResource } from '../ui/useResource';
 import { RefiningEffect } from './processo/RefiningEffect';
 import { SetpointPanel } from './processo/SetpointPanel';
+import { WhatIfPanel } from './processo/WhatIfPanel';
 import { MAX_TREND_TAGS, TrendStack } from './processo/TrendStack';
 
 /**
@@ -317,6 +318,7 @@ function AreaView({
               tag={tag}
               variables={variables}
               loops={loops}
+              values={new Map([...pv].map(([key, item]) => [key, item.value]))}
               standing={standing}
               setpoints={setpoints.changes}
               history={history2}
@@ -339,6 +341,7 @@ function Side({
   tag,
   variables,
   loops,
+  values,
   standing,
   setpoints,
   history,
@@ -351,6 +354,8 @@ function Side({
   readonly tag: string | null;
   readonly variables: readonly ProcessVariable[];
   readonly loops: readonly ProcessVariable[];
+  /** O valor atual de cada TAG da seção, para o "e se" partir de onde a máquina está. */
+  readonly values: ReadonlyMap<string, number>;
   readonly standing: readonly Alarm[];
   readonly setpoints: React.ComponentProps<typeof SetpointPanel>['history'];
   readonly history: React.ComponentProps<typeof SetpointPanel>['history'];
@@ -412,6 +417,12 @@ function Side({
         history={history}
         onWritten={onWritten}
         className={area === 'preparo' ? 'h-[330px] shrink-0' : 'h-[440px] shrink-0'}
+      />
+      <WhatIfPanel
+        gateway={gateway}
+        loops={loops}
+        values={values}
+        className="min-h-[300px] shrink-0"
       />
     </div>
   );

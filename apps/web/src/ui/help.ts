@@ -64,6 +64,13 @@ export const HELP = {
     read: 'Cada faixa tem escala própria — as curvas não se comparam entre si. A banda clara é L–H, a marca azul é uma alteração de setpoint e a colorida é alarme.',
     click: 'O × tira a TAG. Os botões escolhem a janela; a tela mostra o que a fonte cobrir.',
   },
+  'processo.e-se': {
+    shows:
+      'O que aconteceria se esta malha fosse para outro valor, calculado sobre o estado de agora.',
+    read: 'A linha cinza é o que acontece sem mexer e a azul é a proposta; o que importa é a distância entre as duas. O tracejado vertical é o tempo morto e a marca vermelha é onde a previsão cruza um limite.',
+    click:
+      '"Automático" mostra o que a máquina faria, com as malhas reagindo; "manual" abre as malhas e mostra a resposta pura do processo. Nada aqui escreve setpoint: para aplicar, use o painel acima.',
+  },
   'processo.setpoint': {
     shows: 'A escrita de setpoint da malha escolhida e o histórico da seção.',
     read: 'O motivo é obrigatório e fica gravado com quem escreveu e quando. Malha escrava de cascata e modo de demonstração não aceitam escrita, e a tela diz por quê.',

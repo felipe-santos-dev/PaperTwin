@@ -77,6 +77,7 @@ function gatewayOf(over: Partial<DataGateway> = {}): DataGateway {
     asset: nunca,
     vibration: nunca,
     processValues: vazio({ ts: '2026-06-15T17:00:00Z', count: 0, values: [] }),
+    whatIf: nunca,
     tag: nunca,
     tagTrend: nunca,
     steamGroups: vazio({ ts: '2026-06-15T17:00:00Z', groups: [] }),
@@ -655,12 +656,20 @@ describe('Processo · escrita de setpoint', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /aplicar/i })).toBeInTheDocument();
+      expect(
+        within(screen.getByRole('region', { name: 'Alteração de setpoint' })).getByRole('button', {
+          name: /aplicar/i,
+        }),
+      ).toBeInTheDocument();
     });
 
     await userEvent.type(screen.getByLabelText(/Novo SP/i), '400');
     await userEvent.type(screen.getByLabelText(/Motivo/i), 'quero secar mais');
-    await userEvent.click(screen.getByRole('button', { name: /aplicar/i }));
+    await userEvent.click(
+      within(screen.getByRole('region', { name: 'Alteração de setpoint' })).getByRole('button', {
+        name: /aplicar/i,
+      }),
+    );
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toHaveTextContent(/fora da faixa de operação/);
@@ -705,12 +714,20 @@ describe('Processo · escrita de setpoint', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /aplicar/i })).toBeInTheDocument();
+      expect(
+        within(screen.getByRole('region', { name: 'Alteração de setpoint' })).getByRole('button', {
+          name: /aplicar/i,
+        }),
+      ).toBeInTheDocument();
     });
 
     await userEvent.type(screen.getByLabelText(/Novo SP/i), '160');
     await userEvent.type(screen.getByLabelText(/Motivo/i), 'umidade final acima do alvo');
-    await userEvent.click(screen.getByRole('button', { name: /aplicar/i }));
+    await userEvent.click(
+      within(screen.getByRole('region', { name: 'Alteração de setpoint' })).getByRole('button', {
+        name: /aplicar/i,
+      }),
+    );
 
     // a tendência vazia também tem role="status", então a consulta é pelo texto
     await waitFor(() => {
@@ -752,12 +769,20 @@ describe('Processo · escrita de setpoint', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /aplicar/i })).toBeInTheDocument();
+      expect(
+        within(screen.getByRole('region', { name: 'Alteração de setpoint' })).getByRole('button', {
+          name: /aplicar/i,
+        }),
+      ).toBeInTheDocument();
     });
 
     await userEvent.type(screen.getByLabelText(/Novo SP/i), '145,5');
     await userEvent.type(screen.getByLabelText(/Motivo/i), 'motivo');
-    await userEvent.click(screen.getByRole('button', { name: /aplicar/i }));
+    await userEvent.click(
+      within(screen.getByRole('region', { name: 'Alteração de setpoint' })).getByRole('button', {
+        name: /aplicar/i,
+      }),
+    );
 
     await waitFor(() => {
       expect(writeSetpoint).toHaveBeenCalledWith('PIC-712', {

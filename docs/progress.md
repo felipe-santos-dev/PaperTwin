@@ -2186,4 +2186,192 @@ chave de ajuda antiga e um `SceneState` sem o vapor. Ninguém o importa.
 docs/progress.md
 ```
 
-Pare aqui. A Fase 4 começa quando o Felipe escrever "fase 4".
+## Fase 4 — modo "e se"
+
+### O núcleo saiu da API
+
+A Fase 0 disse que dava, e deu. Foram para `packages/shared/src/simulation/`:
+`clock`, `fopdt`, `noise`, `operating-point`, `pi`, `cd-profile`,
+`process-engine` e `autonomous`. Ficaram na API `scenarios`, `bearings`,
+`alarm-engine` e `vibration` — são puros também, mas não têm por que atravessar
+agora.
+
+**Por subcaminho, não pelo barril.** `@mp1/shared/simulation` é uma entrada
+própria no `exports` do pacote. O barril é importado por todas as telas; o
+motor ali dentro entraria no pedaço inicial da web. Com o subcaminho, ele fica
+no pedaço de quem pediu — e o build confirma: o **worker tem 74,6 kB** e o
+pedaço da aplicação não cresceu por causa do motor.
+
+Dentro do pacote os imports viraram relativos. Importar `@mp1/shared` de dentro
+de `@mp1/shared` funcionaria pelo link do npm, e seria o primeiro passo para um
+ciclo que ninguém enxerga.
+
+Os testes foram junto: o `shared` passou de 233 para **337** e a API, de 407
+para 323. A soma não mudou — é o mesmo teste, do lado de quem agora tem o
+código.
+
+### Duas opções novas no motor, e uma função
+
+- `noise: false` — a previsão não treme. Com ruído, a diferença entre as duas
+  curvas teria um pedaço que não é da mudança.
+- `loops: 'manual'` — malha aberta: ninguém persegue setpoint, e aparece a
+  resposta pura do processo.
+- `force(tag, value)` — o degrau de malha aberta, que põe a válvula onde se
+  mandou. Só aceita malha de campo: medição e PV de cascata são resultado, não
+  comando.
+
+### O cálculo
+
+Duas trajetórias do **mesmo** estado — uma sem a mudança, uma com ela —, e a
+diferença entre as curvas é a mudança e nada mais. Por variável alcançada:
+variação final, **desvio de pico**, tempo morto, tempo até 63 %, instante em
+que cruza cada limite, e se a válvula saturou.
+
+O pico não estava na lista da fase, e entrou porque sem ele a tela mentia: em
+automático a malha devolve a variável ao setpoint, o desvio final fica em zero
+e a frase dizia "cai 0,00 %" sobre uma perturbação de 1,1 g/m². Agora ela diz
+o que aconteceu: _"Gramatura · scanner final cai 1,12 g/m² no pico em 1,8 min e
+a malha traz de volta"_.
+
+**Quem a mudança alcança sai do grafo de relações**, andando da entrada para a
+saída e depois pelas calculadas que leem essas saídas — o mesmo grafo que o
+motor usa para integrar, para a lista não poder discordar do que se move.
+
+**Três coisas que ele não faz**, e são o ponto: não grava (nenhuma amostra, nenhum
+alarme), não toca no processo (os dois motores saem de uma cópia do estado) e
+não treme.
+
+### Onde roda
+
+**Com API:** `POST /process/what-if`, validada por esquema, com teto de
+horizonte de 30 min e no máximo quatro mudanças por pedido. O teto está no
+esquema e no núcleo: cada segundo de previsão são dois passos de motor, e um
+pedido de oito horas pararia a API para todo mundo.
+
+**Sem API:** o estado do motor viaja no instantâneo
+(`demo/sim-state.json`, **23,6 kB**) e a conta roda num **Web Worker** com o
+mesmo `runWhatIf`. É a primeira coisa que o modo de demonstração **calcula** em
+vez de servir de arquivo — e por isso `whatIf` não é `null` no portão de
+demonstração, como a escrita de setpoint é: prever não muda nada, então não há
+o que fingir.
+
+O worker existe por duas razões: meia hora de previsão são 3.600 passos duas
+vezes, que na thread da interface travariam justamente a tela em que a pessoa
+acabou de clicar; e é ele que mantém o motor fora do pedaço inicial.
+
+### A tela
+
+Dentro de Processo, abaixo do painel de setpoint. Escolhe-se a malha, propõe-se
+o valor, e a previsão aparece: a frase gerada dos números, e uma curva por
+variável — cinza o que aconteceria sem mexer, azul a proposta, tracejado
+vertical no tempo morto, marca vermelha onde cruza um limite, banda L–H ao
+fundo.
+
+Os três atalhos da fase estão lá: **vapor do grupo principal**, **velocidade da
+máquina** e **carga da prensa**. O do vapor abre em manual de propósito — a
+`PIC-514` é escrava de cascata, e em automático quem manda nela é a umidade.
+
+Aplicar continua sendo o painel de cima, com motivo obrigatório e auditoria.
+Esta tela não escreve nada.
+
+### O que os testes seguram
+
+- **Degrau reproduz o CSV.** Quatro relações, em malha aberta: ganho, tempo
+  morto e τ têm de bater com a linha do `relacoes-fopdt.csv`, com o nome da
+  relação na mensagem quando não batem.
+- **A cópia não vaza.** O estado passado continua igual depois da previsão, e o
+  motor de onde ele saiu continua no mesmo passo, com o mesmo valor.
+- **A rota não acrescenta nada.** O teste roda o núcleo direto com o estado que
+  a rota usaria e exige resposta idêntica. É isto que garante que o navegador e
+  a API dão a mesma série: não há duas implementações: há uma, e o que poderia
+  divergir é o que cada lado faz em volta.
+- **O instantâneo serve de partida.** O teste lê o `sim-state.json` que o
+  gerador escreveu e roda o núcleo sobre ele — exatamente o que o worker faz.
+- **No navegador, de verdade.** Um e2e bloqueia a API, simula pela tela e exige
+  que o `sim-state.json` e o pedaço do worker tenham sido baixados. Outro exige
+  que esse pedaço **não** entre no carregamento inicial.
+- **A escrava de cascata é recusada** na previsão como é na escrita.
+
+### Medido
+
+- Testes: `shared` **337**, API **323** (111 pulados sem `DATABASE_URL`), web
+  **186**. Typecheck, lint, `format:check` e build.
+- e2e: **26 testes**, 24 passando, 1 pulado e 1 falhando — os dois últimos por
+  causa do ambiente, não do código (veja abaixo).
+- Build: pedaço da aplicação **268,5 kB** (era 258,9 — os 9,6 kB do painel) e o
+  **worker em 74,6 kB**, baixado só quando alguém simula. O pedaço do `three`
+  não mudou.
+
+### Dois problemas do ambiente, não do código
+
+1. **A API na porta 3333 tem 69 h de uptime** e é de um build anterior a esta
+   fase: ela não tem a rota `/process/what-if` (404). O e2e do caminho com API
+   se **pula** dizendo isso, em vez de falhar sem explicar — no CI a API sobe do
+   zero e o teste roda de verdade. Tentei reiniciar o processo e o ambiente
+   recusou, com razão: não é um processo meu.
+2. **Um e2e da Fase 3 falha pelo mesmo motivo**: `scene.spec.ts`, "o painel do
+   mancal mostra a vibração vinda da API", espera mais de dez colunas de
+   vibração e a API em pé só tem **três** — o arquivo dela encolheu nesses dias
+   de processo ocioso. Reiniciar a API resolve as duas coisas.
+
+### Arquivos, por commit sugerido
+
+**17. O núcleo puro sai da API**
+
+```
+packages/shared/src/simulation/        (movido de apps/api/src/simulation)
+packages/shared/src/simulation/index.ts (novo)
+packages/shared/package.json
+apps/api/src/**                         (imports)
+```
+
+**18. O motor aprende a não tremer e a abrir a malha**
+
+```
+packages/shared/src/simulation/process-engine.ts
+```
+
+**19. O cálculo do "e se"**
+
+```
+packages/shared/src/simulation/what-if.ts        (novo)
+packages/shared/src/simulation/what-if.test.ts   (novo)
+```
+
+**20. A rota, e o estado no instantâneo**
+
+```
+apps/api/src/routes/process.ts
+apps/api/src/routes/process-route-schemas.ts
+apps/api/src/routes/process.test.ts
+apps/api/src/scripts/generate-demo.ts
+apps/web/public/demo/sim-state.json
+```
+
+**21. O mesmo núcleo no navegador**
+
+```
+apps/web/src/api/whatif-worker.ts   (novo)
+apps/web/src/api/whatif.ts          (novo)
+apps/web/src/api/process.ts
+apps/web/src/api/gateway.ts
+apps/web/src/api/demo-gateway.ts
+```
+
+**22. Simular antes de aplicar**
+
+```
+apps/web/src/screens/processo/WhatIfPanel.tsx   (novo)
+apps/web/src/screens/ProcessoScreen.tsx
+apps/web/src/screens/screens.test.tsx
+apps/web/src/ui/help.ts
+apps/web/e2e/e-se.spec.ts                       (novo)
+```
+
+**23. Documentação da fase**
+
+```
+docs/progress.md
+```
+
+Pare aqui. A Fase 5 começa quando o Felipe escrever "fase 5".

@@ -2,6 +2,8 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
+import type { WhatIfOptions } from '@mp1/shared/simulation';
+
 import type { DataGateway } from '../api/gateway';
 import type { ReelView, ShiftDetail, ShiftView } from '../api/process';
 import { LaboratorioScreen } from './LaboratorioScreen';
@@ -10,6 +12,7 @@ import { RondasScreen } from './RondasScreen';
 import { BobinasScreen } from './BobinasScreen';
 import { NotasScreen } from './NotasScreen';
 import { ProcessoScreen } from './ProcessoScreen';
+import { SimulacaoScreen } from './SimulacaoScreen';
 import { TurnoScreen } from './TurnoScreen';
 
 /**
@@ -791,5 +794,249 @@ describe('Processo · escrita de setpoint', () => {
         changedBy: 'operador',
       });
     });
+  });
+});
+
+/**
+ * Simulação — a tela que calcula sozinha.
+ *
+ * O que estes testes cobram é o que distingue esta tela das outras: ela não
+ * espera clique nenhum para ter o que mostrar, e nada do que ela faz escreve no
+ * processo. O resto — a forma das curvas, o tempo morto, o ganho — é do núcleo,
+ * e tem teste lá, com o CSV na mão.
+ */
+describe('Simulação', () => {
+  const VARIAVEIS = [
+    {
+      tag: 'SIC-1104',
+      name: 'Velocidade da máquina',
+      unit: 'm/min',
+      base: [1250, 1250, 1250],
+      proposed: [1250, 1265, 1270],
+      finalDelta: 20,
+      peakDelta: 20,
+      peakAtS: 10,
+      deadTimeS: 0,
+      t63S: 5,
+      crossings: [],
+      saturated: false,
+      path: ['SIC-1104'],
+      limits: { ll: null, l: null, h: null, hh: null },
+      target: 1250,
+      manipulated: true,
+    },
+    {
+      tag: 'AIC-902',
+      name: 'Gramatura · scanner final',
+      unit: 'g/m²',
+      base: [75, 75, 75],
+      proposed: [75, 73.9, 74.99],
+      finalDelta: -0.01,
+      peakDelta: -1.12,
+      peakAtS: 110,
+      deadTimeS: 20,
+      t63S: 45,
+      crossings: [{ limit: 'L' as const, atS: 60, value: 73.9 }],
+      saturated: false,
+      path: ['SIC-1104', 'AIC-902'],
+      limits: { ll: null, l: 74, h: 76, hh: null },
+      target: 75,
+      manipulated: false,
+    },
+  ];
+
+  const previsao = (over: Record<string, unknown> = {}) => ({
+    fromTick: 1000,
+    horizonS: 600,
+    stepS: 5,
+    mode: 'auto' as const,
+    changes: [{ tag: 'SIC-1104', value: 1270 }],
+    variables: VARIAVEIS,
+    ts: '2026-06-15T21:00:00Z',
+    fromSavedState: true,
+    ...over,
+  });
+
+  const valores = () =>
+    Promise.resolve({
+      ts: '2026-06-15T21:00:00Z',
+      count: 2,
+      values: [
+        {
+          tag: 'SIC-1104',
+          value: 1250,
+          unit: 'm/min',
+          ts: '2026-06-15T21:00:00Z',
+          setpoint: 1250,
+        },
+        {
+          tag: 'AIC-902',
+          value: 75,
+          unit: 'g/m²',
+          ts: '2026-06-15T21:00:00Z',
+          setpoint: 75,
+        },
+      ],
+    });
+
+  it('diz que está carregando antes de a resposta chegar', () => {
+    render(<SimulacaoScreen gateway={gatewayOf({ processValues: nunca })} onApply={vi.fn()} />);
+
+    expect(screen.getByRole('status')).toHaveTextContent(/Carregando/i);
+  });
+
+  it('mostra a mensagem da API no erro, com botão de tentar de novo', async () => {
+    render(<SimulacaoScreen gateway={gatewayOf({ processValues: falha })} onApply={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('A API respondeu 503');
+    });
+  });
+
+  /**
+   * A regra desta tela: ela nunca abre vazia. Sem isto, quem entra tem de
+   * adivinhar o que digitar antes de descobrir o que a tela faz.
+   */
+  it('não abre vazia: simula sozinha ao entrar, sem clique nenhum', async () => {
+    const whatIf = vi.fn((_pedido: WhatIfOptions) => Promise.resolve(previsao()));
+    render(
+      <SimulacaoScreen gateway={gatewayOf({ processValues: valores, whatIf })} onApply={vi.fn()} />,
+    );
+
+    await waitFor(
+      () => {
+        expect(whatIf).toHaveBeenCalled();
+      },
+      { timeout: 3000 },
+    );
+
+    expect(whatIf.mock.calls[0]?.[0].changes[0]?.tag).toBe('SIC-1104');
+
+    await waitFor(() => {
+      expect(screen.getByText(/no pico/)).toBeInTheDocument();
+    });
+    expect(screen.queryByRole('button', { name: /^Simular$/ })).not.toBeInTheDocument();
+  });
+
+  it('um valor novo recalcula sozinho', async () => {
+    const whatIf = vi.fn((_pedido: WhatIfOptions) => Promise.resolve(previsao()));
+    render(
+      <SimulacaoScreen gateway={gatewayOf({ processValues: valores, whatIf })} onApply={vi.fn()} />,
+    );
+
+    await waitFor(
+      () => {
+        expect(whatIf).toHaveBeenCalledTimes(1);
+      },
+      { timeout: 3000 },
+    );
+
+    const campo = screen.getByLabelText('Novo valor de SIC-1104');
+    await userEvent.clear(campo);
+    await userEvent.type(campo, '1300');
+
+    await waitFor(
+      () => {
+        expect(whatIf).toHaveBeenCalledTimes(2);
+      },
+      { timeout: 3000 },
+    );
+    expect(whatIf.mock.calls.at(-1)?.[0].changes[0]?.value).toBe(1300);
+  });
+
+  /**
+   * Piscar para o vazio a cada tecla seria pior do que um número com meio
+   * segundo de atraso.
+   */
+  it('mantém o resultado anterior enquanto a nova conta não chega', async () => {
+    let chamadas = 0;
+    const whatIf = vi.fn(() => {
+      chamadas += 1;
+      return chamadas === 1 ? Promise.resolve(previsao()) : (nunca() as Promise<never>);
+    });
+
+    render(
+      <SimulacaoScreen gateway={gatewayOf({ processValues: valores, whatIf })} onApply={vi.fn()} />,
+    );
+
+    await waitFor(
+      () => {
+        expect(screen.getByText(/no pico/)).toBeInTheDocument();
+      },
+      { timeout: 3000 },
+    );
+
+    await userEvent.click(screen.getByRole('button', { name: '30 min' }));
+
+    await waitFor(
+      () => {
+        expect(whatIf).toHaveBeenCalledTimes(2);
+      },
+      { timeout: 3000 },
+    );
+    expect(screen.getByText(/no pico/)).toBeInTheDocument();
+  });
+
+  it('clicar numa variável da tabela destaca o gráfico dela', async () => {
+    render(
+      <SimulacaoScreen
+        gateway={gatewayOf({ processValues: valores, whatIf: () => Promise.resolve(previsao()) })}
+        onApply={vi.fn()}
+      />,
+    );
+
+    const tabela = await screen.findByRole(
+      'table',
+      { name: 'Variáveis alcançadas' },
+      { timeout: 3000 },
+    );
+    const linha = await waitFor(
+      () => {
+        const achada = within(tabela)
+          .getAllByRole('row')
+          .find((row) => row.textContent?.includes('AIC-902'));
+        expect(achada).toBeDefined();
+        return achada as HTMLElement;
+      },
+      { timeout: 3000 },
+    );
+
+    await userEvent.click(linha);
+
+    const faixa = screen.getByRole('img', { name: 'Previsão de Gramatura · scanner final' });
+    expect(faixa.closest('button')).toHaveAttribute('aria-pressed', 'true');
+    // e o caminho de causa e efeito aparece
+    expect(screen.getByText(/pelo grafo de relações/)).toBeInTheDocument();
+  });
+
+  /**
+   * A tela não escreve: o botão leva a proposta para o painel de setpoint, e
+   * quem escreve é lá, com motivo obrigatório.
+   */
+  it('"Aplicar no processo" entrega a proposta em vez de escrever', async () => {
+    const onApply = vi.fn();
+    const writeSetpoint = vi.fn();
+    render(
+      <SimulacaoScreen
+        gateway={gatewayOf({
+          processValues: valores,
+          whatIf: () => Promise.resolve(previsao()),
+          writeSetpoint,
+        })}
+        onApply={onApply}
+      />,
+    );
+
+    const botão = await screen.findByRole(
+      'button',
+      { name: 'Aplicar no processo' },
+      {
+        timeout: 3000,
+      },
+    );
+    await userEvent.click(botão);
+
+    expect(onApply).toHaveBeenCalledWith({ tag: 'SIC-1104', value: 1270 });
+    expect(writeSetpoint).not.toHaveBeenCalled();
   });
 });

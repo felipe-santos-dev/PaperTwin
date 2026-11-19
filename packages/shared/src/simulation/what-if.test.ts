@@ -1,8 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { relation } from '../process/relations';
-import { processEngine, type EngineState } from './process-engine';
-import { affectedBy, runWhatIf, WHAT_IF_MAX_HORIZON_S } from './what-if';
+import { relation, relationsForInput } from '../process/relations';
+import { derivedVariable } from '../process/derived';
+import { cascadePairs, isCascadeSlave, processEngine, type EngineState } from './process-engine';
+import {
+  affectedBy,
+  causePaths,
+  changeableTags,
+  runWhatIf,
+  WHAT_IF_MAX_HORIZON_S,
+} from './what-if';
 
 /**
  * O "e se" tem de dizer o que o CSV mediu.
@@ -153,6 +160,94 @@ describe('o que a mudança alcança', () => {
   });
 });
 
+/**
+ * O caminho que a tela desenha é o caminho que a conta percorreu.
+ *
+ * Não basta a cadeia parecer razoável: cada passo dela tem de ser uma relação
+ * do CSV ou uma fórmula declarada. Uma seta a mais na tela é uma explicação
+ * errada, e explicação errada numa tela de operação é pior do que nenhuma.
+ */
+describe('o caminho de causa e efeito', () => {
+  it('começa na malha mexida e termina na variável', () => {
+    const caminhos = causePaths(['SIC-1104']);
+    const atéGramatura = caminhos.get('AIC-902');
+
+    expect(atéGramatura?.[0]).toBe('SIC-1104');
+    expect(atéGramatura?.at(-1)).toBe('AIC-902');
+  });
+
+  it('cada passo é uma relação do CSV ou uma fórmula declarada', () => {
+    const caminhos = causePaths(['PIC-514', 'SIC-1104']);
+
+    for (const [tag, caminho] of caminhos) {
+      expect(caminho.at(-1), `o caminho de ${tag} termina nele`).toBe(tag);
+
+      for (let i = 1; i < caminho.length; i += 1) {
+        const de = caminho[i - 1] ?? '';
+        const para = caminho[i] ?? '';
+        const porRelação = relationsForInput(de).some((item) => item.output === para);
+        const porFórmula = derivedVariable(para)?.inputs.includes(de) ?? false;
+        expect(porRelação || porFórmula, `${de} → ${para} não existe no grafo`).toBe(true);
+      }
+    }
+  });
+
+  it('a previsão traz o caminho de cada variável', () => {
+    const resultado = runWhatIf(estado(), {
+      changes: [{ tag: 'SIC-1104', value: 1280 }],
+      horizonS: 300,
+      mode: 'auto',
+    });
+
+    for (const variável of resultado.variables) {
+      expect(variável.path[0], `${variável.tag} não parte da malha mexida`).toBe('SIC-1104');
+      expect(variável.path.at(-1)).toBe(variável.tag);
+    }
+  });
+});
+
+/**
+ * A lista de malhas da tela não pode oferecer o que o motor recusa.
+ *
+ * A tela de Simulação monta o seletor com `changeableTags`. Se essa lista e a
+ * regra do motor discordarem, a pessoa escolhe uma malha e leva um erro — que
+ * é exatamente o que a lista existe para evitar.
+ */
+describe('as malhas que cada modo aceita', () => {
+  it('em automático, nenhuma escrava de cascata', () => {
+    const auto = changeableTags('auto');
+    for (const { mv } of cascadePairs()) expect(auto).not.toContain(mv);
+    expect(auto).toContain('AIC-902');
+    expect(auto).toContain('SIC-1104');
+  });
+
+  it('em manual, nenhuma PV de cascata: PV não é válvula', () => {
+    const manual = changeableTags('manual');
+    for (const { pv } of cascadePairs()) expect(manual).not.toContain(pv);
+    // a escrava, essa sim, tem válvula
+    expect(manual).toContain('PIC-514');
+  });
+
+  it('o motor aceita tudo o que a lista oferece, nos dois modos', () => {
+    const início = estado();
+
+    for (const tag of changeableTags('auto')) {
+      const engine = processEngine(início.tick, { state: início, noise: false });
+      expect(() => {
+        engine.setSetpoint(tag, engine.measured(tag) ?? 0);
+      }, `auto: ${tag}`).not.toThrow();
+      expect(isCascadeSlave(tag)).toBe(false);
+    }
+
+    for (const tag of changeableTags('manual')) {
+      const engine = processEngine(início.tick, { state: início, noise: false, loops: 'manual' });
+      expect(() => {
+        engine.force(tag, engine.measured(tag) ?? 0);
+      }, `manual: ${tag}`).not.toThrow();
+    }
+  });
+});
+
 describe('o que ele recusa', () => {
   it('mudança vazia', () => {
     expect(() => runWhatIf(estado(), { changes: [], horizonS: 300, mode: 'auto' })).toThrow(
@@ -219,5 +314,32 @@ describe('automático contra manual', () => {
     expect(Math.abs(umidadeAuto?.finalDelta ?? 99)).toBeLessThan(
       Math.abs(umidadeManual?.finalDelta ?? 0),
     );
+  });
+
+  /**
+   * O tempo morto não pode virar um passo só porque a malha devolveu.
+   *
+   * Quando o desvio final é quase zero, medir "2 % do final" dá o primeiro
+   * ponto da série em que o ruído numérico aparece — e a tabela diria que
+   * tudo responde em cinco segundos. A régua, nesse caso, é o pico.
+   */
+  it('em automático, o tempo morto sai do pico e não do fim quase nulo', () => {
+    const início = estado();
+    const partida = processEngine(início.tick, { state: início, noise: false }).measured(
+      'SIC-1104',
+    );
+
+    const automático = runWhatIf(início, {
+      changes: [{ tag: 'SIC-1104', value: (partida ?? 1250) + 30 }],
+      horizonS: 900,
+      mode: 'auto',
+    });
+
+    const umidade = automático.variables.find((item) => item.tag === 'AIC-903');
+    expect(umidade).toBeDefined();
+    // a malha devolve: o fim é muito menor que o pico
+    expect(Math.abs(umidade?.finalDelta ?? 9)).toBeLessThan(Math.abs(umidade?.peakDelta ?? 0));
+    // e mesmo assim o tempo morto é o da relação, não o primeiro passo
+    expect(umidade?.deadTimeS ?? 0).toBeGreaterThan(10);
   });
 });

@@ -1,9 +1,11 @@
-import { processVariable } from '../process/catalog';
+import { controlledVariables, processVariable } from '../process/catalog';
 import { derivedVariable, DERIVED_IN_ORDER } from '../process/derived';
 import { relationsForInput } from '../process/relations';
 import type { AlarmLimits } from '../process/types';
 import { TICK_MS } from './clock';
 import {
+  cascadePairs,
+  isCascadeSlave,
   processEngine,
   type EngineState,
   type LoopMode,
@@ -84,6 +86,14 @@ export interface WhatIfVariable {
   readonly crossings: readonly WhatIfCrossing[];
   /** A válvula encostou no fim de curso em algum momento. */
   readonly saturated: boolean;
+  /**
+   * Por onde o efeito chegou: da malha mexida até esta variável.
+   *
+   * Sai do mesmo grafo que o motor integra, então é o caminho que a conta
+   * realmente percorreu — e não uma explicação escrita à parte, que envelhece
+   * quando uma relação entra ou sai do CSV.
+   */
+  readonly path: readonly string[];
   readonly limits: AlarmLimits;
   readonly target: number | null;
   /** Se esta é uma das variáveis que a pessoa mexeu. */
@@ -114,16 +124,18 @@ export interface WhatIfResult {
  * que o motor usa para integrar, então a lista não pode discordar do que
  * realmente se move.
  */
-export function affectedBy(tags: readonly string[]): string[] {
-  const alcançadas = new Set(tags);
+export function causePaths(tags: readonly string[]): Map<string, string[]> {
+  const caminho = new Map<string, string[]>();
+  for (const tag of tags) caminho.set(tag, [tag]);
   const fila = [...tags];
 
   while (fila.length > 0) {
     const tag = fila.shift();
     if (tag === undefined) break;
+    const até = caminho.get(tag) ?? [tag];
     for (const relation of relationsForInput(tag)) {
-      if (alcançadas.has(relation.output)) continue;
-      alcançadas.add(relation.output);
+      if (caminho.has(relation.output)) continue;
+      caminho.set(relation.output, [...até, relation.output]);
       fila.push(relation.output);
     }
   }
@@ -133,15 +145,39 @@ export function affectedBy(tags: readonly string[]): string[] {
   while (mudou) {
     mudou = false;
     for (const derived of DERIVED_IN_ORDER) {
-      if (alcançadas.has(derived.tag)) continue;
-      if (!derived.inputs.some((input) => alcançadas.has(input))) continue;
-      alcançadas.add(derived.tag);
+      if (caminho.has(derived.tag)) continue;
+      const entrada = derived.inputs.find((input) => caminho.has(input));
+      if (entrada === undefined) continue;
+      caminho.set(derived.tag, [...(caminho.get(entrada) ?? [entrada]), derived.tag]);
       mudou = true;
     }
   }
 
+  return caminho;
+}
+
+/** As tags alcançadas, na ordem em que o grafo as encontra. */
+export function affectedBy(tags: readonly string[]): string[] {
   // só o que a interface sabe desenhar: TAG do catálogo, não ensaio de bancada
-  return [...alcançadas].filter((tag) => processVariable(tag) !== null);
+  return [...causePaths(tags).keys()].filter((tag) => processVariable(tag) !== null);
+}
+
+/**
+ * As malhas que cada modo aceita mexer.
+ *
+ * Não é a mesma lista nos dois: em automático escreve-se **setpoint**, e a
+ * escrava de cascata não tem o seu (quem o escreve é o mestre); em manual
+ * força-se a **válvula**, e a PV de cascata não é válvula nenhuma — é medida.
+ * A regra mora aqui, e não na tela, porque é a mesma que o motor aplica ao
+ * recusar: duas cópias dela divergiriam no dia em que uma cascata entrasse.
+ */
+export function changeableTags(mode: LoopMode): string[] {
+  const pvs = new Set(cascadePairs().map((pair) => pair.pv));
+  return controlledVariables()
+    .filter((variable) =>
+      mode === 'manual' ? !pvs.has(variable.tag) : !isCascadeSlave(variable.tag),
+    )
+    .map((variable) => variable.tag);
 }
 
 /** Aplica as mudanças a um motor, do jeito que o modo das malhas pede. */
@@ -223,7 +259,8 @@ export function runWhatIf(state: EngineState, options: WhatIfOptions): WhatIfRes
   }
 
   const mexidas = options.changes.map((change) => change.tag);
-  const tags = affectedBy(mexidas);
+  const caminhos = causePaths(mexidas);
+  const tags = [...caminhos.keys()].filter((tag) => processVariable(tag) !== null);
 
   const semMudança = trajectory(copy(state), tags, options, []);
   const comMudança = trajectory(copy(state), tags, options, options.changes);
@@ -242,6 +279,7 @@ export function runWhatIf(state: EngineState, options: WhatIfOptions): WhatIfRes
         stepS,
         comMudança.saturated.has(tag),
         mexidas.includes(tag),
+        caminhos.get(tag) ?? [tag],
       ),
     )
     // quem não se mexeu não interessa: a lista é o que a mudança alcançou.
@@ -274,6 +312,7 @@ function describe(
   stepS: number,
   saturated: boolean,
   manipulated: boolean,
+  path: readonly string[],
 ): WhatIfVariable {
   const variable = processVariable(tag);
   const finalDelta = (proposed.at(-1) ?? 0) - (base.at(-1) ?? 0);
@@ -289,17 +328,28 @@ function describe(
     }
   }
 
-  /** Quanto da variação final já conta como "começou a responder". */
+  /** Quanto da variação já conta como "começou a responder". */
   const ARRANQUE = 0.02;
+
+  /**
+   * A régua do tempo morto e do t63: o fim, ou o pico quando a malha devolve.
+   *
+   * Em automático o desvio final de uma variável controlada é quase zero, e
+   * medir "2 % de quase zero" dá o primeiro ponto da série em que o ruído
+   * numérico aparece — ou seja, tempo morto de um passo para tudo. Quando o
+   * fim é muito menor que o pico, o que houve foi uma perturbação e uma
+   * correção, e a régua honesta da subida é o pico.
+   */
+  const referência = magnitude >= Math.abs(peakDelta) * 0.4 ? magnitude : Math.abs(peakDelta);
 
   let deadTimeS: number | null = null;
   let t63S: number | null = null;
 
-  if (magnitude > 1e-9) {
+  if (referência > 1e-9) {
     for (let i = 0; i < proposed.length; i += 1) {
       const diff = Math.abs((proposed[i] ?? 0) - (base[i] ?? 0));
-      if (deadTimeS === null && diff >= magnitude * ARRANQUE) deadTimeS = i * stepS;
-      if (t63S === null && diff >= magnitude * 0.63) {
+      if (deadTimeS === null && diff >= referência * ARRANQUE) deadTimeS = i * stepS;
+      if (t63S === null && diff >= referência * 0.63) {
         t63S = i * stepS;
         break;
       }
@@ -347,6 +397,7 @@ function describe(
     t63S,
     crossings,
     saturated,
+    path,
     limits,
     target: variable?.target ?? null,
     manipulated,

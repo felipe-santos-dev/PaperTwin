@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import type { WhatIfChange } from '@mp1/shared/simulation';
 import {
   bearingOfProcessTag,
   variablesOfArea,
@@ -20,7 +21,6 @@ import { isOut, tagScale } from '../ui/tagScale';
 import { useResource } from '../ui/useResource';
 import { RefiningEffect } from './processo/RefiningEffect';
 import { SetpointPanel } from './processo/SetpointPanel';
-import { WhatIfPanel } from './processo/WhatIfPanel';
 import { MAX_TREND_TAGS, TrendStack } from './processo/TrendStack';
 
 /**
@@ -42,6 +42,10 @@ export interface ProcessoScreenProps {
   readonly tag: string | null;
   readonly onSelectTag: (tag: string | null) => void;
   readonly onOpenBearing?: (assetTag: string) => void;
+  /** A proposta que voltou da tela de Simulação, para preencher o novo SP. */
+  readonly proposal?: WhatIfChange | null;
+  /** Abre a tela de Simulação com esta malha. */
+  readonly onSimulate?: (tag: string) => void;
 }
 
 export function ProcessoScreen({
@@ -50,6 +54,8 @@ export function ProcessoScreen({
   tag,
   onSelectTag,
   onOpenBearing,
+  proposal = null,
+  onSimulate,
 }: ProcessoScreenProps) {
   const current = area ?? (tag ? areaOfTag(tag) : null) ?? 'preparo';
   return (
@@ -60,6 +66,8 @@ export function ProcessoScreen({
       tag={tag}
       onSelectTag={onSelectTag}
       onOpenBearing={onOpenBearing}
+      proposal={proposal}
+      onSimulate={onSimulate}
     />
   );
 }
@@ -87,12 +95,16 @@ function AreaView({
   tag,
   onSelectTag,
   onOpenBearing,
+  proposal,
+  onSimulate,
 }: {
   readonly gateway: DataGateway;
   readonly area: string;
   readonly tag: string | null;
   readonly onSelectTag: (tag: string | null) => void;
   readonly onOpenBearing: ((assetTag: string) => void) | undefined;
+  readonly proposal: WhatIfChange | null;
+  readonly onSimulate: ((tag: string) => void) | undefined;
 }) {
   const label = PROCESS_AREAS.find((item) => item.id === area)?.label ?? area;
   const variables = useMemo(() => variablesFor(area), [area]);
@@ -318,11 +330,12 @@ function AreaView({
               tag={tag}
               variables={variables}
               loops={loops}
-              values={new Map([...pv].map(([key, item]) => [key, item.value]))}
               standing={standing}
               setpoints={setpoints.changes}
               history={history2}
               onSelectTag={onSelectTag}
+              proposal={proposal}
+              onSimulate={onSimulate}
               onWritten={() => {
                 setReload((n) => n + 1);
               }}
@@ -341,11 +354,12 @@ function Side({
   tag,
   variables,
   loops,
-  values,
   standing,
   setpoints,
   history,
   onSelectTag,
+  proposal,
+  onSimulate,
   onWritten,
 }: {
   readonly gateway: DataGateway;
@@ -354,12 +368,12 @@ function Side({
   readonly tag: string | null;
   readonly variables: readonly ProcessVariable[];
   readonly loops: readonly ProcessVariable[];
-  /** O valor atual de cada TAG da seção, para o "e se" partir de onde a máquina está. */
-  readonly values: ReadonlyMap<string, number>;
   readonly standing: readonly Alarm[];
   readonly setpoints: React.ComponentProps<typeof SetpointPanel>['history'];
   readonly history: React.ComponentProps<typeof SetpointPanel>['history'];
   readonly onSelectTag: (tag: string | null) => void;
+  readonly proposal: WhatIfChange | null;
+  readonly onSimulate: ((tag: string) => void) | undefined;
   readonly onWritten: () => void;
 }) {
   const areaTags = useMemo(() => new Set(variables.map((v) => v.tag)), [variables]);
@@ -381,8 +395,17 @@ function Side({
       ? tag
       : (tags.find((t) => loops.some((l) => l.tag === t)) ?? null);
 
+  /**
+   * A coluna rola, e a tendência tem altura mínima.
+   *
+   * Os painéis daqui têm altura fixa e a tendência ficava com o que sobrasse —
+   * que, com o painel do "e se" embaixo, era zero: o bloco aparecia só com o
+   * cabeçalho, e o gráfico simplesmente não existia. Agora ela cresce quando há
+   * espaço, para de encolher em 300 px, e se a soma não couber quem rola é a
+   * coluna.
+   */
   return (
-    <div className="flex min-h-0 flex-col gap-4">
+    <div className="flex min-h-0 flex-col gap-4 overflow-y-auto">
       {area === 'preparo' ? (
         <RefiningEffect
           gateway={gateway}
@@ -405,7 +428,7 @@ function Side({
         onRemove={(t) => {
           setTags((list) => list.filter((item) => item !== t));
         }}
-        className="min-h-0 flex-1"
+        className="min-h-[300px] flex-1 shrink-0"
       />
       <SetpointPanel
         gateway={gateway}
@@ -415,14 +438,10 @@ function Side({
           onSelectTag(t);
         }}
         history={history}
+        proposal={proposal}
+        onSimulate={onSimulate}
         onWritten={onWritten}
-        className={area === 'preparo' ? 'h-[330px] shrink-0' : 'h-[440px] shrink-0'}
-      />
-      <WhatIfPanel
-        gateway={gateway}
-        loops={loops}
-        values={values}
-        className="min-h-[300px] shrink-0"
+        className={area === 'preparo' ? 'h-[300px] shrink-0' : 'h-[420px] shrink-0'}
       />
     </div>
   );

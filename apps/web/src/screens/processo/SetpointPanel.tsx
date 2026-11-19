@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import type { WhatIfChange } from '@mp1/shared/simulation';
 import type { ProcessVariable, SetpointChange } from '@mp1/shared';
 
 import type { DataGateway } from '../../api/gateway';
@@ -38,6 +39,16 @@ export interface SetpointPanelProps {
   readonly history: readonly SetpointChange[];
   /** Chamado depois de uma escrita aceita, para a tela reler os valores. */
   readonly onWritten: () => void;
+  /**
+   * A proposta que voltou da tela de Simulação.
+   *
+   * Quem simulou já escolheu o valor; pedir que digite de novo seria perder o
+   * que a outra tela acabou de calcular. O campo chega preenchido, e o motivo
+   * continua vazio e obrigatório — a decisão de escrever é desta tela.
+   */
+  readonly proposal?: WhatIfChange | null;
+  /** Abre a tela de Simulação com a malha escolhida aqui. */
+  readonly onSimulate?: ((tag: string) => void) | undefined;
   readonly className?: string;
 }
 
@@ -104,9 +115,13 @@ function TagForm({
   loops,
   onTag,
   onWritten,
+  proposal = null,
+  onSimulate,
   variable,
 }: SetpointPanelProps & { readonly variable: ProcessVariable }) {
-  const [value, setValue] = useState('');
+  const [value, setValue] = useState(() =>
+    proposal && proposal.tag === variable.tag ? String(proposal.value) : '',
+  );
   const [category, setCategory] = useState<string>(SETPOINT_CATEGORIES[0]);
   const [reason, setReason] = useState('');
   const [result, setResult] = useState<Result>(null);
@@ -278,6 +293,20 @@ function TagForm({
                 {sending ? 'Aplicando…' : 'Aplicar'}
               </button>
             </div>
+            {onSimulate ? (
+              <p className="text-[12px] text-fg-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSimulate(variable.tag);
+                  }}
+                  className="text-action hover:text-action-hover hover:underline"
+                >
+                  Simular esta malha
+                </button>{' '}
+                — vê a resposta prevista antes de escrever, na tela de Simulação.
+              </p>
+            ) : null}
             {blocked ? <p className="text-[12px] text-fg-2">{blocked}</p> : null}
             {result ? (
               <p

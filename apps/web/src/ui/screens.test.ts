@@ -15,7 +15,7 @@ function press(key: string, target?: HTMLElement): void {
   });
 }
 
-describe('as oito telas', () => {
+describe('as nove telas', () => {
   it('estão na ordem do design', () => {
     expect(SCREEN_IDS).toEqual([
       'turno',
@@ -26,12 +26,31 @@ describe('as oito telas', () => {
       'rondas',
       'notas',
       'maquina',
+      'simulacao',
     ]);
   });
 
-  it('tem as teclas 1 a 8, uma por tela, com a Máquina na 8', () => {
-    expect(SCREENS.map((screen) => screen.key)).toEqual(['1', '2', '3', '4', '5', '6', '7', '8']);
+  /**
+   * A Simulação entrou na 9, e não no meio.
+   *
+   * A tecla decorada vale mais do que a ordem perfeita da lista: quem já usa o
+   * gêmeo aperta 8 para a Máquina sem pensar, e mover isso para encaixar uma
+   * tela nova custaria mais do que ganha.
+   */
+  it('tem as teclas 1 a 9, uma por tela, com a Máquina na 8 e a Simulação na 9', () => {
+    expect(SCREENS.map((screen) => screen.key)).toEqual([
+      '1',
+      '2',
+      '3',
+      '4',
+      '5',
+      '6',
+      '7',
+      '8',
+      '9',
+    ]);
     expect(SCREENS.find((s) => s.key === '8')?.id).toBe('maquina');
+    expect(SCREENS.find((s) => s.key === '9')?.id).toBe('simulacao');
     expect(new Set(SCREENS.map((s) => s.key)).size).toBe(SCREENS.length);
   });
 
@@ -97,9 +116,16 @@ describe('navegação', () => {
     }
   });
 
-  it('ignora tecla que não é de tela', () => {
+  it('a tecla 9 abre a Simulação', () => {
     const { result } = renderHook(() => useScreen());
     press('9');
+
+    expect(result.current.screen).toBe('simulacao');
+  });
+
+  it('ignora tecla que não é de tela', () => {
+    const { result } = renderHook(() => useScreen());
+    press('0');
     press('a');
 
     expect(result.current.screen).toBe(DEFAULT_SCREEN);

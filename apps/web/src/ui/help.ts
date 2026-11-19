@@ -64,23 +64,38 @@ export const HELP = {
     read: 'Cada faixa tem escala própria — as curvas não se comparam entre si. A banda clara é L–H, a marca azul é uma alteração de setpoint e a colorida é alarme.',
     click: 'O × tira a TAG. Os botões escolhem a janela; a tela mostra o que a fonte cobrir.',
   },
-  'processo.e-se': {
-    shows:
-      'O que aconteceria se esta malha fosse para outro valor, calculado sobre o estado de agora.',
-    read: 'A linha cinza é o que acontece sem mexer e a azul é a proposta; o que importa é a distância entre as duas. O tracejado vertical é o tempo morto e a marca vermelha é onde a previsão cruza um limite.',
-    click:
-      '"Automático" mostra o que a máquina faria, com as malhas reagindo; "manual" abre as malhas e mostra a resposta pura do processo. Nada aqui escreve setpoint: para aplicar, use o painel acima.',
-  },
   'processo.setpoint': {
     shows: 'A escrita de setpoint da malha escolhida e o histórico da seção.',
     read: 'O motivo é obrigatório e fica gravado com quem escreveu e quando. Malha escrava de cascata e modo de demonstração não aceitam escrita, e a tela diz por quê.',
-    click: 'Escrever grava de verdade na simulação. O histórico abaixo é só leitura.',
+    click:
+      'Escrever grava de verdade na simulação. "Simular esta malha" abre a tela de Simulação com ela, para ver a resposta antes. O histórico abaixo é só leitura.',
   },
   'processo.refino': {
     shows:
       'A energia de refino das últimas horas e, embaixo, o que o laboratório mediu nas bobinas do período.',
     read: 'As duas faixas têm escalas diferentes: o que vale é o formato, não a altura. O efeito do refino é lento — minutos entre mexer e aparecer na folha.',
     click: 'Nada aqui é clicável: é leitura.',
+  },
+
+  // Simulação
+
+  'simulacao.entrada': {
+    shows: 'A proposta: até quatro malhas, o valor novo de cada uma, o modo e o horizonte.',
+    read: '"Agora" é onde a máquina está; o controle deslizante vai de ponta a ponta da faixa da válvula. A lista de malhas muda com o modo, porque em cascata o setpoint é do mestre e a válvula é da escrava.',
+    click:
+      'Qualquer mudança recalcula sozinha. "Aplicar no processo" não escreve: leva a proposta para o painel de setpoint, em Processo.',
+  },
+  'simulacao.curvas': {
+    shows:
+      'Uma curva por variável alcançada, todas no mesmo eixo de tempo, com a leitura em palavras no alto.',
+    read: 'A cinza é o que aconteceria sem mexer e a azul é a proposta; o que importa é a distância entre as duas. O tracejado vertical é o tempo morto, o ▾ é o 63 % e a linha vermelha é onde a previsão cruza um limite.',
+    click:
+      '"Comparar modos" desenha automático e manual juntos, e o espaço entre eles é o que a malha faz. Clicar numa faixa destaca essa variável.',
+  },
+  'simulacao.efeitos': {
+    shows: 'O número de cada variável alcançada e por onde o efeito chegou nela.',
+    read: 'Δ fim é a variação no fim do horizonte e o pico é o maior desvio no meio — em automático a malha devolve a variável, e aí só o pico conta o que aconteceu. O caminho sai do grafo de relações do simulador.',
+    click: 'Clicar numa linha destaca o gráfico dela e mostra a cadeia de causa e efeito abaixo.',
   },
 
   // Laboratório

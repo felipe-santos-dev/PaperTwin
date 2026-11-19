@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
 
 /**
- * As oito telas, na ordem do design.
+ * As nove telas, na ordem do design.
  *
  * Turno primeiro, porque é o recorte em que tudo acontece; depois o caminho do
  * papel (processo, laboratório, bobinas), a condição dos equipamentos (mancais,
- * rondas, notas) e, por último, a máquina em 3D em tela cheia.
+ * rondas, notas), a máquina em 3D em tela cheia e, no fim, a Simulação.
+ *
+ * A Simulação entrou **depois** da Máquina de propósito: mover a Máquina para
+ * outra tecla quebraria o atalho que já está na cabeça de quem usa o gêmeo, e
+ * uma tecla decorada vale mais do que a ordem perfeita da lista.
  */
 
 export const SCREEN_IDS = [
@@ -17,6 +21,7 @@ export const SCREEN_IDS = [
   'rondas',
   'notas',
   'maquina',
+  'simulacao',
 ] as const;
 
 export type ScreenId = (typeof SCREEN_IDS)[number];
@@ -27,7 +32,7 @@ export interface Screen {
   readonly label: string;
   /** O rótulo curto da navegação lateral, que tem 56 px de largura. */
   readonly short: string;
-  /** A tecla que leva a ela: 1 a 8. */
+  /** A tecla que leva a ela: 1 a 9. */
   readonly key: string;
 }
 
@@ -40,6 +45,7 @@ const LABELS: Readonly<Record<ScreenId, { label: string; short: string }>> = {
   rondas: { label: 'Rondas', short: 'Rondas' },
   notas: { label: 'Notas de manutenção', short: 'Notas' },
   maquina: { label: 'Máquina', short: 'Máquina' },
+  simulacao: { label: 'Simulação', short: 'Simul.' },
 };
 
 export const SCREENS: readonly Screen[] = SCREEN_IDS.map((id, index) => ({
@@ -61,7 +67,7 @@ function hashScreen(): ScreenId {
 }
 
 /**
- * A tela aberta, na URL e nas teclas 1–8.
+ * A tela aberta, na URL e nas teclas 1–9.
  *
  * A tela mora na âncora da URL, e não num estado solto, por três razões: o botão
  * voltar do navegador funciona, um link para a tela de Mancais pode ser colado

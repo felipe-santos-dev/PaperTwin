@@ -55,8 +55,8 @@ describe('índice', () => {
     expect(new Set(extra.map((item) => item.kind))).toEqual(new Set(['bobina', 'nota']));
   });
 
-  it('traz as oito telas, o catálogo com as fixas e os 98 mancais', () => {
-    expect(items.filter((item) => item.kind === 'tela')).toHaveLength(8);
+  it('traz as nove telas, o catálogo com as fixas e os 98 mancais', () => {
+    expect(items.filter((item) => item.kind === 'tela')).toHaveLength(9);
     // 356 do catálogo + a fixa que sobrou no preparo depois da Fase 3
     expect(items.filter((item) => item.kind === 'tag')).toHaveLength(357);
     expect(items.filter((item) => item.kind === 'mancal')).toHaveLength(98);

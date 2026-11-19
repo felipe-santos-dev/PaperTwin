@@ -7,7 +7,7 @@ import { SectionBlock } from './SectionBlock';
 import type { SectionState } from './sections';
 
 /**
- * A moldura das oito telas: barra superior, navegação 1–8 e faixa do processo.
+ * A moldura das nove telas: barra superior, navegação 1–9 e faixa do processo.
  *
  * Medidas do design (fonte/Main.dc.html): navegação de 56 px à esquerda, barra
  * de 48 px no alto e, logo abaixo, a faixa de 64 px com as dez seções. O resto

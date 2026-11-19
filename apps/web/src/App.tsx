@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import type { WhatIfChange } from '@mp1/shared/simulation';
 
 import { DEMO_GATEWAY } from './api/demo-gateway';
 import { FIXED_VARIABLES } from './api/fixtures';
@@ -11,6 +12,7 @@ import { MaquinaScreen } from './screens/MaquinaScreen';
 import { NotasScreen } from './screens/NotasScreen';
 import { ProcessoScreen } from './screens/ProcessoScreen';
 import { RondasScreen } from './screens/RondasScreen';
+import { SimulacaoScreen } from './screens/SimulacaoScreen';
 import { TurnoScreen } from './screens/TurnoScreen';
 import { LaboratorioScreen } from './screens/LaboratorioScreen';
 import { DataSourcePill } from './ui/DataSourcePill';
@@ -56,6 +58,18 @@ export function App() {
   const [bearing, setBearing] = useState<string | null>(null);
   const [area, setArea] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
+
+  /**
+   * A travessia entre Simulação e Processo, nos dois sentidos.
+   *
+   * `simLoop` é a malha que a Simulação abre quando se chega por "Simular esta
+   * malha"; `proposal` é o valor que volta de lá para o painel de setpoint, já
+   * preenchido. As duas vivem aqui, e não em cada tela, pela mesma razão que a
+   * TAG da tendência vive: atravessar é o que alguém faz quando investiga, e
+   * quem atravessa não pode perder o que estava olhando.
+   */
+  const [simLoop, setSimLoop] = useState<string | null>(null);
+  const [proposal, setProposal] = useState<WhatIfChange | null>(null);
 
   /**
    * O ativo da cena continua espelhado em `?asset=`.
@@ -120,6 +134,26 @@ export function App() {
   const openArea = useCallback(
     (which: string) => {
       setArea(which);
+      go('processo');
+    },
+    [go],
+  );
+
+  /** Abre a Simulação já com uma malha escolhida. */
+  const openSimulacao = useCallback(
+    (which: string) => {
+      setSimLoop(which);
+      go('simulacao');
+    },
+    [go],
+  );
+
+  /** Volta da Simulação para o painel de setpoint, com a proposta preenchida. */
+  const openSetpoint = useCallback(
+    (change: WhatIfChange) => {
+      setProposal(change);
+      setTag(change.tag);
+      setArea(areaOfTag(change.tag) ?? null);
       go('processo');
     },
     [go],
@@ -192,6 +226,10 @@ export function App() {
           note={note}
           setNote={setNote}
           openNote={openNote}
+          simLoop={simLoop}
+          proposal={proposal}
+          openSimulacao={openSimulacao}
+          openSetpoint={openSetpoint}
         />
       )}
     </Shell>
@@ -216,6 +254,10 @@ interface ScreenProps {
   readonly note: string | null;
   readonly setNote: (value: string | null) => void;
   readonly openNote: (number: string) => void;
+  readonly simLoop: string | null;
+  readonly proposal: WhatIfChange | null;
+  readonly openSimulacao: (tag: string) => void;
+  readonly openSetpoint: (change: WhatIfChange) => void;
 }
 
 function Screen(props: ScreenProps) {
@@ -241,6 +283,8 @@ function Screen(props: ScreenProps) {
           tag={props.tag}
           onSelectTag={props.setTag}
           onOpenBearing={props.openBearing}
+          proposal={props.proposal}
+          onSimulate={props.openSimulacao}
         />
       );
     case 'laboratorio':
@@ -275,6 +319,14 @@ function Screen(props: ScreenProps) {
     case 'maquina':
       return (
         <MaquinaScreen gateway={props.gateway} assetTag={props.asset} onSelect={props.setAsset} />
+      );
+    case 'simulacao':
+      return (
+        <SimulacaoScreen
+          gateway={props.gateway}
+          loop={props.simLoop}
+          onApply={props.openSetpoint}
+        />
       );
   }
 }

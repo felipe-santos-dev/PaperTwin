@@ -57,7 +57,6 @@ export interface TrendStackProps {
 export function TrendStack(props: TrendStackProps) {
   const { gateway, tags, now, fixedTags } = props;
   const [window, setWindow] = useState<TrendWindow>('8h');
-  const [adding, setAdding] = useState(false);
 
   const trends = useResource(
     useCallback(
@@ -82,93 +81,35 @@ export function TrendStack(props: TrendStackProps) {
       title="Tendência"
       className={props.className ?? ''}
       aside={
-        <div
-          role="group"
-          aria-label="Janela da tendência"
-          className="flex border border-line-strong"
-        >
-          {(Object.keys(WINDOW_MS) as TrendWindow[]).map((key, index) => (
-            <button
-              key={key}
-              type="button"
-              aria-pressed={window === key}
-              onClick={() => {
-                setWindow(key);
-              }}
-              className={`h-7 px-3 text-[12px] ${index > 0 ? 'border-l border-line-strong' : ''} ${
-                window === key
-                  ? 'bg-[#1b2a44] text-[#cfe0ff]'
-                  : 'text-fg-2 hover:bg-hover hover:text-fg'
-              }`}
-            >
-              {WINDOW_LABEL[key]}
-            </button>
-          ))}
-        </div>
+        <>
+          <Escolhidas {...props} />
+          <div
+            role="group"
+            aria-label="Janela da tendência"
+            className="flex shrink-0 border border-line-strong"
+          >
+            {(Object.keys(WINDOW_MS) as TrendWindow[]).map((key, index) => (
+              <button
+                key={key}
+                type="button"
+                aria-pressed={window === key}
+                onClick={() => {
+                  setWindow(key);
+                }}
+                className={`h-7 px-3 text-[12px] ${index > 0 ? 'border-l border-line-strong' : ''} ${
+                  window === key
+                    ? 'bg-[#1b2a44] text-[#cfe0ff]'
+                    : 'text-fg-2 hover:bg-hover hover:text-fg'
+                }`}
+              >
+                {WINDOW_LABEL[key]}
+              </button>
+            ))}
+          </div>
+        </>
       }
       bodyClassName="flex min-h-0 flex-col"
     >
-      <div className="mb-2 flex flex-wrap items-center gap-2">
-        {tags.map((tag) => {
-          const alarm = props.alarms.some((item) => item.tag === tag);
-          return (
-            <span
-              key={tag}
-              className={`inline-flex h-6 items-center gap-1.5 border px-2 font-mono text-[11px] ${
-                alarm ? 'border-alarm-2 text-alarm-2' : 'border-line-strong text-fg'
-              }`}
-            >
-              {tag}
-              <button
-                type="button"
-                aria-label={`Tirar ${tag} da tendência`}
-                onClick={() => {
-                  props.onRemove(tag);
-                }}
-                className="text-fg-3 hover:text-fg"
-              >
-                ×
-              </button>
-            </span>
-          );
-        })}
-        {tags.length < MAX_TREND_TAGS ? (
-          adding ? (
-            <select
-              autoFocus
-              aria-label="TAG para a tendência"
-              defaultValue=""
-              onChange={(event) => {
-                if (event.target.value) props.onAdd(event.target.value);
-                setAdding(false);
-              }}
-              onBlur={() => {
-                setAdding(false);
-              }}
-              className="h-6 border border-action bg-cell px-1 font-mono text-[11px] text-fg"
-            >
-              <option value="">escolha…</option>
-              {props.options
-                .filter((option) => !tags.includes(option.tag))
-                .map((option) => (
-                  <option key={option.tag} value={option.tag}>
-                    {option.tag} · {option.name}
-                  </option>
-                ))}
-            </select>
-          ) : (
-            <button
-              type="button"
-              onClick={() => {
-                setAdding(true);
-              }}
-              className="h-6 border border-dashed border-action px-2 font-mono text-[11px] text-action hover:text-action-hover"
-            >
-              + TAG
-            </button>
-          )
-        ) : null}
-      </div>
       {tags.length === 0 ? (
         <p className="py-4 text-[12px] text-fg-3">Escolha uma variável na tabela ou em “+ TAG”.</p>
       ) : (
@@ -186,6 +127,82 @@ export function TrendStack(props: TrendStackProps) {
         </ResourceState>
       )}
     </Panel>
+  );
+}
+
+/**
+ * As TAGs escolhidas e o "+ TAG", na linha do título.
+ *
+ * Ficavam no corpo do painel, acima dos gráficos, e aí comiam uma linha inteira
+ * da área que é o painel: o gráfico. No cabeçalho elas convivem com os botões
+ * de janela, que são o outro controle do mesmo bloco — e a área de desenho
+ * começa logo abaixo da borda.
+ */
+function Escolhidas({ tags, alarms, options, onAdd, onRemove }: TrendStackProps) {
+  const [adding, setAdding] = useState(false);
+
+  return (
+    <>
+      {tags.map((tag) => {
+        const alarm = alarms.some((item) => item.tag === tag);
+        return (
+          <span
+            key={tag}
+            className={`inline-flex h-6 shrink-0 items-center gap-1 border px-1.5 font-mono text-[11px] ${
+              alarm ? 'border-alarm-2 text-alarm-2' : 'border-line-strong text-fg'
+            }`}
+          >
+            {tag}
+            <button
+              type="button"
+              aria-label={`Tirar ${tag} da tendência`}
+              onClick={() => {
+                onRemove(tag);
+              }}
+              className="text-fg-3 hover:text-fg"
+            >
+              ×
+            </button>
+          </span>
+        );
+      })}
+      {tags.length < MAX_TREND_TAGS ? (
+        adding ? (
+          <select
+            autoFocus
+            aria-label="TAG para a tendência"
+            defaultValue=""
+            onChange={(event) => {
+              if (event.target.value) onAdd(event.target.value);
+              setAdding(false);
+            }}
+            onBlur={() => {
+              setAdding(false);
+            }}
+            className="h-6 max-w-40 shrink border border-action bg-cell px-1 font-mono text-[11px] text-fg"
+          >
+            <option value="">escolha…</option>
+            {options
+              .filter((option) => !tags.includes(option.tag))
+              .map((option) => (
+                <option key={option.tag} value={option.tag}>
+                  {option.tag} · {option.name}
+                </option>
+              ))}
+          </select>
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              setAdding(true);
+            }}
+            className="h-6 shrink-0 border border-dashed border-action px-1.5 font-mono text-[11px] text-action hover:text-action-hover"
+          >
+            + TAG
+          </button>
+        )
+      ) : null}
+    </>
   );
 }
 

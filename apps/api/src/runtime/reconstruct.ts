@@ -43,6 +43,16 @@ import type { Trend } from '../db/historian-store';
 /** Quantos pontos por coluna: o bastante para o mínimo e o máximo da coluna. */
 const SAMPLES_PER_BUCKET = 4;
 
+/**
+ * Quatro casas, as mesmas da rota de valores.
+ *
+ * A conta sai em ponto flutuante e `224.99683033140063` não é mais verdadeiro
+ * do que `224.9968`: o instrumento não tem essa resolução, a tela mostra uma
+ * casa, e as treze casas extras só engordam o JSON — no instantâneo de
+ * demonstração, por megabytes.
+ */
+const round = (value: number): number => Number(value.toFixed(4));
+
 /** Teto de colunas, o mesmo da consulta ao banco. */
 const MAX_BUCKETS = 2000;
 
@@ -103,10 +113,10 @@ export async function reconstructTrend(
     plot.push({
       bucketStart: new Date(from.getTime() + bucketMs * column).toISOString(),
       samples: slice.length,
-      min: Math.min(...slice),
-      max: Math.max(...slice),
-      first: slice[0] ?? 0,
-      last: slice.at(-1) ?? 0,
+      min: round(Math.min(...slice)),
+      max: round(Math.max(...slice)),
+      first: round(slice[0] ?? 0),
+      last: round(slice.at(-1) ?? 0),
     });
   }
 
@@ -161,6 +171,16 @@ async function resolve(
     values = instants.map((instant) =>
       autonomousMeasured(variable, tickAt(new Date(instant)), seed),
     );
+  } else if (variable.min === variable.max) {
+    /**
+     * A constante: uma linha reta é a série verdadeira dela.
+     *
+     * A largura da folha (`XI-0002`) não grava, não passeia e não tem fórmula —
+     * ela vale 8 m ontem, hoje e na semana que vem. Antes isto era um 500, o
+     * que fazia a tendência de uma TAG do catálogo falhar sem que nada
+     * estivesse errado.
+     */
+    values = instants.map(() => variable.min);
   } else {
     const formula = derivedVariable(tag);
     if (!formula) {

@@ -2,7 +2,7 @@ import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { allAssets, HISTORIAN_POINTS, MP1, PROCESS_CATALOG, shiftWindowAt } from '@mp1/shared';
+import { allAssets, MP1, PROCESS_CATALOG, shiftWindowAt } from '@mp1/shared';
 import { DEFAULT_SEED, tickAt, TICKS_PER_HOUR, tickTime } from '@mp1/shared/simulation';
 import type { FastifyInstance } from 'fastify';
 
@@ -202,14 +202,20 @@ async function main(): Promise<void> {
 
   // --- catálogo e tendência de cada tag ---
 
-  const archived = new Set(HISTORIAN_POINTS.map((point) => point.tag));
   const from = new Date(NOW.getTime() - 4 * 3_600_000).toISOString();
 
+  /**
+   * Tendência de **toda** TAG do catálogo, não só de quem grava.
+   *
+   * A Fase 3 criou duas famílias que não ocupam linha de arquivo — a autônoma e
+   * a calculada na leitura — e a rota resolve as duas por reconstrução. O
+   * instantâneo pulava justamente essas, então abrir a tendência de uma delas
+   * sem API dava um gráfico vazio: um buraco que só aparecia no modo de
+   * demonstração, que é como quase todo mundo vê o projeto.
+   */
   for (const variable of PROCESS_CATALOG) {
     const tag = encodeURIComponent(variable.tag);
     await grab(`/process/tags/${tag}`, fileFor(`/process/tags/${variable.tag}`));
-
-    if (!archived.has(variable.tag)) continue;
 
     bytes += await writeJson(
       fileFor(`/process/tags/${variable.tag}/trend`),

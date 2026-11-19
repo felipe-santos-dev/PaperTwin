@@ -221,6 +221,17 @@ export interface ProcessEngine {
 
   /** O setpoint de uma malha, ou `null` se a tag não tem setpoint. */
   setpoint(tag: string): number | null;
+
+  /**
+   * O setpoint em vigor de cada malha, escravas de cascata incluídas.
+   *
+   * A escrava não tem setpoint próprio — quem o escreve, passo a passo, é o PI
+   * do mestre. Para quem opera, isso é um detalhe de arquitetura: a `PIC-514`
+   * **tem** um setpoint em vigor, e a tela que mostrasse "–" ali estaria
+   * dizendo que a malha está solta. Por isso as duas origens saem no mesmo
+   * mapa.
+   */
+  effectiveSetpoints(): Map<string, number>;
   /**
    * Move o setpoint de uma malha.
    *
@@ -647,6 +658,10 @@ export function processEngine(
 
     setpoint(tag: string): number | null {
       return setpoints.get(tag) ?? null;
+    },
+
+    effectiveSetpoints(): Map<string, number> {
+      return new Map([...setpoints, ...slaveSetpoints]);
     },
 
     setSetpoint(tag: string, value: number): void {

@@ -92,7 +92,7 @@ export async function processRoutes(app: FastifyInstance): Promise<void> {
         .map((variable) => {
           const value = report.values.get(variable.tag);
           if (value === undefined) return null;
-          return tagValue(variable, value, null, ts);
+          return tagValue(variable, value, report.setpoints.get(variable.tag) ?? null, ts);
         })
         .filter((item) => item !== null);
 
@@ -118,7 +118,10 @@ export async function processRoutes(app: FastifyInstance): Promise<void> {
 
       return {
         variable,
-        value: value === undefined ? null : tagValue(variable, value, null, ts),
+        value:
+          value === undefined
+            ? null
+            : tagValue(variable, value, report.setpoints.get(variable.tag) ?? null, ts),
         /**
          * Se a tag aceita escrita, e por que não quando não aceita.
          *

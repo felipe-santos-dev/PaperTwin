@@ -114,6 +114,16 @@ export interface CatchupReport {
    * Inclui as tags de mancal, que o motor de processo não cuida.
    */
   readonly values: ReadonlyMap<string, number>;
+
+  /**
+   * O setpoint em vigor de cada malha no fim da retomada.
+   *
+   * Vem junto pelo mesmo motivo que a medida: quem acabou de rodar o intervalo
+   * é quem sabe onde o controle está. Sem isto, a coluna SP da tela de Processo
+   * só tinha "–" para mostrar — e uma malha sem setpoint à vista parece uma
+   * malha solta.
+   */
+  readonly setpoints: ReadonlyMap<string, number>;
 }
 
 /**
@@ -128,7 +138,7 @@ export function valuesAt(
   tick: number,
   state: EngineState | undefined,
   scenario: DegradationScenario,
-): Map<string, number> {
+): { values: Map<string, number>; setpoints: Map<string, number> } {
   const engine = processEngine(tick, {
     seed,
     ...(state ? { state } : { setpoints: { 'AIC-902': gradeInEffectAt(tick) } }),
@@ -137,7 +147,7 @@ export function valuesAt(
   const values = engine.snapshot();
   for (const [tag, value] of bearingValuesAt(seed, tick, scenario)) values.set(tag, value);
 
-  return values;
+  return { values, setpoints: engine.effectiveSetpoints() };
 }
 
 /** O que a simulação produziu e ainda não foi gravado. */
@@ -297,12 +307,7 @@ export async function catchUp(db: Database, options: CatchupOptions = {}): Promi
       compression: { fed: 0, afterException: 0, archived: 0, raw: 0, ratio: 0 },
       durationMs: performance.now() - started,
       // nada rodou, mas a pergunta "onde a máquina está" continua tendo resposta
-      values: valuesAt(
-        seed,
-        range.toTick,
-        seedChanged ? undefined : usable,
-        degradationScenarioAt(now),
-      ),
+      ...valuesAt(seed, range.toTick, seedChanged ? undefined : usable, degradationScenarioAt(now)),
     };
   }
 
@@ -431,6 +436,7 @@ export async function catchUp(db: Database, options: CatchupOptions = {}): Promi
       }
       return values;
     })(),
+    setpoints: engine.effectiveSetpoints(),
   };
 }
 

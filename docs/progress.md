@@ -2374,4 +2374,215 @@ apps/web/e2e/e-se.spec.ts                       (novo)
 docs/progress.md
 ```
 
+## Fase 4b — a Simulação ganha tela, e a Tendência volta a desenhar
+
+### Tecla 9, e a Máquina continua na 8
+
+A Simulação entrou **depois** da Máquina na lista das telas. A ordem do caminho
+do papel pediria outro lugar, mas mover a Máquina para encaixá-la quebraria uma
+tecla que já está na cabeça de quem usa o gêmeo — e tecla decorada vale mais do
+que lista perfeita. A busca acha a tela nova sem nada a mais: o índice sai de
+`SCREENS`.
+
+### A tela nunca abre vazia
+
+Ao entrar, ela já roda o atalho da velocidade da máquina e mostra o resultado.
+Uma tela de simulação em branco pede que a pessoa adivinhe o que digitar antes
+de descobrir o que a tela faz; com um caso em pé, ela arrasta o controle e
+entende em dois segundos.
+
+**O botão "Simular" não existe mais.** Não havia o que confirmar: mudar o valor
+**é** o pedido. Toda alteração de malha, valor, modo ou horizonte recalcula
+sozinha, 320 ms depois da última mexida — arrastar o controle deslizante não
+manda trinta pedidos —, e a resposta anterior fica na tela até a nova chegar.
+Piscar para o vazio a cada tecla seria pior do que um número com meio segundo
+de atraso.
+
+### Três colunas
+
+**Esquerda, a entrada.** Até quatro malhas, agrupadas por seção no seletor, cada
+uma com o valor de agora, o novo valor e um controle deslizante que vai de ponta
+a ponta da faixa da válvula. Modo, horizonte, os três atalhos e, no pé,
+"Aplicar no processo".
+
+A lista de malhas **muda com o modo**, e isso é da física, não da tela: em
+automático escreve-se setpoint, e a escrava de cascata não tem o seu; em manual
+força-se a válvula, e a PV de cascata não é válvula, é medida. A regra saiu para
+`changeableTags`, no mesmo núcleo que recusaria o pedido — um teste percorre as
+duas listas e exige que o motor aceite cada tag que elas oferecem.
+
+**Centro, as curvas.** Uma faixa por variável alcançada, eixo de tempo comum, a
+frase gerada dos números em destaque no alto. Cada faixa tem escala vertical
+própria — gramatura em g/m² e pressão em kPa não dividem eixo —, mas o tempo é o
+mesmo de cima a baixo, e é isso que deixa ler a cadeia: a velocidade sobe, a
+gramatura começa a cair vinte segundos depois, a umidade atrás dela.
+
+A ordem é a mexida primeiro e depois o maior desvio, medido na banda L–H de cada
+uma. A mexida no topo porque é a entrada: a pilha se lê de cima para baixo como
+a cadeia se lê.
+
+**"Comparar modos"** desenha automático (cheia) e manual (tracejada) no mesmo
+gráfico. O espaço entre as duas é exatamente o que o controle faz — a parte do
+desvio que a malha come. É a coisa mais difícil de explicar com palavras e a
+mais fácil de ver num gráfico. O alternador fica desligado quando a malha só
+existe num dos modos, com o motivo no título.
+
+**Direita, os números.** Variação final, pico, tempo morto, 63 %, limite cruzado
+e saturação, por variável. Clicar numa linha destaca o gráfico dela e abre, no
+pé, o **caminho de causa e efeito**: da malha mexida até ela, passo a passo.
+
+O caminho sai do grafo de relações do simulador — o mesmo que o motor integra —
+e não de um texto à parte, que envelheceria no dia em que uma relação entrasse
+no CSV. Um teste exige que cada seta do caminho seja uma linha do
+`relacoes-fopdt.csv` ou uma fórmula declarada.
+
+### O tempo morto estava mentindo em automático
+
+Ele saía de "2 % da variação final", e em automático a variação final de uma
+controlada é quase zero: a malha devolve a variável ao setpoint. Dois por cento
+de quase zero é o primeiro ponto em que o ruído numérico aparece — ou seja,
+tempo morto de um passo para tudo, e a tabela inteira dizendo 5 s.
+
+Agora, quando o fim é muito menor que o pico, a régua é o pico. É a mesma
+distinção que a frase já fazia desde a Fase 4 ("cai 1,12 no pico e a malha traz
+de volta"), aplicada também aos tempos.
+
+### Aplicar continua sendo um lugar só
+
+"Aplicar no processo" **não escreve**: leva a proposta para o painel de setpoint
+de Processo, já preenchida, onde o motivo é obrigatório e a escrita entra no
+registro auditado. No caminho de volta, o painel de setpoint ganhou o link
+"Simular esta malha", que abre a Simulação com ela. O painel "Simular antes de
+aplicar" saiu de Processo.
+
+Um e2e faz a ida e a volta inteira: a malha que sai do painel de setpoint chega
+à Simulação, e o valor proposto lá volta preenchido no campo de novo SP.
+
+### A Tendência: quatro coisas erradas, e nenhuma era a mesma
+
+**1. O painel não tinha altura.** A coluna da direita tem painéis de altura fixa
+e a tendência ficava com o que sobrasse. Com o painel do "e se" embaixo, a
+sobra era **zero**: o bloco aparecia só com o cabeçalho, e o gráfico não existia
+— em nenhuma TAG, não só na PIC-201. Agora ela cresce quando há espaço, para de
+encolher em 300 px e, se a soma não couber, quem rola é a coluna. Medido:
+308 px de faixa em 1920×1080 e 300 px em 1440×900.
+
+**2. As TAGs estavam no corpo.** Comiam uma linha inteira da área que é o
+painel. Foram para o cabeçalho, ao lado de 1 h / 8 h / 24 h / 7 d. Para isso o
+`Panel` aprendeu a encolher e quebrar o seu `aside` em vez de deixar vazar.
+
+**3. As autônomas e as calculadas na leitura não tinham série no instantâneo.**
+O gerador do modo de demonstração só gravava a tendência de quem **arquiva**, e
+a Fase 3 criou duas famílias que não ocupam linha de historiador — a rota as
+resolve por reconstrução, o instantâneo as pulava. Eram 35 TAGs do catálogo que
+abriam vazias sem API, que é como quase todo mundo vê o projeto. Agora o
+instantâneo traz as 356.
+
+O custo disso foi menor do que parecia porque a reconstrução passou a arredondar
+em quatro casas, as mesmas da rota de valores: `224.99683033140063` não é mais
+verdadeiro que `224,9968`, e as treze casas extras só engordavam o JSON. O
+instantâneo foi de 4,9 MB para 5,0 MB com 35 séries a mais.
+
+No caminho apareceu um buraco de verdade: `GET /process/tags/XI-0002/trend`
+respondia **500**. A largura da folha não grava, não passeia e não tem fórmula —
+ela vale 8 m ontem, hoje e na semana que vem —, e a reconstrução não tinha caso
+para constante. Agora tem: uma reta.
+
+**4. A coluna SP mostrava "–" em toda malha.** Era falta de dado na API, não de
+leitura na tela: as duas rotas de valor mandavam `setpoint: null` fixo, sem
+perguntar ao motor. O motor sabe — inclusive o que a cascata escreve na escrava,
+que não tem setpoint próprio mas **tem** um setpoint em vigor, e mostrar "–" ali
+dizia que a malha estava solta. O relatório da retomada passou a trazer o mapa e
+as rotas a usá-lo: 57 das 356 TAGs agora têm SP.
+
+Um e2e abre a Tendência com uma arquivada (`FIC-105`), uma autônoma (`JI-111`) e
+uma calculada na leitura (`XI-161`) e exige linha com mais de um ponto e faixa
+com altura nas três; outro exige as TAGs e o "+ TAG" dentro do cabeçalho; outro
+cobra número na coluna SP.
+
+### Medido
+
+- Testes: `shared` **344**, web **194**, API **323** (111 pulados sem `DATABASE_URL`). Typecheck, lint,
+  `format:check` e build.
+- e2e: **32** testes, todos passando — inclusive os da cena 3D e o da vibração,
+  que a Fase 4 entregou falhando por causa da API velha na porta 3333.
+- Build: pedaço da aplicação **283,0 kB** (era 268,5 — a tela nova), worker em
+  **74,9 kB** e o `three` inalterado. O motor continua fora do carregamento
+  inicial: um e2e cobra isso, e o que entrou no pedaço da aplicação foi a tabela
+  das cascatas, não o motor.
+- Sem rolagem horizontal em 1920×1080 nem em 1440×900, nas duas telas.
+
+### Arquivos, por commit sugerido
+
+**24. O setpoint em vigor sai do motor e chega na tela**
+
+```
+packages/shared/src/simulation/process-engine.ts
+apps/api/src/runtime/catchup.ts
+apps/api/src/routes/process.ts
+```
+
+**25. Tendência de toda TAG no instantâneo**
+
+```
+apps/api/src/runtime/reconstruct.ts
+apps/api/src/scripts/generate-demo.ts
+```
+
+O instantâneo em si não entra no commit: `apps/web/public/demo/` está no
+`.gitignore` e sai de `npm run demo:data`, que precisa ser rodado de novo depois
+deste commit.
+
+**26. Caminho de causa e efeito, e as malhas de cada modo**
+
+```
+packages/shared/src/simulation/what-if.ts
+packages/shared/src/simulation/what-if.test.ts
+```
+
+**27. A tela de Simulação**
+
+```
+apps/web/src/screens/SimulacaoScreen.tsx        (novo)
+apps/web/src/screens/simulacao/Entrada.tsx      (novo)
+apps/web/src/screens/simulacao/Curvas.tsx       (novo)
+apps/web/src/screens/simulacao/Efeitos.tsx      (novo)
+apps/web/src/screens/simulacao/frase.ts         (novo)
+apps/web/src/ui/screens.ts
+apps/web/src/ui/screens.test.ts
+apps/web/src/ui/search.test.ts
+apps/web/src/ui/Shell.tsx
+apps/web/src/ui/help.ts
+apps/web/src/App.tsx
+```
+
+**28. Processo: o painel do "e se" sai, o link entra**
+
+```
+apps/web/src/screens/processo/WhatIfPanel.tsx   (removido)
+apps/web/src/screens/processo/SetpointPanel.tsx
+apps/web/src/screens/ProcessoScreen.tsx
+```
+
+**29. A Tendência volta a desenhar**
+
+```
+apps/web/src/screens/processo/TrendStack.tsx
+apps/web/src/ui/Panel.tsx
+```
+
+**30. Testes**
+
+```
+apps/web/src/screens/screens.test.tsx
+apps/web/e2e/e-se.spec.ts
+apps/web/e2e/tendencia.spec.ts                  (novo)
+```
+
+**31. Documentação da fase**
+
+```
+docs/progress.md
+```
+
 Pare aqui. A Fase 5 começa quando o Felipe escrever "fase 5".

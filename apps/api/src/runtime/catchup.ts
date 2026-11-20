@@ -25,6 +25,7 @@ import { bearingSampleAt, type DegradationScenario } from '../simulation/bearing
 import { gradeInEffectAt, planAt, type BreakPlan, type ShiftPlan } from '../simulation/scenarios';
 import { harvestEntities, persistHarvest } from './entities';
 import { HISTORIAN_SCAN_TICKS, historianRecorder, type RecorderStats } from './recorder';
+import { deriveSuggestions } from './suggestions';
 
 /**
  * A retomada: o que roda quando a API acorda.
@@ -101,6 +102,8 @@ export interface CatchupReport {
     readonly webBreaks: number;
     readonly rounds: number;
     readonly notes: number;
+    /** Sugestões de nota em pé no fim da retomada. */
+    readonly suggestions: number;
   };
   readonly compression: RecorderStats;
   readonly durationMs: number;
@@ -303,6 +306,7 @@ export async function catchUp(db: Database, options: CatchupOptions = {}): Promi
         webBreaks: 0,
         rounds: 0,
         notes: 0,
+        suggestions: 0,
       },
       compression: { fed: 0, afterException: 0, archived: 0, raw: 0, ratio: 0 },
       durationMs: performance.now() - started,
@@ -398,6 +402,15 @@ export async function catchUp(db: Database, options: CatchupOptions = {}): Promi
   ]);
   await persistHarvest(db, harvest);
 
+  /**
+   * As sugestões vêm **depois** das notas.
+   *
+   * A regra não sugere para um mancal que já tem nota de tendência aberta, e a
+   * nota que a colheita acabou de gravar conta. Derivar antes faria a retomada
+   * sugerir o trabalho que ela mesma já pôs na fila.
+   */
+  const suggestions = await deriveSuggestions(db, { now });
+
   await db.pruneHistorian(now);
   await db.saveSimState({
     seed,
@@ -426,6 +439,7 @@ export async function catchUp(db: Database, options: CatchupOptions = {}): Promi
       webBreaks: harvest.webBreaks.length,
       rounds: harvest.rounds.length,
       notes: harvest.notes.length,
+      suggestions: suggestions.length,
     },
     compression: recorder.stats(),
     durationMs: performance.now() - started,

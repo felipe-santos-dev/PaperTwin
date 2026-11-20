@@ -7,9 +7,12 @@ import type {
   JumboReel,
   MaintenanceNote,
   NoteStatus,
+  NoteSuggestion,
   Round,
   SetpointChange,
   Shift,
+  SuggestionMeasure,
+  SuggestionStatus,
   WebBreak,
 } from '@mp1/shared';
 
@@ -68,6 +71,12 @@ export interface SetpointFilter {
   readonly limit?: number;
 }
 
+export interface SuggestionFilter {
+  readonly status?: SuggestionStatus;
+  readonly assetTag?: AssetTag;
+  readonly limit?: number;
+}
+
 export interface AlarmFilter extends TimeRange {
   readonly state?: AlarmState;
   readonly priority?: AlarmPriority;
@@ -112,6 +121,42 @@ export interface OperationsRepository {
   upsertMaintenanceNotes(notes: readonly MaintenanceNote[]): Promise<number>;
   listMaintenanceNotes(filter?: NoteFilter): Promise<MaintenanceNote[]>;
   findMaintenanceNote(number: string): Promise<MaintenanceNote | null>;
+
+  // --- nota sugerida ---
+  /**
+   * Troca as sugestões em pé pelas que a conta de agora produziu.
+   *
+   * A sugestão em pé é projeção do arquivo, e o que vale é a última conta; as
+   * decididas ficam, porque são a auditoria da decisão de alguém.
+   */
+  replaceStandingSuggestions(suggestions: readonly NoteSuggestion[]): Promise<number>;
+  listNoteSuggestions(filter?: SuggestionFilter): Promise<NoteSuggestion[]>;
+  findNoteSuggestion(id: string): Promise<NoteSuggestion | null>;
+  /**
+   * Confirma a sugestão e grava a nota, na mesma transação.
+   *
+   * Devolve `null` quando a sugestão não existe **ou** já foi decidida — a
+   * mesma convenção de `acknowledgeAlarm`, pelo mesmo motivo: dois cliques
+   * simultâneos não podem gravar duas decisões.
+   */
+  confirmNoteSuggestion(args: {
+    readonly id: string;
+    readonly note: MaintenanceNote;
+    readonly by: string;
+    readonly at: Date;
+    readonly reason: string | null;
+  }): Promise<{ suggestion: NoteSuggestion; note: MaintenanceNote } | null>;
+  /** Dispensa com motivo obrigatório. */
+  dismissNoteSuggestion(args: {
+    readonly id: string;
+    readonly by: string;
+    readonly at: Date;
+    readonly reason: string;
+  }): Promise<NoteSuggestion | null>;
+  /** Os mancais que já têm nota de origem `tendência` aberta. */
+  assetsWithOpenTrendNote(): Promise<string[]>;
+  /** A última dispensa de cada mancal, para a regra do degrau. */
+  lastDismissedSuggestions(): Promise<Map<string, { measure: SuggestionMeasure; level: number }>>;
 
   // --- alteração de setpoint ---
   /** Grava a alteração. A auditoria não é reescrita: reenviar o mesmo id é inócuo. */

@@ -1,8 +1,16 @@
-import type { NoteStatus } from '@mp1/shared';
+import {
+  noteFromSuggestion,
+  type NotePriority,
+  type NoteStatus,
+  type SuggestionStatus,
+} from '@mp1/shared';
 import type { FastifyInstance } from 'fastify';
 
-import { notFound } from './errors';
+import { conflict, notFound } from './errors';
 import {
+  confirmNoteSuggestionSchema,
+  dismissNoteSuggestionSchema,
+  listNoteSuggestionsSchema,
   getNoteSchema,
   getReelSchema,
   getRoundSchema,
@@ -17,6 +25,7 @@ import {
   getBreakReplaySchema,
 } from './process-route-schemas';
 import { replayOf } from '../runtime/break-replay';
+import { noteNumberFor } from '../runtime/entities';
 
 /**
  * As rotas das entidades de operação.
@@ -224,6 +233,112 @@ export async function operationRoutes(app: FastifyInstance): Promise<void> {
         return reply.code(404).send(notFound(`A nota ${request.params.number} não existe`));
       }
       return { note };
+    },
+  );
+
+  // ------------------------------------------------- nota sugerida
+
+  app.get<{ Querystring: { status?: SuggestionStatus; assetTag?: string; limit?: number } }>(
+    '/note-suggestions',
+    { schema: listNoteSuggestionsSchema },
+    async (request) => {
+      await app.simulation.ensureCurrent();
+      const suggestions = await app.db.listNoteSuggestions({
+        ...(request.query.status ? { status: request.query.status } : {}),
+        ...(request.query.assetTag ? { assetTag: request.query.assetTag } : {}),
+        ...(request.query.limit === undefined ? {} : { limit: request.query.limit }),
+      });
+      return { count: suggestions.length, suggestions };
+    },
+  );
+
+  /**
+   * Confirmar: a sugestão vira nota aberta.
+   *
+   * O número da nota sai do **mancal e do início da tendência**, e não do
+   * instante do clique: confirmar é uma decisão sobre um episódio de
+   * degradação, e derivar o número dele mantém a propriedade que o resto do
+   * gêmeo tem — reexecutar não cria um segundo registro do mesmo fato.
+   *
+   * A escrita é guardada por `status = 'sugerida'` no `where`, então o segundo
+   * clique não decide nada e leva 409.
+   */
+  app.post<{
+    Params: { id: string };
+    Body: {
+      confirmedBy?: string;
+      reason?: string;
+      symptom?: string;
+      priority?: NotePriority;
+      requiresShutdown?: boolean;
+    };
+  }>(
+    '/note-suggestions/:id/confirm',
+    { schema: confirmNoteSuggestionSchema },
+    async (request, reply) => {
+      await app.simulation.ensureCurrent();
+
+      const suggestion = await app.db.findNoteSuggestion(request.params.id);
+      if (!suggestion) {
+        return reply.code(404).send(notFound(`A sugestão ${request.params.id} não existe`));
+      }
+      if (suggestion.status !== 'sugerida') {
+        return reply
+          .code(409)
+          .send(conflict(`A sugestão ${suggestion.id} já foi ${suggestion.status}`));
+      }
+
+      const at = new Date();
+      const note = noteFromSuggestion(
+        suggestion,
+        noteNumberFor(suggestion.assetTag, suggestion.trendStart),
+        at.toISOString(),
+        {
+          ...(request.body.symptom === undefined ? {} : { symptom: request.body.symptom }),
+          ...(request.body.priority === undefined ? {} : { priority: request.body.priority }),
+          ...(request.body.requiresShutdown === undefined
+            ? {}
+            : { requiresShutdown: request.body.requiresShutdown }),
+        },
+      );
+
+      const done = await app.db.confirmNoteSuggestion({
+        id: suggestion.id,
+        note,
+        by: request.body.confirmedBy ?? 'operador',
+        at,
+        reason: request.body.reason ?? null,
+      });
+
+      if (!done) {
+        return reply.code(409).send(conflict(`A sugestão ${suggestion.id} já foi decidida`));
+      }
+
+      return done;
+    },
+  );
+
+  /** Dispensar: com motivo, que é o que faz a linha servir de auditoria. */
+  app.post<{ Params: { id: string }; Body: { reason: string; dismissedBy?: string } }>(
+    '/note-suggestions/:id/dismiss',
+    { schema: dismissNoteSuggestionSchema },
+    async (request, reply) => {
+      await app.simulation.ensureCurrent();
+
+      const suggestion = await app.db.dismissNoteSuggestion({
+        id: request.params.id,
+        by: request.body.dismissedBy ?? 'operador',
+        at: new Date(),
+        reason: request.body.reason,
+      });
+
+      if (suggestion) return { suggestion };
+
+      const existing = await app.db.findNoteSuggestion(request.params.id);
+      if (!existing) {
+        return reply.code(404).send(notFound(`A sugestão ${request.params.id} não existe`));
+      }
+      return reply.code(409).send(conflict(`A sugestão ${existing.id} já foi ${existing.status}`));
     },
   );
 

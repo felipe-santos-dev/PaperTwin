@@ -9,15 +9,19 @@ import type {
   LeakState,
   MaintenanceNote,
   NoiseLevel,
+  NoteEvidence,
   NoteOrigin,
   NotePriority,
   NoteStatus,
+  NoteSuggestion,
   ReelDisposition,
   Round,
   RoundPoint,
   SetpointChange,
   Shift,
   ShiftLetter,
+  SuggestionMeasure,
+  SuggestionStatus,
   WebBreak,
 } from '@mp1/shared';
 
@@ -882,4 +886,215 @@ export const COUNT_ALARMS_IN_WINDOW = `
   select count(*)::int as count
   from alarm
   where raised_at > $1::timestamptz and raised_at <= $2::timestamptz
+`;
+
+// ---------------------------------------------------- nota sugerida
+
+export interface SuggestionRow {
+  id: string;
+  asset_tag: string;
+  trend_start: Date | string;
+  measure: string;
+  symptom: string;
+  priority: number | string;
+  requires_shutdown: boolean;
+  days_to_limit: number | string;
+  per_day: number | string;
+  level: number | string;
+  limit_value: number | string;
+  samples: number | string;
+  evidence: unknown;
+  computed_at: Date | string;
+  status: string;
+  decided_at: Date | string | null;
+  decided_by: string | null;
+  reason: string | null;
+  note_number: string | null;
+}
+
+/**
+ * A evidência volta de `jsonb` e é conferida aqui.
+ *
+ * O driver devolve o que estiver na coluna, e a restrição do banco só garante
+ * que é um arranjo. Uma linha com forma estranha vira lista vazia em vez de
+ * quebrar a tela: a evidência é o caminho de volta ao registro, não o dado da
+ * sugestão.
+ */
+function toEvidence(value: unknown): NoteEvidence[] {
+  const rows = typeof value === 'string' ? (JSON.parse(value) as unknown) : value;
+  if (!Array.isArray(rows)) return [];
+
+  return rows.flatMap((row): NoteEvidence[] => {
+    if (typeof row !== 'object' || row === null) return [];
+    const { kind, ref, label } = row as Record<string, unknown>;
+    if (typeof kind !== 'string' || typeof ref !== 'string' || typeof label !== 'string') {
+      return [];
+    }
+    return [{ kind: kind as EvidenceKind, ref, label }];
+  });
+}
+
+export function toSuggestion(row: SuggestionRow): NoteSuggestion {
+  return {
+    id: row.id,
+    assetTag: row.asset_tag,
+    trendStart: iso(row.trend_start),
+    measure: row.measure as SuggestionMeasure,
+    symptom: row.symptom,
+    priority: num(row.priority) as NotePriority,
+    requiresShutdown: row.requires_shutdown,
+    daysToLimit: num(row.days_to_limit),
+    perDay: num(row.per_day),
+    level: num(row.level),
+    limit: num(row.limit_value),
+    samples: num(row.samples),
+    evidence: toEvidence(row.evidence),
+    at: iso(row.computed_at),
+    status: row.status as SuggestionStatus,
+    decidedAt: nullableIso(row.decided_at),
+    decidedBy: row.decided_by,
+    reason: row.reason,
+    noteNumber: row.note_number,
+  };
+}
+
+const SUGGESTION_COLUMNS = `
+  id, asset_tag, trend_start, measure, symptom, priority, requires_shutdown,
+  days_to_limit, per_day, level, limit_value, samples, evidence, computed_at,
+  status, decided_at, decided_by, reason, note_number
+`;
+
+/**
+ * As sugestões em pé são apagadas antes de as novas entrarem.
+ *
+ * É o que faz a retomada em pedaços dar o mesmo banco que a retomada de uma
+ * vez: a sugestão **em pé** é uma projeção do arquivo, não um registro
+ * histórico, então o que vale é sempre a última conta. O registro histórico é a
+ * decisão de alguém — confirmada ou dispensada —, e essas linhas não são
+ * tocadas.
+ */
+export const DELETE_STANDING_SUGGESTIONS = `delete from note_suggestion where status = 'sugerida'`;
+
+/**
+ * `do nothing` no conflito, e o conflito é por decisão já tomada.
+ *
+ * O `id` é derivado de (mancal + início da tendência), então uma sugestão
+ * dispensada ocupa o id que a conta de agora produziria. Sobrescrever apagaria
+ * o motivo que alguém escreveu — e quem decide se a sugestão volta é a regra do
+ * degrau, no `shared`, antes de esta linha ser montada.
+ */
+export const INSERT_SUGGESTION = `
+  insert into note_suggestion (${SUGGESTION_COLUMNS})
+  values (
+    $1, $2, $3::timestamptz, $4, $5, $6, $7,
+    $8, $9, $10, $11, $12, $13::jsonb, $14::timestamptz,
+    $15, $16::timestamptz, $17, $18, $19
+  )
+  on conflict (id) do nothing
+`;
+
+export const insertSuggestionParams = (suggestion: NoteSuggestion): unknown[] => [
+  suggestion.id,
+  suggestion.assetTag,
+  suggestion.trendStart,
+  suggestion.measure,
+  suggestion.symptom,
+  suggestion.priority,
+  suggestion.requiresShutdown,
+  suggestion.daysToLimit,
+  suggestion.perDay,
+  suggestion.level,
+  suggestion.limit,
+  suggestion.samples,
+  JSON.stringify(suggestion.evidence),
+  suggestion.at,
+  suggestion.status,
+  suggestion.decidedAt,
+  suggestion.decidedBy,
+  suggestion.reason,
+  suggestion.noteNumber,
+];
+
+/**
+ * A fila: as em pé primeiro, por prioridade, e as decididas depois.
+ *
+ * A ordem é a mesma lógica de `LIST_NOTES` — é uma fila de trabalho, e nela a
+ * prioridade 1 de ontem vem antes da 4 de hoje.
+ */
+export const LIST_SUGGESTIONS = `
+  select ${SUGGESTION_COLUMNS}
+  from note_suggestion
+  where ($1::text is null or status = $1)
+    and ($2::text is null or asset_tag = $2)
+  order by (status = 'sugerida') desc, priority, computed_at desc
+  limit $3
+`;
+
+export const FIND_SUGGESTION = `
+  select ${SUGGESTION_COLUMNS} from note_suggestion where id = $1
+`;
+
+/**
+ * A sugestão em pé, travada para a decisão.
+ *
+ * `for update` dentro da transação da confirmação: a nota é gravada antes de a
+ * sugestão ser marcada (a chave estrangeira de `note_number` exige a nota
+ * existindo), então a conferência de que ela ainda está em pé tem de acontecer
+ * antes das duas escritas — e segurar a linha até o fim.
+ */
+export const LOCK_STANDING_SUGGESTION = `
+  select ${SUGGESTION_COLUMNS} from note_suggestion
+  where id = $1 and status = 'sugerida'
+  for update
+`;
+
+/**
+ * Confirmar e dispensar escrevem com `status = 'sugerida'` no `where`.
+ *
+ * Dois cliques simultâneos não podem gravar duas decisões: o segundo não
+ * devolve linha, e quem chamou sabe que não foi ele que decidiu. É a mesma
+ * forma de `ACKNOWLEDGE_ALARM`.
+ */
+export const CONFIRM_SUGGESTION = `
+  update note_suggestion set
+    status = 'confirmada',
+    decided_at = $2::timestamptz,
+    decided_by = $3,
+    reason = $4,
+    note_number = $5
+  where id = $1 and status = 'sugerida'
+  returning ${SUGGESTION_COLUMNS}
+`;
+
+export const DISMISS_SUGGESTION = `
+  update note_suggestion set
+    status = 'dispensada',
+    decided_at = $2::timestamptz,
+    decided_by = $3,
+    reason = $4
+  where id = $1 and status = 'sugerida'
+  returning ${SUGGESTION_COLUMNS}
+`;
+
+/**
+ * Os mancais que já têm nota de tendência aberta.
+ *
+ * Enquanto a nota que saiu de uma sugestão não é encerrada, o trabalho já está
+ * na fila da manutenção e sugerir de novo seria duplicar a mesma ordem de
+ * serviço. Um alarme aberto **não** bloqueia: a sugestão diz o que a tendência
+ * projeta, o alarme diz o que o limite já cruzou, e as duas coisas aparecem
+ * juntas no mancal que degrada.
+ */
+export const ASSETS_WITH_OPEN_TREND_NOTE = `
+  select distinct asset_tag
+  from maintenance_note
+  where origin = 'tendência' and status <> 'encerrada'
+`;
+
+/** A última dispensa de cada mancal, de onde sai o degrau que a faz voltar. */
+export const LAST_DISMISSED_SUGGESTIONS = `
+  select distinct on (asset_tag) asset_tag, measure, level
+  from note_suggestion
+  where status = 'dispensada'
+  order by asset_tag, decided_at desc
 `;

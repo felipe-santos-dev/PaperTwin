@@ -9,9 +9,11 @@ import type {
   JumboReel,
   MachineAsset,
   MaintenanceNote,
+  NoteSuggestion,
   Round,
   SetpointChange,
   Shift,
+  SuggestionMeasure,
   VibrationBucket,
   VibrationReading,
   WebBreak,
@@ -37,12 +39,15 @@ import type {
   RoundFilter,
   SetpointFilter,
   ShiftFilter,
+  SuggestionFilter,
 } from './operations-repository';
 import * as operations from './operations-store';
 import {
   buildInsertReadings,
   chunkReadings,
   COUNT_READINGS,
+  READINGS_BY_BUCKET_ALL,
+  type AssetBucketRow,
   DELETE_ASSETS,
   FIND_ASSET,
   INSERT_ASSET,
@@ -147,6 +152,24 @@ export class SqlDatabase implements Database {
     return rows.map(toBucket);
   }
 
+  async readingsByBucketForAll(
+    query: Omit<VibrationQuery, 'tag'>,
+  ): Promise<Map<AssetTag, VibrationBucket[]>> {
+    const rows = await this.sql.rows<AssetBucketRow>(READINGS_BY_BUCKET_ALL, [
+      query.from.toISOString(),
+      query.to.toISOString(),
+      query.bucket,
+    ]);
+
+    const byAsset = new Map<AssetTag, VibrationBucket[]>();
+    for (const row of rows) {
+      const buckets = byAsset.get(row.asset_tag);
+      if (buckets) buckets.push(toBucket(row));
+      else byAsset.set(row.asset_tag, [toBucket(row)]);
+    }
+    return byAsset;
+  }
+
   async countReadings(): Promise<number> {
     const rows = await this.sql.rows<{ count: number }>(COUNT_READINGS);
     return rows[0]?.count ?? 0;
@@ -224,6 +247,45 @@ export class SqlDatabase implements Database {
 
   findMaintenanceNote(number: string): Promise<MaintenanceNote | null> {
     return operations.findMaintenanceNote(this.sql, number);
+  }
+
+  replaceStandingSuggestions(suggestions: readonly NoteSuggestion[]): Promise<number> {
+    return operations.replaceStandingSuggestions(this.sql, suggestions);
+  }
+
+  listNoteSuggestions(filter?: SuggestionFilter): Promise<NoteSuggestion[]> {
+    return operations.listNoteSuggestions(this.sql, filter);
+  }
+
+  findNoteSuggestion(id: string): Promise<NoteSuggestion | null> {
+    return operations.findNoteSuggestion(this.sql, id);
+  }
+
+  confirmNoteSuggestion(args: {
+    readonly id: string;
+    readonly note: MaintenanceNote;
+    readonly by: string;
+    readonly at: Date;
+    readonly reason: string | null;
+  }): Promise<{ suggestion: NoteSuggestion; note: MaintenanceNote } | null> {
+    return operations.confirmNoteSuggestion(this.sql, args);
+  }
+
+  dismissNoteSuggestion(args: {
+    readonly id: string;
+    readonly by: string;
+    readonly at: Date;
+    readonly reason: string;
+  }): Promise<NoteSuggestion | null> {
+    return operations.dismissNoteSuggestion(this.sql, args);
+  }
+
+  assetsWithOpenTrendNote(): Promise<string[]> {
+    return operations.assetsWithOpenTrendNote(this.sql);
+  }
+
+  lastDismissedSuggestions(): Promise<Map<string, { measure: SuggestionMeasure; level: number }>> {
+    return operations.lastDismissedSuggestions(this.sql);
   }
 
   insertSetpointChange(change: SetpointChange): Promise<void> {

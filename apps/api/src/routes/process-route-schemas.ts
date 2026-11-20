@@ -1,4 +1,4 @@
-import { ALARM_PRIORITIES, ALARM_STATES, NOTE_STATUSES } from '@mp1/shared';
+import { ALARM_PRIORITIES, ALARM_STATES, NOTE_STATUSES, SUGGESTION_STATUSES } from '@mp1/shared';
 import { WHAT_IF_MAX_HORIZON_S, WHAT_IF_MAX_POINTS } from '@mp1/shared/simulation';
 
 import { MAX_PLOT_BUCKETS } from '../db/historian-store';
@@ -612,6 +612,89 @@ export const getNoteSchema = {
       required: ['note'],
     },
     404: error,
+  },
+} as const;
+
+// ---------------------------------------------------------- nota sugerida
+
+export const listNoteSuggestionsSchema = {
+  tags: ['Operação'],
+  summary: 'As notas sugeridas pela tendência dos mancais',
+  description:
+    'As em pé primeiro, por prioridade; as decididas depois. A sugestão não tem número de ' +
+    'nota — só ganha um se alguém confirmar.',
+  querystring: {
+    type: 'object',
+    properties: {
+      status: { type: 'string', enum: [...SUGGESTION_STATUSES] },
+      assetTag: { type: 'string' },
+      limit,
+    },
+    additionalProperties: false,
+  },
+  response: { 200: listOf('NoteSuggestion', 'suggestions') },
+} as const;
+
+const suggestionParams = {
+  type: 'object',
+  properties: { id: { type: 'string', minLength: 1 } },
+  required: ['id'],
+} as const;
+
+export const confirmNoteSuggestionSchema = {
+  tags: ['Operação'],
+  summary: 'Confirma a sugestão: ela vira nota aberta',
+  description:
+    'A nota nasce com origem `tendência` e aponta para a sugestão. O sintoma, a prioridade e ' +
+    'se exige parada podem ser editados antes de confirmar; o que não for enviado vem da ' +
+    'sugestão. Confirmar duas vezes devolve 409: a segunda não decide nada.',
+  params: suggestionParams,
+  body: {
+    type: 'object',
+    properties: {
+      confirmedBy: { type: 'string', minLength: 1, maxLength: 80 },
+      reason: { type: 'string', maxLength: 500 },
+      symptom: { type: 'string', minLength: 3, maxLength: 500 },
+      priority: { type: 'integer', enum: [1, 2, 3, 4] },
+      requiresShutdown: { type: 'boolean' },
+    },
+    additionalProperties: false,
+  },
+  response: {
+    200: {
+      type: 'object',
+      properties: { suggestion: ref('NoteSuggestion'), note: ref('MaintenanceNote') },
+      required: ['suggestion', 'note'],
+    },
+    404: error,
+    409: error,
+  },
+} as const;
+
+export const dismissNoteSuggestionSchema = {
+  tags: ['Operação'],
+  summary: 'Dispensa a sugestão, com motivo obrigatório',
+  description:
+    'O motivo é obrigatório: é ele que faz a linha dispensada servir de auditoria. A sugestão ' +
+    'não volta enquanto a tendência não piorar além do degrau da regra.',
+  params: suggestionParams,
+  body: {
+    type: 'object',
+    properties: {
+      reason: { type: 'string', minLength: 3, maxLength: 500 },
+      dismissedBy: { type: 'string', minLength: 1, maxLength: 80 },
+    },
+    required: ['reason'],
+    additionalProperties: false,
+  },
+  response: {
+    200: {
+      type: 'object',
+      properties: { suggestion: ref('NoteSuggestion') },
+      required: ['suggestion'],
+    },
+    404: error,
+    409: error,
   },
 } as const;
 

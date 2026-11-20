@@ -248,6 +248,34 @@ export const COUNT_READINGS = `select count(*)::int as count from vibration_read
  * então duas consultas com recortes diferentes devolvem as mesmas bordas — é o
  * que permite comparar dois períodos sem as barras andarem.
  */
+/**
+ * A mesma agregação, de todos os mancais numa consulta.
+ *
+ * A regra da nota sugerida olha os 72 mancais a cada retomada. Setenta e duas
+ * consultas de 288 linhas cada seriam setenta e duas idas ao banco dentro de
+ * uma requisição — e a retomada já roda dentro de uma. Agrupar por ativo faz a
+ * pergunta uma vez.
+ */
+export const READINGS_BY_BUCKET_ALL = `
+  select
+    asset_tag,
+    date_bin($3::interval, ts, timestamptz '2000-01-01 00:00:00+00') as bucket_start,
+    count(*)::int        as samples,
+    avg(rms_mm_s)        as rms_avg,
+    max(rms_mm_s)        as rms_max,
+    avg(temp_c)          as temp_avg,
+    max(envelope_ge)     as envelope_max
+  from vibration_reading
+  where ts >= $1::timestamptz
+    and ts <  $2::timestamptz
+  group by 1, 2
+  order by 1, 2
+`;
+
+export interface AssetBucketRow extends BucketRow {
+  asset_tag: string;
+}
+
 export const READINGS_BY_BUCKET = `
   select
     date_bin($4::interval, ts, timestamptz '2000-01-01 00:00:00+00') as bucket_start,

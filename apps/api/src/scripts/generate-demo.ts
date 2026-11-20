@@ -221,6 +221,7 @@ async function main(): Promise<void> {
     '/grade-changes',
     '/rounds',
     '/notes',
+    '/note-suggestions',
     '/setpoint-changes',
   ]) {
     await grab(path);

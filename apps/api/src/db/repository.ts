@@ -52,6 +52,16 @@ export interface VibrationRepository {
   /** Leituras agregadas por janela, via `date_bin()`. */
   readingsByBucket(query: VibrationQuery): Promise<VibrationBucket[]>;
 
+  /**
+   * A mesma agregação para todos os ativos medidos, numa consulta.
+   *
+   * A regra da nota sugerida olha os 72 mancais a cada retomada, e a retomada
+   * roda dentro de uma requisição: 72 consultas ali seriam 72 esperas.
+   */
+  readingsByBucketForAll(
+    query: Omit<VibrationQuery, 'tag'>,
+  ): Promise<Map<AssetTag, VibrationBucket[]>>;
+
   countReadings(): Promise<number>;
 }
 

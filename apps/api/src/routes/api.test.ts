@@ -276,6 +276,9 @@ describe('OpenAPI', () => {
       '/grade-changes',
       '/rounds',
       '/notes',
+      '/note-suggestions',
+      '/note-suggestions/{id}/confirm',
+      '/note-suggestions/{id}/dismiss',
       '/setpoint-changes',
       '/stream',
     ]) {
@@ -301,6 +304,7 @@ describe('OpenAPI', () => {
         'GradeChange',
         'Round',
         'MaintenanceNote',
+        'NoteSuggestion',
         'SetpointChange',
       ]),
     );

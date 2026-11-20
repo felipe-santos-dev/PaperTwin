@@ -10,6 +10,8 @@ import {
   NOTE_STATUSES,
   REEL_DISPOSITIONS,
   SECTION_IDS,
+  SUGGESTION_MEASURES,
+  SUGGESTION_STATUSES,
   SHIFT_LETTERS,
 } from '@mp1/shared';
 
@@ -422,6 +424,69 @@ export const noteSchema = {
   additionalProperties: false,
 } as const;
 
+export const noteSuggestionSchema = {
+  $id: 'NoteSuggestion',
+  type: 'object',
+  description:
+    'Nota que a tendência do mancal propõe. Nasce sem número: só ganha um `NM-…` se alguém ' +
+    'confirmar. A linha fica depois de decidida — é ela a auditoria da decisão.',
+  properties: {
+    id: { type: 'string', examples: ['SG-1781308800-MP1-SEC-G4-CS23-MLC'] },
+    assetTag: { type: 'string' },
+    trendStart: { type: 'string' },
+    measure: { type: 'string', enum: [...SUGGESTION_MEASURES] },
+    symptom: { type: 'string' },
+    priority: { type: 'integer', enum: [1, 2, 3, 4] },
+    requiresShutdown: { type: 'boolean' },
+    daysToLimit: { type: 'number', description: 'Zero quando a projeção já cruzou o limite.' },
+    perDay: { type: 'number' },
+    level: { type: 'number' },
+    limit: { type: 'number' },
+    samples: { type: 'integer' },
+    evidence: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          kind: { type: 'string', enum: [...EVIDENCE_KINDS] },
+          ref: { type: 'string' },
+          label: { type: 'string' },
+        },
+        required: ['kind', 'ref', 'label'],
+        additionalProperties: false,
+      },
+    },
+    at: { type: 'string' },
+    status: { type: 'string', enum: [...SUGGESTION_STATUSES] },
+    decidedAt: { type: ['string', 'null'] },
+    decidedBy: { type: ['string', 'null'] },
+    reason: { type: ['string', 'null'] },
+    noteNumber: { type: ['string', 'null'] },
+  },
+  required: [
+    'id',
+    'assetTag',
+    'trendStart',
+    'measure',
+    'symptom',
+    'priority',
+    'requiresShutdown',
+    'daysToLimit',
+    'perDay',
+    'level',
+    'limit',
+    'samples',
+    'evidence',
+    'at',
+    'status',
+    'decidedAt',
+    'decidedBy',
+    'reason',
+    'noteNumber',
+  ],
+  additionalProperties: false,
+} as const;
+
 export const setpointChangeSchema = {
   $id: 'SetpointChange',
   type: 'object',
@@ -454,5 +519,6 @@ export const PROCESS_SCHEMAS = [
   gradeChangeSchema,
   roundSchema,
   noteSchema,
+  noteSuggestionSchema,
   setpointChangeSchema,
 ];

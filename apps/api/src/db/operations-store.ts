@@ -3,16 +3,30 @@ import type {
   GradeChange,
   JumboReel,
   MaintenanceNote,
+  NoteSuggestion,
   Round,
   SetpointChange,
   Shift,
+  SuggestionMeasure,
   WebBreak,
 } from '@mp1/shared';
 
 import type { SqlExecutor } from './executor';
 import {
   ACKNOWLEDGE_ALARM,
+  ASSETS_WITH_OPEN_TREND_NOTE,
+  CONFIRM_SUGGESTION,
   COUNT_ALARMS_IN_WINDOW,
+  DELETE_STANDING_SUGGESTIONS,
+  DISMISS_SUGGESTION,
+  FIND_SUGGESTION,
+  INSERT_SUGGESTION,
+  insertSuggestionParams,
+  LAST_DISMISSED_SUGGESTIONS,
+  LIST_SUGGESTIONS,
+  LOCK_STANDING_SUGGESTION,
+  toSuggestion,
+  type SuggestionRow,
   DELETE_GRADE_CHANGE_REELS,
   DELETE_HANDOVER,
   DELETE_NOTE_EVIDENCE,
@@ -93,6 +107,7 @@ import type {
   RoundFilter,
   SetpointFilter,
   ShiftFilter,
+  SuggestionFilter,
 } from './operations-repository';
 
 /**
@@ -528,4 +543,149 @@ export async function countAlarmsInWindow(sql: SqlExecutor, from: Date, to: Date
     to.toISOString(),
   ]);
   return rows[0]?.count ?? 0;
+}
+
+// ---------------------------------------------------------- nota sugerida
+
+/**
+ * Substitui as sugestões em pé pelas que a conta de agora produziu.
+ *
+ * Apagar e inserir, numa transação, e não casar linha por linha: a sugestão em
+ * pé é uma **projeção do arquivo**, e o que vale é sempre a última conta. É
+ * isso que faz a retomada em pedaços deixar o mesmo banco que a retomada de uma
+ * vez — qualquer linha intermediária que uma retomada anterior tenha criado sai
+ * na próxima.
+ *
+ * As decididas ficam: elas são a auditoria, e o `do nothing` do `insert` impede
+ * que uma conta nova apague o motivo que alguém escreveu.
+ */
+export async function replaceStandingSuggestions(
+  sql: SqlExecutor,
+  suggestions: readonly NoteSuggestion[],
+): Promise<number> {
+  await sql.transaction(async (tx) => {
+    await tx.rows(DELETE_STANDING_SUGGESTIONS);
+    for (const suggestion of suggestions) {
+      await tx.rows(INSERT_SUGGESTION, insertSuggestionParams(suggestion));
+    }
+  });
+
+  return suggestions.length;
+}
+
+export async function listNoteSuggestions(
+  sql: SqlExecutor,
+  filter: SuggestionFilter = {},
+): Promise<NoteSuggestion[]> {
+  const rows = await sql.rows<SuggestionRow>(LIST_SUGGESTIONS, [
+    filter.status ?? null,
+    filter.assetTag ?? null,
+    limitOf(filter.limit),
+  ]);
+  return rows.map(toSuggestion);
+}
+
+export async function findNoteSuggestion(
+  sql: SqlExecutor,
+  id: string,
+): Promise<NoteSuggestion | null> {
+  const rows = await sql.rows<SuggestionRow>(FIND_SUGGESTION, [id]);
+  const row = rows[0];
+  return row ? toSuggestion(row) : null;
+}
+
+/**
+ * Confirma: grava a nota e marca a sugestão, na mesma transação.
+ *
+ * A nota é montada por quem chama — `noteFromSuggestion`, no `shared` — porque
+ * é lá que mora a regra de o que a nota herda da sugestão. Aqui ficam as duas
+ * escritas, que não podem acontecer pela metade: uma nota sem a sugestão
+ * marcada voltaria a ser sugerida na retomada seguinte, e uma sugestão
+ * confirmada sem nota não teria o que a manutenção faz.
+ *
+ * Devolve `null` quando a sugestão não existe **ou** já foi decidida — e quem
+ * chamou distingue os dois casos com `findNoteSuggestion`.
+ */
+export async function confirmNoteSuggestion(
+  sql: SqlExecutor,
+  args: {
+    readonly id: string;
+    readonly note: MaintenanceNote;
+    readonly by: string;
+    readonly at: Date;
+    readonly reason: string | null;
+  },
+): Promise<{ suggestion: NoteSuggestion; note: MaintenanceNote } | null> {
+  return sql.transaction(async (tx) => {
+    /**
+     * A ordem é: travar, gravar a nota, marcar a sugestão.
+     *
+     * `note_number` aponta para `maintenance_note`, então marcar antes de
+     * gravar a nota violaria a chave estrangeira. E gravar a nota antes de
+     * conferir que a sugestão está em pé deixaria uma nota órfã quando o
+     * segundo clique perdesse a corrida — daí o `for update`, que confere e
+     * segura a linha até o fim da transação.
+     */
+    const standing = await tx.rows<SuggestionRow>(LOCK_STANDING_SUGGESTION, [args.id]);
+    if (!standing[0]) return null;
+
+    await upsertMaintenanceNotes(tx, [args.note]);
+
+    const updated = await tx.rows<SuggestionRow>(CONFIRM_SUGGESTION, [
+      args.id,
+      args.at.toISOString(),
+      args.by,
+      args.reason,
+      args.note.number,
+    ]);
+
+    const row = updated[0];
+    if (!row) return null;
+
+    return { suggestion: toSuggestion(row), note: args.note };
+  });
+}
+
+/** Dispensa com motivo. O motivo é obrigatório, e o banco também cobra. */
+export async function dismissNoteSuggestion(
+  sql: SqlExecutor,
+  args: {
+    readonly id: string;
+    readonly by: string;
+    readonly at: Date;
+    readonly reason: string;
+  },
+): Promise<NoteSuggestion | null> {
+  const rows = await sql.rows<SuggestionRow>(DISMISS_SUGGESTION, [
+    args.id,
+    args.at.toISOString(),
+    args.by,
+    args.reason,
+  ]);
+  const row = rows[0];
+  return row ? toSuggestion(row) : null;
+}
+
+/** Os mancais com nota de tendência ainda aberta. */
+export async function assetsWithOpenTrendNote(sql: SqlExecutor): Promise<string[]> {
+  const rows = await sql.rows<{ asset_tag: string }>(ASSETS_WITH_OPEN_TREND_NOTE);
+  return rows.map((row) => row.asset_tag);
+}
+
+/** A última dispensa de cada mancal: a medição e o valor em que alguém disse não. */
+export async function lastDismissedSuggestions(
+  sql: SqlExecutor,
+): Promise<Map<string, { measure: SuggestionMeasure; level: number }>> {
+  const rows = await sql.rows<{
+    asset_tag: string;
+    measure: string;
+    level: number | string;
+  }>(LAST_DISMISSED_SUGGESTIONS);
+
+  return new Map(
+    rows.map((row) => [
+      row.asset_tag,
+      { measure: row.measure as SuggestionMeasure, level: Number(row.level) },
+    ]),
+  );
 }

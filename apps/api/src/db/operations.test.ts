@@ -891,38 +891,21 @@ for (const driver of DRIVERS) {
 }
 
 /**
- * As enumerações estão escritas duas vezes: como constante em `@mp1/shared` e
- * como `check` na migration. Isso é de propósito — o banco não pode depender do
- * código para recusar o que é inválido — mas é duplicação, e duplicação some de
- * vista.
+ * As constantes numéricas do SQL, lidas do texto da migration.
  *
- * Este teste lê a migration e cobra que as duas listas sejam a mesma. Mudar a
- * constante sem mudar o SQL quebra aqui, e não em produção.
+ * As **enumerações** saíram daqui na Fase 6, para `schema-enums.test.ts`: ler o
+ * texto de `003` deixou de responder a pergunta no dia em que `006` fez
+ * `alter table … add constraint note_origin_valid` com a origem `tendência`. O
+ * arquivo de 003 continua dizendo três valores, e o banco passou a aceitar
+ * quatro — um teste sobre o texto diria que o código divergiu do banco quando o
+ * que divergiu foi o arquivo que ele estava lendo. O teste novo pergunta ao
+ * esquema, depois das migrations.
+ *
+ * A janela dos precursores fica: é um número, não uma lista, e nenhuma
+ * migration a redefine.
  */
-describe('as enumerações do SQL batem com as de @mp1/shared', () => {
+describe('as constantes do SQL batem com as de @mp1/shared', () => {
   const migration = fileURLToPath(new URL('./migrations/003_operations.sql', import.meta.url));
-
-  const casos: readonly { readonly constraint: string; readonly values: readonly string[] }[] = [
-    { constraint: 'shift_letter_valid', values: SHIFT_LETTERS },
-    { constraint: 'reel_disposition_valid', values: REEL_DISPOSITIONS },
-    { constraint: 'round_point_noise_valid', values: NOISE_LEVELS },
-    { constraint: 'round_point_leak_valid', values: LEAK_STATES },
-    { constraint: 'note_origin_valid', values: NOTE_ORIGINS },
-    { constraint: 'note_status_valid', values: NOTE_STATUSES },
-    { constraint: 'evidence_kind_valid', values: EVIDENCE_KINDS },
-    { constraint: 'alarm_priority_valid', values: ALARM_PRIORITIES },
-    { constraint: 'alarm_state_valid', values: ALARM_STATES },
-  ];
-
-  it.each(casos)('$constraint', async ({ constraint, values }) => {
-    const sql = await readFile(migration, 'utf8');
-    const bloco = new RegExp(`constraint ${constraint} check \\(([^)]*)\\)`, 's').exec(sql);
-
-    expect(bloco, `restrição ${constraint} não encontrada na migration`).not.toBeNull();
-
-    const noSql = [...(bloco?.[1] ?? '').matchAll(/'([^']*)'/g)].map((m) => m[1]);
-    expect([...noSql].sort()).toEqual([...values].map(String).sort());
-  });
 
   it('usa a janela de PRECURSOR_WINDOW_S no check dos sinais', async () => {
     const sql = await readFile(migration, 'utf8');

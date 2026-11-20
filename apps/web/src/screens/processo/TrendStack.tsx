@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import type { Alarm, SetpointChange } from '@mp1/shared';
 
 import type { DataGateway } from '../../api/gateway';
@@ -39,6 +39,9 @@ const WINDOW_LABEL: Readonly<Record<TrendWindow, string>> = {
 };
 
 export const MAX_TREND_TAGS = 4;
+
+/** O `gap-1.5` do cabeçalho, em pixels, que entra na conta do que cabe. */
+const GAP_PX = 6;
 
 export interface TrendStackProps {
   readonly gateway: DataGateway;
@@ -96,7 +99,7 @@ export function TrendStack(props: TrendStackProps) {
                 onClick={() => {
                   setWindow(key);
                 }}
-                className={`h-7 px-3 text-[12px] ${index > 0 ? 'border-l border-line-strong' : ''} ${
+                className={`h-6 px-1.5 text-[11px] ${index > 0 ? 'border-l border-line-strong' : ''} ${
                   window === key
                     ? 'bg-[#1b2a44] text-[#cfe0ff]'
                     : 'text-fg-2 hover:bg-hover hover:text-fg'
@@ -137,35 +140,129 @@ export function TrendStack(props: TrendStackProps) {
  * da área que é o painel: o gráfico. No cabeçalho elas convivem com os botões
  * de janela, que são o outro controle do mesmo bloco — e a área de desenho
  * começa logo abaixo da borda.
+ *
+ * ## Por que medir, em vez de escolher um número
+ *
+ * A linha tem 493 px de conteúdo e 402 px de espaço quando a janela é de
+ * 1440 px — e sobra folga quando é de 1920. Um "mostre duas e esconda o resto"
+ * escondia TAG à toa na tela larga e ainda estourava na estreita, porque o
+ * tamanho de um chip depende do nome da TAG (`JI-111` e `PDIC-521` não medem o
+ * mesmo). Então a conta é feita com as larguras reais: uma régua invisível
+ * desenha todas as peças no tamanho natural, e a linha mostra quantas couberem.
+ *
+ * A régua existe para a medida não depender do que está na tela. Medir as peças
+ * visíveis faria o resultado mudar o layout, que mudaria o resultado — esconder
+ * uma TAG sobraria espaço, que traria a TAG de volta, que faltaria espaço.
  */
 function Escolhidas({ tags, alarms, options, onAdd, onRemove }: TrendStackProps) {
   const [adding, setAdding] = useState(false);
+  const [abertas, setAbertas] = useState(false);
+  const [cabem, setCabem] = useState(tags.length);
+  const caixa = useRef<HTMLDivElement>(null);
+  const régua = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const caixaEl = caixa.current;
+    const réguaEl = régua.current;
+    if (!caixaEl || !réguaEl) return;
+
+    const medir = (): void => {
+      const peças = [...réguaEl.children].map((peça) => (peça as HTMLElement).offsetWidth);
+      // a régua desenha, nesta ordem: as TAGs, o "+N" e o "+ TAG"
+      const maisN = peças.at(-2) ?? 0;
+      const addTag = peças.at(-1) ?? 0;
+      const larguras = peças.slice(0, -2);
+
+      const reservado = addTag + GAP_PX;
+      let usado = 0;
+      let quantas = 0;
+
+      for (const [índice, largura] of larguras.entries()) {
+        const sobram = larguras.length - índice - 1;
+        // o "+N" só ocupa lugar se ainda houver TAG escondida depois desta
+        const comMais = sobram > 0 ? maisN + GAP_PX : 0;
+        if (reservado + usado + largura + comMais > caixaEl.clientWidth) break;
+        usado += largura + GAP_PX;
+        quantas += 1;
+      }
+
+      // uma sempre aparece: um cabeçalho só com "+3" não diz o que está no gráfico
+      setCabem(Math.max(1, quantas));
+    };
+
+    medir();
+
+    // o jsdom não tem ResizeObserver, e sem layout não haveria o que observar
+    if (typeof ResizeObserver === 'undefined') return;
+    const observador = new ResizeObserver(medir);
+    observador.observe(caixaEl);
+    return () => {
+      observador.disconnect();
+    };
+  }, [tags]);
+
+  const visíveis = tags.slice(0, cabem);
+  const escondidas = tags.slice(cabem);
+  // a lista aberta some sozinha quando a janela cresce e todas voltam a caber
+  const aberta = abertas && escondidas.length > 0;
+
+  const chip = (tag: string) => (
+    <Chip
+      key={tag}
+      tag={tag}
+      alarm={alarms.some((item) => item.tag === tag)}
+      onRemove={() => {
+        onRemove(tag);
+      }}
+    />
+  );
 
   return (
-    <>
-      {tags.map((tag) => {
-        const alarm = alarms.some((item) => item.tag === tag);
-        return (
-          <span
-            key={tag}
-            className={`inline-flex h-6 shrink-0 items-center gap-1 border px-1.5 font-mono text-[11px] ${
-              alarm ? 'border-alarm-2 text-alarm-2' : 'border-line-strong text-fg'
-            }`}
-          >
-            {tag}
-            <button
-              type="button"
-              aria-label={`Tirar ${tag} da tendência`}
-              onClick={() => {
-                onRemove(tag);
-              }}
-              className="text-fg-3 hover:text-fg"
+    <div
+      ref={caixa}
+      className="relative flex min-w-0 flex-1 items-center justify-end gap-1.5 overflow-hidden"
+    >
+      {/* a régua: as mesmas peças, no tamanho natural, fora da vista */}
+      {/*
+        `inert` além de `aria-hidden`: a régua tem botões de verdade dentro, e um
+        botão invisível no caminho do Tab é pior do que não medir nada.
+      */}
+      <div
+        ref={régua}
+        inert
+        aria-hidden="true"
+        className="pointer-events-none invisible absolute top-0 left-0 flex gap-1.5"
+      >
+        {tags.map((tag) => (
+          <Chip key={tag} tag={tag} alarm={false} onRemove={() => undefined} />
+        ))}
+        <Mais quantas={tags.length} aberta={false} onToggle={() => undefined} />
+        <AddTag cheio={false} onClick={() => undefined} />
+      </div>
+
+      {visíveis.map((tag) => chip(tag))}
+
+      {escondidas.length > 0 ? (
+        <span className="relative flex shrink-0 items-center">
+          <Mais
+            quantas={escondidas.length}
+            aberta={aberta}
+            onToggle={() => {
+              setAbertas((valor) => !valor);
+            }}
+          />
+          {aberta ? (
+            <div
+              role="dialog"
+              aria-label="TAGs da tendência"
+              className="absolute top-7 right-0 z-30 flex w-44 flex-col gap-1 border border-line-strong bg-chrome p-2 shadow-[0_8px_24px_rgba(0,0,0,0.45)]"
             >
-              ×
-            </button>
-          </span>
-        );
-      })}
+              {escondidas.map((tag) => chip(tag))}
+            </div>
+          ) : null}
+        </span>
+      ) : null}
+
       {tags.length < MAX_TREND_TAGS ? (
         adding ? (
           <select
@@ -191,18 +288,82 @@ function Escolhidas({ tags, alarms, options, onAdd, onRemove }: TrendStackProps)
               ))}
           </select>
         ) : (
-          <button
-            type="button"
+          <AddTag
+            cheio={false}
             onClick={() => {
               setAdding(true);
             }}
-            className="h-6 shrink-0 border border-dashed border-action px-1.5 font-mono text-[11px] text-action hover:text-action-hover"
-          >
-            + TAG
-          </button>
+          />
         )
       ) : null}
-    </>
+    </div>
+  );
+}
+
+function Chip({
+  tag,
+  alarm,
+  onRemove,
+}: {
+  readonly tag: string;
+  readonly alarm: boolean;
+  readonly onRemove: () => void;
+}) {
+  return (
+    <span
+      className={`inline-flex h-6 shrink-0 items-center gap-1 border px-1.5 font-mono text-[11px] ${
+        alarm ? 'border-alarm-2 text-alarm-2' : 'border-line-strong text-fg'
+      }`}
+    >
+      {tag}
+      <button
+        type="button"
+        aria-label={`Tirar ${tag} da tendência`}
+        onClick={onRemove}
+        className="text-fg-3 hover:text-fg"
+      >
+        ×
+      </button>
+    </span>
+  );
+}
+
+/** O "+N" das TAGs que não couberam na linha. */
+function Mais({
+  quantas,
+  aberta,
+  onToggle,
+}: {
+  readonly quantas: number;
+  readonly aberta: boolean;
+  readonly onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-expanded={aberta}
+      aria-label={`Mais ${String(quantas)} TAG(s) na tendência`}
+      title="As TAGs que não couberam na linha"
+      onClick={onToggle}
+      className={`h-6 shrink-0 border px-1.5 font-mono text-[11px] ${
+        aberta ? 'border-action text-action' : 'border-line-strong text-fg-2 hover:text-fg'
+      }`}
+    >
+      +{quantas}
+    </button>
+  );
+}
+
+function AddTag({ cheio, onClick }: { readonly cheio: boolean; readonly onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      disabled={cheio}
+      onClick={onClick}
+      className="h-6 shrink-0 border border-dashed border-action px-1.5 font-mono text-[11px] text-action hover:text-action-hover"
+    >
+      + TAG
+    </button>
   );
 }
 

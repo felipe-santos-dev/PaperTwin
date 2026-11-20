@@ -65,8 +65,15 @@ export function Panel({
       <header className="mb-3 flex min-h-6 items-baseline gap-3">
         <Heading className="shrink-0 text-[14px] font-semibold text-fg">{title}</Heading>
         {context ? <div className="min-w-0 truncate text-[12px] text-fg-2">{context}</div> : null}
-        {/* o aside encolhe e quebra em vez de vazar: a Tendência põe as TAGs aqui */}
-        <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-x-2 gap-y-1 text-[11px] text-fg-3">
+        {/*
+          O aside toma o espaço que sobra, numa linha só.
+
+          `flex-1` em vez de largura de conteúdo porque a Tendência põe as TAGs
+          aqui e precisa saber quanto espaço tem para decidir quantas mostrar —
+          uma caixa do tamanho do conteúdo responderia o tamanho do conteúdo, e
+          a conta andaria em círculo.
+        */}
+        <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2 text-[11px] text-fg-3">
           {aside}
           <HelpButton help={help} name={name} />
         </div>

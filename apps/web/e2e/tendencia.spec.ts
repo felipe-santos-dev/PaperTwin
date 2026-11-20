@@ -82,22 +82,96 @@ test('desenha arquivada, autônoma e calculada na leitura', async ({ page }) => 
  * As TAGs escolhidas moram no cabeçalho, com os botões de janela.
  *
  * No corpo elas comiam uma linha inteira da área que é o painel: o gráfico.
+ * E no cabeçalho elas têm de caber numa linha só — duas linhas devolveriam ao
+ * gráfico metade do que a mudança lhe deu.
  */
-test('as TAGs escolhidas e o "+ TAG" ficam na linha do título', async ({ page }) => {
+const UMA_LINHA = 32;
+
+for (const [largura, altura] of [
+  [1920, 1080],
+  [1440, 900],
+] as const) {
+  test(`em ${String(largura)}, as TAGs e o "+ TAG" cabem na linha do título`, async ({ page }) => {
+    await page.setViewportSize({ width: largura, height: altura });
+    await page.route('**://127.0.0.1:3333/**', (route) => route.abort());
+    await page.goto('/#processo');
+
+    const cabeçalho = tendencia(page).locator('header');
+    await expect(cabeçalho).toBeVisible({ timeout: 60_000 });
+
+    await expect(cabeçalho.getByRole('button', { name: /^Tirar / }).first()).toBeVisible();
+    await expect(cabeçalho.getByRole('button', { name: '+ TAG' })).toBeVisible();
+    await expect(cabeçalho.getByRole('group', { name: 'Janela da tendência' })).toBeVisible();
+
+    const caixa = await cabeçalho.boundingBox();
+    expect(caixa?.height ?? 99, 'o cabeçalho quebrou em duas linhas').toBeLessThanOrEqual(
+      UMA_LINHA,
+    );
+
+    // e nada disso vaza para fora do painel
+    const painel = await tendencia(page).boundingBox();
+    expect(caixa?.width ?? 0).toBeLessThanOrEqual((painel?.width ?? 0) + 1);
+  });
+}
+
+/**
+ * O que não cabe vira "+N", e o "+N" abre a lista.
+ *
+ * Esconder uma TAG sem dizer que ela existe seria pior do que a segunda linha:
+ * o gráfico dela continua desenhado embaixo, e o cabeçalho estaria mentindo
+ * sobre o que está na tela.
+ */
+test('as TAGs que não cabem viram "+N", e o "+N" abre a lista', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
   await page.route('**://127.0.0.1:3333/**', (route) => route.abort());
   await page.goto('/#processo');
 
   const cabeçalho = tendencia(page).locator('header');
   await expect(cabeçalho).toBeVisible({ timeout: 60_000 });
 
-  await expect(cabeçalho.getByRole('button', { name: /^Tirar / }).first()).toBeVisible();
-  await expect(cabeçalho.getByRole('button', { name: '+ TAG' })).toBeVisible();
-  await expect(cabeçalho.getByRole('group', { name: 'Janela da tendência' })).toBeVisible();
+  // os gráficos primeiro: é com eles que a contagem do cabeçalho tem de bater
+  await expect(tendencia(page).locator('svg[aria-label^="Tendência de"]').first()).toBeVisible({
+    timeout: 60_000,
+  });
 
-  // e nada disso vaza para fora do painel
-  const painel = await tendencia(page).boundingBox();
-  const caixa = await cabeçalho.boundingBox();
-  expect(caixa?.width ?? 0).toBeLessThanOrEqual((painel?.width ?? 0) + 1);
+  const mais = cabeçalho.getByRole('button', { name: /^Mais \d+ TAG/ });
+  await expect(mais).toBeVisible();
+
+  const naLinha = await cabeçalho.getByRole('button', { name: /^Tirar / }).count();
+  await mais.click();
+
+  const lista = page.getByRole('dialog', { name: 'TAGs da tendência' });
+  await expect(lista).toBeVisible();
+  expect(await lista.getByRole('button', { name: /^Tirar / }).count()).toBeGreaterThan(0);
+
+  // a soma bate: o que está na linha mais o que está na lista é o que o gráfico desenha
+  const escondidas = await lista.getByRole('button', { name: /^Tirar / }).count();
+  const gráficos = await tendencia(page).locator('svg[aria-label^="Tendência de"]').count();
+  expect(naLinha + escondidas).toBe(gráficos);
+});
+
+/**
+ * Em 1920 cabem todas, e aí o "+N" não deve existir.
+ *
+ * Um "+0" ou um botão vazio na tela larga seria o sintoma de a conta estar
+ * chutando em vez de medir.
+ */
+test('em 1920 não sobra "+N": todas cabem', async ({ page }) => {
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await page.route('**://127.0.0.1:3333/**', (route) => route.abort());
+  await page.goto('/#processo');
+
+  const cabeçalho = tendencia(page).locator('header');
+  await expect(cabeçalho.getByRole('button', { name: '+ TAG' })).toBeVisible({ timeout: 60_000 });
+  await expect(tendencia(page).locator('svg[aria-label^="Tendência de"]').first()).toBeVisible({
+    timeout: 60_000,
+  });
+
+  await expect(cabeçalho.getByRole('button', { name: /^Mais \d+ TAG/ })).toHaveCount(0);
+
+  const naLinha = await cabeçalho.getByRole('button', { name: /^Tirar / }).count();
+  const gráficos = await tendencia(page).locator('svg[aria-label^="Tendência de"]').count();
+  expect(naLinha).toBe(gráficos);
 });
 
 /**

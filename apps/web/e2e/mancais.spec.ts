@@ -101,6 +101,14 @@ test('na cena, clicar num mancal escolhe ele na lista', async ({ page }) => {
 
   const canvas = page.getByRole('region', { name: 'Máquina · mancais' }).locator('canvas');
   await expect(canvas).toBeVisible({ timeout: 60_000 });
+  /**
+   * A coluna rola quando o mancal tem nota sugerida.
+   *
+   * Com o cartão da Fase 6 entre o detalhe e a cena, a cena pode começar
+   * abaixo da dobra — e `screenPointOf` devolve coordenadas de viewport, que só
+   * servem para clicar depois que ela está à vista. É o que alguém faria.
+   */
+  await canvas.scrollIntoViewIfNeeded();
   await page.waitForFunction(() => Boolean(window.__twin), undefined, { timeout: 60_000 });
   // o voo da câmera leva 1,4 s
   await page.waitForTimeout(2200);

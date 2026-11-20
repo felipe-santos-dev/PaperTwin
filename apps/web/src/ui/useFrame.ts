@@ -26,6 +26,8 @@ const SHIFT_MS = 8 * 60 * 60 * 1000;
 export function useFrame(gateway: DataGateway | null): {
   top: FrameTop;
   sections: SectionState[];
+  /** Quantas notas sugeridas esperam decisão — o contador da moldura. */
+  suggested: number;
 } {
   const enabled = gateway !== null;
 
@@ -56,6 +58,24 @@ export function useFrame(gateway: DataGateway | null): {
       (signal) => {
         if (!gateway) return Promise.reject(new Error('fonte não escolhida'));
         return gateway.shifts({ limit: 3 }, signal);
+      },
+      [gateway],
+    ),
+    { enabled },
+  );
+
+  /**
+   * As sugestões em pé, na moldura.
+   *
+   * É a quarta busca da moldura, e ela está aqui pelo mesmo motivo das outras
+   * três: o contador aparece em todas as telas. A nota sugerida não serve para
+   * nada se só quem abre Mancais souber que ela existe.
+   */
+  const suggestions = useResource(
+    useCallback(
+      (signal) => {
+        if (!gateway) return Promise.reject(new Error('fonte não escolhida'));
+        return gateway.noteSuggestions({ status: 'sugerida', limit: 100 }, signal);
       },
       [gateway],
     ),
@@ -102,8 +122,12 @@ export function useFrame(gateway: DataGateway | null): {
       clock: ts ? { time: clockTime(ts), date: weekdayDate(ts) } : null,
     };
 
-    return { top, sections: sectionStates(standing) };
-  }, [values.data, alarms.data, shifts.data]);
+    return {
+      top,
+      sections: sectionStates(standing),
+      suggested: suggestions.data?.count ?? 0,
+    };
+  }, [values.data, alarms.data, shifts.data, suggestions.data]);
 }
 
 /** O turno em curso, ou o mais recente se nenhum estiver aberto. */

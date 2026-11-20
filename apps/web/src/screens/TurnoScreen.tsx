@@ -141,20 +141,44 @@ function ShiftBody({
           to: new Date(Math.min(now, window.to)),
           buckets: 240,
         };
-        const [speed, prod, reels, breaks, grades, setpoints, alarms, holds, fixed, notes] =
-          await Promise.all([
-            gateway.tagTrend(SPEED_TAG, query, signal),
-            gateway.tagTrend(PRODUCTION_TAG, query, signal),
-            gateway.reels({ limit: 40 }, signal),
-            gateway.webBreaks({ limit: 50 }, signal),
-            gateway.gradeChanges({ limit: 20 }, signal),
-            gateway.setpointChanges({ limit: 50 }, signal),
-            gateway.alarms({ limit: 200 }, signal),
-            gateway.reelHolds(signal),
-            gateway.fixedProcess(signal),
-            gateway.notes({ limit: 50 }, signal),
-          ]);
-        return { speed, prod, reels, breaks, grades, setpoints, alarms, holds, fixed, notes };
+        const [
+          speed,
+          prod,
+          reels,
+          breaks,
+          grades,
+          setpoints,
+          alarms,
+          holds,
+          fixed,
+          notes,
+          suggestions,
+        ] = await Promise.all([
+          gateway.tagTrend(SPEED_TAG, query, signal),
+          gateway.tagTrend(PRODUCTION_TAG, query, signal),
+          gateway.reels({ limit: 40 }, signal),
+          gateway.webBreaks({ limit: 50 }, signal),
+          gateway.gradeChanges({ limit: 20 }, signal),
+          gateway.setpointChanges({ limit: 50 }, signal),
+          gateway.alarms({ limit: 200 }, signal),
+          gateway.reelHolds(signal),
+          gateway.fixedProcess(signal),
+          gateway.notes({ limit: 50 }, signal),
+          gateway.noteSuggestions({ status: 'sugerida', limit: 20 }, signal),
+        ]);
+        return {
+          speed,
+          prod,
+          reels,
+          breaks,
+          grades,
+          setpoints,
+          alarms,
+          holds,
+          fixed,
+          notes,
+          suggestions,
+        };
       },
       [gateway, window.from, window.to, now],
     ),
@@ -222,6 +246,7 @@ function ShiftBody({
             .filter((note) => note.status !== 'encerrada' && note.priority <= 2)
             .slice(0, 3),
           round: detail.rounds[0] ?? null,
+          suggestions: data.suggestions.suggestions,
           onOpenNote,
           onOpenTag,
         });

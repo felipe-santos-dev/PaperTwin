@@ -63,6 +63,14 @@ export interface ShellProps {
   readonly onArea: (area: string) => void;
   /** Um aviso que pede ação (a API voltou, por exemplo). */
   readonly banner?: ReactNode;
+  /**
+   * Contadores na navegação, por tela.
+   *
+   * Hoje um só: as notas sugeridas esperando decisão. Ele fica na moldura, e não
+   * na tela de Notas, porque quem está no Processo também precisa saber que a
+   * manutenção tem uma decisão parada — é o que faz o ciclo da Fase 6 fechar.
+   */
+  readonly badges?: Partial<Record<ScreenId, number>> | undefined;
   readonly children: ReactNode;
 }
 
@@ -76,11 +84,12 @@ export function Shell({
   area,
   onArea,
   banner,
+  badges,
   children,
 }: ShellProps) {
   return (
     <div className="grid h-full grid-cols-[56px_minmax(0,1fr)] grid-rows-[48px_64px_auto_minmax(0,1fr)] bg-base">
-      <NavRail screen={screen} go={go} />
+      <NavRail screen={screen} go={go} badges={badges} />
       <TopBar
         top={top}
         source={source}
@@ -120,9 +129,11 @@ export function Shell({
 function NavRail({
   screen,
   go,
+  badges,
 }: {
   readonly screen: ScreenId;
   readonly go: (id: ScreenId) => void;
+  readonly badges?: Partial<Record<ScreenId, number>> | undefined;
 }) {
   return (
     <nav
@@ -134,6 +145,7 @@ function NavRail({
       </div>
       {RAIL_SCREENS.map((item) => {
         const active = item.id === screen;
+        const count = badges?.[item.id] ?? 0;
         return (
           <button
             key={item.id}
@@ -142,10 +154,10 @@ function NavRail({
               go(item.id);
             }}
             aria-current={active ? 'page' : undefined}
-            aria-label={item.label}
+            aria-label={count > 0 ? `${item.label} (${String(count)})` : item.label}
             aria-keyshortcuts={item.key ?? undefined}
             title={`${item.label} (tecla ${item.key ?? '—'})`}
-            className={`flex h-13 w-14 shrink-0 flex-col items-center justify-center gap-0.5 border-l-2 transition-colors ${
+            className={`relative flex h-13 w-14 shrink-0 flex-col items-center justify-center gap-0.5 border-l-2 transition-colors ${
               active
                 ? 'border-action bg-hover text-fg'
                 : 'border-transparent text-fg-3 hover:bg-hover hover:text-fg'
@@ -157,6 +169,14 @@ function NavRail({
             <span aria-hidden="true" className="text-[10px]">
               {item.short}
             </span>
+            {count > 0 ? (
+              <span
+                aria-hidden="true"
+                className="absolute top-1 right-1 border border-alarm-3 bg-chrome px-1 font-mono text-[10px] leading-[14px] text-alarm-3"
+              >
+                {count}
+              </span>
+            ) : null}
           </button>
         );
       })}

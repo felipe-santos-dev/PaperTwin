@@ -10,6 +10,7 @@ import {
   type MaintenanceNote,
   type NotePriority,
   type NoteStatus,
+  type NoteSuggestion,
 } from '@mp1/shared';
 
 import type { DataGateway } from '../api/gateway';
@@ -69,24 +70,29 @@ export function NotasScreen({
   const notes = useResource(
     useCallback(
       async (signal: AbortSignal) => {
-        const [list, values] = await Promise.all([
+        const [list, values, suggested] = await Promise.all([
           gateway.notes({ limit: 100 }, signal),
           gateway.processValues({}, signal),
+          gateway.noteSuggestions({ status: 'sugerida', limit: 100 }, signal),
         ]);
-        return { notes: list.notes, now: Date.parse(values.ts) };
+        return {
+          notes: list.notes,
+          now: Date.parse(values.ts),
+          suggestions: suggested.suggestions,
+        };
       },
       [gateway],
     ),
-    { isEmpty: (data) => data.notes.length === 0 },
+    { isEmpty: (data) => data.notes.length === 0 && data.suggestions.length === 0 },
   );
 
   return (
     <ResourceState
       resource={notes}
       label="as notas"
-      emptyMessage="Nenhuma nota aberta. As notas nascem de alarme de mancal de prioridade alta ou crítica."
+      emptyMessage="Nenhuma nota aberta. As notas nascem de alarme de mancal de prioridade alta ou crítica, ou da tendência que a regra de manutenção propõe."
     >
-      {({ notes: list, now }) => {
+      {({ notes: list, now, suggestions }) => {
         const pick =
           list.find((note) => note.number === selected) ??
           list.find((note) => note.status !== 'encerrada') ??
@@ -104,7 +110,13 @@ export function NotasScreen({
                   <span className="font-mono text-fg">
                     {active.filter((note) => note.requiresShutdown).length}
                   </span>{' '}
-                  exigem parada
+                  exigem parada ·{' '}
+                  <span
+                    className={`font-mono ${suggestions.length > 0 ? 'text-alarm-3' : 'text-fg'}`}
+                  >
+                    {suggestions.length}
+                  </span>{' '}
+                  sugeridas
                 </span>
               }
               aside={
@@ -122,8 +134,36 @@ export function NotasScreen({
                   ))}
                 </span>
               }
-              bodyClassName="grid min-h-0 grid-cols-4 gap-2"
+              bodyClassName="grid min-h-0 grid-cols-5 gap-2"
             >
+              {/*
+                A coluna das sugeridas vem antes de "Aberta", porque é antes
+                dela que a sugestão está: ninguém abriu nada ainda. Decidir é no
+                mancal, onde está a tendência que propôs — aqui a coluna é a
+                fila de quem espera decisão.
+              */}
+              <section
+                aria-label="Sugeridas"
+                className="flex min-h-0 flex-col bg-base/60 outline outline-dashed outline-line-strong"
+              >
+                <header className="flex h-9 items-center justify-between border-b border-line px-2.5 text-[12px] font-semibold tracking-[0.05em] text-fg-2 uppercase">
+                  Sugeridas
+                  <span className="font-mono">{suggestions.length}</span>
+                </header>
+                <ul className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2">
+                  {suggestions.map((suggestion) => (
+                    <li key={suggestion.id}>
+                      <SuggestionCard suggestion={suggestion} onOpenBearing={onOpenBearing} />
+                    </li>
+                  ))}
+                  {suggestions.length === 0 ? (
+                    <li className="text-[11px] leading-snug text-fg-3">
+                      Nenhuma tendência de mancal passou da régua. A sugestão nasce quando a
+                      projeção cruza um limite dentro do prazo da regra.
+                    </li>
+                  ) : null}
+                </ul>
+              </section>
               {NOTE_STATUSES.map((status) => {
                 const cards = list.filter((note) => note.status === status);
                 return (
@@ -224,6 +264,55 @@ function NoteCard({
         <span>{when(closed && note.closedAt ? note.closedAt : note.createdAt, now)}</span>
       </span>
     </button>
+  );
+}
+
+/**
+ * O cartão da sugestão na fila.
+ *
+ * Sem número — ela não tem — e com a borda tracejada, que é o que distingue
+ * "proposta" de "nota" num quadro onde tudo o mais já foi aberto por alguém.
+ * Ele não decide: decidir é no mancal, com a tendência à vista.
+ */
+function SuggestionCard({
+  suggestion,
+  onOpenBearing,
+}: {
+  readonly suggestion: NoteSuggestion;
+  readonly onOpenBearing: (assetTag: string) => void;
+}) {
+  return (
+    <div
+      className="flex w-full flex-col gap-2 border border-t-[3px] border-dashed border-x-edge border-b-edge bg-cell px-3 pt-2 pb-2.5"
+      style={{ borderTopColor: PRIORITY_BAR[suggestion.priority] }}
+    >
+      <span className="flex items-center gap-2">
+        <span className="text-[11px] text-fg-3">sem número</span>
+        <span className="font-mono text-[11px] text-fg-3">P{suggestion.priority}</span>
+        <span className="ml-auto border border-line-strong px-1.5 text-[10px] text-fg-2">
+          tendência
+        </span>
+      </span>
+      <span className="text-[13px] leading-snug">{suggestion.symptom}</span>
+      <span className="flex items-center gap-2 font-mono text-[10px] text-fg-3">
+        {bearingShort(suggestion.assetTag)}
+        <span className="flex-1" />
+        {suggestion.requiresShutdown ? (
+          <span className="border border-fg-2 px-1.5 font-semibold tracking-[0.04em] text-fg">
+            PARADA
+          </span>
+        ) : null}
+      </span>
+      <button
+        type="button"
+        onClick={() => {
+          onOpenBearing(suggestion.assetTag);
+        }}
+        className="h-7 border border-action text-[12px] text-action-hover hover:bg-action/10"
+      >
+        Decidir no mancal
+      </button>
+    </div>
   );
 }
 

@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import type { Alarm, MaintenanceNote, Round } from '@mp1/shared';
+import type { Alarm, MaintenanceNote, NoteSuggestion, Round } from '@mp1/shared';
 
 import type { ReelHold } from '../../api/fixtures';
 import { fraction } from '../../ui/chart/scale';
@@ -476,6 +476,8 @@ export interface HandoverSources {
   } | null;
   readonly notes: readonly MaintenanceNote[];
   readonly round: Round | null;
+  /** As notas sugeridas que ainda esperam decisão. */
+  readonly suggestions: readonly NoteSuggestion[];
   readonly onOpenNote: (number: string) => void;
   readonly onOpenTag: (tag: string) => void;
 }
@@ -598,6 +600,23 @@ export function handoverItems(src: HandoverSources): HandoverItem[] {
         illustrative: false,
       });
     }
+  }
+
+  /**
+   * A sugestão entra como pendência, e é a primeira das de manutenção.
+   *
+   * Uma decisão parada é pendência de turno: ninguém abriu nada ainda, e quem
+   * assume precisa saber que a tendência de um mancal está esperando um sim ou
+   * um não. A nota já aberta vem depois — aquela já é trabalho da manutenção.
+   */
+  for (const suggestion of src.suggestions) {
+    items.push({
+      id: `suggestion-${suggestion.id}`,
+      title: <>Decidir a nota sugerida do mancal {bearingShort(suggestion.assetTag)}</>,
+      detail: suggestion.symptom,
+      chip: <Chip>sugerida · P{suggestion.priority}</Chip>,
+      illustrative: false,
+    });
   }
 
   for (const note of src.notes) {

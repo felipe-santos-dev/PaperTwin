@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { WhatIfOptions } from '@mp1/shared/simulation';
+import type { MaintenanceNote, NoteSuggestion } from '@mp1/shared';
 
 import type { DataGateway } from '../api/gateway';
 import type { ReelView, ShiftDetail, ShiftView } from '../api/process';
@@ -102,6 +103,9 @@ function gatewayOf(over: Partial<DataGateway> = {}): DataGateway {
     gradeChanges: vazio({ count: 0, gradeChanges: [] }),
     rounds: vazio({ count: 0, rounds: [] }),
     notes: vazio({ count: 0, notes: [] }),
+    noteSuggestions: vazio({ count: 0, suggestions: [] }),
+    confirmSuggestion: null,
+    dismissSuggestion: null,
     setpointChanges: vazio({ count: 0, changes: [] }),
     writeSetpoint: null,
     acknowledgeAlarm: null,
@@ -346,13 +350,167 @@ describe('Rondas', () => {
 });
 
 describe('Mancais', () => {
+  const mancaisProps = () => ({
+    assetTag: null,
+    onSelect: vi.fn(),
+    onOpenTag: vi.fn(),
+    onOpenNote: vi.fn(),
+  });
+
   it('explica o vazio sem carregar a cena', async () => {
-    render(
-      <MancaisScreen gateway={gatewayOf({ asset: falha })} assetTag={null} onSelect={vi.fn()} />,
-    );
+    render(<MancaisScreen gateway={gatewayOf({ asset: falha })} {...mancaisProps()} />);
 
     await waitFor(() => {
       expect(screen.getByRole('status')).toHaveTextContent(/Nenhuma leitura de mancal/);
+    });
+  });
+
+  /**
+   * O cartão da nota sugerida, que é a tela da Fase 6.
+   *
+   * O que os testes cobram é o que a fase promete: a nota vem preenchida e sem
+   * número, dispensar não passa sem motivo, e o instantâneo diz que não decide
+   * em vez de fingir que decidiu.
+   */
+  describe('nota sugerida', () => {
+    const resposta =
+      <T,>(value: T) =>
+      () =>
+        Promise.resolve(value);
+
+    const NOTA: MaintenanceNote = {
+      number: 'NM-000900',
+      assetTag: 'MP1-SEC-G4-CS23-MLC',
+      symptom: 'vibração acima da fronteira C→D',
+      priority: 1,
+      origin: 'tendência',
+      originRef: 'SG-1781265600-MP1-SEC-G4-CS23-MLC',
+      status: 'aberta',
+      requiresShutdown: true,
+      evidence: [],
+      createdAt: '2026-06-15T12:30:00Z',
+      closedAt: null,
+    };
+
+    const SUGESTÃO: NoteSuggestion = {
+      id: 'SG-1781265600-MP1-SEC-G4-CS23-MLC',
+      assetTag: 'MP1-SEC-G4-CS23-MLC',
+      trendStart: '2026-06-12T12:00:00Z',
+      measure: 'vibração',
+      symptom:
+        'vibração 5,21 mm/s (zona D), subindo 1,40 mm/s por dia: a projeção já passou a fronteira C→D de 4,5 mm/s',
+      priority: 1,
+      requiresShutdown: true,
+      daysToLimit: 0,
+      perDay: 1.4,
+      level: 5.21,
+      limit: 4.5,
+      samples: 72,
+      evidence: [
+        { kind: 'tendência', ref: 'VI-5123B', label: 'janela da tendência com a projeção' },
+        { kind: 'alarme', ref: 'AL-1', label: 'alarme H de VI-5123B' },
+      ],
+      at: '2026-06-15T12:00:00Z',
+      status: 'sugerida',
+      decidedAt: null,
+      decidedBy: null,
+      reason: null,
+      noteNumber: null,
+    };
+
+    const comMancal = (over: Partial<DataGateway> = {}) =>
+      gatewayOf({
+        // os mancais sem TAG no catálogo vêm da rota do ativo, que aqui falha e é
+        // ignorada: o que o cartão precisa são os valores de processo
+        asset: falha,
+        processValues: resposta({
+          ts: '2026-06-15T12:00:00Z',
+          count: 1,
+          values: [{ tag: 'VI-5123B', value: 5.21, unit: 'mm/s', setpoint: null, ts: SUGESTÃO.at }],
+        }),
+        noteSuggestions: resposta({ count: 1, suggestions: [SUGESTÃO] }),
+        confirmSuggestion: vi.fn(() =>
+          Promise.resolve({
+            suggestion: { ...SUGESTÃO, status: 'confirmada' as const, noteNumber: 'NM-000900' },
+            note: NOTA,
+          }),
+        ),
+        dismissSuggestion: vi.fn(() =>
+          Promise.resolve({ suggestion: { ...SUGESTÃO, status: 'dispensada' as const } }),
+        ),
+        ...over,
+      });
+
+    it('mostra a nota pronta, sem número, com a prioridade e a parada', async () => {
+      render(<MancaisScreen gateway={comMancal()} {...mancaisProps()} />);
+
+      const cartão = await screen.findByRole('region', { name: 'Nota sugerida pela tendência' });
+      expect(cartão).toHaveTextContent('sem número até confirmar');
+      expect(cartão).toHaveTextContent('P1');
+      expect(cartão).toHaveTextContent('PARADA');
+      expect(cartão).toHaveTextContent('a projeção já passou');
+      expect(cartão).toHaveTextContent('já passou');
+      expect(cartão).toHaveTextContent('defeito que acelera chega antes');
+    });
+
+    it('a evidência da tendência abre a TAG', async () => {
+      const props = mancaisProps();
+      render(<MancaisScreen gateway={comMancal()} {...props} />);
+
+      const cartão = await screen.findByRole('region', { name: 'Nota sugerida pela tendência' });
+      await userEvent.click(within(cartão).getByRole('button', { name: 'VI-5123B' }));
+      expect(props.onOpenTag).toHaveBeenCalledWith('VI-5123B');
+    });
+
+    it('dispensar não passa sem motivo', async () => {
+      const portão = comMancal();
+      render(<MancaisScreen gateway={portão} {...mancaisProps()} />);
+
+      const cartão = await screen.findByRole('region', { name: 'Nota sugerida pela tendência' });
+      await userEvent.click(within(cartão).getByRole('button', { name: 'Dispensar' }));
+
+      const enviar = within(cartão).getByRole('button', { name: 'Confirmar a dispensa' });
+      expect(enviar).toBeDisabled();
+
+      await userEvent.type(
+        within(cartão).getByLabelText(/Motivo da dispensa/),
+        'já programado para agosto',
+      );
+      expect(enviar).toBeEnabled();
+      await userEvent.click(enviar);
+
+      expect(portão.dismissSuggestion).toHaveBeenCalledWith(SUGESTÃO.id, {
+        reason: 'já programado para agosto',
+        dismissedBy: 'operador',
+      });
+    });
+
+    it('confirmar abre a nota e diz o número', async () => {
+      const portão = comMancal();
+      render(<MancaisScreen gateway={portão} {...mancaisProps()} />);
+
+      const cartão = await screen.findByRole('region', { name: 'Nota sugerida pela tendência' });
+      await userEvent.click(within(cartão).getByRole('button', { name: 'Confirmar' }));
+
+      await waitFor(() => {
+        expect(within(cartão).getByRole('status')).toHaveTextContent('NM-000900');
+      });
+      expect(portão.confirmSuggestion).toHaveBeenCalledWith(SUGESTÃO.id, {
+        confirmedBy: 'operador',
+      });
+    });
+
+    it('no instantâneo os botões ficam desligados, com a razão', async () => {
+      render(
+        <MancaisScreen
+          gateway={comMancal({ confirmSuggestion: null, dismissSuggestion: null })}
+          {...mancaisProps()}
+        />,
+      );
+
+      const cartão = await screen.findByRole('region', { name: 'Nota sugerida pela tendência' });
+      expect(cartão).toHaveTextContent('não aceita decisão');
+      expect(within(cartão).getByRole('button', { name: 'Confirmar' })).toBeDisabled();
     });
   });
 });

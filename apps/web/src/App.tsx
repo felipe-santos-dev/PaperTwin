@@ -179,6 +179,7 @@ export function App() {
       screen={screen}
       go={go}
       top={frame.top}
+      badges={{ notas: frame.suggested }}
       sections={frame.sections}
       area={area}
       onArea={openArea}
@@ -318,6 +319,8 @@ function Screen(props: ScreenProps) {
           gateway={props.gateway}
           assetTag={props.bearing}
           onSelect={props.setBearing}
+          onOpenTag={props.openTrend}
+          onOpenNote={props.openNote}
         />
       );
     case 'rondas':

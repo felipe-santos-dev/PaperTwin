@@ -267,9 +267,16 @@ function Plot({
         )}
 
         <rect x={L} width={width - L - 4} y={T0} height={TH} fill="#161b22" />
+        {/*
+          A unidade vai **acima** da faixa, no vão entre os dois gráficos.
+
+          Dentro dela ela disputava a linha com o rótulo do limite de alarme:
+          com o limite em 95 e o topo do eixo em 100, os dois caem no mesmo
+          pixel e saem um por cima do outro. O vão de 16 px já estava ali.
+        */}
         <text
           x={0}
-          y={T0 + 8}
+          y={T0 - 4}
           fill="var(--color-fg-3)"
           fontSize={10}
           fontFamily="JetBrains Mono, monospace"

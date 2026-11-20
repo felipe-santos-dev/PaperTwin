@@ -4,8 +4,10 @@ import type {
   GradeChange,
   MaintenanceNote,
   NoteStatus,
+  NoteSuggestion,
   Round,
   SetpointChange,
+  SuggestionStatus,
   WebBreak,
 } from '@mp1/shared';
 
@@ -26,6 +28,7 @@ import {
   fetchReel,
   fetchReels,
   fetchRounds,
+  fetchNoteSuggestions,
   fetchSetpointChanges,
   fetchShift,
   fetchShifts,
@@ -34,8 +37,12 @@ import {
   fetchTagTrend,
   fetchBreakReplay,
   fetchWebBreaks,
+  confirmNoteSuggestion,
+  dismissNoteSuggestion,
   writeSetpoint,
   type AlarmList,
+  type ConfirmBody,
+  type SuggestionQuery,
   type BreakReplayView,
   type AlarmQuery,
   type ProcessValues,
@@ -137,6 +144,39 @@ export interface DataGateway extends FixtureRoutes {
     signal?: AbortSignal,
   ): Promise<{ count: number; changes: readonly SetpointChange[] }>;
 
+  /**
+   * As notas sugeridas pela tendência dos mancais.
+   *
+   * A **leitura** existe no instantâneo: a sugestão é derivada do arquivo, e o
+   * gerador a colhe como colhe as outras listas. O que não existe lá é decidir.
+   */
+  noteSuggestions(
+    filter?: { status?: SuggestionStatus; assetTag?: string; limit?: number },
+    signal?: AbortSignal,
+  ): Promise<{ count: number; suggestions: readonly NoteSuggestion[] }>;
+
+  /**
+   * Confirmar e dispensar são `null` quando a fonte não aceita escrita.
+   *
+   * Mesma honestidade da escrita de setpoint: um instantâneo que aceitasse a
+   * confirmação mostraria a nota criada e a perderia no próximo carregamento,
+   * sem nenhuma explicação.
+   */
+  readonly confirmSuggestion:
+    | ((
+        id: string,
+        body?: ConfirmBody,
+        signal?: AbortSignal,
+      ) => Promise<{ suggestion: NoteSuggestion; note: MaintenanceNote }>)
+    | null;
+  readonly dismissSuggestion:
+    | ((
+        id: string,
+        body: { reason: string; dismissedBy?: string },
+        signal?: AbortSignal,
+      ) => Promise<{ suggestion: NoteSuggestion }>)
+    | null;
+
   /** `null` quando a fonte não aceita escrita — é o caso do instantâneo. */
   readonly writeSetpoint:
     | ((
@@ -189,6 +229,10 @@ export const LIVE_GATEWAY: DataGateway = {
   gradeChanges: fetchGradeChanges,
   rounds: fetchRounds,
   notes: fetchNotes,
+  noteSuggestions: (filter?: SuggestionQuery, signal?: AbortSignal) =>
+    fetchNoteSuggestions(filter, signal),
+  confirmSuggestion: confirmNoteSuggestion,
+  dismissSuggestion: dismissNoteSuggestion,
   setpointChanges: fetchSetpointChanges,
   writeSetpoint,
   acknowledgeAlarm,

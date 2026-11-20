@@ -2,6 +2,7 @@ import {
   processVariable,
   type GradeChange,
   type MaintenanceNote,
+  type NoteSuggestion,
   type Round,
   type SetpointChange,
   type WebBreak,
@@ -255,6 +256,33 @@ const DEMO_ROUTES: Omit<DataGateway, keyof FixtureRoutes> = {
 
     return { count: rows.length, notes: capped(rows, filter.limit) };
   },
+
+  /**
+   * As sugestões vêm do instantâneo; decidir, não.
+   *
+   * A sugestão é leitura de arquivo como as outras listas — ela foi derivada
+   * quando o instantâneo foi gerado. Confirmar e dispensar ficam nulos, e a
+   * tela diz por quê: uma confirmação que não grava mostraria a nota criada e a
+   * perderia no próximo carregamento.
+   */
+  async noteSuggestions(filter = {}, signal) {
+    const all = await load<{ count: number; suggestions: readonly NoteSuggestion[] }>(
+      '/note-suggestions',
+      ['count', 'suggestions'],
+      signal,
+    );
+
+    const rows = all.suggestions.filter((suggestion) => {
+      if (filter.status !== undefined && suggestion.status !== filter.status) return false;
+      if (filter.assetTag !== undefined && suggestion.assetTag !== filter.assetTag) return false;
+      return true;
+    });
+
+    return { count: rows.length, suggestions: capped(rows, filter.limit) };
+  },
+
+  confirmSuggestion: null,
+  dismissSuggestion: null,
 
   async setpointChanges(filter = {}, signal) {
     const all = await load<{ count: number; changes: readonly SetpointChange[] }>(

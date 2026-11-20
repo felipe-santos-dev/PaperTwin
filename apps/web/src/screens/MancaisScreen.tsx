@@ -18,8 +18,9 @@ import { Panel } from '../ui/Panel';
 import { ResourceState } from '../ui/ResourceState';
 import { useResource } from '../ui/useResource';
 import { BearingDetail } from './mancais/BearingDetail';
-import { rank, visible, zoneOf, type BearingRow } from './mancais/derive';
+import { rank, TEMP_LIMITS, visible, zoneOf, type BearingRow } from './mancais/derive';
 import { MachinePanel } from './mancais/MachinePanel';
+import { Sugestao } from './mancais/Sugestao';
 
 /**
  * Mancais — os mancais monitorados, do pior para o melhor.
@@ -36,23 +37,34 @@ export interface MancaisScreenProps {
   /** O mancal aberto, pela tag do ativo, quando outra tela pediu. */
   readonly assetTag: string | null;
   readonly onSelect: (assetTag: string | null) => void;
+  /** Abre a tendência de uma TAG na tela de Processo. */
+  readonly onOpenTag: (tag: string) => void;
+  /** Abre a nota na tela de Notas. */
+  readonly onOpenNote: (number: string) => void;
 }
 
 const DRYER_LIMITS = isoLimitsOf(DRYER_BEARING_ISO);
 const DRYER = new Set<string>(DRYER_BEARING_TAGS.map((b) => b.assetTag));
 
-export function MancaisScreen({ gateway, assetTag, onSelect }: MancaisScreenProps) {
+export function MancaisScreen({
+  gateway,
+  assetTag,
+  onSelect,
+  onOpenTag,
+  onOpenNote,
+}: MancaisScreenProps) {
   const data = useResource(
     useCallback(
       async (signal: AbortSignal) => {
         const others = monitoredAssets(MP1).filter(
           (a) => a.kind === 'bearing' && !DRYER.has(a.tag),
         );
-        const [values, details, rounds, notes] = await Promise.all([
+        const [values, details, rounds, notes, suggestions] = await Promise.all([
           gateway.processValues({ area: 'mancais' }, signal),
           Promise.all(others.map((a) => gateway.asset(a.tag, signal).catch(() => null))),
           gateway.rounds({ limit: 20 }, signal),
           gateway.notes({ limit: 100 }, signal),
+          gateway.noteSuggestions({ status: 'sugerida', limit: 100 }, signal),
         ]);
         const byTag = new Map(values.values.map((v) => [v.tag, v.value]));
         const rows: BearingRow[] = [
@@ -87,7 +99,12 @@ export function MancaisScreen({ gateway, assetTag, onSelect }: MancaisScreenProp
             };
           }),
         ];
-        return { rows: rank(rows), rounds: rounds.rounds, notes: notes.notes };
+        return {
+          rows: rank(rows),
+          rounds: rounds.rounds,
+          notes: notes.notes,
+          suggestions: suggestions.suggestions,
+        };
       },
       [gateway],
     ),
@@ -100,10 +117,20 @@ export function MancaisScreen({ gateway, assetTag, onSelect }: MancaisScreenProp
       label="os mancais"
       emptyMessage="Nenhuma leitura de mancal. A simulação precisa rodar um intervalo."
     >
-      {({ rows, rounds, notes }) => {
+      {({ rows, rounds, notes, suggestions }) => {
         const current = rows.find((row) => row.assetTag === assetTag) ?? rows[0] ?? null;
         const zones = new Map<AssetTag, IsoZone>();
         for (const row of rows) if (row.zone) zones.set(row.assetTag, row.zone);
+        /**
+         * A sugestão do mancal escolhido, se houver.
+         *
+         * Ela entra entre o detalhe e o mapa, e empurra a altura mínima da
+         * coluna: em 1920 a tela continua sem rolar, e em 1440 a página rola,
+         * como já rola na Simulação.
+         */
+        const sugestão = current
+          ? (suggestions.find((item) => item.assetTag === current.assetTag) ?? null)
+          : null;
         return (
           <div className="grid h-[calc(100vh-152px)] min-h-[760px] grid-cols-[minmax(0,1100fr)_minmax(0,716fr)] gap-4">
             <Ranking
@@ -112,7 +139,16 @@ export function MancaisScreen({ gateway, assetTag, onSelect }: MancaisScreenProp
               selected={current?.assetTag ?? null}
               onSelect={onSelect}
             />
-            <div className="flex min-h-0 flex-col gap-4">
+            {/*
+              Com o cartão, a coluna rola sozinha em vez de espremer o mapa.
+
+              Três painéis numa coluna que cabia em dois: ou o mapa 2D encolhe
+              até não mostrar mais a máquina, ou a página inteira rola. A
+              terceira saída é a que a tela de Processo já usa — a coluna rola,
+              a moldura fica parada — e é a única em que o mapa continua
+              legível nas duas larguras.
+            */}
+            <div className="flex min-h-0 flex-col gap-4 overflow-y-auto">
               {current ? (
                 <BearingDetail
                   key={current.assetTag}
@@ -123,12 +159,23 @@ export function MancaisScreen({ gateway, assetTag, onSelect }: MancaisScreenProp
                   className="h-[470px] shrink-0"
                 />
               ) : null}
+              {sugestão ? (
+                <Sugestao
+                  key={sugestão.id}
+                  gateway={gateway}
+                  suggestion={sugestão}
+                  onOpenTag={onOpenTag}
+                  onOpenNote={onOpenNote}
+                  onDecided={data.reload}
+                  className="shrink-0"
+                />
+              ) : null}
               <MachinePanel
                 rows={rows}
                 selected={current?.assetTag ?? null}
                 onSelect={onSelect}
                 zones={zones}
-                className="min-h-0 flex-1"
+                className={sugestão ? 'h-[340px] shrink-0' : 'min-h-0 flex-1'}
               />
             </div>
           </div>
@@ -193,7 +240,7 @@ function Ranking({
             vibração
           </span>
           <span role="columnheader" className="truncate">
-            temperatura · 80 / 90 °C
+            temperatura · {TEMP_LIMITS.attention} / {TEMP_LIMITS.alarm} °C
           </span>
           <span role="columnheader" />
           <span role="columnheader">janela da API</span>

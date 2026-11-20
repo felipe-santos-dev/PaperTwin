@@ -1,6 +1,7 @@
 import {
+  BEARING_TEMP_LIMITS,
   classifyIsoZone,
-  estimateRemainingLife,
+  temperatureLife as temperatureLifeTo,
   type IsoLimits,
   type IsoZone,
   type RemainingLife,
@@ -49,22 +50,23 @@ export function visible(ranked: readonly BearingRow[]): BearingRow[] {
   );
 }
 
-/** Temperatura de atenção e de alarme do mancal, em °C (as marcas da barra). */
-export const TEMP_LIMITS = { attention: 80, alarm: 90 } as const;
+/**
+ * Temperatura de atenção e de alarme do mancal, em °C (as marcas da barra).
+ *
+ * Saem do **catálogo**, pelos limites `H` e `HH` da tag `TI-53nn`. Estavam
+ * escritas aqui à mão, em 80 e 90, enquanto o alarme dispara em 85 e 95 — a
+ * barra marcava um número e o alarme outro, na mesma tela. Agora é uma régua
+ * só, a mesma que a regra da nota sugerida usa.
+ */
+export const TEMP_LIMITS = BEARING_TEMP_LIMITS;
 
 /**
  * Projeção da temperatura até o limite de atenção.
  *
- * É a mesma regressão de `estimateRemainingLife`, aplicada às médias de
- * temperatura: a função recebe a série como se fosse vibração e o limite de
- * atenção no lugar da fronteira C→D. Assim a temperatura passa pelo mesmo
- * critério — uma reta que não é maior que o espalhamento não vira prazo.
+ * A conta mora no `shared`, junto da regra que vira sugestão: a tela e a regra
+ * não podem projetar a temperatura de dois jeitos, senão o cartão diria um
+ * prazo e o gráfico ao lado dele outro.
  */
 export function temperatureLife(buckets: readonly VibrationBucket[]): RemainingLife {
-  const asVibration = buckets.map((bucket) => ({ ...bucket, rmsAvgMmS: bucket.tempAvgC }));
-  return estimateRemainingLife(asVibration, {
-    aToB: TEMP_LIMITS.attention,
-    bToC: TEMP_LIMITS.attention,
-    cToD: TEMP_LIMITS.attention,
-  });
+  return temperatureLifeTo(buckets, TEMP_LIMITS.attention);
 }

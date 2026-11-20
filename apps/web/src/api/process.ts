@@ -10,10 +10,13 @@ import type {
   ArchiveReason,
   GradeChange,
   MaintenanceNote,
+  NotePriority,
   NoteStatus,
+  NoteSuggestion,
   ProcessVariable,
   Round,
   SetpointChange,
+  SuggestionStatus,
   WebBreak,
 } from '@mp1/shared';
 
@@ -410,6 +413,56 @@ export function fetchNotes(
   signal?: AbortSignal,
 ): Promise<{ count: number; notes: readonly MaintenanceNote[] }> {
   return request(`/notes${query(filter)}`, signalOf(signal));
+}
+
+// --------------------------------------------------------- nota sugerida
+
+export interface SuggestionQuery {
+  readonly status?: SuggestionStatus;
+  readonly assetTag?: string;
+  readonly limit?: number;
+}
+
+export function fetchNoteSuggestions(
+  filter: SuggestionQuery = {},
+  signal?: AbortSignal,
+): Promise<{ count: number; suggestions: readonly NoteSuggestion[] }> {
+  return request(`/note-suggestions${query({ ...filter })}`, signalOf(signal));
+}
+
+/** O que alguém pode mudar antes de confirmar, mais quem confirmou. */
+export interface ConfirmBody {
+  readonly confirmedBy?: string;
+  readonly reason?: string;
+  readonly symptom?: string;
+  readonly priority?: NotePriority;
+  readonly requiresShutdown?: boolean;
+}
+
+export function confirmNoteSuggestion(
+  id: string,
+  body: ConfirmBody = {},
+  signal?: AbortSignal,
+): Promise<{ suggestion: NoteSuggestion; note: MaintenanceNote }> {
+  return request(`/note-suggestions/${encodeURIComponent(id)}/confirm`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    ...(signal ? { signal } : {}),
+  });
+}
+
+export function dismissNoteSuggestion(
+  id: string,
+  body: { reason: string; dismissedBy?: string },
+  signal?: AbortSignal,
+): Promise<{ suggestion: NoteSuggestion }> {
+  return request(`/note-suggestions/${encodeURIComponent(id)}/dismiss`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    ...(signal ? { signal } : {}),
+  });
 }
 
 export function fetchSetpointChanges(

@@ -173,6 +173,13 @@ export const HELP = {
     read: 'As faixas de fundo são as zonas da ISO. A linha pontilhada é projeção da tendência, e ela só aparece quando a inclinação passa do próprio ruído do ajuste. Rolamento degrada acelerando, então a data real chega antes da projetada.',
     click: 'As marcas na linha do tempo abrem a nota e a ronda daquele ponto.',
   },
+  'mancais.sugestao': {
+    shows:
+      'A nota que a tendência deste mancal propõe, já preenchida: sintoma, prioridade, se exige parada e as evidências.',
+    read: 'Ela nasce sem número — só ganha um `NM-…` se alguém confirmar. A prioridade sai do prazo até o limite; o prazo é da reta ajustada, e um defeito que acelera chega antes dele. Enquanto a nota confirmada estiver aberta, o mancal não recebe outra sugestão.',
+    click:
+      'Confirmar abre a nota; "Editar e confirmar" deixa mudar sintoma, prioridade e parada antes; dispensar exige motivo, e a sugestão só volta se a tendência piorar. A TAG da evidência abre a tendência dela.',
+  },
   'mancais.mapa': {
     shows:
       'A máquina de lado, com um ponto por mancal: a faixa de cima é o lado comando e a de baixo o lado acionamento.',

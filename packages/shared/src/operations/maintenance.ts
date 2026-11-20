@@ -33,8 +33,15 @@ export const NOTE_PRIORITY_LABELS: Readonly<Record<NotePriority, string>> = {
   4: 'Quando houver oportunidade',
 };
 
-/** De onde a nota saiu. */
-export const NOTE_ORIGINS = ['alarme', 'ronda', 'operação'] as const;
+/**
+ * De onde a nota saiu.
+ *
+ * `tendência` é a origem da Fase 6: a nota nasceu de uma sugestão que a
+ * regressão da vibração propôs, e o `originRef` aponta para ela. É a origem em
+ * que ninguém digitou o sintoma — e por isso a que mais precisa dizer de onde
+ * veio.
+ */
+export const NOTE_ORIGINS = ['alarme', 'ronda', 'operação', 'tendência'] as const;
 
 export type NoteOrigin = (typeof NOTE_ORIGINS)[number];
 

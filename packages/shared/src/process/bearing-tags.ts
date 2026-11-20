@@ -1,7 +1,7 @@
 import type { AssetTag, MachineSide } from '../asset';
 import { MP1 } from '../machine/mp1';
 import { dryerCylinders, monitoredAssets } from '../machine/query';
-import { isCatalogTag } from './catalog';
+import { isCatalogTag, processVariable } from './catalog';
 import { expandCylinderTag } from './per-cylinder';
 
 /**
@@ -117,6 +117,35 @@ export function bearingTagsOf(assetTag: AssetTag): BearingTags | null {
 /** O mancal a que uma tag de processo pertence, ou `null`. */
 export function bearingOfProcessTag(tag: string): BearingTags | null {
   return BY_PROCESS_TAG.get(tag) ?? null;
+}
+
+/**
+ * Os limites de temperatura de um mancal de secador, em °C.
+ *
+ * Saem do **catálogo**, dos limites de alarme da tag `TI-53nnX`: `H` é a
+ * atenção e `HH` é o alarme. Não são constante de tela: enquanto estavam
+ * escritos na web (80 e 90), a barra marcava um número e o alarme disparava em
+ * outro — 85 e 95 —, e as duas coisas aparecem na mesma tela.
+ *
+ * O padrão por cilindro dá os mesmos limites às 72 tags, e um teste cobra isso:
+ * se algum dia um mancal tiver limite próprio, esta constante deixa de servir e
+ * o teste avisa antes de a tela mentir.
+ */
+export const BEARING_TEMP_LIMITS: { readonly attention: number; readonly alarm: number } =
+  Object.freeze(bearingTempLimits());
+
+function bearingTempLimits(): { attention: number; alarm: number } {
+  const first = DRYER_BEARING_TAGS[0];
+  if (!first) throw new Error('Nenhum mancal de secador no modelo');
+
+  const limits = processVariable(first.temperature)?.limits;
+  const attention = limits?.h ?? null;
+  const alarm = limits?.hh ?? null;
+  if (attention === null || alarm === null) {
+    throw new Error(`${first.temperature} não tem limites H e HH no catálogo`);
+  }
+
+  return { attention, alarm };
 }
 
 /** Se a tag é uma medição de mancal de cilindro secador. */

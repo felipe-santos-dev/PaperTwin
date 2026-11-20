@@ -18,6 +18,7 @@ export * from './alarm';
 export * from './break-replay';
 export * from './grade-change';
 export * from './maintenance';
+export * from './note-suggestion';
 export * from './provenance';
 export * from './reel';
 export * from './round';

@@ -3,7 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { MP1 } from '../machine/mp1';
 import { monitoredAssets } from '../machine/query';
 import { DRYER_CYLINDER_COUNT } from '../machine/steam-groups';
+import { processVariable } from './catalog';
 import {
+  BEARING_TEMP_LIMITS,
   bearingOfProcessTag,
   bearingTagsOf,
   bearingsWithoutProcessTags,
@@ -92,5 +94,23 @@ describe('ponte entre ativo e tags de processo', () => {
   it('não repete tag de processo entre mancais', () => {
     const todas = DRYER_BEARING_TAGS.flatMap((m) => [m.vibration, m.envelope, m.temperature]);
     expect(new Set(todas).size).toBe(todas.length);
+  });
+
+  /**
+   * Os limites de temperatura saem do catálogo, e valem para os 72.
+   *
+   * `BEARING_TEMP_LIMITS` é uma constante só porque o padrão por cilindro dá os
+   * mesmos limites a todas as tags. Se algum dia um mancal tiver limite próprio,
+   * a constante deixa de servir — e é este teste que avisa, antes de a barra da
+   * tela marcar um número enquanto o alarme dispara em outro.
+   */
+  it('os limites de temperatura são os do catálogo, iguais nos 72 mancais', () => {
+    expect(BEARING_TEMP_LIMITS.attention).toBeLessThan(BEARING_TEMP_LIMITS.alarm);
+
+    for (const mancal of DRYER_BEARING_TAGS) {
+      const limites = processVariable(mancal.temperature)?.limits;
+      expect(limites?.h).toBe(BEARING_TEMP_LIMITS.attention);
+      expect(limites?.hh).toBe(BEARING_TEMP_LIMITS.alarm);
+    }
   });
 });

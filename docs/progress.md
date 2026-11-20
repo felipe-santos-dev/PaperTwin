@@ -2585,4 +2585,305 @@ apps/web/e2e/tendencia.spec.ts                  (novo)
 docs/progress.md
 ```
 
-Pare aqui. A Fase 5 começa quando o Felipe escrever "fase 5".
+### Depois do commit: a linha do cabeçalho da Tendência
+
+Em 1440 o cabeçalho quebrava em duas linhas, e duas linhas devolviam ao gráfico
+metade do que a mudança tinha lhe dado. Medido: a linha pedia **493 px** e tinha
+**402**.
+
+Os botões de janela encolheram (`h-6`, `px-1.5`, 11 px) e foram de 177 px para
+**123**. Faltavam ainda ~43 px, então o que não cabe virou **"+N"**, um botão que
+abre a lista das TAGs escondidas — cada uma com o seu × , porque o gráfico delas
+continua desenhado embaixo e o cabeçalho não pode mentir sobre o que está na
+tela.
+
+**A conta é medida, não escolhida.** Um "mostre duas e esconda o resto" esconderia
+TAG à toa em 1920 e ainda estouraria em 1440, porque o tamanho do chip depende do
+nome da TAG — `JI-111` e `PDIC-521` não medem o mesmo. Uma régua invisível desenha
+todas as peças no tamanho natural, e a linha mostra quantas couberem.
+
+A régua existe para a medida não depender do que está na tela: medir as peças
+visíveis faria o resultado mudar o layout, que mudaria o resultado — esconder uma
+TAG sobraria espaço, que traria a TAG de volta, que faltaria espaço.
+
+Para a caixa das TAGs saber quanto espaço tem, o `aside` do `Panel` passou a ser
+`flex-1`: uma caixa do tamanho do conteúdo responderia o tamanho do conteúdo, e a
+conta andaria em círculo.
+
+Medido depois: cabeçalho de **26 px** nas duas larguras — três TAGs na linha em
+1920, duas mais "+1" em 1440.
+
+Testes novos: cabeçalho numa linha só em 1920 e em 1440; o "+N" abre a lista e a
+soma (na linha + na lista) bate com o número de gráficos; e em 1920 não sobra
+"+N" nenhum.
+
+**32. O cabeçalho da Tendência numa linha só**
+
+```
+apps/web/src/screens/processo/TrendStack.tsx
+apps/web/src/ui/Panel.tsx
+apps/web/e2e/tendencia.spec.ts
+docs/progress.md
+```
+
+## Fase 5 — replay de quebra de folha
+
+### A pergunta, e o que dá para responder dela
+
+"Por que a folha quebrou" é a pergunta mais cara da operação, e um gêmeo não
+tem como respondê-la: a causa pode estar fora do catálogo — um rolo sujo, uma
+emenda mal feita, uma faca de ponta. O que ele tem como responder é **o que se
+mexeu primeiro**, com a régua à vista.
+
+A tela diz "primeiro desvio", e não "causa", em todo lugar onde poderia dizer
+as duas coisas. A diferença parece sutil e não é: a primeira convida a olhar, a
+segunda encerra o assunto.
+
+### A régua: duas, e vale a maior
+
+O desvio é medido contra a **hora anterior à janela**, não contra o alvo do
+catálogo — uma máquina que já estava rodando acima do alvo não está desviando,
+está onde estava. E o que conta como desvio sai da maior entre duas réguas:
+
+- o `excDev` do catálogo, que é a banda em que o instrumento tremelica;
+- o desvio-padrão da própria hora anterior, que é o quanto aquela tag andava
+  naquele turno.
+
+Só o `excDev` faria de toda tag agitada uma precursora de tudo. Só a dispersão
+da base deixaria uma tag parada demais disparar com um décimo de ruído. A maior
+das duas não mente nos dois casos. Sai do normal quem anda **três réguas** — o
+mesmo limiar que a colheita de precursores já usava.
+
+Um teste prova que a régua faz diferença: o mesmo passo de 5 `excDev` é desvio
+numa base parada e é ruído numa base agitada.
+
+### Origem e consequência
+
+Numa rede de relações quase tudo se mexe quando qualquer coisa se mexe. A lista
+ordenada por tempo não basta: a gramatura desviar depois da velocidade é a
+velocidade **chegando** na gramatura, não um segundo problema.
+
+Então uma tag que desvia depois de outra da qual ela depende no grafo é marcada
+como consequência e sai da disputa pela origem. O grafo é andado para trás
+(`upstreamOf`, novo em `process/graph.ts`) — o motor anda para a frente quando
+integra, a investigação anda para trás.
+
+O que sobra é uma afirmação pequena e verdadeira: _esta foi a primeira que se
+mexeu, e nada do que ela depende tinha se mexido antes_.
+
+Na quebra do instantâneo isso dá exatamente o que se espera: a carga da prensa
+cai 51,8 kN/m (25,9× a régua), e 33 s depois a umidade antes da colagem sobe e
+a sequidade na saída da prensa cai — as duas marcadas como consequência da
+carga, porque é ela que as move no CSV de relações.
+
+### Dez tags, declaradas
+
+A investigação não olha o catálogo inteiro: trezentas séries por quebra é
+consulta demais para uma tela, e a maioria não tem relação com a folha
+arrebentar. São dez — as quatro malhas que os cenários de quebra perturbam, a
+umidade nos três pontos em que é medida, a gramatura, o estiramento entre
+seções e a velocidade.
+
+A lista é **fixa e declarada**, e isso é o ponto: ela não pode depender de qual
+malha o cenário perturbou, senão o diagnóstico estaria olhando a resposta antes
+de fazer a conta. Três testes seguram a lista: todas no catálogo, todas pontos
+do historiador (o replay lê do arquivo) e todas com banda de exceção.
+
+### Uma conta, dois chamadores
+
+A colheita de precursores da retomada e a tela de replay passam pela **mesma**
+`diagnoseBreak`. Antes havia duas réguas parecidas, uma em cada lado — e duas
+réguas parecidas discordam no dia em que importam. Um teste de rota exige que a
+ordem dos desvios da resposta seja idêntica à dos precursores gravados na
+entidade.
+
+A colheita também parou de receber a malha perturbada como argumento. Ela
+recebia, e usava para montar a lista de tags observadas; agora lê as dez e
+decide sozinha.
+
+### A rota
+
+`GET /web-breaks/:id/replay`, numa resposta só: a ordem dos desvios, as séries
+da janela e os eventos do período (alarmes, alterações de setpoint, trocas de
+gramatura). Quem investiga uma parada quer as três coisas ao mesmo tempo, e três
+idas ao servidor seriam três esperas.
+
+Ela **não escreve nada** e não inventa nada: é a conta que a retomada já fez,
+refeita sobre as séries para a tela poder desenhá-las.
+
+### A tela, e por que ela não está na barra
+
+Porque não se abre "o replay": abre-se o replay **de uma** quebra. Os dois
+caminhos até ela são os dois lugares em que uma quebra aparece — a linha do
+tempo do Turno, onde o cartão do evento ganhou "Ver o replay", e a lista de
+Bobinas, que ganhou os atalhos das quebras do período.
+
+Ela continua tendo URL própria (`#quebra`, que abre a mais recente) e continua
+na busca — que é o caminho de teclado para uma tela sem tecla. A barra lateral
+segue com nove.
+
+**Esta é uma decisão que vale a tua revisão.** A alternativa era uma décima
+entrada na barra, que levaria a um "escolha uma quebra" que o Turno e Bobinas já
+fazem melhor. Se preferires a entrada na barra, é uma linha em `screens.ts`.
+
+**Centro:** a janela de −10 min a 0, com cursor e reprodução em 1×, 4× e 16×. A
+curva é desenhada **até o cursor** e não além: no instante em que a carga da
+prensa cai, a umidade ainda não sabe o que vai acontecer. É o que a reprodução
+acrescenta a um gráfico parado — a ordem, vista acontecer.
+
+Três faixas, as três primeiras a desviar, dividindo a altura do painel; clicar
+numa variável da lista troca o gráfico pela dela. Ao fundo de cada uma, a faixa
+do normal (a média da hora anterior, mais ou menos três réguas) e o tracejado
+vermelho onde ela saiu.
+
+**Direita:** a lista na ordem em que saíram do normal, com as consequências
+recuadas e o nome de quem as puxou. As que ainda não desviaram no instante do
+cursor ficam apagadas — é o que liga a lista à reprodução. Embaixo, as que não
+se mexeram, cada uma abrindo a tendência.
+
+**Embaixo:** o mapa 2D da Fase 2, com a seção da quebra em vermelho, o padrão e
+as notas abertas da seção. O mapa é o mesmo componente: duas vistas laterais
+diferentes na mesma aplicação fariam quem opera reaprender a geometria a cada
+tela.
+
+**O padrão** conta coincidências e para aí: "2 das 4 quebras anteriores em
+Prensas também começaram por WIC-401". Ele não prevê a próxima, e a comparação
+usa a mesma regra de origem sobre os precursores já gravados — sem reler o
+arquivo de cada quebra passada.
+
+### O instantâneo não tinha quebra nenhuma
+
+Este foi o achado incômodo da fase. O cenário dá **uma quebra por dia de
+operação**, no turno que o ruído por posição escolher, e no dia do instantâneo
+ela cai no turno A — enquanto o instantâneo retrata o turno B. Pior: a retomada
+tem teto de 4 h, então uma API que acabou de subir também não tem quebra
+nenhuma. A tela principal da fase abriria vazia para quase todo mundo.
+
+A correção está na geração do instantâneo: ela roda uma **segunda janela**,
+curta, em volta da quebra mais recente anterior ao instante retratado — os 10
+min de precursores, a parada e cinco minutos de folga. O arquivo fica com dois
+períodos e um buraco entre eles, que é exatamente o que acontece num gêmeo que
+ninguém olha o tempo todo, e o que a tendência já sabia desenhar.
+
+A ordem importa e custou uma tentativa: a janela da quebra roda **antes** da
+principal. Rodá-la depois fazia um alarme fechar antes de ter sido aberto, e a
+restrição da tabela — com razão — recusava.
+
+Custo: +31 kB no instantâneo e um turno a mais na lista.
+
+### O que os testes seguram
+
+- **Perturbação conhecida tem de aparecer em primeiro lugar.** Num teste de
+  integração com banco, cenário e retomada de verdade: o turno C de 15/06 tem
+  quebra, o cenário perturbou a `WIC-401` dez minutos antes, e ninguém contou
+  isso ao diagnóstico — ele lê as séries do arquivo e decide. O mesmo caso roda
+  no núcleo para as quatro malhas que os cenários perturbam.
+- **Quebra sem perturbação não inventa culpado.** Com todas as tags paradas
+  dentro da régua, a resposta é "ninguém se mexeu" — e a tela diz isso em vez de
+  eleger o menos inocente. É o teste que impede o primeiro de virar um gerador
+  de culpados.
+- **Cada seta do caminho existe no grafo**, e a consequência só é consequência
+  quando desvia **depois** de quem a move: o teste espelho, com a ordem
+  invertida, exige que ela volte a ser origem.
+- **A ordem da rota bate com os precursores da entidade.**
+- **No navegador:** a URL abre a mais recente; a lista está em ordem de
+  antecedência decrescente (lido do texto da tela); reproduzir anda com o cursor
+  e pausar para; o mapa marca a seção; de Bobinas se chega ao replay; e a busca
+  acha a tela sem tecla.
+
+### Medido
+
+- Testes: `shared` **359**, API **331** (111 pulados sem `DATABASE_URL`), web **202**. Typecheck, lint,
+  `format:check` e build.
+- e2e: **41** testes.
+- Build: pedaço da aplicação **300,4 kB** (era 284,9 — a tela nova), worker e
+  `three` inalterados.
+- Sem rolagem horizontal em 1920×1080 nem em 1440×900.
+
+### Arquivos, por commit sugerido
+
+**33. O grafo andado para trás**
+
+```
+packages/shared/src/process/graph.ts        (novo)
+packages/shared/src/process/index.ts
+```
+
+**34. O diagnóstico da quebra**
+
+```
+packages/shared/src/operations/break-replay.ts        (novo)
+packages/shared/src/operations/break-replay.test.ts   (novo)
+packages/shared/src/operations/index.ts
+```
+
+**35. A rota do replay, e uma régua só na colheita**
+
+```
+apps/api/src/runtime/break-replay.ts        (novo)
+apps/api/src/runtime/break-replay.test.ts   (novo)
+apps/api/src/runtime/entities.ts
+apps/api/src/routes/operations.ts
+apps/api/src/routes/process-route-schemas.ts
+apps/api/src/routes/process-schemas.ts
+apps/api/src/routes/process.test.ts
+apps/api/src/routes/api.test.ts
+apps/api/src/db/operations-queries.ts
+apps/api/src/db/operations-store.ts
+apps/api/src/db/operations-repository.ts
+apps/api/src/db/sql-database.ts
+```
+
+**36. Uma quebra no instantâneo**
+
+```
+apps/api/src/scripts/generate-demo.ts
+```
+
+O instantâneo em si não entra no commit: `apps/web/public/demo/` está no
+`.gitignore` e sai de `npm run demo:data`.
+
+**37. A tela do replay**
+
+```
+apps/web/src/screens/QuebraScreen.tsx        (novo)
+apps/web/src/screens/quebra/Linha.tsx        (novo)
+apps/web/src/screens/quebra/Variaveis.tsx    (novo)
+apps/web/src/screens/quebra/Local.tsx        (novo)
+apps/web/src/screens/quebra/frase.ts         (novo)
+apps/web/src/api/process.ts
+apps/web/src/api/gateway.ts
+apps/web/src/api/demo-gateway.ts
+apps/web/src/ui/screens.ts
+apps/web/src/ui/Shell.tsx
+apps/web/src/ui/search.ts
+apps/web/src/ui/help.ts
+apps/web/src/App.tsx
+```
+
+**38. As portas de entrada, e o mapa marcado**
+
+```
+apps/web/src/screens/TurnoScreen.tsx
+apps/web/src/screens/turno/Timeline.tsx
+apps/web/src/screens/BobinasScreen.tsx
+apps/web/src/screens/mancais/MachineMap2D.tsx
+```
+
+**39. Testes**
+
+```
+apps/web/src/screens/screens.test.tsx
+apps/web/src/ui/screens.test.ts
+apps/web/src/ui/search.test.ts
+apps/web/e2e/quebra.spec.ts                  (novo)
+apps/web/e2e/largura.spec.ts
+```
+
+**40. Documentação da fase**
+
+```
+docs/progress.md
+```
+
+Pare aqui. A Fase 6 começa quando o Felipe escrever "fase 6".

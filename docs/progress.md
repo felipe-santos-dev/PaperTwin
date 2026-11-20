@@ -2887,3 +2887,293 @@ docs/progress.md
 ```
 
 Pare aqui. A Fase 6 começa quando o Felipe escrever "fase 6".
+
+## Fase 6 — ciclo fechado de manutenção
+
+### O que fecha o ciclo
+
+O gêmeo já sabia duas coisas separadas: a tendência de vibração de cada mancal
+(`rul.ts`, com o critério de significância que a Fase 3 escreveu) e o que é uma
+nota de manutenção. Esta fase é a ponte — a regra que, olhando a tendência,
+escreve a nota que alguém escreveria à mão, e a deixa esperando um sim ou um
+não.
+
+Do sinal até a nota, sem ninguém digitar. O que **não** é automático é a
+decisão: confirmar, editar e confirmar, ou dispensar com motivo.
+
+### A sugestão não cabia dentro da nota
+
+O pedido dizia "situação nova na entidade de nota, antes de aberta". A resposta
+9 do Felipe, da Fase 0, dizia que a sugestão **só ganha número quando é
+confirmada**, com chave própria (mancal + início da tendência), porque sugestão
+dispensada não pode gastar sequência.
+
+As duas coisas não cabem na mesma tabela: a chave primária da nota **é** o
+número, e `note_evidence` referencia esse número. Uma nota sem número seria uma
+linha sem chave.
+
+Então a sugestão virou entidade própria, com a chave que o Felipe fixou. Ela
+nasce `sugerida` e morre `confirmada` (virou nota) ou `dispensada` (com motivo).
+A nota que sai da confirmação tem origem `tendência` e `originRef` apontando
+para a sugestão — o caminho de volta existe, e a restrição que já cobrava
+referência de toda origem que não é a operação continua valendo sem mudança.
+
+**Esta é a decisão que vale a tua revisão.** A alternativa seria uma nota com
+número desde o nascimento e a situação `sugerida`, o que é mais simples de
+escrever e gasta sequência em toda sugestão dispensada — que é o caso comum.
+
+A linha dispensada **fica**, com quem dispensou e por quê: é ela a auditoria,
+como a alteração de setpoint é a auditoria da escrita. A diferença é que lá cada
+escrita é um evento novo, e aqui cada episódio de degradação é uma linha com uma
+decisão.
+
+### De qual série a regra lê, e por que não do arquivo
+
+Da série de vibração dos mancais (`vibration_reading`), **não** do arquivo do
+historiador. A diferença não é de gosto, e levou um tempo para aparecer:
+
+O cenário de degradação é ancorado para **terminar agora** — escolha de
+apresentação da Fase 3, para quem abre a tela hoje ter o que ver. Cada retomada
+grava no historiador valores de mancal consistentes com o seu próprio instante
+final, então a série arquivada ganha um **dente a cada retomada**: no passo logo
+depois de um corte, o valor volta a ser o de um ponto anterior da degradação.
+Uma regressão de três dias sobre essa série leria os dentes em vez da tendência.
+
+A série de vibração é escrita uma vez, não é reescrita, e é a mesma que a tela
+de Mancais desenha e que `/assets/:tag/vibration` devolve. A sugestão e o
+gráfico ao lado dela contam a mesma história — que é o requisito que decide,
+porque os dois aparecem juntos na tela.
+
+### O que mantém 71 mancais fora da fila
+
+Não é o critério de significância: é o **horizonte**.
+
+Duas vezes o erro padrão da inclinação é a convenção de sempre, e sozinha ela
+erra por excesso num universo de 72 mancais — cerca de 5 % de falsos por
+varredura dá três notas inventadas, e uma fila de trabalho com três notas
+inventadas é pior que nenhuma.
+
+O que corta de verdade é exigir que a projeção **cruze o limite dentro de trinta
+dias**. Com ruído de 0,02 mm/s numa série de 72 h, a inclinação que levaria um
+mancal saudável de 1,4 a 4,5 mm/s em trinta dias é dezenas de vezes maior do que
+o ruído produz. Um teste de integração cobra exatamente isso: no instantâneo, o
+mancal que degrada ganha sugestão e **os outros 71 não ganham nada**.
+
+Duas projeções entram na disputa — a vibração contra a fronteira C→D e a
+temperatura contra o limite do catálogo — e vale a que cruza primeiro. A
+temperatura passa pela mesma régua: `temperatureLife` entrega a série ao mesmo
+`estimateRemainingLife`, com o limite no lugar da fronteira, em vez de uma
+segunda regressão escrita à mão que divergiria da primeira na primeira mudança
+de regra.
+
+### A régua da temperatura estava escrita em dois lugares
+
+A tela de Mancais marcava 80 °C de atenção e 90 °C de alarme, escritos à mão em
+`derive.ts`. O catálogo diz **85 e 95** — é onde o alarme dispara de verdade. A
+barra marcava um número e o alarme tocava em outro, na mesma tela.
+
+Agora os limites saem do catálogo (`BEARING_TEMP_LIMITS`, dos limites `H` e `HH`
+da tag `TI-53nn`), e um teste cobra que os 72 mancais tenham os mesmos: no dia em
+que um tiver limite próprio, a constante deixa de servir e o teste avisa antes
+de a tela mentir.
+
+A correção revelou outro defeito pequeno: com o limite de alarme em 95 e o topo
+do eixo em 100, o rótulo `95` caía em cima do `°C` do eixo de temperatura. A
+unidade subiu para o vão de 16 px que já existia entre os dois gráficos.
+
+### O alarme não cala a sugestão
+
+Uma sugestão em pé por mancal, e nenhuma enquanto houver **nota de tendência
+aberta** para ele: o trabalho já está na fila da manutenção, e sugerir de novo
+seria duplicar a ordem de serviço.
+
+Um alarme aberto, não. A sugestão diz o que a tendência projeta; o alarme diz o
+que o limite já cruzou. São coisas diferentes, e a própria lista de evidências
+do pedido pede o "alarme associado" dentro da sugestão — as duas aparecem juntas
+no mancal que degrada, que é o que o instantâneo mostra.
+
+### Por que isto é idempotente
+
+A gravação **substitui** as sugestões em pé: apaga e insere, numa transação. A
+sugestão em pé é projeção do arquivo, e o que vale é sempre a última conta. As
+decididas não são tocadas — o `do nothing` do `insert` impede que uma conta nova
+apague o motivo que alguém escreveu.
+
+Com isso, retomar em quatro pedaços deixa o mesmo banco que retomar de uma vez,
+campo por campo, inclusive o id, que sai da chave. Um teste compara as duas
+execuções inteiras com uma exceção declarada: o **rótulo** da evidência da
+ronda, que carrega a leitura de campo lida do arquivo. A retomada fatiada tem
+pontos de borda a mais — o que o teste da própria retomada já documenta — e o
+valor muda no primeiro decimal. Tudo o mais é idêntico, porque sai da série de
+vibração, que nenhuma retomada reescreve.
+
+### Confirmar: travar, gravar a nota, marcar
+
+Nessa ordem, e as três numa transação. `note_number` aponta para
+`maintenance_note`, então marcar antes de gravar a nota violaria a chave
+estrangeira; e gravar a nota antes de conferir que a sugestão ainda está em pé
+deixaria uma nota órfã quando o segundo clique perdesse a corrida. O `select …
+for update` confere e segura a linha até o fim — a mesma ideia de
+`ACKNOWLEDGE_ALARM`, que também não deixa dois cliques gravarem duas decisões.
+
+O número da nota sai do **mancal e do início da tendência**, e não do instante
+do clique: confirmar é uma decisão sobre um episódio de degradação, e derivar o
+número dele mantém a propriedade que o resto do gêmeo tem — reexecutar não cria
+um segundo registro do mesmo fato.
+
+### O teste das enumerações mudou de lugar
+
+Já existia um teste que lia o texto de `003_operations.sql` e cobrava que as
+listas do SQL e as do `@mp1/shared` fossem iguais. Ele parou de responder a
+pergunta no dia em que `006` fez `alter table … add constraint
+note_origin_valid` com a origem `tendência`: o arquivo de 003 continua dizendo
+três valores, e o banco passou a aceitar quatro. Um teste sobre o texto diria que
+o código divergiu do banco quando o que divergiu foi o arquivo que ele lia.
+
+O teste novo pergunta ao **esquema**, depois das migrations, lendo
+`pg_get_constraintdef`. Ele cobre catorze restrições, e tem um dente a mais:
+nenhuma restrição de lista pode existir no banco sem estar mapeada nele. Uma
+coluna nova com `check (x in (…))` e sem lista no `shared` falha, e falha no
+lugar certo.
+
+### As telas
+
+**Mancais.** O cartão da nota sugerida, entre o detalhe do mancal e o mapa: a
+nota como ela vai nascer — o sintoma gerado dos números, a prioridade, se exige
+parada, as evidências — e três saídas. O rodapé diz de quantas janelas a reta
+saiu e lembra que um defeito que acelera chega antes dela.
+
+Com o cartão, a coluna da direita passa a **rolar sozinha** em vez de espremer o
+mapa 2D: três painéis numa coluna que cabia em dois, e a escolha é a mesma da
+tela de Processo — a coluna rola, a moldura fica parada.
+
+**Notas.** Uma quinta coluna, antes de "Aberta", com borda tracejada: é onde a
+sugestão está, antes de alguém abrir qualquer coisa. O cartão não decide —
+"Decidir no mancal" leva para a tendência que a propôs, que é o que alguém
+precisa ver antes de dizer sim.
+
+**Moldura.** O contador na navegação, na entrada de Notas. Ele fica lá, e não na
+tela de Notas, porque quem está no Processo também precisa saber que a
+manutenção tem uma decisão parada — é isso que faz o ciclo fechar.
+
+**Turno.** A sugestão entra na passagem de turno como pendência, antes das notas
+já abertas: uma decisão parada é pendência de quem assume; nota aberta já é
+trabalho da manutenção.
+
+A prioridade sai do prazo (3 dias → P1, 10 → P2, 20 → P3, o resto P4) e a
+exigência de parada sai da zona: em C ou D a intervenção é troca de mancal, e
+trocar o mancal de um cilindro secador pede máquina parada. As duas regras são
+suposição nossa, e estão ditas no código como tal.
+
+### O que os testes seguram
+
+- **Uma tendência de verdade vira uma nota, e só uma.** Teste de integração com
+  banco, semeadura e retomada: o mancal que degrada ganha sugestão, os outros 71
+  não, e a retomada seguinte não cria uma segunda.
+- **Ruído sem tendência não gera nada**, e a mesma série com um horizonte maior
+  gera — é o horizonte que decide, e o teste mostra isso.
+- **Retomada em pedaços dá o mesmo que de uma vez**, campo por campo.
+- **Dispensar cala, e calar tem limite.** A sugestão dispensada não volta na
+  retomada seguinte; volta quando a medição piora além do degrau, ou quando quem
+  cruza o limite passa a ser a outra medição.
+- **Confirmar vira nota aberta de origem tendência**, com a edição valendo, e o
+  mancal sai da fila de sugestões enquanto a nota estiver aberta. O segundo
+  clique leva 409 nas duas decisões; dispensar sem motivo leva 400.
+- **As enumerações do SQL e as do `shared` são a mesma lista**, lidas do esquema.
+- **No navegador:** o cartão aparece no mancal que degrada sem número e sem
+  promessa de falha; o contador aparece na moldura em qualquer tela; a coluna
+  das sugeridas leva ao mancal; a passagem de turno lista a decisão parada; e o
+  instantâneo diz que não aceita decisão em vez de fingir que aceitou.
+
+### Medido
+
+- Testes: `shared` **380**, API **350** (111 pulados sem `DATABASE_URL`), web
+  **207**. Typecheck, lint e `format:check` limpos.
+- e2e: **47** testes, 5 novos.
+- Build: pedaço da aplicação **312,1 kB** (era 300,4), worker e `three`
+  inalterados.
+- Instantâneo: 992 arquivos, 2.870 kB, com uma sugestão — a do CS23 lado
+  comando, P1, com as três evidências.
+- Sem rolagem horizontal em 1920×1080 nem em 1440×900.
+
+**Uma observação honesta sobre o instantâneo:** no instante retratado o CS23 já
+está em zona D, então a projeção **já passou** a fronteira e a sugestão nasce P1
+com prazo zero. A mesma regra, três dias antes, daria um prazo em dias e uma
+prioridade menor — o caminho preditivo existe e é o mesmo código, mas o
+instantâneo mostra o caso em que a tendência chegou ao fim. Mudar isso pediria
+mover a janela de degradação, que é escolha de apresentação da Fase 3 e sustenta
+o alarme e a nota que as outras telas mostram.
+
+### Arquivos, por commit sugerido
+
+**41. A regra que vira sugestão**
+
+```
+packages/shared/src/operations/note-suggestion.ts        (novo)
+packages/shared/src/operations/note-suggestion.test.ts   (novo)
+packages/shared/src/operations/maintenance.ts
+packages/shared/src/operations/index.ts
+packages/shared/src/process/bearing-tags.ts
+packages/shared/src/process/bearing-tags.test.ts
+```
+
+**42. A sugestão no banco, na retomada e na API**
+
+```
+apps/api/src/db/migrations/006_note_suggestion.sql   (novo)
+apps/api/src/db/schema-enums.test.ts                 (novo)
+apps/api/src/runtime/suggestions.ts                  (novo)
+apps/api/src/runtime/suggestions.test.ts             (novo)
+apps/api/src/runtime/catchup.ts
+apps/api/src/db/operations-queries.ts
+apps/api/src/db/operations-store.ts
+apps/api/src/db/operations-repository.ts
+apps/api/src/db/sql-database.ts
+apps/api/src/db/queries.ts
+apps/api/src/db/repository.ts
+apps/api/src/db/operations.test.ts
+apps/api/src/routes/operations.ts
+apps/api/src/routes/process-route-schemas.ts
+apps/api/src/routes/process-schemas.ts
+apps/api/src/routes/api.test.ts
+apps/api/src/scripts/generate-demo.ts
+```
+
+O instantâneo em si não entra: `apps/web/public/demo/` está no `.gitignore` e
+sai de `npm run demo:data`.
+
+**43. O cartão no mancal, e a temperatura pelo catálogo**
+
+```
+apps/web/src/screens/mancais/Sugestao.tsx    (novo)
+apps/web/src/screens/mancais/BearingDetail.tsx
+apps/web/src/screens/mancais/derive.ts
+apps/web/src/screens/MancaisScreen.tsx
+apps/web/src/api/process.ts
+apps/web/src/api/gateway.ts
+apps/web/src/api/demo-gateway.ts
+apps/web/src/ui/help.ts
+apps/web/src/App.tsx
+```
+
+**44. O contador, a coluna e a pendência**
+
+```
+apps/web/src/ui/Shell.tsx
+apps/web/src/ui/useFrame.ts
+apps/web/src/screens/NotasScreen.tsx
+apps/web/src/screens/TurnoScreen.tsx
+apps/web/src/screens/turno/Support.tsx
+apps/web/src/screens/screens.test.tsx
+apps/web/e2e/manutencao.spec.ts              (novo)
+apps/web/e2e/mancais.spec.ts
+```
+
+**45. Documentação da fase**
+
+```
+docs/progress.md
+```
+
+Pare aqui. A Fase 7 é a que depende da tua confirmação — o custo estimado está
+na seção "Fase 7 — quanto custa", mais acima.

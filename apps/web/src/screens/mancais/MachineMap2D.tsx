@@ -147,10 +147,25 @@ export interface MachineMap2DProps {
    * dá a mesma escolha pelo teclado, com nome e número à vista.
    */
   readonly onSelect?: (assetTag: string) => void;
+  /**
+   * A seção onde a folha arrebentou, marcada em vermelho.
+   *
+   * O mapa serve a duas telas: em Mancais ele mostra a condição dos 98 pontos,
+   * no replay de quebra ele mostra **onde**. É a mesma máquina e a mesma
+   * geometria — duas vistas laterais diferentes fariam quem opera reaprender a
+   * posição a cada tela.
+   */
+  readonly breakSection?: string | null;
   readonly className?: string;
 }
 
-export function MachineMap2D({ rows, selected, onSelect, className = '' }: MachineMap2DProps) {
+export function MachineMap2D({
+  rows,
+  selected,
+  onSelect,
+  breakSection = null,
+  className = '',
+}: MachineMap2DProps) {
   const [ref, width, alturaCaixa] = useSize<HTMLDivElement>(640, 220);
   const [sobCursor, setSobCursor] = useState<string | null>(null);
 
@@ -189,6 +204,34 @@ export function MachineMap2D({ rows, selected, onSelect, className = '' }: Machi
           />
         ) : null}
 
+        {/* onde a folha arrebentou: a faixa de X da seção, do alto ao rodapé */}
+        {(() => {
+          const secao = SECOES.find((item) => item.id === breakSection);
+          if (!secao) return null;
+          const x0 = px(secao.x0);
+          const x1 = px(secao.x1);
+          return (
+            <g aria-label="Seção da quebra">
+              <rect
+                x={x0}
+                width={Math.max(2, x1 - x0)}
+                y={0}
+                height={alturaFaixa * 2 + ENTRE_FAIXAS}
+                fill="var(--color-alarm-1)"
+                fillOpacity={0.12}
+              />
+              <text
+                x={(x0 + x1) / 2}
+                y={10}
+                textAnchor="middle"
+                className="fill-alarm-1 text-[9px]"
+              >
+                quebra aqui
+              </text>
+            </g>
+          );
+        })()}
+
         {(['LC', 'LA'] as const).map((lado, indice) => (
           <g key={lado} transform={`translate(0 ${String(indice * (alturaFaixa + ENTRE_FAIXAS))})`}>
             <Faixa
@@ -207,7 +250,7 @@ export function MachineMap2D({ rows, selected, onSelect, className = '' }: Machi
           </g>
         ))}
 
-        <Rodape y={alturaFaixa * 2 + ENTRE_FAIXAS} px={px} />
+        <Rodape y={alturaFaixa * 2 + ENTRE_FAIXAS} px={px} quebra={breakSection} />
       </svg>
     </div>
   );
@@ -333,7 +376,15 @@ function Faixa({
  * Pope são um corpo só cada uma, e o nome delas tem mais pixels que a própria
  * seção. Onde não cabe fica o traço, que já diz que ali começa outra coisa.
  */
-function Rodape({ y, px }: { readonly y: number; readonly px: (x: number) => number }) {
+function Rodape({
+  y,
+  px,
+  quebra,
+}: {
+  readonly y: number;
+  readonly px: (x: number) => number;
+  readonly quebra: string | null;
+}) {
   return (
     <g transform={`translate(0 ${String(y)})`}>
       {SECOES.map((secao) => {
@@ -341,14 +392,21 @@ function Rodape({ y, px }: { readonly y: number; readonly px: (x: number) => num
         const fim = px(secao.x1);
         const meio = (inicio + fim) / 2;
         const cabe = fim - inicio >= secao.label.length * 5.4;
+        const aqui = secao.id === quebra;
+        const cor = aqui ? 'var(--color-alarm-1)' : 'var(--color-line-strong)';
 
         return (
           <g key={secao.id}>
-            <line x1={inicio} x2={fim} y1={2.5} y2={2.5} stroke="var(--color-line-strong)" />
-            <line x1={inicio} x2={inicio} y1={0} y2={5} stroke="var(--color-line-strong)" />
-            <line x1={fim} x2={fim} y1={0} y2={5} stroke="var(--color-line-strong)" />
+            <line x1={inicio} x2={fim} y1={2.5} y2={2.5} stroke={cor} strokeWidth={aqui ? 2 : 1} />
+            <line x1={inicio} x2={inicio} y1={0} y2={5} stroke={cor} />
+            <line x1={fim} x2={fim} y1={0} y2={5} stroke={cor} />
             {cabe ? (
-              <text x={meio} y={14} textAnchor="middle" className="fill-fg-3 text-[9px]">
+              <text
+                x={meio}
+                y={14}
+                textAnchor="middle"
+                className={`text-[9px] ${aqui ? 'fill-alarm-1' : 'fill-fg-3'}`}
+              >
                 {secao.label}
               </text>
             ) : null}

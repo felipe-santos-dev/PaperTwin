@@ -3,6 +3,7 @@ import type { WhatIfOptions } from '@mp1/shared/simulation';
 import type { WhatIfResponse } from './whatif';
 import type {
   Alarm,
+  BreakReplay,
   AlarmLimits,
   AlarmPriority,
   AlarmState,
@@ -348,6 +349,46 @@ export function fetchWebBreaks(
   signal?: AbortSignal,
 ): Promise<{ count: number; webBreaks: readonly WebBreak[] }> {
   return request(`/web-breaks${query(filter)}`, signalOf(signal));
+}
+
+/** Uma série da janela da quebra, como a rota do replay devolve. */
+export interface ReplaySeries {
+  readonly tag: string;
+  readonly name: string;
+  readonly unit: string;
+  /** A média da hora anterior, que o gráfico desenha como linha de base. */
+  readonly baseline: number | null;
+  readonly samples: readonly { readonly t: string; readonly v: number }[];
+}
+
+export interface BreakPattern {
+  readonly sameSection: number;
+  readonly sameFirst: number;
+  readonly tag: string | null;
+}
+
+/**
+ * O replay de uma quebra, inteiro.
+ *
+ * `replay` é a conta do `@mp1/shared` — a mesma que a retomada usou para gravar
+ * os precursores da entidade. O resto é o que a tela precisa desenhar em volta
+ * dela: as séries, os eventos do período e a comparação com as quebras
+ * anteriores da mesma seção.
+ */
+export interface BreakReplayView {
+  readonly webBreak: WebBreak;
+  readonly replay: BreakReplay;
+  readonly series: readonly ReplaySeries[];
+  readonly events: {
+    readonly alarms: readonly Alarm[];
+    readonly setpointChanges: readonly SetpointChange[];
+    readonly gradeChanges: readonly GradeChange[];
+  };
+  readonly pattern: BreakPattern;
+}
+
+export function fetchBreakReplay(id: string, signal?: AbortSignal): Promise<BreakReplayView> {
+  return request(`/web-breaks/${encodeURIComponent(id)}/replay`, signalOf(signal));
 }
 
 export function fetchGradeChanges(

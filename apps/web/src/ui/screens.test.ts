@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { DEFAULT_SCREEN, SCREENS, SCREEN_IDS, screenOf, useScreen } from './screens';
+import { DEFAULT_SCREEN, RAIL_SCREENS, SCREENS, SCREEN_IDS, screenOf, useScreen } from './screens';
 
 afterEach(() => {
   window.location.hash = '';
@@ -15,7 +15,7 @@ function press(key: string, target?: HTMLElement): void {
   });
 }
 
-describe('as nove telas', () => {
+describe('as telas', () => {
   it('estão na ordem do design', () => {
     expect(SCREEN_IDS).toEqual([
       'turno',
@@ -27,6 +27,7 @@ describe('as nove telas', () => {
       'notas',
       'maquina',
       'simulacao',
+      'quebra',
     ]);
   });
 
@@ -37,8 +38,8 @@ describe('as nove telas', () => {
    * gêmeo aperta 8 para a Máquina sem pensar, e mover isso para encaixar uma
    * tela nova custaria mais do que ganha.
    */
-  it('tem as teclas 1 a 9, uma por tela, com a Máquina na 8 e a Simulação na 9', () => {
-    expect(SCREENS.map((screen) => screen.key)).toEqual([
+  it('tem as teclas 1 a 9, uma por tela da barra, com a Máquina na 8 e a Simulação na 9', () => {
+    expect(RAIL_SCREENS.map((screen) => screen.key)).toEqual([
       '1',
       '2',
       '3',
@@ -51,7 +52,20 @@ describe('as nove telas', () => {
     ]);
     expect(SCREENS.find((s) => s.key === '8')?.id).toBe('maquina');
     expect(SCREENS.find((s) => s.key === '9')?.id).toBe('simulacao');
-    expect(new Set(SCREENS.map((s) => s.key)).size).toBe(SCREENS.length);
+    expect(new Set(RAIL_SCREENS.map((s) => s.key)).size).toBe(RAIL_SCREENS.length);
+  });
+
+  /**
+   * A tela do replay de quebra não tem tecla nem entrada na barra: ela só
+   * existe dentro de uma quebra, e os caminhos até ela são a linha do tempo do
+   * Turno e a lista de bobinas.
+   */
+  it('a tela contextual fica fora da barra e sem tecla', () => {
+    const quebra = SCREENS.find((screen) => screen.id === 'quebra');
+    expect(quebra?.key).toBeNull();
+    expect(quebra?.rail).toBe(false);
+    expect(RAIL_SCREENS.map((screen) => screen.id)).not.toContain('quebra');
+    expect(RAIL_SCREENS).toHaveLength(9);
   });
 
   it('tem rótulo e rótulo curto em todas', () => {
@@ -107,10 +121,11 @@ describe('navegação', () => {
     expect(result.current.screen).toBe('processo');
   });
 
-  it('as teclas 1 a 8 levam à tela certa', () => {
+  it('as teclas 1 a 9 levam à tela certa', () => {
     const { result } = renderHook(() => useScreen());
 
-    for (const screen of SCREENS) {
+    for (const screen of RAIL_SCREENS) {
+      if (screen.key === null) continue;
       press(screen.key);
       expect(result.current.screen, `tecla ${screen.key}`).toBe(screen.id);
     }

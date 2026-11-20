@@ -63,6 +63,8 @@ export interface TimelineProps {
   readonly events: readonly TimelineEvent[];
   readonly onOpenReel: (number: number) => void;
   readonly onOpenTag: (tag: string) => void;
+  /** Abre o replay de uma quebra; o id vem do evento da linha do tempo. */
+  readonly onOpenBreak: (id: string) => void;
 }
 
 export function Timeline(props: TimelineProps) {
@@ -215,6 +217,7 @@ export function Timeline(props: TimelineProps) {
               }}
               onOpenReel={props.onOpenReel}
               onOpenTag={props.onOpenTag}
+              onOpenBreak={props.onOpenBreak}
             />
           ) : null}
         </div>
@@ -693,12 +696,14 @@ function EventCard({
   onClose,
   onOpenReel,
   onOpenTag,
+  onOpenBreak,
 }: {
   readonly event: TimelineEvent;
   readonly left: number;
   readonly onClose: () => void;
   readonly onOpenReel: (number: number) => void;
   readonly onOpenTag: (tag: string) => void;
+  readonly onOpenBreak: (id: string) => void;
 }) {
   const scale = event.tag ? tagScale(event.tag) : null;
   const out = scale && event.value !== null ? isOut(scale, event.value) : false;
@@ -710,22 +715,36 @@ function EventCard({
         : 'var(--color-fg)';
   const reel = event.reel;
   const tag = event.tag;
+  /**
+   * Na quebra, o botão leva ao replay.
+   *
+   * É o caminho da Fase 5: a quebra aparece aqui, e o diagnóstico dos 10 min
+   * anteriores está a um clique — sem ninguém ter de procurar a quebra numa
+   * outra tela para investigá-la.
+   */
   const action =
-    reel !== null && (event.kind === 'bobina' || event.kind === 'gramatura')
+    event.kind === 'quebra'
       ? {
-          label: 'Abrir em Bobinas',
+          label: 'Ver o replay',
           run: () => {
-            onOpenReel(reel);
+            onOpenBreak(event.id.replace(/^quebra:/, ''));
           },
         }
-      : tag !== null && event.kind !== 'bobina'
+      : reel !== null && (event.kind === 'bobina' || event.kind === 'gramatura')
         ? {
-            label: 'Abrir em Processo',
+            label: 'Abrir em Bobinas',
             run: () => {
-              onOpenTag(tag);
+              onOpenReel(reel);
             },
           }
-        : null;
+        : tag !== null && event.kind !== 'bobina'
+          ? {
+              label: 'Abrir em Processo',
+              run: () => {
+                onOpenTag(tag);
+              },
+            }
+          : null;
 
   return (
     <div

@@ -22,6 +22,7 @@ export const SCREEN_IDS = [
   'notas',
   'maquina',
   'simulacao',
+  'quebra',
 ] as const;
 
 export type ScreenId = (typeof SCREEN_IDS)[number];
@@ -32,8 +33,18 @@ export interface Screen {
   readonly label: string;
   /** O rótulo curto da navegação lateral, que tem 56 px de largura. */
   readonly short: string;
-  /** A tecla que leva a ela: 1 a 9. */
-  readonly key: string;
+  /**
+   * A tecla que leva a ela: 1 a 9, ou `null` para quem não está na barra.
+   *
+   * O replay de quebra não tem tecla porque não se abre "o replay": abre-se o
+   * replay **de uma** quebra, e os dois caminhos até ele são os dois lugares em
+   * que uma quebra aparece — a linha do tempo do Turno e a lista de bobinas.
+   * Uma entrada na barra levaria a um "escolha uma quebra" que essas duas telas
+   * já fazem melhor.
+   */
+  readonly key: string | null;
+  /** Se ela aparece na navegação lateral. */
+  readonly rail: boolean;
 }
 
 const LABELS: Readonly<Record<ScreenId, { label: string; short: string }>> = {
@@ -46,13 +57,21 @@ const LABELS: Readonly<Record<ScreenId, { label: string; short: string }>> = {
   notas: { label: 'Notas de manutenção', short: 'Notas' },
   maquina: { label: 'Máquina', short: 'Máquina' },
   simulacao: { label: 'Simulação', short: 'Simul.' },
+  quebra: { label: 'Replay de quebra', short: 'Quebra' },
 };
+
+/** As telas sem tecla e fora da barra: as que só existem dentro de um contexto. */
+const CONTEXTUAIS: ReadonlySet<ScreenId> = new Set<ScreenId>(['quebra']);
 
 export const SCREENS: readonly Screen[] = SCREEN_IDS.map((id, index) => ({
   id,
   ...LABELS[id],
-  key: String(index + 1),
+  key: CONTEXTUAIS.has(id) ? null : String(index + 1),
+  rail: !CONTEXTUAIS.has(id),
 }));
+
+/** As telas da barra lateral, na ordem das teclas. */
+export const RAIL_SCREENS: readonly Screen[] = SCREENS.filter((screen) => screen.rail);
 
 export const DEFAULT_SCREEN: ScreenId = 'turno';
 

@@ -68,7 +68,8 @@ export function staticIndex(): SearchItem[] {
       kind: 'tela',
       id: screen.id,
       label: screen.label,
-      detail: `tela · tecla ${screen.key}`,
+      // a tela sem tecla continua buscável: é o único caminho de teclado até ela
+      detail: screen.key === null ? 'tela' : `tela · tecla ${screen.key}`,
     });
   }
 

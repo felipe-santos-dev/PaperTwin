@@ -12,6 +12,7 @@ import { RondasScreen } from './RondasScreen';
 import { BobinasScreen } from './BobinasScreen';
 import { NotasScreen } from './NotasScreen';
 import { ProcessoScreen } from './ProcessoScreen';
+import { QuebraScreen } from './QuebraScreen';
 import { SimulacaoScreen } from './SimulacaoScreen';
 import { TurnoScreen } from './TurnoScreen';
 
@@ -97,6 +98,7 @@ function gatewayOf(over: Partial<DataGateway> = {}): DataGateway {
     reels: vazio({ count: 0, reels: [] }),
     reel: nunca,
     webBreaks: vazio({ count: 0, webBreaks: [] }),
+    breakReplay: nunca,
     gradeChanges: vazio({ count: 0, gradeChanges: [] }),
     rounds: vazio({ count: 0, rounds: [] }),
     notes: vazio({ count: 0, notes: [] }),
@@ -204,7 +206,12 @@ describe('Turno', () => {
 
 /** As três navegações da tela de Turno, como funções vigiadas. */
 function turnoProps() {
-  return { onSelectReel: vi.fn(), onOpenTag: vi.fn(), onOpenNote: vi.fn() };
+  return {
+    onSelectReel: vi.fn(),
+    onOpenTag: vi.fn(),
+    onOpenNote: vi.fn(),
+    onOpenBreak: vi.fn(),
+  };
 }
 
 /** Um turno das 17:00 com leitura às 19:00 e XI-0001 constante em 45 t/h. */
@@ -1038,5 +1045,169 @@ describe('Simulação', () => {
 
     expect(onApply).toHaveBeenCalledWith({ tag: 'SIC-1104', value: 1270 });
     expect(writeSetpoint).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * Replay de quebra — a tela que não pode inventar culpado.
+ *
+ * O que os testes cobram aqui é o que distingue esta tela: a ordem é a dos
+ * números, a consequência aparece como consequência, e uma quebra sem desvio
+ * diz que não sabe em vez de eleger o menos inocente da lista.
+ */
+describe('Replay de quebra', () => {
+  const QUEBRA = {
+    id: 'QB-1',
+    shiftId: TURNO.id,
+    startedAt: '2026-06-15T18:30:00Z',
+    endedAt: '2026-06-15T18:52:00Z',
+    section: 'press' as const,
+    probableCause: 'perda de vácuo na prensa de sapata',
+    precursors: [],
+  };
+
+  const desvio = (over: Record<string, unknown>) => ({
+    tag: 'WIC-401',
+    name: 'Carga linear da prensa de sapata',
+    unit: 'kN/m',
+    leadTimeS: 540,
+    direction: 'caiu' as const,
+    size: -50,
+    peak: -52,
+    sigmas: 25,
+    baseline: 720,
+    ruler: 2,
+    consequenceOf: null,
+    ...over,
+  });
+
+  const série = (tag: string) => ({
+    tag,
+    name: tag,
+    unit: '%',
+    baseline: 10,
+    samples: [
+      { t: '2026-06-15T18:20:00Z', v: 10 },
+      { t: '2026-06-15T18:25:00Z', v: 9 },
+      { t: '2026-06-15T18:30:00Z', v: 8 },
+    ],
+  });
+
+  const replay = (over: Record<string, unknown> = {}) => ({
+    webBreak: QUEBRA,
+    replay: {
+      breakAt: Date.parse(QUEBRA.startedAt),
+      windowS: 600,
+      deviations: [
+        desvio({}),
+        desvio({
+          tag: 'AI-407',
+          name: 'Sequidade na saída da prensa',
+          unit: '%',
+          leadTimeS: 300,
+          consequenceOf: 'WIC-401',
+        }),
+      ],
+      quiet: ['SIC-1104'],
+      unknown: [],
+      first: desvio({}),
+      ...over,
+    },
+    series: [série('WIC-401'), série('AI-407'), série('SIC-1104')],
+    events: { alarms: [], setpointChanges: [], gradeChanges: [] },
+    pattern: { sameSection: 4, sameFirst: 2, tag: 'WIC-401' },
+  });
+
+  const portão = (over: Partial<DataGateway> = {}) =>
+    gatewayOf({
+      webBreaks: () => Promise.resolve({ count: 1, webBreaks: [QUEBRA] }),
+      breakReplay: () => Promise.resolve(replay()),
+      notes: () => Promise.resolve({ count: 0, notes: [] }),
+      ...over,
+    });
+
+  const props = { id: null, onOpenNote: vi.fn(), onOpenTag: vi.fn() };
+
+  it('diz que está carregando antes de a resposta chegar', () => {
+    render(<QuebraScreen gateway={portão({ webBreaks: nunca })} {...props} />);
+    expect(screen.getByRole('status')).toHaveTextContent(/Carregando/i);
+  });
+
+  it('explica o vazio quando não há quebra registrada', async () => {
+    render(
+      <QuebraScreen
+        gateway={portão({ webBreaks: () => Promise.resolve({ count: 0, webBreaks: [] }) })}
+        {...props}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByRole('status')).toHaveTextContent(/Nenhuma quebra/i);
+    });
+  });
+
+  it('mostra a mensagem da API no erro', async () => {
+    render(<QuebraScreen gateway={portão({ webBreaks: falha })} {...props} />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent('A API respondeu 503');
+    });
+  });
+
+  it('o resumo diz o primeiro desvio, e não a causa', async () => {
+    render(<QuebraScreen gateway={portão()} {...props} />);
+
+    const resumo = await screen.findByText(/Primeiro desvio:/);
+    expect(resumo).toHaveTextContent('Carga linear da prensa de sapata');
+    expect(resumo.textContent ?? '').not.toMatch(/causa/i);
+  });
+
+  it('a consequência aparece como consequência', async () => {
+    render(<QuebraScreen gateway={portão()} {...props} />);
+
+    await screen.findByText(/Primeiro desvio:/);
+
+    const lista = within(screen.getByRole('region', { name: 'O que se mexeu' }));
+    expect(lista.getByText(/depois de WIC-401 — que a move/)).toBeInTheDocument();
+    expect(lista.getByText('primeiro desvio')).toBeInTheDocument();
+  });
+
+  /** O teste irmão do núcleo: sem desvio, sem culpado. */
+  it('quebra sem desvio não aponta ninguém', async () => {
+    render(
+      <QuebraScreen
+        gateway={portão({
+          breakReplay: () =>
+            Promise.resolve({
+              ...replay(),
+              replay: {
+                breakAt: Date.parse(QUEBRA.startedAt),
+                windowS: 600,
+                deviations: [],
+                quiet: ['WIC-401', 'AI-407'],
+                unknown: [],
+                first: null,
+              },
+            }),
+        })}
+        {...props}
+      />,
+    );
+
+    // a frase aparece nos dois painéis: no resumo e no lugar da lista
+    await waitFor(() => {
+      expect(
+        screen.getAllByText(/Nenhuma das variáveis observadas saiu do normal/).length,
+      ).toBeGreaterThan(0);
+    });
+    expect(screen.queryByText(/Primeiro desvio:/)).not.toBeInTheDocument();
+  });
+
+  it('o padrão conta coincidências sem prever a próxima', async () => {
+    render(<QuebraScreen gateway={portão()} {...props} />);
+
+    const padrão = await screen.findByText(/quebras anteriores em/);
+    expect(padrão).toHaveTextContent('2 das 4');
+    expect(padrão.textContent ?? '').not.toMatch(/vai|provável/i);
   });
 });

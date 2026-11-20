@@ -38,6 +38,8 @@ export interface TurnoScreenProps {
   readonly onSelectReel: (number: number) => void;
   readonly onOpenTag: (tag: string) => void;
   readonly onOpenNote: (number: string) => void;
+  /** Abre o replay de uma quebra da linha do tempo. */
+  readonly onOpenBreak: (id: string) => void;
 }
 
 const HOUR = 3_600_000;
@@ -45,7 +47,13 @@ const HOUR = 3_600_000;
 /** A dosagem de cola: a TAG do cenário que termina na bobina retida. */
 const AKD_TAG = 'FIC-107';
 
-export function TurnoScreen({ gateway, onSelectReel, onOpenTag, onOpenNote }: TurnoScreenProps) {
+export function TurnoScreen({
+  gateway,
+  onSelectReel,
+  onOpenTag,
+  onOpenNote,
+  onOpenBreak,
+}: TurnoScreenProps) {
   const [mode, setMode] = useState<TimelineWindow>('turno');
 
   const base = useResource(
@@ -82,6 +90,7 @@ export function TurnoScreen({ gateway, onSelectReel, onOpenTag, onOpenNote }: Tu
             onSelectReel={onSelectReel}
             onOpenTag={onOpenTag}
             onOpenNote={onOpenNote}
+            onOpenBreak={onOpenBreak}
           />
         ) : null
       }
@@ -109,6 +118,7 @@ function ShiftBody({
   onSelectReel,
   onOpenTag,
   onOpenNote,
+  onOpenBreak,
 }: Base & {
   readonly gateway: DataGateway;
   readonly mode: TimelineWindow;
@@ -116,6 +126,7 @@ function ShiftBody({
   readonly onSelectReel: (number: number) => void;
   readonly onOpenTag: (tag: string) => void;
   readonly onOpenNote: (number: string) => void;
+  readonly onOpenBreak: (id: string) => void;
 }) {
   const { shift } = detail;
   const now = Date.parse(values.ts);
@@ -235,6 +246,7 @@ function ShiftBody({
               events={events}
               onOpenReel={onSelectReel}
               onOpenTag={onOpenTag}
+              onOpenBreak={onOpenBreak}
             />
             <div className="grid h-88 grid-cols-3 gap-4">
               <Scoreboard

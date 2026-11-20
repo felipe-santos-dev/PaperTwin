@@ -98,6 +98,27 @@ export const HELP = {
     click: 'Clicar numa linha destaca o gráfico dela e mostra a cadeia de causa e efeito abaixo.',
   },
 
+  // Replay de quebra
+
+  'quebra.linha': {
+    shows: 'Os 10 min antes da quebra, com as três variáveis que saíram do normal primeiro.',
+    read: 'A faixa clara é o normal daquela hora e o tracejado horizontal é a média dela; o tracejado vertical vermelho é onde a variável saiu. A linha azul é o cursor, e a curva só é desenhada até ele.',
+    click:
+      '"Reproduzir" anda com o cursor; 1×, 4× e 16× mudam a velocidade. Arrastar a barra vai direto a um instante.',
+  },
+  'quebra.variaveis': {
+    shows: 'As variáveis observadas, na ordem em que saíram do normal.',
+    read: 'As recuadas desviaram depois de alguma que as move no grafo de relações: são consequência, não origem. As apagadas ainda não desviaram no instante do cursor.',
+    click:
+      'Clicar numa variável troca o gráfico ao lado pela dela; uma TAG parada abre a tendência.',
+  },
+  'quebra.local': {
+    shows:
+      'Onde a folha arrebentou, quantas quebras anteriores ali começaram igual e as notas abertas da seção.',
+    read: 'A faixa vermelha no mapa é a seção da quebra. O padrão conta coincidências das quebras guardadas; ele não prevê a próxima nem afirma causa.',
+    click: 'Uma nota abre a tela de Notas nela.',
+  },
+
   // Laboratório
 
   'laboratorio.matriz': {

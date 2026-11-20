@@ -55,8 +55,9 @@ describe('índice', () => {
     expect(new Set(extra.map((item) => item.kind))).toEqual(new Set(['bobina', 'nota']));
   });
 
-  it('traz as nove telas, o catálogo com as fixas e os 98 mancais', () => {
-    expect(items.filter((item) => item.kind === 'tela')).toHaveLength(9);
+  /** Dez telas no índice: as nove da barra e a do replay, que só a busca alcança. */
+  it('traz as dez telas, o catálogo com as fixas e os 98 mancais', () => {
+    expect(items.filter((item) => item.kind === 'tela')).toHaveLength(10);
     // 356 do catálogo + a fixa que sobrou no preparo depois da Fase 3
     expect(items.filter((item) => item.kind === 'tag')).toHaveLength(357);
     expect(items.filter((item) => item.kind === 'mancal')).toHaveLength(98);

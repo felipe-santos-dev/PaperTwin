@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 
 import { PRIORITY_CLASS, PRIORITY_LABEL, type DesignPriority } from './priority';
 import { RangeBar } from './RangeBar';
-import { SCREENS, type ScreenId } from './screens';
+import { RAIL_SCREENS, type ScreenId } from './screens';
 import { SectionBlock } from './SectionBlock';
 import type { SectionState } from './sections';
 
@@ -132,7 +132,7 @@ function NavRail({
       <div className="flex h-12 w-14 shrink-0 items-center justify-center border-b border-line text-[13px] font-semibold tracking-[0.02em] text-fg">
         PT
       </div>
-      {SCREENS.map((item) => {
+      {RAIL_SCREENS.map((item) => {
         const active = item.id === screen;
         return (
           <button
@@ -143,8 +143,8 @@ function NavRail({
             }}
             aria-current={active ? 'page' : undefined}
             aria-label={item.label}
-            aria-keyshortcuts={item.key}
-            title={`${item.label} (tecla ${item.key})`}
+            aria-keyshortcuts={item.key ?? undefined}
+            title={`${item.label} (tecla ${item.key ?? '—'})`}
             className={`flex h-13 w-14 shrink-0 flex-col items-center justify-center gap-0.5 border-l-2 transition-colors ${
               active
                 ? 'border-action bg-hover text-fg'

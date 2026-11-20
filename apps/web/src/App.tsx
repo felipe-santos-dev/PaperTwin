@@ -11,6 +11,7 @@ import { MancaisScreen } from './screens/MancaisScreen';
 import { MaquinaScreen } from './screens/MaquinaScreen';
 import { NotasScreen } from './screens/NotasScreen';
 import { ProcessoScreen } from './screens/ProcessoScreen';
+import { QuebraScreen } from './screens/QuebraScreen';
 import { RondasScreen } from './screens/RondasScreen';
 import { SimulacaoScreen } from './screens/SimulacaoScreen';
 import { TurnoScreen } from './screens/TurnoScreen';
@@ -70,6 +71,9 @@ export function App() {
    */
   const [simLoop, setSimLoop] = useState<string | null>(null);
   const [proposal, setProposal] = useState<WhatIfChange | null>(null);
+
+  /** A quebra aberta no replay; `null` abre a mais recente. */
+  const [webBreak, setWebBreak] = useState<string | null>(null);
 
   /**
    * O ativo da cena continua espelhado em `?asset=`.
@@ -135,6 +139,15 @@ export function App() {
     (which: string) => {
       setArea(which);
       go('processo');
+    },
+    [go],
+  );
+
+  /** Abre o replay de uma quebra, vindo do Turno ou de Bobinas. */
+  const openBreak = useCallback(
+    (id: string) => {
+      setWebBreak(id);
+      go('quebra');
     },
     [go],
   );
@@ -230,6 +243,8 @@ export function App() {
           proposal={proposal}
           openSimulacao={openSimulacao}
           openSetpoint={openSetpoint}
+          webBreak={webBreak}
+          openBreak={openBreak}
         />
       )}
     </Shell>
@@ -258,6 +273,8 @@ interface ScreenProps {
   readonly proposal: WhatIfChange | null;
   readonly openSimulacao: (tag: string) => void;
   readonly openSetpoint: (change: WhatIfChange) => void;
+  readonly webBreak: string | null;
+  readonly openBreak: (id: string) => void;
 }
 
 function Screen(props: ScreenProps) {
@@ -269,11 +286,17 @@ function Screen(props: ScreenProps) {
           onSelectReel={props.openReel}
           onOpenTag={props.openTrend}
           onOpenNote={props.openNote}
+          onOpenBreak={props.openBreak}
         />
       );
     case 'bobinas':
       return (
-        <BobinasScreen gateway={props.gateway} selected={props.reel} onSelect={props.setReel} />
+        <BobinasScreen
+          gateway={props.gateway}
+          selected={props.reel}
+          onSelect={props.setReel}
+          onOpenBreak={props.openBreak}
+        />
       );
     case 'processo':
       return (
@@ -326,6 +349,15 @@ function Screen(props: ScreenProps) {
           gateway={props.gateway}
           loop={props.simLoop}
           onApply={props.openSetpoint}
+        />
+      );
+    case 'quebra':
+      return (
+        <QuebraScreen
+          gateway={props.gateway}
+          id={props.webBreak}
+          onOpenNote={props.openNote}
+          onOpenTag={props.openTrend}
         />
       );
   }

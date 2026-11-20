@@ -217,6 +217,9 @@ const DEMO_ROUTES: Omit<DataGateway, keyof FixtureRoutes> = {
     return { count: rows.length, webBreaks: capped(rows, filter.limit) };
   },
 
+  breakReplay: (id, signal) =>
+    load(`/web-breaks/${encodeURIComponent(id)}/replay`, ['webBreak', 'replay'], signal),
+
   async gradeChanges(filter = {}, signal) {
     const all = await load<{ count: number; gradeChanges: readonly GradeChange[] }>(
       '/grade-changes',

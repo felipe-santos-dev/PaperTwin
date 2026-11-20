@@ -29,6 +29,8 @@ export interface BobinasScreenProps {
   readonly gateway: DataGateway;
   readonly selected: number | null;
   readonly onSelect: (number: number | null) => void;
+  /** Abre o replay de uma quebra do período. */
+  readonly onOpenBreak?: (id: string) => void;
 }
 
 /** As três propriedades do QCS que a faixa e o perfil olham. */
@@ -40,7 +42,7 @@ const QCS = [
 
 const REELS = 24;
 
-export function BobinasScreen({ gateway, selected, onSelect }: BobinasScreenProps) {
+export function BobinasScreen({ gateway, selected, onSelect, onOpenBreak }: BobinasScreenProps) {
   const data = useResource(
     useCallback(
       async (signal: AbortSignal) => {
@@ -104,6 +106,7 @@ export function BobinasScreen({ gateway, selected, onSelect }: BobinasScreenProp
               speed={speed}
               selected={pick?.number ?? null}
               onSelect={onSelect}
+              onOpenBreak={onOpenBreak}
             />
             {pick ? (
               <div className="grid h-88 grid-cols-[minmax(0,1100fr)_minmax(0,716fr)] gap-4">
@@ -150,6 +153,7 @@ function ReelList({
   speed,
   selected,
   onSelect,
+  onOpenBreak,
 }: {
   readonly reels: readonly ReelView[];
   readonly holds: readonly ReelHold[];
@@ -159,6 +163,7 @@ function ReelList({
   readonly speed: number | null;
   readonly selected: number | null;
   readonly onSelect: (number: number) => void;
+  readonly onOpenBreak: ((id: string) => void) | undefined;
 }) {
   const holdOf = new Map(holds.map((hold) => [hold.reelNumber, hold]));
   const lengths = reels.map((reel) => reelLength(reel, now, speed));
@@ -340,7 +345,49 @@ function ReelList({
           );
         })}
       </ul>
+
+      <Quebras breaks={breaks} onOpenBreak={onOpenBreak} />
     </Panel>
+  );
+}
+
+/**
+ * As quebras do período, cada uma a um clique do replay.
+ *
+ * Elas já apareciam como um traço vermelho na faixa da bobina, mas um traço de
+ * 2 px numa linha de 20 px não é um alvo de clique nem um caminho de teclado.
+ * A lista embaixo é o que torna o replay alcançável de Bobinas — que é onde
+ * alguém está quando percebe que uma bobina terminou mais curta do que devia.
+ */
+function Quebras({
+  breaks,
+  onOpenBreak,
+}: {
+  readonly breaks: readonly WebBreak[];
+  readonly onOpenBreak: ((id: string) => void) | undefined;
+}) {
+  if (breaks.length === 0 || !onOpenBreak) return null;
+
+  return (
+    <div className="mt-2 flex shrink-0 flex-wrap items-center gap-2 border-t border-line pt-2 text-[11px] text-fg-3">
+      <span className="flex items-center gap-1.5">
+        <span className="h-3 w-0.5 bg-alarm-1" />
+        quebras no período:
+      </span>
+      {breaks.map((item) => (
+        <button
+          key={item.id}
+          type="button"
+          title={item.probableCause}
+          onClick={() => {
+            onOpenBreak(item.id);
+          }}
+          className="border border-line-strong px-1.5 py-px font-mono text-[11px] text-fg-2 hover:border-action hover:text-action"
+        >
+          {hhmm(item.startedAt)} · replay
+        </button>
+      ))}
+    </div>
   );
 }
 

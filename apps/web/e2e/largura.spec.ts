@@ -17,7 +17,17 @@ import { expect, test, type Page } from '@playwright/test';
  * assim que o corte no "Efeito do refino" passou despercebido.
  */
 
-const TELAS = ['turno', 'processo', 'laboratorio', 'bobinas', 'mancais', 'rondas', 'notas'];
+const TELAS = [
+  'turno',
+  'processo',
+  'laboratorio',
+  'bobinas',
+  'mancais',
+  'rondas',
+  'notas',
+  'simulacao',
+  'quebra',
+];
 
 /** Quanto se tolera: meio pixel de arredondamento de grade, não mais. */
 const FOLGA = 1;
@@ -64,6 +74,17 @@ test.beforeEach(async ({ page }) => {
 
 for (const tela of TELAS) {
   test(`nenhum gráfico passa da borda do painel em ${tela}`, async ({ page }) => {
+    /**
+     * O replay mede o instantâneo, e não a API.
+     *
+     * A retomada tem teto de 4 h, e a quebra do cenário é uma por dia: uma API
+     * recém-subida quase nunca tem uma, e a tela abriria no estado vazio — sem
+     * gráfico nenhum para medir. O instantâneo tem sempre a dele.
+     */
+    if (tela === 'quebra') {
+      await page.route('**://127.0.0.1:3333/**', (route) => route.abort());
+    }
+
     await page.goto(`/#${tela}`);
     await expect(page.locator('section').first()).toBeVisible({ timeout: 60_000 });
     // os gráficos só existem depois da resposta da API e da primeira medição

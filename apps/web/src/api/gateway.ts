@@ -32,9 +32,11 @@ import {
   fetchSteamGroups,
   fetchTag,
   fetchTagTrend,
+  fetchBreakReplay,
   fetchWebBreaks,
   writeSetpoint,
   type AlarmList,
+  type BreakReplayView,
   type AlarmQuery,
   type ProcessValues,
   type ReelView,
@@ -110,6 +112,14 @@ export interface DataGateway extends FixtureRoutes {
     filter?: { shiftId?: string; limit?: number },
     signal?: AbortSignal,
   ): Promise<{ count: number; webBreaks: readonly WebBreak[] }>;
+
+  /**
+   * O replay de uma quebra: a ordem dos desvios, as séries e os eventos.
+   *
+   * Não é `null` no instantâneo. A conta já foi feita quando o instantâneo foi
+   * gerado — o replay é leitura de arquivo, como todo o resto da demonstração.
+   */
+  breakReplay(id: string, signal?: AbortSignal): Promise<BreakReplayView>;
   gradeChanges(
     filter?: { shiftId?: string; limit?: number },
     signal?: AbortSignal,
@@ -175,6 +185,7 @@ export const LIVE_GATEWAY: DataGateway = {
   reels: fetchReels,
   reel: fetchReel,
   webBreaks: fetchWebBreaks,
+  breakReplay: fetchBreakReplay,
   gradeChanges: fetchGradeChanges,
   rounds: fetchRounds,
   notes: fetchNotes,

@@ -364,6 +364,8 @@ export const INSERT_PRECURSOR = `
   values ($1, $2, $3, $4, $5, $6)
 `;
 
+export const FIND_WEB_BREAK = `select ${BREAK_COLUMNS} from web_break where id = $1`;
+
 export const LIST_WEB_BREAKS = `
   select ${BREAK_COLUMNS}
   from web_break

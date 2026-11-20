@@ -14,7 +14,9 @@ import {
   listSetpointChangesSchema,
   listShiftsSchema,
   listWebBreaksSchema,
+  getBreakReplaySchema,
 } from './process-route-schemas';
+import { replayOf } from '../runtime/break-replay';
 
 /**
  * As rotas das entidades de operação.
@@ -125,6 +127,31 @@ export async function operationRoutes(app: FastifyInstance): Promise<void> {
         ...(request.query.shiftId ? { shiftId: request.query.shiftId } : {}),
       });
       return { count: webBreaks.length, webBreaks };
+    },
+  );
+
+  /**
+   * O replay de uma quebra.
+   *
+   * Quem investiga uma parada quer três coisas ao mesmo tempo: o que se mexeu
+   * primeiro, como as curvas andaram e o que mais aconteceu no período. Vão
+   * juntas numa resposta só — uma tela, uma ida ao servidor.
+   *
+   * A rota **não escreve nada**: é a mesma conta que a retomada já fez ao colher
+   * a entidade, refeita sobre as séries para a tela poder desenhá-las.
+   */
+  app.get<{ Params: { id: string } }>(
+    '/web-breaks/:id/replay',
+    { schema: getBreakReplaySchema },
+    async (request, reply) => {
+      await app.simulation.ensureCurrent();
+
+      const webBreak = await app.db.findWebBreak(request.params.id);
+      if (!webBreak) {
+        return reply.code(404).send(notFound(`A quebra ${request.params.id} não existe`));
+      }
+
+      return replayOf(app.db, webBreak);
     },
   );
 

@@ -11,7 +11,6 @@ import {
   shiftWindowAt,
   WEB_WIDTH_M,
   type Alarm,
-  type BreakPrecursor,
   type GradeChange,
   type JumboReel,
   type LeakState,
@@ -26,12 +25,12 @@ import {
 
 import type { Database } from '../db';
 import type { StoredShift } from '../db/operations-queries';
+import { precursorsOf } from './break-replay';
 import {
   nominalShiftProductionT,
   reelDiameterMm,
   reelWoundM,
   shiftPlan,
-  UPSET_LEAD_S,
   type ShiftPlan,
 } from '../simulation/scenarios';
 
@@ -207,87 +206,22 @@ async function buildReel(
 // --------------------------------------------------------- quebra de folha
 
 /**
- * As tags que a investigação de uma quebra olha.
- *
- * A malha perturbada entra sempre; as outras são o caminho por onde o efeito
- * desce até a folha. Só vale a pena olhar o que é ponto do historiador, porque é
- * de lá que os sinais são lidos.
- */
-const DIAGNOSTIC_TAGS: readonly string[] = ['AIC-903', 'AIC-901', 'AI-407', 'SDIC-703', 'AIC-902'];
-
-/**
- * Quantos desvios de exceção um sinal precisa andar para contar como precursor.
- *
- * **Suposição**, e com razão: o `excDev` é a banda em que o instrumento
- * tremelica, então três vezes ela é movimento que não é ruído. Um limiar
- * absoluto não serviria — a mesma régua teria de valer para umidade em % e
- * pressão em kPa.
- */
-const PRECURSOR_SIGMAS = 3;
-
-/** Descreve em português o que a tag fez. */
-function describeMove(tag: string, before: number, at: number, leadS: number): string {
-  const unit = processVariable(tag)?.unit ?? '';
-  const delta = at - before;
-  const direction = delta >= 0 ? 'subiu' : 'caiu';
-  const minutes = Math.round(leadS / 60);
-
-  return (
-    `${direction} ${Math.abs(delta).toFixed(2)} ${unit} nos ${String(minutes)} min ` +
-    'antes da quebra'
-  );
-}
-
-/**
  * Os sinais dos 10 min anteriores, **lidos do arquivo**.
  *
  * Nada aqui é escrito à mão: o cenário perturbou uma malha e o processo
  * respondeu, e isto lê a resposta. É a diferença entre um gêmeo digital e uma
  * animação — se a rede de relações mudar, os sinais mudam com ela.
+ *
+ * A conta é a mesma que a tela de replay faz: `runtime/break-replay.ts` lê as
+ * duas janelas e `diagnoseBreak` julga. Antes havia duas réguas parecidas, uma
+ * aqui e outra na investigação — e duas réguas parecidas discordam no dia em
+ * que importam.
+ *
+ * A lista de tags observadas não inclui a malha perturbada por saber que ela
+ * foi perturbada: ela é fixa, e as quatro causas de cenário estão nela desde o
+ * começo. Olhar a resposta antes de fazer a conta daria uma colheita que
+ * acerta sempre e não vale nada.
  */
-async function precursorsOf(
-  db: Database,
-  upsetTag: string,
-  breakTick: number,
-): Promise<BreakPrecursor[]> {
-  const breakAt = tickTime(breakTick);
-  const from = tickTime(breakTick - UPSET_LEAD_S);
-
-  const tags = [upsetTag, ...DIAGNOSTIC_TAGS.filter((tag) => tag !== upsetTag)];
-  const found: BreakPrecursor[] = [];
-
-  for (const tag of tags) {
-    const point = historianPoint(tag);
-    if (!point) continue;
-
-    const threshold = (processVariable(tag)?.compression.excDev ?? 0) * PRECURSOR_SIGMAS;
-    if (threshold <= 0) continue;
-
-    const valueBefore = (await db.valueAt(point.pointId, from))?.v ?? null;
-    if (valueBefore === null) continue;
-
-    const samples = await db.archivedSamples({ pointId: point.pointId, from, to: breakAt });
-    if (samples.length === 0) continue;
-
-    // o instante em que o sinal passou do limiar pela primeira vez
-    const crossed = samples.find((sample) => Math.abs(sample.v - valueBefore) > threshold);
-    if (!crossed) continue;
-
-    const leadTimeS = Math.round((breakAt.getTime() - crossed.t) / 1000);
-
-    found.push({
-      tag,
-      description: describeMove(tag, valueBefore, crossed.v, leadTimeS),
-      leadTimeS,
-      valueBefore: Number(valueBefore.toFixed(3)),
-      valueAtSignal: Number(crossed.v.toFixed(3)),
-    });
-  }
-
-  // do mais antigo para o mais recente, que é como a tela desenha a linha do
-  // tempo e como a restrição da tabela exige
-  return found.sort((a, b) => b.leadTimeS - a.leadTimeS);
-}
 
 // ----------------------------------------------------------------- ronda
 
@@ -537,7 +471,7 @@ export async function harvestEntities(
         endedAt: quebra.endTick <= toTick ? tickTime(quebra.endTick).toISOString() : null,
         section: quebra.section,
         probableCause: quebra.probableCause,
-        precursors: await precursorsOf(db, quebra.upsetTag, quebra.startTick),
+        precursors: await precursorsOf(db, tickTime(quebra.startTick)),
       });
     }
 

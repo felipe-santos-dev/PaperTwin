@@ -186,6 +186,10 @@ export class SqlDatabase implements Database {
     return operations.upsertWebBreaks(this.sql, breaks);
   }
 
+  findWebBreak(id: string): Promise<WebBreak | null> {
+    return operations.findWebBreak(this.sql, id);
+  }
+
   listWebBreaks(filter?: EventFilter): Promise<WebBreak[]> {
     return operations.listWebBreaks(this.sql, filter);
   }

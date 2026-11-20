@@ -2,8 +2,14 @@ import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { allAssets, MP1, PROCESS_CATALOG, shiftWindowAt } from '@mp1/shared';
-import { DEFAULT_SEED, tickAt, TICKS_PER_HOUR, tickTime } from '@mp1/shared/simulation';
+import { allAssets, MP1, PRECURSOR_WINDOW_S, PROCESS_CATALOG, shiftWindowAt } from '@mp1/shared';
+import {
+  DEFAULT_SEED,
+  secondsToTicks,
+  tickAt,
+  TICKS_PER_HOUR,
+  tickTime,
+} from '@mp1/shared/simulation';
 import type { FastifyInstance } from 'fastify';
 
 import { buildApp } from '../app';
@@ -11,7 +17,7 @@ import { openPglite } from '../db/sql-database';
 import { seedDatabase } from '../db/seed';
 import { loadEnv } from '../env';
 import { catchUp } from '../runtime/catchup';
-import { shiftPlan } from '../simulation/scenarios';
+import { shiftPlan, type BreakPlan } from '../simulation/scenarios';
 
 /**
  * Gera o espelho estático da API para o modo de demonstração.
@@ -100,10 +106,52 @@ function fileFor(path: string): string {
   return `${path.replace(/^\//, '').replace(/\//g, '~')}.json`;
 }
 
+/**
+ * Uma quebra de folha no instantâneo, com o arquivo que o replay precisa.
+ *
+ * O cenário dá **uma quebra por dia de operação**, no turno que o ruído por
+ * posição escolher — e no dia do instantâneo ela cai no turno A, não no B que o
+ * instantâneo retrata. Sem isto, a tela de replay abriria vazia no modo de
+ * demonstração: a entidade só existe para os turnos que a retomada percorreu, e
+ * as séries dos 10 min anteriores só existem se a simulação tiver rodado ali.
+ *
+ * Então a geração roda uma segunda janela, curta, em volta daquela quebra. O
+ * arquivo fica com dois períodos e um buraco entre eles — que é exatamente o
+ * que acontece num gêmeo que ninguém olha o tempo todo, e o que a tendência já
+ * sabe desenhar.
+ *
+ * A ordem importa: a janela da quebra roda **antes** da principal, porque o
+ * tempo anda para a frente nos dois lados do banco. Rodá-la depois faria um
+ * alarme fechar antes de ter sido aberto, e a restrição da tabela — com razão —
+ * recusa.
+ */
+async function comQuebra(db: Awaited<ReturnType<typeof openPglite>>): Promise<void> {
+  const anterior = quebraAnteriorA(NOW);
+  if (!anterior) return;
+
+  const início = tickTime(anterior.startTick - secondsToTicks(PRECURSOR_WINDOW_S + 300));
+  const fim = tickTime(anterior.endTick + secondsToTicks(300));
+
+  await db.saveSimState({ seed: DEFAULT_SEED, lastTick: tickAt(início), updatedAt: início });
+  await catchUp(db, { now: fim });
+}
+
+/** A quebra mais recente que termina antes do instante dado, nos últimos dias. */
+function quebraAnteriorA(instante: Date): BreakPlan | null {
+  for (let horas = 0; horas <= 72; horas += 4) {
+    const janela = shiftWindowAt(new Date(instante.getTime() - horas * 3_600_000));
+    const plano = shiftPlan(DEFAULT_SEED, janela).webBreak;
+    if (plano && tickTime(plano.endTick) < instante) return plano;
+  }
+  return null;
+}
+
 async function main(): Promise<void> {
   const db = await openPglite();
   await db.migrate();
   const seeded = await seedDatabase(db, { now: NOW });
+
+  await comQuebra(db);
 
   /**
    * A simulação roda a partir do começo do turno.
@@ -188,6 +236,19 @@ async function main(): Promise<void> {
   const reels = (await capture(app, '/reels')) as { reels: { number: number }[] };
   for (const reel of reels.reels) {
     await grab(`/reels/${String(reel.number)}`);
+  }
+
+  /**
+   * O replay de cada quebra.
+   *
+   * É a conta da Fase 5 já feita: o instantâneo guarda a ordem dos desvios, as
+   * séries da janela e os eventos do período. Sem isto, a tela de replay
+   * abriria vazia no modo de demonstração — que é como quase todo mundo vê o
+   * projeto.
+   */
+  const breaks = (await capture(app, '/web-breaks')) as { webBreaks: { id: string }[] };
+  for (const quebra of breaks.webBreaks) {
+    await grab(`/web-breaks/${encodeURIComponent(quebra.id)}/replay`);
   }
 
   const rounds = (await capture(app, '/rounds')) as { rounds: { id: string }[] };

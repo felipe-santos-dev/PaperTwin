@@ -41,6 +41,7 @@ import {
   LIST_ROUNDS,
   LIST_SETPOINT_CHANGES,
   LIST_SHIFTS,
+  FIND_WEB_BREAK,
   LIST_WEB_BREAKS,
   pointsOfRounds,
   precursorsOfBreaks,
@@ -254,6 +255,15 @@ export async function upsertWebBreaks(
   });
 
   return breaks.length;
+}
+
+export async function findWebBreak(sql: SqlExecutor, id: string): Promise<WebBreak | null> {
+  const rows = await sql.rows<WebBreakRow>(FIND_WEB_BREAK, [id]);
+  const row = rows[0];
+  if (!row) return null;
+
+  const precursors = await children<PrecursorRow>(sql, [row.id], precursorsOfBreaks);
+  return toWebBreak(row, precursors);
 }
 
 export async function listWebBreaks(

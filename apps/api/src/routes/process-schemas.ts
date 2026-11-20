@@ -288,6 +288,48 @@ export const webBreakSchema = {
   additionalProperties: false,
 } as const;
 
+/**
+ * Um desvio da investigação de quebra.
+ *
+ * Tem mais campos que o precursor gravado na entidade porque diz **como** o
+ * desvio foi julgado: a média da hora anterior e a régua usada. Sem os dois, um
+ * número como "desviou 1,8" não dá para discutir.
+ */
+export const breakDeviationSchema = {
+  $id: 'BreakDeviation',
+  type: 'object',
+  properties: {
+    tag: { type: 'string' },
+    name: { type: 'string' },
+    unit: { type: 'string' },
+    leadTimeS: { type: 'integer', description: 'Segundos antes da quebra.' },
+    direction: { type: 'string', enum: ['subiu', 'caiu'] },
+    size: { type: 'number', description: 'O desvio no instante em que passou da régua.' },
+    peak: { type: 'number', description: 'O maior desvio da janela, com sinal.' },
+    sigmas: { type: 'number', description: 'Quantas réguas o desvio andou.' },
+    baseline: { type: 'number', description: 'A média da hora anterior.' },
+    ruler: { type: 'number', description: 'A maior entre o excDev e a dispersão da base.' },
+    consequenceOf: {
+      type: ['string', 'null'],
+      description: 'De quem este desvio é consequência, pelo grafo de relações.',
+    },
+  },
+  required: [
+    'tag',
+    'name',
+    'unit',
+    'leadTimeS',
+    'direction',
+    'size',
+    'peak',
+    'sigmas',
+    'baseline',
+    'ruler',
+    'consequenceOf',
+  ],
+  additionalProperties: false,
+} as const;
+
 export const gradeChangeSchema = {
   $id: 'GradeChange',
   type: 'object',
@@ -408,6 +450,7 @@ export const PROCESS_SCHEMAS = [
   shiftSchema,
   reelSchema,
   webBreakSchema,
+  breakDeviationSchema,
   gradeChangeSchema,
   roundSchema,
   noteSchema,

@@ -463,6 +463,89 @@ export const listWebBreaksSchema = {
   response: { 200: listOf('WebBreak', 'webBreaks') },
 } as const;
 
+/**
+ * O replay de uma quebra.
+ *
+ * A resposta é grande de propósito: a tela precisa da ordem dos desvios, das
+ * séries da janela e dos eventos do período ao mesmo tempo, e três idas ao
+ * servidor para desenhar uma tela só seriam três esperas de quem está
+ * investigando uma parada de máquina.
+ */
+export const getBreakReplaySchema = {
+  tags: ['Operação'],
+  summary: 'O replay de uma quebra: a ordem dos desvios, as séries e os eventos do período',
+  params: {
+    type: 'object',
+    properties: { id: { type: 'string' } },
+    required: ['id'],
+    additionalProperties: false,
+  },
+  response: {
+    200: {
+      type: 'object',
+      properties: {
+        webBreak: ref('WebBreak'),
+        replay: {
+          type: 'object',
+          properties: {
+            breakAt: { type: 'number' },
+            windowS: { type: 'number' },
+            deviations: { type: 'array', items: ref('BreakDeviation') },
+            quiet: { type: 'array', items: { type: 'string' } },
+            unknown: { type: 'array', items: { type: 'string' } },
+            first: { ...ref('BreakDeviation'), nullable: true },
+          },
+          required: ['breakAt', 'windowS', 'deviations', 'quiet', 'unknown'],
+        },
+        series: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              tag: { type: 'string' },
+              name: { type: 'string' },
+              unit: { type: 'string' },
+              baseline: { type: 'number', nullable: true },
+              samples: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    t: { type: 'string', format: 'date-time' },
+                    v: { type: 'number' },
+                  },
+                  required: ['t', 'v'],
+                },
+              },
+            },
+            required: ['tag', 'name', 'unit', 'baseline', 'samples'],
+          },
+        },
+        events: {
+          type: 'object',
+          properties: {
+            alarms: { type: 'array', items: ref('Alarm') },
+            setpointChanges: { type: 'array', items: ref('SetpointChange') },
+            gradeChanges: { type: 'array', items: ref('GradeChange') },
+          },
+          required: ['alarms', 'setpointChanges', 'gradeChanges'],
+        },
+        pattern: {
+          type: 'object',
+          properties: {
+            sameSection: { type: 'number' },
+            sameFirst: { type: 'number' },
+            tag: { type: 'string', nullable: true },
+          },
+          required: ['sameSection', 'sameFirst', 'tag'],
+        },
+      },
+      required: ['webBreak', 'replay', 'series', 'events', 'pattern'],
+    },
+    404: error,
+  },
+} as const;
+
 export const listGradeChangesSchema = {
   tags: ['Operação'],
   summary: 'As trocas de gramatura',

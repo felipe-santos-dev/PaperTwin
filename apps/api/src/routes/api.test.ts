@@ -272,6 +272,7 @@ describe('OpenAPI', () => {
       '/shifts/{id}',
       '/reels',
       '/web-breaks',
+      '/web-breaks/{id}/replay',
       '/grade-changes',
       '/rounds',
       '/notes',

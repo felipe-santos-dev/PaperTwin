@@ -97,6 +97,7 @@ export interface OperationsRepository {
   // --- quebra de folha ---
   upsertWebBreaks(breaks: readonly WebBreak[]): Promise<number>;
   listWebBreaks(filter?: EventFilter): Promise<WebBreak[]>;
+  findWebBreak(id: string): Promise<WebBreak | null>;
 
   // --- troca de gramatura ---
   upsertGradeChanges(changes: readonly GradeChange[]): Promise<number>;

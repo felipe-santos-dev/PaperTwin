@@ -15,6 +15,7 @@
  */
 
 export * from './alarm';
+export * from './break-replay';
 export * from './grade-change';
 export * from './maintenance';
 export * from './provenance';

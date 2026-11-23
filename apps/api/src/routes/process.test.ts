@@ -1,6 +1,3 @@
-import { readFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
-
 import {
   ENGINE_STATE_VERSION,
   runWhatIf,
@@ -796,29 +793,40 @@ describe('a mesma conta nos dois lados', () => {
   });
 
   /**
-   * E o instantâneo carrega o estado de que o navegador precisa.
+   * E o estado que vai para o instantâneo sobrevive à ida e volta do JSON.
    *
-   * Sem este arquivo o modo de demonstração não teria de onde partir, e a
-   * previsão sairia da rede em regime — de um lugar que não é onde a máquina
-   * está. O teste lê o arquivo que o gerador escreveu e roda o núcleo sobre
-   * ele, que é exatamente o que o Web Worker faz.
+   * O modo de demonstração parte deste objeto: o gerador grava
+   * `engine.snapshotState()` em `demo/sim-state.json` e o Web Worker lê de
+   * volta. Sem ele a previsão sairia da rede em regime — de um lugar que não é
+   * onde a máquina está.
+   *
+   * O teste monta o estado **aqui**, com o mesmo caminho do gerador (a retomada
+   * grava, `findSimState` devolve), e passa pelo `JSON` na mão. A primeira
+   * versão lia o arquivo que o gerador tinha escrito, e isso quebrava no CI:
+   * `apps/web/public/demo/` está no `.gitignore`, e os testes rodam antes do
+   * build que o geraria. Um teste não pode depender de artefato gerado — e a
+   * ida e volta pelo JSON é justamente a parte que o arquivo acrescentava,
+   * então nada se perde: um `Map` ou um `Infinity` no estado quebra aqui.
    */
-  it('o estado do instantâneo serve de ponto de partida', async () => {
-    const caminho = fileURLToPath(
-      new URL('../../../web/public/demo/sim-state.json', import.meta.url),
-    );
-    const doInstantâneo = JSON.parse(await readFile(caminho, 'utf8')) as EngineState;
+  it('o estado que vai para o instantâneo serve de ponto de partida', async () => {
+    await app.simulation.ensureCurrent();
 
-    expect(doInstantâneo.version).toBe(ENGINE_STATE_VERSION);
+    const saved = await app.db.findSimState();
+    expect(saved?.state, 'a retomada precisa ter gravado o estado').toBeDefined();
 
-    const previsão = runWhatIf(doInstantâneo, {
+    const comoNoArquivo = JSON.parse(JSON.stringify(saved?.state)) as EngineState;
+
+    expect(comoNoArquivo.version).toBe(ENGINE_STATE_VERSION);
+    expect(comoNoArquivo).toEqual(saved?.state);
+
+    const previsão = runWhatIf(comoNoArquivo, {
       changes: [{ tag: 'AIC-902', value: 77 }],
       horizonS: 300,
       mode: 'auto',
       points: 40,
     });
 
-    expect(previsão.fromTick).toBe(doInstantâneo.tick);
+    expect(previsão.fromTick).toBe(comoNoArquivo.tick);
     expect(previsão.variables.length).toBeGreaterThan(1);
   });
 });

@@ -2,7 +2,14 @@ import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { allAssets, MP1, PRECURSOR_WINDOW_S, PROCESS_CATALOG, shiftWindowAt } from '@mp1/shared';
+import {
+  allAssets,
+  MD_TENSILE_SPEC,
+  MP1,
+  PRECURSOR_WINDOW_S,
+  PROCESS_CATALOG,
+  shiftWindowAt,
+} from '@mp1/shared';
 import {
   DEFAULT_SEED,
   secondsToTicks,
@@ -222,6 +229,7 @@ async function main(): Promise<void> {
     '/rounds',
     '/notes',
     '/note-suggestions',
+    '/lab-results',
     '/setpoint-changes',
   ]) {
     await grab(path);
@@ -262,6 +270,19 @@ async function main(): Promise<void> {
     await grab(`/notes/${encodeURIComponent(note.number)}`);
   }
 
+  /**
+   * O sensor virtual, com a janela do instantâneo.
+   *
+   * A conta já está feita aqui: a tela de Laboratório lê a resposta pronta,
+   * como a de replay lê a da quebra. A janela é a mesma das tendências — quatro
+   * horas — para os laudos do turno caberem nela.
+   */
+  await grab(
+    `/process/quality/${MD_TENSILE_SPEC.tag}?from=${new Date(NOW.getTime() - 4 * 3_600_000).toISOString()}` +
+      `&to=${NOW.toISOString()}&buckets=${String(TREND_BUCKETS)}`,
+    fileFor(`/process/quality/${MD_TENSILE_SPEC.tag}`),
+  );
+
   // --- catálogo e tendência de cada tag ---
 
   const from = new Date(NOW.getTime() - 4 * 3_600_000).toISOString();
@@ -299,10 +320,14 @@ async function main(): Promise<void> {
    * malhas e a verdade de cada tag no instante do instantâneo.
    */
   const simState = await app.db.findSimState();
-  if (simState?.state) {
-    bytes += await writeJson('sim-state.json', simState.state);
-    files += 1;
+  if (!simState?.state) {
+    throw new Error(
+      'A retomada não deixou estado do motor gravado: o instantâneo sairia sem ' +
+        'sim-state.json e o "e se" do modo de demonstração partiria da rede em regime.',
+    );
   }
+  bytes += await writeJson('sim-state.json', simState.state);
+  files += 1;
 
   await app.close();
 

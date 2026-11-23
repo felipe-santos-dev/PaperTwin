@@ -30,6 +30,24 @@ test('o mancal que degrada mostra a nota sugerida, pronta e sem número', async 
   await expect(cartão(page)).not.toContainText(/vai falhar|vai quebrar/);
 });
 
+/**
+ * O outro mancal do cenário é o que separa prever de reagir.
+ *
+ * Ele está em zona B, a vibração não alarmou, e mesmo assim tem nota sugerida
+ * — com **prazo**, sem parada. Se um dia esta tela mostrar "já passou" aqui, o
+ * caso preditivo sumiu do gêmeo e só sobrou o reativo.
+ */
+test('o mancal que ainda está subindo tem sugestão com prazo', async ({ page }) => {
+  await page.goto('/#mancais');
+  await expect(cartão(page)).toBeVisible({ timeout: 60_000 });
+
+  await page.locator('[role="row"][data-asset="MP1-SEC-G6-CS36-MLC"]').click();
+
+  await expect(cartão(page)).toContainText('a projeção cruza a fronteira C→D');
+  await expect(cartão(page)).toContainText(/\d+ dias/);
+  await expect(cartão(page)).not.toContainText('PARADA');
+});
+
 test('a moldura conta as sugestões esperando decisão', async ({ page }) => {
   await page.goto('/#processo');
 
@@ -45,7 +63,9 @@ test('Notas tem a coluna das sugeridas, e dela se chega ao mancal', async ({ pag
 
   const coluna = page.getByRole('region', { name: 'Sugeridas' });
   await expect(coluna).toBeVisible({ timeout: 60_000 });
-  await expect(coluna.getByText('sem número')).toBeVisible();
+  // os dois mancais do cenário estão na fila, e nenhum tem número ainda
+  await expect(coluna.getByText('sem número').first()).toBeVisible();
+  expect(await coluna.getByText('sem número').count()).toBe(2);
 
   await coluna.getByRole('button', { name: 'Decidir no mancal' }).first().click();
 
@@ -58,7 +78,9 @@ test('a passagem de turno lista a decisão parada', async ({ page }) => {
 
   const passagem = page.getByRole('region', { name: 'Pendências da passagem de turno' });
   await expect(passagem).toBeVisible({ timeout: 60_000 });
-  await expect(passagem.getByText(/Decidir a nota sugerida do mancal/)).toBeVisible();
+  // as duas decisões paradas entram, uma por mancal
+  await expect(passagem.getByText('Decidir a nota sugerida do mancal CS23 LC')).toBeVisible();
+  await expect(passagem.getByText('Decidir a nota sugerida do mancal CS36 LC')).toBeVisible();
 });
 
 test('no instantâneo os botões dizem que não dá para decidir', async ({ page }) => {

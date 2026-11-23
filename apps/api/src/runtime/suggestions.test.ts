@@ -3,6 +3,8 @@ import type { FastifyInstance } from 'fastify';
 import { DRYER_BEARING_TAGS, type NoteSuggestion } from '@mp1/shared';
 import { tickAt } from '@mp1/shared/simulation';
 
+import { DEGRADATION_PLANS } from '../simulation/bearings';
+
 import { buildApp } from '../app';
 import type { SqlExecutor } from '../db/executor';
 import { DEGRADING_TAG, seedDatabase } from '../db/seed';
@@ -35,6 +37,10 @@ const driver = DRIVERS[0];
 if (!driver) throw new Error('nenhum driver de teste disponível');
 
 const SEED = 4242;
+
+/** O segundo mancal do cenário: o que ainda está no meio da curva. */
+const SEGUNDO = DEGRADATION_PLANS[1]?.assetTag ?? '';
+
 const NOW = new Date('2026-06-15T12:00:00Z');
 const UMA_HORA = 60 * 60 * 1000;
 const LENTO = 180_000;
@@ -69,29 +75,70 @@ const emPé = (): Promise<NoteSuggestion[]> => app.db.listNoteSuggestions({ stat
 
 describe('a sugestão que a tendência gera', () => {
   it(
-    'o mancal que degrada ganha uma sugestão, e é o único',
+    'os dois mancais do cenário ganham sugestão, e só eles',
     async () => {
       const sugestões = await emPé();
 
-      expect(sugestões).toHaveLength(1);
+      expect(sugestões).toHaveLength(2);
+      // a lista é fila de trabalho: a prioridade 1 vem primeiro
       expect(sugestões[0]?.assetTag).toBe(DEGRADING_TAG);
-      expect(sugestões[0]?.measure).toBe('vibração');
-      expect(sugestões[0]?.status).toBe('sugerida');
-      expect(sugestões[0]?.noteNumber).toBeNull();
+      expect(sugestões[1]?.assetTag).toBe(SEGUNDO);
+      for (const sugestão of sugestões) {
+        expect(sugestão.measure).toBe('vibração');
+        expect(sugestão.status).toBe('sugerida');
+        expect(sugestão.noteNumber).toBeNull();
+      }
     },
     LENTO,
   );
 
   it(
-    'os outros 71 mancais não geram nada',
+    'os outros 70 mancais não geram nada',
     async () => {
       const sugestões = await emPé();
-      const outros = DRYER_BEARING_TAGS.filter((m) => m.assetTag !== DEGRADING_TAG);
+      const outros = DRYER_BEARING_TAGS.filter(
+        (m) => m.assetTag !== DEGRADING_TAG && m.assetTag !== SEGUNDO,
+      );
 
-      expect(outros).toHaveLength(71);
+      expect(outros).toHaveLength(70);
       for (const mancal of outros) {
         expect(sugestões.some((s) => s.assetTag === mancal.assetTag)).toBe(false);
       }
+    },
+    LENTO,
+  );
+
+  /**
+   * O segundo mancal é o caso que separa prever de reagir.
+   *
+   * A **vibração** dele está em zona B, abaixo do limite de alarme: pela
+   * medida que a norma usa para julgar severidade, ele está normal, e a única
+   * coisa que sabe que ele está indo embora é a reta. Por isso a sugestão tem
+   * **prazo** — e não "já passou" — e não exige parada.
+   *
+   * O que já passou do limite é o **envelope de aceleração**, e isso é o
+   * modelo funcionando como deveria: o envelope pega impacto de rolamento
+   * semanas antes de a velocidade sair da faixa. O alarme que acompanha a
+   * sugestão é o dele, não o de vibração — e é por isso que o teste olha qual
+   * alarme é, em vez de exigir que não haja nenhum.
+   */
+  it(
+    'o segundo vem com prazo, sem parada, e com o alarme que vê antes',
+    async () => {
+      const sugestão = (await emPé())[1];
+      if (!sugestão) throw new Error('o segundo mancal deveria ter sugestão');
+
+      expect(sugestão.assetTag).toBe(SEGUNDO);
+      expect(sugestão.daysToLimit).toBeGreaterThan(3);
+      expect(sugestão.daysToLimit).toBeLessThan(20);
+      expect(sugestão.priority).toBeGreaterThan(1);
+      expect(sugestão.requiresShutdown).toBe(false);
+      expect(sugestão.level).toBeLessThan(2.8);
+      expect(sugestão.symptom).toContain('a projeção cruza');
+      expect(sugestão.evidence.find((item) => item.kind === 'tendência')?.ref).toBe('VI-5136B');
+
+      const alarme = sugestão.evidence.find((item) => item.kind === 'alarme');
+      if (alarme) expect(alarme.label).toContain('VE-5136B');
     },
     LENTO,
   );
@@ -141,8 +188,8 @@ describe('a sugestão que a tendência gera', () => {
       const body = response.json() as { count: number; suggestions: NoteSuggestion[] };
 
       expect(response.statusCode).toBe(200);
-      expect(body.count).toBe(1);
-      expect(body.suggestions[0]?.assetTag).toBe(DEGRADING_TAG);
+      expect(body.count).toBe(2);
+      expect(body.suggestions.map((item) => item.assetTag)).toEqual([DEGRADING_TAG, SEGUNDO]);
     },
     LENTO,
   );
@@ -202,9 +249,14 @@ describe('a decisão de alguém, e o que a retomada faz com ela', () => {
 
       await catchUp(app.db, { seed: SEED, now: new Date(NOW.getTime() + 120_000) });
 
-      expect(await emPé()).toHaveLength(0);
+      // o mancal dispensado sai da fila; o outro continua nela
+      const aindaEmPé = await emPé();
+      expect(aindaEmPé).toHaveLength(1);
+      expect(aindaEmPé[0]?.assetTag).toBe(SEGUNDO);
+
       const dispensadas = await app.db.listNoteSuggestions({ status: 'dispensada' });
       expect(dispensadas).toHaveLength(1);
+      expect(dispensadas[0]?.assetTag).toBe(DEGRADING_TAG);
       expect(dispensadas[0]?.reason).toContain('parada de agosto');
     },
     LENTO,
@@ -266,9 +318,11 @@ describe('a decisão de alguém, e o que a retomada faz com ela', () => {
       expect(nota?.assetTag).toBe(DEGRADING_TAG);
       expect(nota?.evidence.length).toBe(sugestão.evidence.length);
 
-      // e a retomada não sugere de novo o que já está na fila da manutenção
+      // e a retomada não sugere de novo o que já está na fila da manutenção —
+      // só o outro mancal, que ninguém decidiu ainda, continua em pé
       await catchUp(app.db, { seed: SEED, now: new Date(NOW.getTime() + 240_000) });
-      expect(await emPé()).toHaveLength(0);
+      const aindaEmPé = await emPé();
+      expect(aindaEmPé.map((item) => item.assetTag)).toEqual([SEGUNDO]);
     },
     LENTO,
   );
@@ -336,7 +390,7 @@ describe('retomada em pedaços', () => {
 
       const [deUmaVez, fatiado] = await Promise.all([comoFoi([0]), comoFoi([30, 20, 10, 0])]);
 
-      expect(deUmaVez).toHaveLength(1);
+      expect(deUmaVez).toHaveLength(2);
       expect(semRótulos(fatiado)).toEqual(semRótulos(deUmaVez));
     },
     LENTO,

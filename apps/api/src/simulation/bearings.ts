@@ -5,6 +5,7 @@ import {
   streamOf,
   TICK_MS,
   tickAt,
+  TICKS_PER_HOUR,
   tickTime,
 } from '@mp1/shared/simulation';
 
@@ -76,6 +77,61 @@ export interface DegradationScenario {
   readonly assetTag: AssetTag;
   readonly fromTick: number;
   readonly toTick: number;
+}
+
+/**
+ * Os mancais que degradam no cenário, e onde cada um está na própria curva.
+ *
+ * São **dois**, e a diferença entre eles é o que a Fase 6 existe para mostrar:
+ *
+ * - O CS23 do lado comando chega ao fim da curva **agora**: zona D, alarme
+ *   tocando, nota aberta pelo alarme. É o mancal do design das telas.
+ * - O CS36 do lado comando está **no meio** da dele: 2,5 mm/s, zona B, abaixo
+ *   do limite de alarme. Nada toca, nada abre nota — a única coisa que sabe
+ *   que ele está indo embora é a tendência. É o caso que separa manutenção
+ *   preditiva de reagir a alarme, e sem ele o gêmeo só mostraria o segundo.
+ *
+ * As duas janelas são ancoradas no instante de referência, como a da Fase 3:
+ * é escolha de apresentação, para quem abre a tela hoje encontrar os dois
+ * casos, e está dita aqui em vez de passar por propriedade do mancal.
+ */
+export interface DegradationPlan {
+  readonly assetTag: AssetTag;
+  /** Horas de degradação já percorridas no instante de referência. */
+  readonly behindH: number;
+  /** Horas que ainda faltam depois dele. */
+  readonly aheadH: number;
+}
+
+export const DEGRADATION_PLANS: readonly DegradationPlan[] = Object.freeze([
+  { assetTag: 'MP1-SEC-G4-CS23-MLC', behindH: 72, aheadH: 0 },
+  { assetTag: 'MP1-SEC-G6-CS36-MLC', behindH: 14 * 24, aheadH: 12 * 24 },
+]);
+
+/**
+ * As janelas de degradação ancoradas num instante.
+ *
+ * O segundo mancal tem janela longa de propósito: 26 dias, com 14 já
+ * percorridos. É o que põe a subida num ritmo em que a reta de três dias
+ * projeta a fronteira C→D para dali a ~13 dias — um prazo que cabe numa parada
+ * de manutenção, que é o que a nota sugerida dele vai dizer.
+ */
+export function degradationScenariosAt(now: Date): DegradationScenario[] {
+  const tick = tickAt(now);
+
+  return DEGRADATION_PLANS.map((plan) => ({
+    assetTag: plan.assetTag,
+    fromTick: tick - plan.behindH * TICKS_PER_HOUR,
+    toTick: tick + plan.aheadH * TICKS_PER_HOUR,
+  }));
+}
+
+/** A janela que vale para um mancal, ou `null` se ele não degrada. */
+export function scenarioFor(
+  tag: AssetTag,
+  scenarios: readonly DegradationScenario[],
+): DegradationScenario | null {
+  return scenarios.find((scenario) => scenario.assetTag === tag) ?? null;
 }
 
 /** Hash estável de uma tag, para a assinatura do mancal não variar. */
@@ -178,8 +234,14 @@ export interface SimulationOptions {
   readonly to: Date;
   /** Intervalo entre amostras. */
   readonly intervalMs: number;
-  /** Mancal que degrada ao longo da janela, até cruzar a zona D. */
-  readonly degradingTag: AssetTag;
+  /**
+   * As janelas de degradação que valem nesta série.
+   *
+   * Vêm de fora, e não montadas aqui a partir de `from`/`to`: desde que são
+   * dois mancais, cada um tem a sua janela — e a do segundo começa antes e
+   * termina depois do recorte que está sendo gravado.
+   */
+  readonly scenarios: readonly DegradationScenario[];
   readonly seed?: number;
 }
 
@@ -192,10 +254,10 @@ export const DEFAULT_WINDOW_MS = 72 * 60 * 60 * 1000;
 /**
  * A série histórica de todos os mancais na janela pedida.
  *
- * O mancal em degradação vai de saudável a zona D **ao longo da janela**: o
- * cenário é montado a partir dela, do primeiro ao último passo. É o que faz a
- * tela ter sempre o que mostrar, e é escolha de apresentação — está dito aqui
- * para não passar por propriedade do mancal.
+ * Quem degrada, e em que ritmo, vem nos `scenarios`: a janela de cada mancal é
+ * declarada por quem chama, e pode começar antes e terminar depois do recorte
+ * que está sendo gravado. É o que permite um mancal chegar ao fim da curva e
+ * outro ficar no meio dela.
  *
  * A amostragem é de 15 min, e não de 1 s como o passo da simulação: 72 h a 1 s
  * seriam 259.200 linhas por mancal. A série histórica é para o gráfico de
@@ -209,15 +271,10 @@ export function simulateVibration(options: SimulationOptions): VibrationReading[
   if (options.intervalMs <= 0) throw new RangeError('O intervalo precisa ser positivo');
 
   const seed = options.seed ?? DEFAULT_SEED;
-  const scenario: DegradationScenario = {
-    assetTag: options.degradingTag,
-    fromTick: tickAt(options.from),
-    toTick: tickAt(options.to),
-  };
-
   const readings: VibrationReading[] = [];
 
   for (const bearing of options.bearings) {
+    const scenario = scenarioFor(bearing.tag, options.scenarios);
     for (let ts = from; ts <= to; ts += options.intervalMs) {
       // a amostra cai no passo que contém o instante, para a série gravada e o
       // valor ao vivo coincidirem onde se encontram

@@ -6,7 +6,6 @@ import {
   MAX_CATCHUP_TICKS,
   processEngine,
   type ProcessEngine,
-  tickAt,
   TICKS_PER_HOUR,
   tickTime,
 } from '@mp1/shared/simulation';
@@ -21,9 +20,16 @@ import {
 
 import type { Database } from '../db';
 import { alarmEngine, type AlarmEngine } from '../simulation/alarm-engine';
-import { bearingSampleAt, type DegradationScenario } from '../simulation/bearings';
+import {
+  bearingSampleAt,
+  DEGRADATION_PLANS,
+  degradationScenariosAt,
+  scenarioFor,
+  type DegradationScenario,
+} from '../simulation/bearings';
 import { gradeInEffectAt, planAt, type BreakPlan, type ShiftPlan } from '../simulation/scenarios';
 import { harvestEntities, persistHarvest } from './entities';
+import { LAB_TENSILE_TAG, type TruthSample } from './lab';
 import { HISTORIAN_SCAN_TICKS, historianRecorder, type RecorderStats } from './recorder';
 import { deriveSuggestions } from './suggestions';
 
@@ -54,18 +60,19 @@ import { deriveSuggestions } from './suggestions';
  * mexer.
  */
 
-/** O mancal que degrada: o CS23 do lado comando, o mesmo do design das telas. */
-export const DEGRADING_BEARING = 'MP1-SEC-G4-CS23-MLC';
+/** O mancal que degrada e já chegou ao fim: o CS23 do lado comando. */
+export const DEGRADING_BEARING = DEGRADATION_PLANS[0]?.assetTag ?? 'MP1-SEC-G4-CS23-MLC';
 
 /**
- * Quanto tempo a degradação do mancal leva, em horas.
+ * Quanto tempo a degradação do primeiro mancal leva, em horas.
  *
  * **Suposição.** 72 h é a janela da tela de tendência, e é o que faz a subida
  * caber inteira no gráfico que alguém vai olhar. Um defeito de rolamento de
- * verdade leva semanas; três dias é a escolha de apresentação, e está dita aqui
- * em vez de passar por propriedade do mancal.
+ * verdade leva semanas; três dias é a escolha de apresentação, e está dita em
+ * `DEGRADATION_PLANS` em vez de passar por propriedade do mancal. O segundo
+ * mancal tem janela de 26 dias, e no instante de referência está no meio dela.
  */
-export const DEGRADATION_HOURS = 72;
+export const DEGRADATION_HOURS = DEGRADATION_PLANS[0]?.behindH ?? 72;
 
 /** Quantas linhas vão ao banco por ida. */
 const WRITE_CHUNK = 5000;
@@ -102,6 +109,8 @@ export interface CatchupReport {
     readonly webBreaks: number;
     readonly rounds: number;
     readonly notes: number;
+    /** Laudos de laboratório colhidos das bobinas que fecharam. */
+    readonly labResults: number;
     /** Sugestões de nota em pé no fim da retomada. */
     readonly suggestions: number;
   };
@@ -140,7 +149,7 @@ export function valuesAt(
   seed: number,
   tick: number,
   state: EngineState | undefined,
-  scenario: DegradationScenario,
+  scenarios: readonly DegradationScenario[],
 ): { values: Map<string, number>; setpoints: Map<string, number> } {
   const engine = processEngine(tick, {
     seed,
@@ -148,7 +157,7 @@ export function valuesAt(
   });
 
   const values = engine.snapshot();
-  for (const [tag, value] of bearingValuesAt(seed, tick, scenario)) values.set(tag, value);
+  for (const [tag, value] of bearingValuesAt(seed, tick, scenarios)) values.set(tag, value);
 
   return { values, setpoints: engine.effectiveSetpoints() };
 }
@@ -173,20 +182,13 @@ async function writeRaw(db: Database, rows: readonly PointSample[]): Promise<voi
 }
 
 /**
- * O cenário de degradação do mancal, ancorado no instante pedido.
+ * Os cenários de degradação, ancorados no instante pedido.
  *
- * A janela termina **agora** e começa `DEGRADATION_HOURS` antes, o que põe o
- * mancal em zona D no presente — é a mesma escolha da Fase 3, e é de
- * apresentação: o gêmeo precisa ter o que mostrar a quem abre a tela hoje.
+ * São dois mancais em pontos diferentes da própria curva, e as janelas moram em
+ * `simulation/bearings.ts`: a semeadura da série e a retomada leem a mesma
+ * declaração, porque as duas precisam contar a mesma história do mesmo mancal.
  */
-export function degradationScenarioAt(now: Date): DegradationScenario {
-  const toTick = tickAt(now);
-  return {
-    assetTag: DEGRADING_BEARING,
-    fromTick: toTick - DEGRADATION_HOURS * TICKS_PER_HOUR,
-    toTick,
-  };
-}
+export { degradationScenariosAt };
 
 /**
  * Os valores dos mancais num passo, nas tags do catálogo.
@@ -198,12 +200,17 @@ export function degradationScenarioAt(now: Date): DegradationScenario {
 export function bearingValuesAt(
   seed: number,
   tick: number,
-  scenario: DegradationScenario,
+  scenarios: readonly DegradationScenario[],
 ): Map<string, number> {
   const values = new Map<string, number>();
 
   for (const bearing of DRYER_BEARING_TAGS) {
-    const sample = bearingSampleAt(seed, tick, bearing.assetTag, scenario);
+    const sample = bearingSampleAt(
+      seed,
+      tick,
+      bearing.assetTag,
+      scenarioFor(bearing.assetTag, scenarios),
+    );
     values.set(bearing.vibration, sample.rmsMmS);
     values.set(bearing.envelope, sample.envelopeGe);
     values.set(bearing.temperature, sample.tempC);
@@ -306,12 +313,18 @@ export async function catchUp(db: Database, options: CatchupOptions = {}): Promi
         webBreaks: 0,
         rounds: 0,
         notes: 0,
+        labResults: 0,
         suggestions: 0,
       },
       compression: { fed: 0, afterException: 0, archived: 0, raw: 0, ratio: 0 },
       durationMs: performance.now() - started,
       // nada rodou, mas a pergunta "onde a máquina está" continua tendo resposta
-      ...valuesAt(seed, range.toTick, seedChanged ? undefined : usable, degradationScenarioAt(now)),
+      ...valuesAt(
+        seed,
+        range.toTick,
+        seedChanged ? undefined : usable,
+        degradationScenariosAt(now),
+      ),
     };
   }
 
@@ -329,9 +342,20 @@ export async function catchUp(db: Database, options: CatchupOptions = {}): Promi
   // para a poda apagar três e quarenta e cinco é trabalho e tráfego de banco
   // por nada
   const recorder = historianRecorder({ rawFrom: rawCutoff(now).getTime() });
-  const scenario = degradationScenarioAt(now);
+  const scenarios = degradationScenariosAt(now);
 
   const pending: Pending = { archive: [], raw: [], alarms: new Map() };
+
+  /**
+   * A verdade da tração MD, varredura a varredura.
+   *
+   * O ensaio não é tag de catálogo: ele não grava no historiador e o valor dele
+   * só existe enquanto a rede está montada. Guardar aqui é o que permite a
+   * colheita cortar a amostra no instante em que a bobina fecha — quatro horas
+   * de varredura são ~2.900 números, que é barato perto de montar a rede outra
+   * vez só para perguntar isso.
+   */
+  const labTruth: TruthSample[] = [];
   let scans = 0;
   let raised = 0;
   let cleared = 0;
@@ -357,9 +381,12 @@ export async function catchUp(db: Database, options: CatchupOptions = {}): Promi
     if (tick % scanTicks !== 0) continue;
 
     const values = engine.snapshot();
-    for (const [tag, value] of bearingValuesAt(seed, tick, scenario)) {
+    for (const [tag, value] of bearingValuesAt(seed, tick, scenarios)) {
       values.set(tag, value);
     }
+
+    const tração = engine.truth(LAB_TENSILE_TAG);
+    if (tração !== null) labTruth.push({ tick, v: tração });
 
     recorder.feed(tick, values);
     scans += 1;
@@ -397,9 +424,14 @@ export async function catchUp(db: Database, options: CatchupOptions = {}): Promi
    * E colher antes de podar: a poda corta pelo tempo, e uma bobina que acabou
    * de fechar está dentro da retenção de todo jeito.
    */
-  const harvest = await harvestEntities(db, seed, range.fromTick, range.toTick, [
-    ...pending.alarms.values(),
-  ]);
+  const harvest = await harvestEntities(
+    db,
+    seed,
+    range.fromTick,
+    range.toTick,
+    [...pending.alarms.values()],
+    labTruth,
+  );
   await persistHarvest(db, harvest);
 
   /**
@@ -439,13 +471,14 @@ export async function catchUp(db: Database, options: CatchupOptions = {}): Promi
       webBreaks: harvest.webBreaks.length,
       rounds: harvest.rounds.length,
       notes: harvest.notes.length,
+      labResults: harvest.labResults.length,
       suggestions: suggestions.length,
     },
     compression: recorder.stats(),
     durationMs: performance.now() - started,
     values: (() => {
       const values = engine.snapshot();
-      for (const [tag, value] of bearingValuesAt(seed, range.toTick, scenario)) {
+      for (const [tag, value] of bearingValuesAt(seed, range.toTick, scenarios)) {
         values.set(tag, value);
       }
       return values;

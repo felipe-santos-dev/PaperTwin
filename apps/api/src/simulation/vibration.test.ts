@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { classifyIsoZone, DRYER_BEARING_ISO, isoLimitsOf } from '@mp1/shared';
+import { tickAt } from '@mp1/shared/simulation';
 import { DEGRADING_TAG } from '../db/seed';
 import { simulateVibration, type SimulationOptions } from './vibration';
 
@@ -13,7 +14,7 @@ const options: SimulationOptions = {
   from,
   to,
   intervalMs: 15 * 60 * 1000,
-  degradingTag: DEGRADING_TAG,
+  scenarios: [{ assetTag: DEGRADING_TAG, fromTick: tickAt(from), toTick: tickAt(to) }],
 };
 
 const series = simulateVibration(options);

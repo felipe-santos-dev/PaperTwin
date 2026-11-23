@@ -190,7 +190,7 @@ describe('a série gravada e o valor ao vivo saem do mesmo modelo', () => {
       from,
       to,
       intervalMs: 15 * 60 * 1000,
-      degradingTag: DEGRADANDO,
+      scenarios: [{ assetTag: DEGRADANDO, fromTick: START, toTick: START + JANELA }],
     });
 
     const última = série.at(-1);

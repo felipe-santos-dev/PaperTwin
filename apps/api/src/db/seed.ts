@@ -3,6 +3,8 @@ import {
   bearingsOf,
   DEFAULT_INTERVAL_MS,
   DEFAULT_WINDOW_MS,
+  DEGRADATION_PLANS,
+  degradationScenariosAt,
   simulateVibration,
 } from '../simulation/vibration';
 import type { Database } from './repository';
@@ -24,12 +26,13 @@ import type { Database } from './repository';
  */
 
 /**
- * O mancal que degrada na simulação.
+ * O mancal que degrada e já chegou ao fim: o CS23 do lado comando.
  *
- * É o CS23 do lado comando, o mesmo do design das telas, para quem comparar
- * os dois encontrar o mesmo ativo em alarme.
+ * É o mesmo do design das telas, para quem comparar os dois encontrar o mesmo
+ * ativo em alarme. O segundo mancal do cenário — o que ainda está no meio da
+ * curva — é `DEGRADATION_PLANS[1]`, e quem precisa dele pega de lá.
  */
-export const DEGRADING_TAG: AssetTag = 'MP1-SEC-G4-CS23-MLC';
+export const DEGRADING_TAG: AssetTag = DEGRADATION_PLANS[0]?.assetTag ?? 'MP1-SEC-G4-CS23-MLC';
 
 export interface SeedResult {
   readonly assets: number;
@@ -63,12 +66,19 @@ export async function seedDatabase(db: Database, options: SeedOptions = {}): Pro
   const to = options.now ?? new Date();
   const from = new Date(to.getTime() - (options.windowMs ?? DEFAULT_WINDOW_MS));
 
+  /**
+   * As janelas vêm da mesma função que a retomada usa.
+   *
+   * A série semeada e os valores que a retomada grava no historiador têm de
+   * contar a mesma história do mesmo mancal; duas declarações do cenário, uma
+   * aqui e outra lá, discordariam no dia em que uma das duas mudasse.
+   */
   const readings = simulateVibration({
     bearings: bearingsOf(assets),
     from,
     to,
     intervalMs: options.intervalMs ?? DEFAULT_INTERVAL_MS,
-    degradingTag: DEGRADING_TAG,
+    scenarios: degradationScenariosAt(to),
   });
 
   const written = await db.insertReadings(readings);

@@ -20,7 +20,7 @@ import type { SqlExecutor } from '../db/executor';
 import type { Database } from '../db/repository';
 import { clearOperations, DRIVERS } from '../db/test-drivers';
 import { shiftPlan } from '../simulation/scenarios';
-import { bearingValuesAt, catchUp, degradationScenarioAt, MAX_CATCHUP_HOURS } from './catchup';
+import { bearingValuesAt, catchUp, degradationScenariosAt, MAX_CATCHUP_HOURS } from './catchup';
 import { HISTORIAN_SCAN_TICKS, RAW_TAGS } from './recorder';
 
 /** Um instante fixo, para a retomada ser comparável entre execuções. */
@@ -454,9 +454,10 @@ describe('retomada', () => {
 });
 
 describe('valores de mancal na retomada', () => {
+  const agora = () => tickAt(NOW);
+
   it('traz as três medições de cada mancal de secador, nas tags do catálogo', () => {
-    const scenario = degradationScenarioAt(NOW);
-    const values = bearingValuesAt(SEED, scenario.toTick, scenario);
+    const values = bearingValuesAt(SEED, agora(), degradationScenariosAt(NOW));
 
     // 36 cilindros × 2 lados × 3 medições
     expect(values.size).toBe(36 * 2 * 3);
@@ -465,9 +466,8 @@ describe('valores de mancal na retomada', () => {
     expect(values.get('VE-5123A')).toBeGreaterThan(0);
   });
 
-  it('põe o mancal que degrada em alarme no fim da janela', () => {
-    const scenario = degradationScenarioAt(NOW);
-    const values = bearingValuesAt(SEED, scenario.toTick, scenario);
+  it('põe o primeiro mancal em alarme no fim da janela', () => {
+    const values = bearingValuesAt(SEED, agora(), degradationScenariosAt(NOW));
 
     // HH da VI-51nnB é 4,5 mm/s, a fronteira C→D do grupo 2 rígido
     expect(values.get('VI-5123B')).toBeGreaterThan(4.5);
@@ -475,10 +475,35 @@ describe('valores de mancal na retomada', () => {
     expect(values.get('VI-5123A')).toBeLessThan(2.8);
   });
 
-  it('ancora a degradação para terminar agora', () => {
-    const scenario = degradationScenarioAt(NOW);
+  /**
+   * E deixa o segundo **abaixo** do limite de alarme.
+   *
+   * É a razão de ele existir: um mancal que só a tendência denuncia. Se um dia
+   * ele passar de 2,8 no instante de referência, o alarme toca e a nota
+   * sugerida dele deixa de ser o caso que distingue prever de reagir.
+   */
+  it('deixa o segundo mancal subindo, e ainda em silêncio', () => {
+    const values = bearingValuesAt(SEED, agora(), degradationScenariosAt(NOW));
+    const agoraVI = values.get('VI-5136B') ?? 0;
 
-    expect(scenario.assetTag).toBe('MP1-SEC-G4-CS23-MLC');
-    expect(scenario.toTick - scenario.fromTick).toBe(72 * TICKS_PER_HOUR);
+    expect(agoraVI).toBeGreaterThan(2.0);
+    expect(agoraVI).toBeLessThan(2.8);
+
+    // e um dia antes era menor: a série sobe
+    const ontem = bearingValuesAt(SEED, agora() - 24 * TICKS_PER_HOUR, degradationScenariosAt(NOW));
+    expect(agoraVI).toBeGreaterThan(ontem.get('VI-5136B') ?? 0);
+  });
+
+  it('ancora os dois cenários no instante pedido', () => {
+    const [primeiro, segundo] = degradationScenariosAt(NOW);
+
+    expect(primeiro?.assetTag).toBe('MP1-SEC-G4-CS23-MLC');
+    expect(primeiro?.toTick).toBe(tickAt(NOW));
+    expect((primeiro?.toTick ?? 0) - (primeiro?.fromTick ?? 0)).toBe(72 * TICKS_PER_HOUR);
+
+    // o segundo ainda tem janela pela frente: ele está no meio da curva
+    expect(segundo?.assetTag).toBe('MP1-SEC-G6-CS36-MLC');
+    expect(segundo?.toTick).toBeGreaterThan(tickAt(NOW));
+    expect(segundo?.fromTick).toBeLessThan(primeiro?.fromTick ?? 0);
   });
 });

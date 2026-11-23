@@ -5,6 +5,7 @@ import type {
   AssetTag,
   GradeChange,
   JumboReel,
+  LabResult,
   MaintenanceNote,
   NoteStatus,
   NoteSuggestion,
@@ -71,6 +72,12 @@ export interface SetpointFilter {
   readonly limit?: number;
 }
 
+export interface LabResultFilter extends TimeRange {
+  readonly tag?: string;
+  readonly reelNumber?: number;
+  readonly limit?: number;
+}
+
 export interface SuggestionFilter {
   readonly status?: SuggestionStatus;
   readonly assetTag?: AssetTag;
@@ -121,6 +128,12 @@ export interface OperationsRepository {
   upsertMaintenanceNotes(notes: readonly MaintenanceNote[]): Promise<number>;
   listMaintenanceNotes(filter?: NoteFilter): Promise<MaintenanceNote[]>;
   findMaintenanceNote(number: string): Promise<MaintenanceNote | null>;
+
+  // --- ensaio de laboratório ---
+  /** Grava os laudos. A chave é derivada da bobina, então reescrever é inócuo. */
+  upsertLabResults(results: readonly LabResult[]): Promise<number>;
+  /** Os laudos, do mais recente para o mais antigo **pela amostra**. */
+  listLabResults(filter?: LabResultFilter): Promise<LabResult[]>;
 
   // --- nota sugerida ---
   /**

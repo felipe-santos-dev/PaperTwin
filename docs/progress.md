@@ -3177,3 +3177,387 @@ docs/progress.md
 
 Pare aqui. A Fase 7 é a que depende da tua confirmação — o custo estimado está
 na seção "Fase 7 — quanto custa", mais acima.
+
+## Conserto: o CI quebrado por um teste que lia artefato gerado
+
+### O que quebrou, e por quê
+
+`process.test.ts` lia `apps/web/public/demo/sim-state.json` para provar que o
+estado do motor serve de ponto de partida ao modo de demonstração. A pasta está
+no `.gitignore` — ela é **gerada** por `npm run demo:data` — e no CI os testes
+rodam **antes** do build que a geraria. Na minha máquina o arquivo estava lá de
+uma geração anterior, e por isso o teste passava aqui e falhava lá.
+
+É o tipo de erro que só aparece em máquina limpa, e a lição é a regra que o
+Felipe escreveu: teste não depende de artefato gerado.
+
+### O que ele passou a fazer
+
+O estado agora é montado **no próprio teste**, pelo mesmo caminho do gerador: a
+retomada roda, grava, e `findSimState` devolve o mesmo objeto que
+`generate-demo` serializa. O teste passa esse objeto por `JSON.parse(
+JSON.stringify(...))` na mão.
+
+Nada se perde na troca. O que o arquivo acrescentava era exatamente a ida e
+volta pelo JSON — e é isso que o teste faz agora, com uma asserção a mais que o
+arquivo não dava: o estado tem de voltar **igual**. Um `Map`, um `Set` ou um
+`Infinity` que entrasse no estado do motor quebraria o modo de demonstração em
+silêncio, e agora quebra aqui.
+
+Verificado do jeito que importa: com `sim-state.json` escondido, as três suítes
+passam inteiras (350 / 207 / 380).
+
+**Nenhum outro teste lia a pasta gerada.** Os que leem arquivo leem
+**fonte versionada** — as migrations (`003`, `004`), os catálogos gerados e o
+CSV da pesquisa —, que é outra coisa: ali o arquivo é a verdade que o teste
+confere. Os testes de ponta a ponta também não leem: o `webServer` do Playwright
+roda `build:test`, que começa por `demo:data`.
+
+### O gerador agora falha alto
+
+`generate-demo.ts` gravava o estado dentro de um `if (simState?.state)`. Sem
+estado, ele terminava **em silêncio** e publicava um instantâneo sem
+`sim-state.json` — o "e se" do modo de demonstração partiria da rede em regime,
+que é um lugar que não é onde a máquina está. Agora é erro.
+
+### O Pages já gerava o instantâneo — e agora está dito
+
+O passo de build do Pages chama `npm run build --workspace @mp1/web`, e o script
+da web é `npm run demo:data && vite build`. O instantâneo é gerado na
+publicação, não commitado.
+
+Estava certo e **implícito**: quem trocasse aquele passo por um `vite build`
+direto publicaria o site sem o modo de demonstração, que é como quase todo mundo
+o vê. O comentário no workflow agora diz isso.
+
+### As actions que pediam Node 20
+
+O runner avisa — e um dia recusa — toda action que ainda roda em Node 20. Subiram
+as quatro que avisavam, para a major que roda em Node 24:
+
+| action                          | antes | agora |
+| ------------------------------- | ----- | ----- |
+| `actions/upload-artifact`       | v4    | v7    |
+| `actions/configure-pages`       | v5    | v6    |
+| `actions/upload-pages-artifact` | v4    | v5    |
+| `actions/deploy-pages`          | v4    | v5    |
+
+`checkout@v5` e `setup-node@v5` **ficaram onde estão**: as duas já rodam em Node
+24, e subir major sem necessidade é pedir uma mudança de comportamento de
+graça. As entradas que o projeto usa de `upload-artifact` (`name`, `path`,
+`retention-days`, `if-no-files-found`) existem iguais na v7, e a v5 do
+`upload-pages-artifact` é composta sobre a v7 do `upload-artifact` — ou seja, a
+cadeia inteira do Pages passa a rodar em 24.
+
+### Arquivos, por commit sugerido
+
+**46. O CI: teste sem artefato gerado, e as actions em Node 24**
+
+```
+apps/api/src/routes/process.test.ts
+apps/api/src/scripts/generate-demo.ts
+.github/workflows/ci.yml
+.github/workflows/pages.yml
+docs/progress.md
+```
+
+## O segundo mancal: o caso que separa prever de reagir
+
+### Por que ele existe
+
+Na entrega da Fase 6 ficou dito que o instantâneo mostrava só metade do que a
+fase sabe fazer: o CS23 do lado comando chega ao fim da curva **agora**, então a
+nota sugerida dele nasce com prazo zero e prioridade 1 — a mesma coisa que o
+alarme já dizia. O caminho preditivo existia no código e não aparecia na tela.
+
+Agora o cenário tem **dois** mancais em pontos diferentes da própria curva:
+
+|                        | CS23 lado comando       | CS36 lado comando            |
+| ---------------------- | ----------------------- | ---------------------------- |
+| vibração agora         | 5,72 mm/s, zona D       | 2,49 mm/s, zona B            |
+| alarme                 | `VI-5123B` H (vibração) | `VE-5136B` H (envelope)      |
+| nota aberta por alarme | sim                     | não                          |
+| nota sugerida          | P1, parada, "já passou" | P3, sem parada, "em 13 dias" |
+
+O segundo é o caso que a manutenção preditiva existe para pegar: pela medida
+que a norma usa para julgar severidade ele está **normal**, ninguém abriu nota
+nenhuma, e a única coisa que sabe que ele está indo embora é a reta de três
+dias.
+
+### O envelope viu primeiro, e isso não foi programado
+
+O que já passou do limite nele é o **envelope de aceleração**, não a velocidade.
+Isso não foi arranjado para a tela: é o modelo de mancal da Fase 3 funcionando
+como foi escrito — o envelope tem expoente menor que a velocidade, justamente
+porque pega impacto de rolamento semanas antes de o RMS sair da faixa. É por
+isso que se mede envelope.
+
+O alarme que acompanha a sugestão dele é o do envelope, e o teste olha **qual**
+alarme é, em vez de exigir que não haja nenhum. Como a prioridade do alarme de
+envelope é média, ele não abre nota automática — o mancal fica mesmo só com a
+sugestão.
+
+### Uma declaração só para os dois
+
+As janelas de degradação saíram de `catchup.ts` e viraram `DEGRADATION_PLANS`
+em `simulation/bearings.ts`, com `degradationScenariosAt(now)` ao lado. A
+semeadura da série e a retomada passaram a ler a **mesma** declaração: antes, a
+janela era montada em dois lugares (o `simulateVibration` inventava a sua a
+partir do recorte pedido), e com dois mancais isso daria duas histórias do
+mesmo mancal.
+
+`simulateVibration` deixou de inventar cenário: ele agora recebe as janelas. É o
+que permite a do segundo mancal **começar antes e terminar depois** do recorte
+que está sendo gravado — 26 dias de janela para 72 h de série.
+
+### Os números do segundo, e por que estes
+
+Catorze dias percorridos e doze pela frente. Com a progressão `^2,2` do modelo,
+isso põe o mancal em 2,49 mm/s — acima do ruído dos saudáveis (~1,9) e abaixo do
+limite de alarme de vibração (2,8) — e dá uma inclinação de 0,15 mm/s por dia,
+que a reta de 72 h projeta cruzar a fronteira C→D em **13 dias**: um prazo que
+cabe numa parada de manutenção, que é exatamente o que a prioridade 3 quer
+dizer.
+
+Um teste segura a parte que importa dessa escolha: se um dia ele passar de 2,8
+no instante de referência, o alarme de vibração toca e o caso preditivo some do
+gêmeo.
+
+### Medido
+
+- Testes: `shared` **380**, API **352** (111 pulados), web **207**.
+- e2e: **48** testes — um novo, que escolhe o segundo mancal e exige prazo em
+  dias e ausência de "PARADA" no cartão.
+- Instantâneo: 2.871 kB, com **duas** sugestões; o contador da moldura mostra 2.
+- Sem rolagem horizontal em 1920×1080 nem em 1440×900.
+
+### Arquivos, por commit sugerido
+
+**47. O segundo mancal, no meio da curva**
+
+```
+apps/api/src/simulation/bearings.ts
+apps/api/src/simulation/vibration.ts
+apps/api/src/db/seed.ts
+apps/api/src/runtime/catchup.ts
+apps/api/src/runtime/catchup.test.ts
+apps/api/src/runtime/suggestions.test.ts
+apps/api/src/simulation/bearings.test.ts
+apps/api/src/simulation/vibration.test.ts
+apps/web/e2e/manutencao.spec.ts
+docs/progress.md
+```
+
+## Fase 7 — sensor virtual de qualidade
+
+### O buraco que ela preenche
+
+O laboratório mede a tração MD numa amostra por bobina, e o laudo demora. Entre
+um resultado e o próximo — quarenta e cinco minutos de bobina mais vinte e cinco
+de bancada — a pergunta "o papel que está saindo agora está dentro?" não tinha
+resposta no gêmeo.
+
+Duas coisas tiveram de existir para ela ter: o **ensaio como evento**, com os
+dois instantes que o definem, e a **estimativa** que preenche o intervalo entre
+eles.
+
+### O ensaio virou entidade
+
+Até aqui o laboratório era dado fixo no front: dezenove ensaios plausíveis com o
+selo de ilustrativo. Um deles — a tração MD, `LAB-1206` — passou a ser evento:
+tabela, chave derivada (`LR-<bobina>-<tag>`), colheita na retomada e rota.
+
+Os dois instantes são o ponto. `sampledAt` é quando a amostra foi cortada (o fim
+da bobina) e `reportedAt` é quando o laudo ficou pronto, 25 min depois. Sem os
+dois gravados, o sensor virtual não teria como saber onde está o buraco que ele
+preenche — nem a tela teria como mostrar o laudo chegando.
+
+**De onde sai o valor:** da _verdade_ do motor no instante da amostra, mais a
+repetibilidade da bancada. Três escolhas, cada uma com razão:
+
+- **Um instante, não uma janela.** O corpo de prova é um pedaço de papel
+  cortado quando a bobina fecha; ele não é a média de 45 min de produção. É
+  também o que faz a colheita dar o mesmo resultado reexecutada em pedaços — o
+  instante da amostra é o mesmo nos dois caminhos.
+- **A verdade, não a medida.** O ruído do `snapshot()` é do instrumento de
+  campo; o laboratório tem o ruído dele, que é outro.
+- **Com repetibilidade própria** (0,08 kN/m, ~1,5 % do alvo): dois corpos de
+  prova da mesma bobina não dão o mesmo número, e é essa diferença que o sensor
+  virtual nunca vai prever.
+
+### A regressão não servia, e o motivo é do processo
+
+A ideia óbvia era ajustar tração contra as variáveis de processo dos últimos
+laudos. Ela não serve aqui: **a energia de refino é malha**, fica no setpoint, e
+uma variável que não varia não sustenta regressão nenhuma. O ajuste daria uma
+inclinação inventada em cima de ruído.
+
+O que existe é melhor. O ganho da relação 9 (`JIC-101 → LAB-1206`, 0,0425 kN/m
+por kWh/t) foi **medido num teste de degrau** e está declarado no CSV de
+relações — a mesma fonte que o motor integra. O sensor usa esse ganho em regime:
+
+```
+estimativa = ponto de operação + Σ kp × (entrada − ponto de operação dela) + viés
+```
+
+O modelo é montado **do grafo**, não escrito à mão: `softSensorModel(tag)` lê as
+relações que terminam no ensaio. Um ensaio sem relação declarada não tem modelo,
+e a rota devolve 404 — sem teste de degrau não há ganho, e sem ganho não há
+estimativa, que é diferente de estimar o alvo.
+
+### E o laboratório corrige o que o modelo não sabe
+
+Um modelo de regime erra por motivos conhecidos: a planta tem dinâmica (270 s de
+tempo morto e τ de 450 s na relação 9), o ensaio tem repetibilidade, e a folha
+tem o que ninguém mediu. A correção vem do próprio laboratório:
+
+- o **viés** é a média dos resíduos (laudo − modelo) dos últimos oito laudos;
+- a **faixa** é duas vezes o desvio padrão amostral desses resíduos.
+
+Com menos de três laudos **não há faixa**, e a tela diz isso em vez de inventar
+uma incerteza. O desvio é amostral (divide por n − 1) de propósito: com três
+laudos a faixa fica 22 % maior que a do populacional, e ela fica maior justamente
+quando há menos medida para sustentá-la.
+
+O resíduo é contra o modelo **daquela bobina**, com a entrada lida no instante
+da amostra — não contra o alvo. Se fosse contra o alvo, o viés passaria a
+corrigir o que o modelo já explicava, e um turno inteiro de refino alto viraria
+"erro do sensor".
+
+### O pulo quando o laudo chega
+
+Cada ponto da série é estimado com os laudos que **já tinham chegado até ele**.
+É isso que faz a curva ter um degrau no instante em que um laudo entra. Desenhar
+a série inteira com o viés final apagaria exatamente a coisa que a tela existe
+para mostrar — e ainda faria o passado parecer mais certo do que foi.
+
+O degrau é o sensor sendo corrigido, não um defeito do desenho, e o teste cobra
+que ele tenha **o tamanho da mudança de viés, nem mais nem menos**.
+
+### A série não é desenhada nas colunas do arquivo
+
+Primeira versão: um ponto por coluna do historiador. Deu **quatro pontos em
+quatro horas** — e está certo, porque uma malha em regime produz quatro colunas:
+o filtro de exceção não arquiva o que não mudou.
+
+Mas o degrau do viés não acontece quando a entrada muda; ele acontece quando um
+laudo chega, num instante em que o arquivo não tem coluna nenhuma. Então a série
+é desenhada numa **grade fixa**, segurando o último valor arquivado de cada
+entrada — que é exatamente o que o historiador promete: enquanto não há coluna
+nova, o valor não saiu da banda de exceção.
+
+### Um ensaio deixou de ser ilustrativo, e a tela diz qual
+
+A matriz de Bobinas × ensaios passou a mostrar os laudos de verdade na coluna da
+tração MD, com o selo trocado: `LAB-1206 medido` ao lado do `ilustrativo` dos
+outros dezoito. Duas versões do mesmo ensaio na mesma tela seriam a pior forma
+de meia-verdade.
+
+A tela também **abre** nesse ensaio. Antes ela abria no ensaio da bobina retida,
+que é o que alguém viria olhar; a retenção sai de dado ilustrativo, e deixar o
+dado fixo decidir o que a tela mostra na frente do único ensaio medido seria pôr
+a demonstração à frente da medida. Quando o Cobb₆₀ também for medido, a retida
+volta a ganhar a vez.
+
+No lugar da carta de controle, quando o ensaio escolhido é a tração MD, entra o
+painel do sensor: a faixa da especificação ao fundo, a linha da estimativa com a
+área de incerteza, os laudos como pontos no instante da amostra e o tracejado
+vertical em que cada um ficou pronto.
+
+### O que os testes seguram
+
+- **O modelo é o ganho medido**, e um ensaio sem relação não tem modelo.
+- **Sem laudo não há viés nem faixa**; com dois há viés e ainda não há faixa;
+  com três a faixa aparece e sai do espalhamento dos resíduos.
+- **Só os últimos oito laudos contam** — quatro laudos de outro patamar saem da
+  conta.
+- **O resíduo é contra o modelo daquela bobina:** a bobina que rodou com 10
+  kWh/t a mais e veio com 0,425 kN/m a mais tem resíduo **zero**.
+- **O salto é a diferença de viés**, e a faixa abre quando os laudos passam a
+  discordar entre si.
+- **A estimativa acerta o laudo dentro da faixa que ela declara** — num teste de
+  integração com banco, semeadura e retomada. Se não caísse, a faixa estaria
+  mentindo sobre a incerteza, que é pior do que não ter estimativa.
+- **Um laudo que ainda não ficou pronto não entra na conta**, e mesmo assim há
+  estimativa: é para esse buraco que ela existe.
+- **No navegador:** o Laboratório abre no sensor, com número, faixa e veredito
+  contra a especificação; a matriz diz qual coluna é medida e qual é
+  ilustrativa; escolher outro ensaio troca o sensor pela carta de controle.
+
+### Medido
+
+- Testes: `shared` **393**, API **363** (111 pulados sem `DATABASE_URL`), web
+  **210**. Typecheck, lint e `format:check` limpos.
+- e2e: **51** testes, 3 novos.
+- Build: pedaço da aplicação **317,5 kB** (era 312,1), worker e `three`
+  inalterados.
+- Instantâneo: 994 arquivos, 2.889 kB, com 5 laudos e a série do sensor.
+- Sem rolagem horizontal em 1920×1080 nem em 1440×900.
+
+**O que esta fase não fez:** os outros dezoito ensaios continuam ilustrativos.
+Dar evento a todos é repetir o que está aqui dezoito vezes — barato de copiar e
+caro de inventar, porque só três têm relação declarada na pesquisa. Os outros
+quinze precisariam de um teste de degrau que ninguém fez, e um ganho inventado
+daria um sensor que parece funcionar.
+
+### Arquivos, por commit sugerido
+
+**48. O ensaio como entidade, e a regra do sensor**
+
+```
+packages/shared/src/operations/lab-result.ts        (novo)
+packages/shared/src/quality/soft-sensor.ts          (novo)
+packages/shared/src/quality/soft-sensor.test.ts     (novo)
+packages/shared/src/operations/index.ts
+packages/shared/src/index.ts
+```
+
+**49. O laudo no banco e na colheita**
+
+```
+apps/api/src/db/migrations/007_lab_result.sql   (novo)
+apps/api/src/runtime/lab.ts                     (novo)
+apps/api/src/runtime/entities.ts
+apps/api/src/runtime/catchup.ts
+apps/api/src/db/operations-queries.ts
+apps/api/src/db/operations-store.ts
+apps/api/src/db/operations-repository.ts
+apps/api/src/db/sql-database.ts
+```
+
+**50. A rota do sensor virtual**
+
+```
+apps/api/src/runtime/soft-sensor.ts        (novo)
+apps/api/src/runtime/soft-sensor.test.ts   (novo)
+apps/api/src/routes/process.ts
+apps/api/src/routes/operations.ts
+apps/api/src/routes/process-route-schemas.ts
+apps/api/src/routes/process-schemas.ts
+apps/api/src/routes/api.test.ts
+apps/api/src/scripts/generate-demo.ts
+```
+
+**51. O painel no Laboratório**
+
+```
+apps/web/src/screens/laboratorio/SensorVirtual.tsx   (novo)
+apps/web/src/screens/LaboratorioScreen.tsx
+apps/web/src/api/process.ts
+apps/web/src/api/gateway.ts
+apps/web/src/api/demo-gateway.ts
+apps/web/src/ui/help.ts
+apps/web/src/screens/screens.test.tsx
+apps/web/e2e/qualidade.spec.ts                       (novo)
+```
+
+**52. Documentação da fase**
+
+```
+docs/progress.md
+```
+
+As sete fases estão feitas. O fechamento que o pedido original prevê —
+regenerar o instantâneo, rodar a suíte inteira e comparar com a base da Fase 0,
+atualizar `docs/notas-para-readme.md` e deixar o checklist de deploy — começa
+quando o Felipe disser.

@@ -615,6 +615,56 @@ export const getNoteSchema = {
   },
 } as const;
 
+// ------------------------------------------------- ensaio de laboratório
+
+export const listLabResultsSchema = {
+  tags: ['Operação'],
+  summary: 'Os laudos de laboratório, do mais recente para o mais antigo',
+  description:
+    'A ordem é pela **amostra**, não pelo laudo: o que ordena a série de qualidade é quando o ' +
+    'papel foi feito, não quando a bancada terminou de medi-lo.',
+  querystring: {
+    type: 'object',
+    properties: {
+      tag: { type: 'string', examples: ['LAB-1206'] },
+      reelNumber: { type: 'integer', minimum: 1 },
+      ...timeWindow,
+      limit,
+    },
+    additionalProperties: false,
+  },
+  response: { 200: listOf('LabResult', 'results') },
+} as const;
+
+export const getQualitySchema = {
+  tags: ['Processo'],
+  summary: 'A estimativa de um ensaio entre duas análises',
+  description:
+    'O modelo de regime vem das relações medidas (teste de degrau da pesquisa); o viés e a ' +
+    'faixa vêm dos últimos laudos. Cada ponto da série usa a calibração que existia **naquele ' +
+    'instante**, então a curva tem um degrau quando um laudo chega. 404 para ensaio sem ' +
+    'relação declarada: sem ganho medido não há o que estimar.',
+  params: {
+    type: 'object',
+    properties: { tag: { type: 'string', minLength: 1 } },
+    required: ['tag'],
+  },
+  querystring: {
+    type: 'object',
+    properties: {
+      ...timeWindow,
+      buckets: {
+        type: 'integer',
+        minimum: 1,
+        maximum: MAX_PLOT_BUCKETS,
+        description: `Colunas da série. O máximo é ${String(MAX_PLOT_BUCKETS)}.`,
+      },
+    },
+    additionalProperties: false,
+  },
+  response: { 200: ref('QualityReport'), ...errors },
+} as const;
+
 // ---------------------------------------------------------- nota sugerida
 
 export const listNoteSuggestionsSchema = {

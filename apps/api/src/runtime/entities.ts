@@ -13,6 +13,7 @@ import {
   type Alarm,
   type GradeChange,
   type JumboReel,
+  type LabResult,
   type LeakState,
   type MaintenanceNote,
   type NoiseLevel,
@@ -26,6 +27,7 @@ import {
 import type { Database } from '../db';
 import type { StoredShift } from '../db/operations-queries';
 import { precursorsOf } from './break-replay';
+import { labResultsFor, type SampledReel, type TruthSample } from './lab';
 import {
   nominalShiftProductionT,
   reelDiameterMm,
@@ -408,6 +410,8 @@ export function notesFromAlarms(
 
 export interface EntityHarvest {
   readonly shifts: readonly StoredShift[];
+  /** Os laudos das bobinas que fecharam na janela. */
+  readonly labResults: readonly LabResult[];
   readonly reels: readonly JumboReel[];
   readonly gradeChanges: readonly GradeChange[];
   readonly webBreaks: readonly WebBreak[];
@@ -443,7 +447,17 @@ export async function harvestEntities(
   fromTick: number,
   toTick: number,
   alarms: readonly Alarm[],
+  /**
+   * A verdade da tração MD nos passos varridos.
+   *
+   * Vem da retomada porque é ela que tem o motor: o ensaio não é tag de
+   * catálogo, não grava no historiador, e o valor dele só existe enquanto a
+   * rede está montada. Vazio quando quem chama não está simulando — e aí não
+   * há laudo, que é diferente de haver laudo vazio.
+   */
+  labTruth: readonly TruthSample[] = [],
 ): Promise<EntityHarvest> {
+  const sampledReels: SampledReel[] = [];
   const shifts: StoredShift[] = [];
   const reels: JumboReel[] = [];
   const gradeChanges: GradeChange[] = [];
@@ -558,6 +572,9 @@ export async function harvestEntities(
           gradeChangeInside,
         }),
       );
+
+      // a amostra do laboratório é cortada quando a bobina fecha
+      if (closed) sampledReels.push(reel);
     }
 
     // --- turno ---
@@ -610,6 +627,7 @@ export async function harvestEntities(
     gradeChanges,
     webBreaks,
     rounds,
+    labResults: labResultsFor(sampledReels, labTruth, seed),
     notes: notesFromAlarms(alarms, lastRoundId),
     setpointChanges,
   };
@@ -620,6 +638,8 @@ export async function persistHarvest(db: Database, harvest: EntityHarvest): Prom
   // turno primeiro: bobina, quebra, troca e ronda apontam para ele
   await db.upsertShifts(harvest.shifts);
   await db.upsertReels(harvest.reels);
+  // o laudo aponta para a bobina de onde a amostra saiu
+  await db.upsertLabResults(harvest.labResults);
   await db.upsertWebBreaks(harvest.webBreaks);
   // a troca aponta para as bobinas afetadas, que já estão gravadas
   await db.upsertGradeChanges(harvest.gradeChanges);

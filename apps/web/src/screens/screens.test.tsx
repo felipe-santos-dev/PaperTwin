@@ -103,6 +103,9 @@ function gatewayOf(over: Partial<DataGateway> = {}): DataGateway {
     gradeChanges: vazio({ count: 0, gradeChanges: [] }),
     rounds: vazio({ count: 0, rounds: [] }),
     notes: vazio({ count: 0, notes: [] }),
+    labTestResults: vazio({ count: 0, results: [] }),
+    // sem sensor virtual por padrão: a tela cai no caminho dos 19 ilustrativos
+    quality: falha,
     noteSuggestions: vazio({ count: 0, suggestions: [] }),
     confirmSuggestion: null,
     dismissSuggestion: null,
@@ -254,6 +257,125 @@ function turnoGateway(over: Partial<DataGateway> = {}): DataGateway {
 }
 
 describe('Laboratório', () => {
+  /**
+   * O sensor virtual, que é o único ensaio que não é ilustrativo.
+   *
+   * O que o teste cobra é a honestidade do painel: o número vem com a faixa
+   * que ele mesmo declara, a tela diz se está dentro, e o aviso de que a
+   * estimativa chega antes do papel num transiente continua lá.
+   */
+  describe('sensor virtual', () => {
+    const QUALIDADE = {
+      tag: 'LAB-1206',
+      unit: 'kN/m',
+      from: '2026-06-15T17:00:00Z',
+      to: '2026-06-15T21:00:00Z',
+      spec: { lo: 4.6, hi: 6.0, target: 5.2 },
+      model: {
+        tag: 'LAB-1206',
+        base: 5.2,
+        terms: [{ tag: 'JIC-101', kp: 0.0425, at: 110, unit: 'kN/m por kWh/t' }],
+      },
+      calibration: {
+        bias: 0.04,
+        sd: 0.03,
+        samples: 5,
+        lastAt: '2026-06-15T20:10:00Z',
+      },
+      now: { t: '2026-06-15T21:00:00Z', value: 5.24, lo: 5.18, hi: 5.3 },
+      points: [
+        { t: '2026-06-15T20:00:00Z', value: 5.2, lo: 5.14, hi: 5.26 },
+        { t: '2026-06-15T21:00:00Z', value: 5.24, lo: 5.18, hi: 5.3 },
+      ],
+      results: [
+        {
+          id: 'LR-412-LAB-1206',
+          tag: 'LAB-1206',
+          reelNumber: 412,
+          value: 5.26,
+          unit: 'kN/m',
+          sampledAt: '2026-06-15T20:10:00Z',
+          reportedAt: '2026-06-15T20:35:00Z',
+          withinSpec: true,
+        },
+      ],
+      lastResult: {
+        id: 'LR-412-LAB-1206',
+        tag: 'LAB-1206',
+        reelNumber: 412,
+        value: 5.26,
+        unit: 'kN/m',
+        sampledAt: '2026-06-15T20:10:00Z',
+        reportedAt: '2026-06-15T20:35:00Z',
+        withinSpec: true,
+      },
+    };
+
+    const portão = () =>
+      gatewayOf({
+        tagTrend: falha,
+        reels: () => Promise.resolve({ count: 1, reels: [BOBINA] }),
+        quality: () => Promise.resolve(QUALIDADE),
+        labResults: () =>
+          Promise.resolve({
+            illustrative: true as const,
+            specs: [
+              {
+                tag: 'LAB-1206',
+                label: 'Tração MD',
+                unit: 'kN/m',
+                lo: 4.6,
+                hi: 6.0,
+                target: 5.2,
+                everyReels: 1,
+              },
+            ],
+            results: [],
+          }),
+      });
+
+    it('abre no sensor virtual, com a estimativa e a faixa', async () => {
+      render(<LaboratorioScreen gateway={portão()} />);
+
+      const painel = await screen.findByRole('region', { name: 'Sensor virtual de tração MD' });
+      expect(painel).toHaveTextContent('5,24');
+      expect(painel).toHaveTextContent('± 0,06');
+      expect(painel).toHaveTextContent('dentro da faixa');
+      expect(painel).toHaveTextContent('viés +0,04 · 5 laudos');
+      expect(painel).toHaveTextContent(/chega antes do papel/);
+    });
+
+    it('a matriz diz que a tração MD é medida, e não ilustrativa', async () => {
+      render(<LaboratorioScreen gateway={portão()} />);
+
+      const matriz = await screen.findByRole('region', { name: 'Bobinas × ensaios' });
+      expect(within(matriz).getByText('LAB-1206 medido')).toBeInTheDocument();
+    });
+
+    it('sem faixa, diz que faltam laudos em vez de inventar incerteza', async () => {
+      render(
+        <LaboratorioScreen
+          gateway={gatewayOf({
+            tagTrend: falha,
+            reels: () => Promise.resolve({ count: 1, reels: [BOBINA] }),
+            labResults: () =>
+              Promise.resolve({ illustrative: true as const, specs: [], results: [] }),
+            quality: () =>
+              Promise.resolve({
+                ...QUALIDADE,
+                calibration: { bias: 0, sd: null, samples: 2, lastAt: null },
+                now: { t: '2026-06-15T21:00:00Z', value: 5.2, lo: null, hi: null },
+                points: [{ t: '2026-06-15T21:00:00Z', value: 5.2, lo: null, hi: null }],
+              }),
+          })}
+        />,
+      );
+
+      const painel = await screen.findByRole('region', { name: 'Sensor virtual de tração MD' });
+      expect(painel).toHaveTextContent('menos de três laudos');
+    });
+  });
+
   it('explica que o ensaio vem depois da bobina fechar', async () => {
     render(<LaboratorioScreen gateway={gatewayOf()} />);
 

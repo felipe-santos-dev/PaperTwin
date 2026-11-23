@@ -10,6 +10,7 @@ import { conflict, notFound } from './errors';
 import {
   confirmNoteSuggestionSchema,
   dismissNoteSuggestionSchema,
+  listLabResultsSchema,
   listNoteSuggestionsSchema,
   getNoteSchema,
   getReelSchema,
@@ -235,6 +236,20 @@ export async function operationRoutes(app: FastifyInstance): Promise<void> {
       return { note };
     },
   );
+
+  // ------------------------------------------- ensaio de laboratório
+
+  app.get<{
+    Querystring: { tag?: string; reelNumber?: number; from?: string; to?: string; limit?: number };
+  }>('/lab-results', { schema: listLabResultsSchema }, async (request) => {
+    await app.simulation.ensureCurrent();
+    const results = await app.db.listLabResults({
+      ...windowOf(request.query),
+      ...(request.query.tag ? { tag: request.query.tag } : {}),
+      ...(request.query.reelNumber === undefined ? {} : { reelNumber: request.query.reelNumber }),
+    });
+    return { count: results.length, results };
+  });
 
   // ------------------------------------------------- nota sugerida
 

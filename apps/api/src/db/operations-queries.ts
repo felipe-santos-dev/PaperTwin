@@ -6,6 +6,7 @@ import type {
   EvidenceKind,
   GradeChange,
   JumboReel,
+  LabResult,
   LeakState,
   MaintenanceNote,
   NoiseLevel,
@@ -1097,4 +1098,73 @@ export const LAST_DISMISSED_SUGGESTIONS = `
   from note_suggestion
   where status = 'dispensada'
   order by asset_tag, decided_at desc
+`;
+
+// ------------------------------------------------- ensaio de laboratório
+
+export interface LabResultRow {
+  id: string;
+  tag: string;
+  reel_number: number | string;
+  value: number | string;
+  unit: string;
+  sampled_at: Date | string;
+  reported_at: Date | string;
+  within_spec: boolean | null;
+}
+
+export function toLabResult(row: LabResultRow): LabResult {
+  return {
+    id: row.id,
+    tag: row.tag,
+    reelNumber: num(row.reel_number),
+    value: num(row.value),
+    unit: row.unit,
+    sampledAt: iso(row.sampled_at),
+    reportedAt: iso(row.reported_at),
+    withinSpec: row.within_spec,
+  };
+}
+
+const LAB_COLUMNS = `id, tag, reel_number, value, unit, sampled_at, reported_at, within_spec`;
+
+export const UPSERT_LAB_RESULT = `
+  insert into lab_result (${LAB_COLUMNS})
+  values ($1, $2, $3, $4, $5, $6::timestamptz, $7::timestamptz, $8)
+  on conflict (id) do update set
+    value = excluded.value,
+    unit = excluded.unit,
+    sampled_at = excluded.sampled_at,
+    reported_at = excluded.reported_at,
+    within_spec = excluded.within_spec
+`;
+
+export const upsertLabResultParams = (result: LabResult): unknown[] => [
+  result.id,
+  result.tag,
+  result.reelNumber,
+  result.value,
+  result.unit,
+  result.sampledAt,
+  result.reportedAt,
+  result.withinSpec,
+];
+
+/**
+ * Os laudos, do mais recente para o mais antigo.
+ *
+ * A ordem é por **amostra**, e não por laudo: o que ordena a série de qualidade
+ * é quando o papel foi feito, não quando a bancada terminou de medi-lo. Dois
+ * ensaios podem sair do laboratório fora de ordem sem que o papel tenha sido
+ * feito fora de ordem.
+ */
+export const LIST_LAB_RESULTS = `
+  select ${LAB_COLUMNS}
+  from lab_result
+  where ($1::text is null or tag = $1)
+    and ($2::int is null or reel_number = $2)
+    and ($3::timestamptz is null or sampled_at >= $3)
+    and ($4::timestamptz is null or sampled_at <= $4)
+  order by sampled_at desc
+  limit $5
 `;

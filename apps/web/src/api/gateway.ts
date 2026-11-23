@@ -28,7 +28,9 @@ import {
   fetchReel,
   fetchReels,
   fetchRounds,
+  fetchLabTestResults,
   fetchNoteSuggestions,
+  fetchQuality,
   fetchSetpointChanges,
   fetchShift,
   fetchShifts,
@@ -45,7 +47,9 @@ import {
   type SuggestionQuery,
   type BreakReplayView,
   type AlarmQuery,
+  type LabTestResult,
   type ProcessValues,
+  type QualityReport,
   type ReelView,
   type SetpointAccepted,
   type SetpointRejection,
@@ -145,6 +149,29 @@ export interface DataGateway extends FixtureRoutes {
   ): Promise<{ count: number; changes: readonly SetpointChange[] }>;
 
   /**
+   * Os laudos de laboratório que viraram entidade — hoje só a tração MD.
+   *
+   * Os outros 18 ensaios continuam vindo de `labResults`, que é dado fixo com
+   * selo de ilustrativo. A tela mostra os dois e diz qual é qual.
+   */
+  labTestResults(
+    filter?: { tag?: string; reelNumber?: number; limit?: number },
+    signal?: AbortSignal,
+  ): Promise<{ count: number; results: readonly LabTestResult[] }>;
+
+  /**
+   * A estimativa de um ensaio entre duas análises.
+   *
+   * Não é `null` no instantâneo: a conta já foi feita quando ele foi gerado, e
+   * o que viaja é a resposta pronta — como o replay de quebra.
+   */
+  quality(
+    tag: string,
+    options?: { from?: Date; to?: Date; buckets?: number },
+    signal?: AbortSignal,
+  ): Promise<QualityReport>;
+
+  /**
    * As notas sugeridas pela tendência dos mancais.
    *
    * A **leitura** existe no instantâneo: a sugestão é derivada do arquivo, e o
@@ -229,6 +256,8 @@ export const LIVE_GATEWAY: DataGateway = {
   gradeChanges: fetchGradeChanges,
   rounds: fetchRounds,
   notes: fetchNotes,
+  labTestResults: fetchLabTestResults,
+  quality: fetchQuality,
   noteSuggestions: (filter?: SuggestionQuery, signal?: AbortSignal) =>
     fetchNoteSuggestions(filter, signal),
   confirmSuggestion: confirmNoteSuggestion,

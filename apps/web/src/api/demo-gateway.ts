@@ -13,7 +13,7 @@ import { fetchDemoAsset, fetchDemoVibration } from './demo';
 import { fixtureRoutes, type FixtureRoutes } from './fixtures';
 import { runWhatIfInBrowser } from './whatif';
 import type { DataGateway } from './gateway';
-import type { AlarmList, ProcessValues, ReelView, ShiftView } from './process';
+import type { AlarmList, LabTestResult, ProcessValues, ReelView, ShiftView } from './process';
 
 /**
  * O portão que lê o instantâneo estático.
@@ -283,6 +283,32 @@ const DEMO_ROUTES: Omit<DataGateway, keyof FixtureRoutes> = {
 
   confirmSuggestion: null,
   dismissSuggestion: null,
+
+  async labTestResults(filter = {}, signal) {
+    const all = await load<{ count: number; results: readonly LabTestResult[] }>(
+      '/lab-results',
+      ['count', 'results'],
+      signal,
+    );
+
+    const rows = all.results.filter((result) => {
+      if (filter.tag !== undefined && result.tag !== filter.tag) return false;
+      if (filter.reelNumber !== undefined && result.reelNumber !== filter.reelNumber) return false;
+      return true;
+    });
+
+    return { count: rows.length, results: capped(rows, filter.limit) };
+  },
+
+  /**
+   * A janela do instantâneo é a que o gerador escolheu.
+   *
+   * A tela pede uma janela; o arquivo tem uma só. Servir o que existe é mais
+   * honesto que recortar e deixar o gráfico mentir sobre o período — a mesma
+   * regra da tendência.
+   */
+  quality: (tag, _options, signal) =>
+    load(`/process/quality/${encodeURIComponent(tag)}`, ['tag', 'points'], signal),
 
   async setpointChanges(filter = {}, signal) {
     const all = await load<{ count: number; changes: readonly SetpointChange[] }>(

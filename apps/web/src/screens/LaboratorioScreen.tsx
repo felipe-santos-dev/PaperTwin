@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 
 import type { LabResult, LabSpec, ReelHold } from '../api/fixtures';
 import type { DataGateway } from '../api/gateway';
-import type { ReelView } from '../api/process';
+import type { QualityReport, ReelView } from '../api/process';
 import { fraction, linear } from '../ui/chart/scale';
 import { seriesOf, type Point } from '../ui/chart/series';
 import { hhmm, num } from '../ui/format';
@@ -20,6 +20,7 @@ import {
   typicalReelMs,
   type CellState,
 } from './laboratorio/derive';
+import { SensorVirtual } from './laboratorio/SensorVirtual';
 
 /**
  * Laboratório — os ensaios por bobina.
@@ -35,15 +36,26 @@ import {
 
 const ROWS = 12;
 
+/** O ensaio que virou entidade na Fase 7: a tração MD. */
+const TENSILE_TAG = 'LAB-1206';
+
 export function LaboratorioScreen({ gateway }: { readonly gateway: DataGateway }) {
   const data = useResource(
     useCallback(
       async (signal: AbortSignal) => {
-        const [reels, lab, holds, values] = await Promise.all([
+        const [reels, lab, holds, values, quality] = await Promise.all([
           gateway.reels({ limit: 40 }, signal),
           gateway.labResults({}, signal),
           gateway.reelHolds(signal),
           gateway.processValues({}, signal),
+          /**
+           * O ensaio que deixou de ser ilustrativo.
+           *
+           * Falha vira `null` em vez de derrubar a tela: uma API mais velha
+           * não tem a rota, e os outros 18 ensaios continuam valendo. O que
+           * some é o painel do sensor, não o Laboratório.
+           */
+          gateway.quality(TENSILE_TAG, {}, signal).catch(() => null),
         ]);
         const now = Date.parse(values.ts);
         const closed = reels.reels.filter((r) => r.endedAt !== null);
@@ -57,9 +69,31 @@ export function LaboratorioScreen({ gateway }: { readonly gateway: DataGateway }
               )
               .catch(() => null)
           : null;
+        /**
+         * A coluna da tração MD passa a mostrar os laudos de verdade.
+         *
+         * Duas versões do mesmo ensaio na mesma tela — um número fixo na
+         * matriz e um laudo na API — seria a pior forma de meia-verdade. Os
+         * resultados da API substituem os ilustrativos daquela TAG, e só
+         * daquela.
+         */
+        const results = quality
+          ? [
+              ...lab.results.filter((item) => item.tag !== TENSILE_TAG),
+              ...quality.results.map((item) => ({
+                reelNumber: item.reelNumber,
+                tag: item.tag,
+                value: item.value,
+                unit: item.unit,
+                analyzedAt: item.reportedAt,
+              })),
+            ]
+          : lab.results;
+
         return {
           reels: reels.reels,
-          lab,
+          lab: { specs: lab.specs, results },
+          quality,
           holds: holds.holds,
           now,
           ash: ash ? seriesOf(ash, now) : [],
@@ -84,12 +118,14 @@ export function LaboratorioScreen({ gateway }: { readonly gateway: DataGateway }
 function LabView({
   reels,
   lab,
+  quality,
   holds,
   now,
   ash,
 }: {
   readonly reels: readonly ReelView[];
   readonly lab: { readonly specs: readonly LabSpec[]; readonly results: readonly LabResult[] };
+  readonly quality: QualityReport | null;
   readonly holds: readonly ReelHold[];
   readonly now: number;
   readonly ash: readonly Point[];
@@ -97,7 +133,19 @@ function LabView({
   const closed = reels.filter((r) => r.endedAt !== null);
   const rows = closed.slice(0, ROWS);
   const held = holds.find((h) => h.status === 'retida');
-  const [selected, setSelected] = useState<string>(held?.tag ?? lab.specs[0]?.tag ?? '');
+  /**
+   * A tela abre no ensaio que é medido de verdade.
+   *
+   * Antes ela abria no ensaio da bobina retida, que é o que alguém viria
+   * olhar. A Fase 7 inverte essa ordem por um motivo que vale enquanto durar:
+   * a retenção sai de dado **ilustrativo**, e deixar o dado fixo decidir o que
+   * a tela mostra na frente do único ensaio medido seria pôr a demonstração à
+   * frente da medida. Quando o Cobb₆₀ também for medido, a retida volta a
+   * ganhar a vez.
+   */
+  const [selected, setSelected] = useState<string>(
+    quality ? TENSILE_TAG : (held?.tag ?? lab.specs[0]?.tag ?? ''),
+  );
   const spec = lab.specs.find((s) => s.tag === selected) ?? lab.specs[0];
 
   return (
@@ -107,11 +155,16 @@ function LabView({
         specs={lab.specs}
         results={lab.results}
         holds={holds}
+        measured={quality ? TENSILE_TAG : null}
         selected={spec?.tag ?? ''}
         onSelect={setSelected}
       />
       <div className="flex min-h-0 flex-col gap-4">
-        {spec ? <Chart spec={spec} results={lab.results} className="h-[340px] shrink-0" /> : null}
+        {quality && selected === TENSILE_TAG ? (
+          <SensorVirtual quality={quality} className="h-[340px] shrink-0" />
+        ) : spec ? (
+          <Chart spec={spec} results={lab.results} className="h-[340px] shrink-0" />
+        ) : null}
         <Queue reels={reels} specs={lab.specs} results={lab.results} holds={holds} now={now} />
         <LabVsQcs
           rows={rows}
@@ -140,6 +193,7 @@ function Matrix({
   specs,
   results,
   holds,
+  measured,
   selected,
   onSelect,
 }: {
@@ -147,6 +201,8 @@ function Matrix({
   readonly specs: readonly LabSpec[];
   readonly results: readonly LabResult[];
   readonly holds: readonly ReelHold[];
+  /** A TAG cujos resultados vêm da API, e não do dado fixo. */
+  readonly measured: string | null;
   readonly selected: string;
   readonly onSelect: (tag: string) => void;
 }) {
@@ -170,7 +226,18 @@ function Matrix({
         </span>
       }
       aside={
-        <Illustrative title="Resultados de laboratório: dado fixo de demonstração, ancorado nas bobinas reais." />
+        measured ? (
+          <span className="flex items-center gap-2">
+            <span className="border border-band px-1.5 py-0.5 text-[11px] text-fg-2">
+              {measured} medido
+            </span>
+            <Illustrative
+              title={`Os outros ensaios são dado fixo de demonstração, ancorado nas bobinas reais. ${measured} vem da API: amostra por bobina, com laudo.`}
+            />
+          </span>
+        ) : (
+          <Illustrative title="Resultados de laboratório: dado fixo de demonstração, ancorado nas bobinas reais." />
+        )
       }
       bodyClassName="flex min-h-0 flex-col"
     >

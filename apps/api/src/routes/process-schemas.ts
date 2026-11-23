@@ -424,6 +424,114 @@ export const noteSchema = {
   additionalProperties: false,
 } as const;
 
+export const labResultSchema = {
+  $id: 'LabResult',
+  type: 'object',
+  description:
+    'Um ensaio de laboratório como evento: a amostra cortada de uma bobina num instante, e o ' +
+    'laudo pronto depois.',
+  properties: {
+    id: { type: 'string', examples: ['LR-412-LAB-1206'] },
+    tag: { type: 'string', examples: ['LAB-1206'] },
+    reelNumber: { type: 'integer' },
+    value: { type: 'number' },
+    unit: { type: 'string' },
+    sampledAt: { type: 'string', description: 'Quando a amostra foi cortada: o fim da bobina.' },
+    reportedAt: { type: 'string', description: 'Quando o laudo ficou pronto.' },
+    withinSpec: { type: ['boolean', 'null'] },
+  },
+  required: ['id', 'tag', 'reelNumber', 'value', 'unit', 'sampledAt', 'reportedAt', 'withinSpec'],
+  additionalProperties: false,
+} as const;
+
+const qualityPointSchema = {
+  type: 'object',
+  properties: {
+    t: { type: 'string' },
+    value: { type: 'number' },
+    lo: { type: ['number', 'null'] },
+    hi: { type: ['number', 'null'] },
+  },
+  required: ['t', 'value', 'lo', 'hi'],
+  additionalProperties: false,
+} as const;
+
+export const qualityReportSchema = {
+  $id: 'QualityReport',
+  type: 'object',
+  description:
+    'A estimativa de um ensaio entre duas análises: o modelo de regime das relações medidas, ' +
+    'mais o viés e a faixa que saem dos últimos laudos.',
+  properties: {
+    tag: { type: 'string' },
+    unit: { type: 'string' },
+    from: { type: 'string' },
+    to: { type: 'string' },
+    spec: {
+      type: 'object',
+      properties: {
+        lo: { type: 'number' },
+        hi: { type: 'number' },
+        target: { type: 'number' },
+      },
+      required: ['lo', 'hi', 'target'],
+      additionalProperties: false,
+    },
+    model: {
+      type: 'object',
+      properties: {
+        tag: { type: 'string' },
+        base: { type: 'number' },
+        terms: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              tag: { type: 'string' },
+              kp: { type: 'number' },
+              at: { type: 'number' },
+              unit: { type: 'string' },
+            },
+            required: ['tag', 'kp', 'at', 'unit'],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ['tag', 'base', 'terms'],
+      additionalProperties: false,
+    },
+    calibration: {
+      type: 'object',
+      properties: {
+        bias: { type: 'number' },
+        sd: { type: ['number', 'null'], description: 'Nulo com menos de três laudos.' },
+        samples: { type: 'integer' },
+        lastAt: { type: ['string', 'null'] },
+      },
+      required: ['bias', 'sd', 'samples', 'lastAt'],
+      additionalProperties: false,
+    },
+    now: { anyOf: [qualityPointSchema, { type: 'null' }] },
+    points: { type: 'array', items: qualityPointSchema },
+    results: { type: 'array', items: { $ref: 'LabResult' } },
+    lastResult: { anyOf: [{ $ref: 'LabResult' }, { type: 'null' }] },
+  },
+  required: [
+    'tag',
+    'unit',
+    'from',
+    'to',
+    'spec',
+    'model',
+    'calibration',
+    'now',
+    'points',
+    'results',
+    'lastResult',
+  ],
+  additionalProperties: false,
+} as const;
+
 export const noteSuggestionSchema = {
   $id: 'NoteSuggestion',
   type: 'object',
@@ -520,5 +628,7 @@ export const PROCESS_SCHEMAS = [
   roundSchema,
   noteSchema,
   noteSuggestionSchema,
+  labResultSchema,
+  qualityReportSchema,
   setpointChangeSchema,
 ];

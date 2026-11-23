@@ -9,6 +9,7 @@ import type {
   AlarmState,
   ArchiveReason,
   GradeChange,
+  LabResult,
   MaintenanceNote,
   NotePriority,
   NoteStatus,
@@ -413,6 +414,73 @@ export function fetchNotes(
   signal?: AbortSignal,
 ): Promise<{ count: number; notes: readonly MaintenanceNote[] }> {
   return request(`/notes${query(filter)}`, signalOf(signal));
+}
+
+// ---------------------------------------------- laboratório e qualidade
+
+/**
+ * O laudo de laboratório da API.
+ *
+ * O nome é outro porque a web já tem um `LabResult`: o do dado fixo, com
+ * `analyzedAt` e sem instante de amostra. Os dois convivem na tela de
+ * Laboratório enquanto só um ensaio é de verdade, e o nome diferente é o que
+ * impede alguém de passar um pelo outro sem o compilador reclamar.
+ */
+export type LabTestResult = LabResult;
+
+export interface QualityPoint {
+  readonly t: string;
+  readonly value: number;
+  readonly lo: number | null;
+  readonly hi: number | null;
+}
+
+export interface QualityReport {
+  readonly tag: string;
+  readonly unit: string;
+  readonly from: string;
+  readonly to: string;
+  readonly spec: { readonly lo: number; readonly hi: number; readonly target: number };
+  readonly model: {
+    readonly tag: string;
+    readonly base: number;
+    readonly terms: readonly {
+      readonly tag: string;
+      readonly kp: number;
+      readonly at: number;
+      readonly unit: string;
+    }[];
+  };
+  readonly calibration: {
+    readonly bias: number;
+    readonly sd: number | null;
+    readonly samples: number;
+    readonly lastAt: string | null;
+  };
+  readonly now: QualityPoint | null;
+  readonly points: readonly QualityPoint[];
+  readonly results: readonly LabTestResult[];
+  readonly lastResult: LabTestResult | null;
+}
+
+export function fetchLabTestResults(
+  filter: { tag?: string; reelNumber?: number; limit?: number } = {},
+  signal?: AbortSignal,
+): Promise<{ count: number; results: readonly LabTestResult[] }> {
+  return request(`/lab-results${query(filter)}`, signalOf(signal));
+}
+
+export function fetchQuality(
+  tag: string,
+  options: { from?: Date; to?: Date; buckets?: number } = {},
+  signal?: AbortSignal,
+): Promise<QualityReport> {
+  const params = query({
+    ...(options.from ? { from: options.from.toISOString() } : {}),
+    ...(options.to ? { to: options.to.toISOString() } : {}),
+    ...(options.buckets === undefined ? {} : { buckets: options.buckets }),
+  });
+  return request(`/process/quality/${encodeURIComponent(tag)}${params}`, signalOf(signal));
 }
 
 // --------------------------------------------------------- nota sugerida

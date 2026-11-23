@@ -173,6 +173,13 @@ export const HELP = {
     read: 'As faixas de fundo são as zonas da ISO. A linha pontilhada é projeção da tendência, e ela só aparece quando a inclinação passa do próprio ruído do ajuste. Rolamento degrada acelerando, então a data real chega antes da projetada.',
     click: 'As marcas na linha do tempo abrem a nota e a ronda daquele ponto.',
   },
+  'laboratorio.sensor': {
+    shows:
+      'A tração MD estimada entre uma análise e outra, com a faixa de incerteza e os laudos marcados.',
+    read: 'A faixa de fundo é a especificação; a linha é a estimativa e a área em volta é a incerteza que ela declara. Os pontos são os laudos, no instante da amostra, e o degrau na linha é um laudo entrando e corrigindo o viés.',
+    click:
+      'Nada aqui é clicável: é leitura. A coluna da tração MD na matriz ao lado mostra os mesmos laudos.',
+  },
   'mancais.sugestao': {
     shows:
       'A nota que a tendência deste mancal propõe, já preenchida: sintoma, prioridade, se exige parada e as evidências.',

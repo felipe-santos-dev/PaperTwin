@@ -7,6 +7,7 @@ import type {
   ReadValue,
   GradeChange,
   JumboReel,
+  LabResult,
   MachineAsset,
   MaintenanceNote,
   NoteSuggestion,
@@ -34,6 +35,7 @@ import type { StoredShift } from './operations-queries';
 import type {
   AlarmFilter,
   EventFilter,
+  LabResultFilter,
   NoteFilter,
   ReelFilter,
   RoundFilter,
@@ -247,6 +249,14 @@ export class SqlDatabase implements Database {
 
   findMaintenanceNote(number: string): Promise<MaintenanceNote | null> {
     return operations.findMaintenanceNote(this.sql, number);
+  }
+
+  upsertLabResults(results: readonly LabResult[]): Promise<number> {
+    return operations.upsertLabResults(this.sql, results);
+  }
+
+  listLabResults(filter?: LabResultFilter): Promise<LabResult[]> {
+    return operations.listLabResults(this.sql, filter);
   }
 
   replaceStandingSuggestions(suggestions: readonly NoteSuggestion[]): Promise<number> {

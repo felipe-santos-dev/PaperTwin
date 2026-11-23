@@ -2,6 +2,7 @@ import type {
   Alarm,
   GradeChange,
   JumboReel,
+  LabResult,
   MaintenanceNote,
   NoteSuggestion,
   Round,
@@ -23,8 +24,13 @@ import {
   INSERT_SUGGESTION,
   insertSuggestionParams,
   LAST_DISMISSED_SUGGESTIONS,
+  LIST_LAB_RESULTS,
   LIST_SUGGESTIONS,
   LOCK_STANDING_SUGGESTION,
+  toLabResult,
+  UPSERT_LAB_RESULT,
+  upsertLabResultParams,
+  type LabResultRow,
   toSuggestion,
   type SuggestionRow,
   DELETE_GRADE_CHANGE_REELS,
@@ -106,6 +112,7 @@ import type {
   ReelFilter,
   RoundFilter,
   SetpointFilter,
+  LabResultFilter,
   ShiftFilter,
   SuggestionFilter,
 } from './operations-repository';
@@ -688,4 +695,35 @@ export async function lastDismissedSuggestions(
       { measure: row.measure as SuggestionMeasure, level: Number(row.level) },
     ]),
   );
+}
+
+// ------------------------------------------------- ensaio de laboratório
+
+export async function upsertLabResults(
+  sql: SqlExecutor,
+  results: readonly LabResult[],
+): Promise<number> {
+  if (results.length === 0) return 0;
+
+  await sql.transaction(async (tx) => {
+    for (const result of results) {
+      await tx.rows(UPSERT_LAB_RESULT, upsertLabResultParams(result));
+    }
+  });
+
+  return results.length;
+}
+
+export async function listLabResults(
+  sql: SqlExecutor,
+  filter: LabResultFilter = {},
+): Promise<LabResult[]> {
+  const rows = await sql.rows<LabResultRow>(LIST_LAB_RESULTS, [
+    filter.tag ?? null,
+    filter.reelNumber ?? null,
+    at(filter.from),
+    at(filter.to),
+    limitOf(filter.limit),
+  ]);
+  return rows.map(toLabResult);
 }

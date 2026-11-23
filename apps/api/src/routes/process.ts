@@ -19,8 +19,10 @@ import {
 import type { FastifyInstance } from 'fastify';
 
 import { reconstructTrend } from '../runtime/reconstruct';
+import { qualityReport } from '../runtime/soft-sensor';
 import { notFound, badRequest } from './errors';
 import {
+  getQualitySchema,
   getTagSchema,
   getTagTrendSchema,
   listProcessValuesSchema,
@@ -200,6 +202,49 @@ export async function processRoutes(app: FastifyInstance): Promise<void> {
     } catch (error) {
       return reply.code(400).send(badRequest((error as Error).message));
     }
+  });
+
+  /**
+   * O sensor virtual de um ensaio.
+   *
+   * Mora nas rotas de processo, e não nas de operação, pelo mesmo motivo que a
+   * escrita de setpoint mora aqui: o que esta rota responde é sobre o processo
+   * **agora** — o laudo é que é entidade de operação, e tem rota própria.
+   */
+  app.get<{
+    Params: { tag: string };
+    Querystring: { from?: string; to?: string; buckets?: number };
+  }>('/process/quality/:tag', { schema: getQualitySchema }, async (request, reply) => {
+    const report = await app.simulation.ensureCurrent();
+    const clock = tickTime(report.toTick);
+
+    const to = request.query.to ? new Date(request.query.to) : clock;
+    const from = request.query.from
+      ? new Date(request.query.from)
+      : new Date(to.getTime() - 4 * 60 * 60 * 1000);
+
+    if (!(from < to)) {
+      return reply.code(400).send(badRequest('`from` precisa ser anterior a `to`'));
+    }
+
+    const quality = await qualityReport(app.db, {
+      tag: request.params.tag,
+      from,
+      to,
+      ...(request.query.buckets === undefined ? {} : { buckets: request.query.buckets }),
+    });
+
+    if (!quality) {
+      return reply
+        .code(404)
+        .send(
+          notFound(
+            `O ensaio ${request.params.tag} não tem relação declarada: sem ganho medido não há o que estimar`,
+          ),
+        );
+    }
+
+    return quality;
   });
 
   app.get<{

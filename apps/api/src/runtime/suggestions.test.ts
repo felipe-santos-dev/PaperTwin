@@ -11,19 +11,33 @@ import { DEGRADING_TAG, seedDatabase } from '../db/seed';
 import { DRIVERS } from '../db/test-drivers';
 import { loadEnv } from '../env';
 import { catchUp } from './catchup';
+import { deriveSuggestions } from './suggestions';
 
 /**
  * O par de testes que a Fase 6 existe para passar.
  *
- * Um mancal degrada de verdade na série — o CS23 do lado comando, o mesmo do
- * design das telas — e **nada** no caminho da regra sabe qual é. Ela lê a série
- * de todos os 72, faz a conta e decide. Se o mancal que degrada não sair com
- * sugestão, a regra não serve; se mais algum sair, ela é um gerador de ordens
- * de serviço, o que é pior.
+ * Dois mancais degradam de verdade na série — o CS23 do lado comando, o mesmo
+ * do design das telas, e um segundo no meio da curva — e **nada** no caminho da
+ * regra sabe quais são. Ela lê a série de todos os 72, faz a conta e decide. Se
+ * o mancal que degrada não for apontado, a regra não serve; se mais algum for,
+ * ela é um gerador de ordens de serviço, o que é pior.
  *
- * O segundo par é sobre a decisão de alguém: dispensar tem de calar a sugestão,
- * e confirmar tem de virar nota e calar também. Sem isso a fila pediria todo
- * dia a mesma decisão que já foi tomada.
+ * ## Apontado como: nota aberta **ou** sugestão, nunca os dois
+ *
+ * O CS23 está em zona D e tem alarme de `HH`, e o alarme já abre nota. Então o
+ * trabalho dele **já está** na fila da manutenção, e sugerir de novo seria
+ * pedir a mesma ordem de serviço duas vezes para o mesmo mancal. A regra da
+ * Fase 6 é essa: nota aberta do mesmo mancal cala a sugestão, qualquer que seja
+ * a origem da nota.
+ *
+ * Quem sobra para a sugestão é o segundo mancal — e é ele que mostra o que a
+ * Fase 6 vale. A vibração dele está em zona B, abaixo de qualquer limite de
+ * alarme: nenhuma nota se abre sozinha, e a única coisa que sabe que ele está
+ * indo embora é a reta.
+ *
+ * O terceiro par é sobre a decisão de alguém: dispensar tem de calar a
+ * sugestão, e confirmar tem de virar nota e calar também. Sem isso a fila
+ * pediria todo dia a mesma decisão que já foi tomada.
  */
 
 /**
@@ -73,21 +87,69 @@ afterAll(async () => {
 
 const emPé = (): Promise<NoteSuggestion[]> => app.db.listNoteSuggestions({ status: 'sugerida' });
 
+/** Um número em formato inglês, para cobrar a vírgula decimal nas frases. */
+const NUMERO_INGLES = /\d\.\d/;
+
 describe('a sugestão que a tendência gera', () => {
   it(
-    'os dois mancais do cenário ganham sugestão, e só eles',
+    'só o mancal sem nota aberta é sugerido',
     async () => {
       const sugestões = await emPé();
 
-      expect(sugestões).toHaveLength(2);
-      // a lista é fila de trabalho: a prioridade 1 vem primeiro
-      expect(sugestões[0]?.assetTag).toBe(DEGRADING_TAG);
-      expect(sugestões[1]?.assetTag).toBe(SEGUNDO);
+      expect(sugestões).toHaveLength(1);
+      expect(sugestões[0]?.assetTag).toBe(SEGUNDO);
       for (const sugestão of sugestões) {
         expect(sugestão.measure).toBe('vibração');
         expect(sugestão.status).toBe('sugerida');
         expect(sugestão.noteNumber).toBeNull();
       }
+    },
+    LENTO,
+  );
+
+  /**
+   * O CS23 é o caso que a revisão pegou.
+   *
+   * Ele tem nota aberta de origem `alarme` — a NM-205916 do design — e ganhava
+   * nota sugerida ao lado dela: duas recomendações para o mesmo mancal, uma
+   * delas pedindo parada e a outra não. A consulta que cala a sugestão filtrava
+   * por `origin = 'tendência'`, e a nota do alarme passava por baixo dela.
+   */
+  it(
+    'o mancal que degrada é apontado pela nota aberta, e não duas vezes',
+    async () => {
+      const notas = await app.db.listMaintenanceNotes({ assetTag: DEGRADING_TAG });
+      const abertas = notas.filter((nota) => nota.status !== 'encerrada');
+
+      expect(abertas.length).toBeGreaterThan(0);
+      expect(abertas[0]?.origin).toBe('alarme');
+
+      const sugestões = await app.db.listNoteSuggestions({ assetTag: DEGRADING_TAG });
+      expect(sugestões).toEqual([]);
+    },
+    LENTO,
+  );
+
+  /**
+   * A nota aberta pelo alarme diz o que a sugestão diria.
+   *
+   * Calar a sugestão só é honesto se a nota que ficou no lugar dela carregar a
+   * mesma gravidade. O CS23 está em zona D: a nota tem de sair P1, com parada,
+   * e com a zona escrita no sintoma — que é exatamente o que a sugestão dizia
+   * antes de ser calada.
+   */
+  it(
+    'a nota que ficou no lugar da sugestão tem a mesma gravidade',
+    async () => {
+      const notas = await app.db.listMaintenanceNotes({ assetTag: DEGRADING_TAG });
+      const nota = notas.find((item) => item.status !== 'encerrada');
+      if (!nota) throw new Error('o mancal que degrada deveria ter nota aberta');
+
+      expect(nota.priority).toBe(1);
+      expect(nota.requiresShutdown).toBe(true);
+      expect(nota.symptom).toContain('zona D');
+      // os números da frase são em português
+      expect(nota.symptom).not.toMatch(NUMERO_INGLES);
     },
     LENTO,
   );
@@ -125,7 +187,7 @@ describe('a sugestão que a tendência gera', () => {
   it(
     'o segundo vem com prazo, sem parada, e com o alarme que vê antes',
     async () => {
-      const sugestão = (await emPé())[1];
+      const sugestão = (await emPé())[0];
       if (!sugestão) throw new Error('o segundo mancal deveria ter sugestão');
 
       expect(sugestão.assetTag).toBe(SEGUNDO);
@@ -144,23 +206,18 @@ describe('a sugestão que a tendência gera', () => {
   );
 
   it(
-    'a sugestão vem preenchida: prioridade, parada e as evidências',
+    'a sugestão vem preenchida: inclinação, amostras e as evidências',
     async () => {
       const sugestão = (await emPé())[0];
       if (!sugestão) throw new Error('nenhuma sugestão em pé');
 
-      // na zona D, a projeção já passou a fronteira: P1 e parada
-      expect(sugestão.priority).toBe(1);
-      expect(sugestão.requiresShutdown).toBe(true);
-      expect(sugestão.symptom).toContain('zona D');
       expect(sugestão.perDay).toBeGreaterThan(0);
       expect(sugestão.samples).toBeGreaterThan(24);
+      expect(sugestão.limit).toBe(4.5);
 
       const kinds = sugestão.evidence.map((item) => item.kind);
       expect(kinds).toContain('tendência');
-      // o mancal em zona D tem alarme, e é ele que vai junto na sugestão
-      expect(kinds).toContain('alarme');
-      expect(sugestão.evidence.find((item) => item.kind === 'tendência')?.ref).toBe('VI-5123B');
+      expect(sugestão.evidence.find((item) => item.kind === 'tendência')?.ref).toBe('VI-5136B');
     },
     LENTO,
   );
@@ -171,7 +228,7 @@ describe('a sugestão que a tendência gera', () => {
       const sugestão = (await emPé())[0];
       if (!sugestão) throw new Error('nenhuma sugestão em pé');
 
-      expect(sugestão.id).toContain(DEGRADING_TAG);
+      expect(sugestão.id).toContain(SEGUNDO);
       expect(Date.parse(sugestão.trendStart)).toBeLessThan(NOW.getTime());
       // a janela é de 72 h: o início fica a três dias do instante da conta
       const dias = (NOW.getTime() - Date.parse(sugestão.trendStart)) / (24 * UMA_HORA);
@@ -188,8 +245,8 @@ describe('a sugestão que a tendência gera', () => {
       const body = response.json() as { count: number; suggestions: NoteSuggestion[] };
 
       expect(response.statusCode).toBe(200);
-      expect(body.count).toBe(2);
-      expect(body.suggestions.map((item) => item.assetTag)).toEqual([DEGRADING_TAG, SEGUNDO]);
+      expect(body.count).toBe(1);
+      expect(body.suggestions.map((item) => item.assetTag)).toEqual([SEGUNDO]);
     },
     LENTO,
   );
@@ -198,7 +255,7 @@ describe('a sugestão que a tendência gera', () => {
     'a retomada seguinte não cria uma segunda sugestão para o mesmo mancal',
     async () => {
       await catchUp(app.db, { seed: SEED, now: new Date(NOW.getTime() + 60_000) });
-      const sugestões = await app.db.listNoteSuggestions({ assetTag: DEGRADING_TAG });
+      const sugestões = await app.db.listNoteSuggestions({ assetTag: SEGUNDO });
 
       expect(sugestões).toHaveLength(1);
     },
@@ -249,14 +306,13 @@ describe('a decisão de alguém, e o que a retomada faz com ela', () => {
 
       await catchUp(app.db, { seed: SEED, now: new Date(NOW.getTime() + 120_000) });
 
-      // o mancal dispensado sai da fila; o outro continua nela
-      const aindaEmPé = await emPé();
-      expect(aindaEmPé).toHaveLength(1);
-      expect(aindaEmPé[0]?.assetTag).toBe(SEGUNDO);
+      // o mancal dispensado sai da fila, e a fila fica vazia: o outro mancal
+      // que degrada já está apontado pela nota aberta dele
+      expect(await emPé()).toEqual([]);
 
       const dispensadas = await app.db.listNoteSuggestions({ status: 'dispensada' });
       expect(dispensadas).toHaveLength(1);
-      expect(dispensadas[0]?.assetTag).toBe(DEGRADING_TAG);
+      expect(dispensadas[0]?.assetTag).toBe(SEGUNDO);
       expect(dispensadas[0]?.reason).toContain('parada de agosto');
     },
     LENTO,
@@ -315,14 +371,19 @@ describe('a decisão de alguém, e o que a retomada faz com ela', () => {
 
       // a nota está no banco, com as evidências da sugestão
       const nota = await app.db.findMaintenanceNote(body.note.number);
-      expect(nota?.assetTag).toBe(DEGRADING_TAG);
+      expect(nota?.assetTag).toBe(SEGUNDO);
       expect(nota?.evidence.length).toBe(sugestão.evidence.length);
 
-      // e a retomada não sugere de novo o que já está na fila da manutenção —
-      // só o outro mancal, que ninguém decidiu ainda, continua em pé
+      /**
+       * E agora a nota confirmada é ela mesma a que cala a sugestão.
+       *
+       * É o mesmo caminho do CS23, por outra porta: o trabalho entrou na fila
+       * da manutenção, e a regra não pede duas vezes a mesma ordem de serviço.
+       * Antes isto só valia para a nota de origem `tendência`; vale para
+       * qualquer uma.
+       */
       await catchUp(app.db, { seed: SEED, now: new Date(NOW.getTime() + 240_000) });
-      const aindaEmPé = await emPé();
-      expect(aindaEmPé.map((item) => item.assetTag)).toEqual([SEGUNDO]);
+      expect(await emPé()).toEqual([]);
     },
     LENTO,
   );
@@ -390,8 +451,68 @@ describe('retomada em pedaços', () => {
 
       const [deUmaVez, fatiado] = await Promise.all([comoFoi([0]), comoFoi([30, 20, 10, 0])]);
 
-      expect(deUmaVez).toHaveLength(2);
+      expect(deUmaVez).toHaveLength(1);
       expect(semRótulos(fatiado)).toEqual(semRótulos(deUmaVez));
+    },
+    LENTO,
+  );
+});
+
+/**
+ * A regra da supressão, nos dois sentidos, em banco próprio.
+ *
+ * Banco próprio porque o caso **mexe** no estado: encerra a nota do mancal que
+ * degrada para ver a sugestão voltar. Fazer isso na suíte de cima deixaria as
+ * decisões dos casos seguintes num banco que ninguém descreveu.
+ *
+ * E a regra tem de valer nos dois sentidos. Calar enquanto a nota está aberta é
+ * metade dela; a outra metade é voltar quando a nota é encerrada, porque a
+ * razão de calar é "o trabalho já está na fila" — e encerrar a nota tira o
+ * trabalho da fila. Sem a volta, encerrar uma nota sem resolver o mancal o
+ * apagaria do radar para sempre.
+ */
+describe('nota aberta cala, nota encerrada liberta', () => {
+  it(
+    'a sugestão do mancal volta quando a nota dele é encerrada',
+    async () => {
+      const aberto = await driver.openWithSql();
+      const db = aberto.db;
+      await db.migrate();
+      await seedDatabase(db, { now: NOW });
+
+      const início = new Date(NOW.getTime() - 10 * 60_000);
+      await db.saveSimState({ seed: SEED, lastTick: tickAt(início), updatedAt: início });
+      await catchUp(db, { seed: SEED, now: NOW });
+
+      // calada: o mancal tem nota aberta de origem alarme
+      const notas = await db.listMaintenanceNotes({ assetTag: DEGRADING_TAG });
+      const nota = notas.find((item) => item.status !== 'encerrada');
+      if (!nota) throw new Error('o mancal que degrada deveria ter nota aberta');
+      expect(nota.origin).toBe('alarme');
+      expect(await db.listNoteSuggestions({ assetTag: DEGRADING_TAG })).toEqual([]);
+
+      /**
+       * A nota é encerrada e a regra roda de novo — sem passar pela retomada.
+       *
+       * A retomada recolheria as notas dos alarmes e reabriria esta, porque ela
+       * é derivada do arquivo e o alarme continua lá. Isso está certo para o
+       * sistema e é o contrário do que este caso quer observar: o que se cobra
+       * aqui é a regra da supressão, e ela é `deriveSuggestions`.
+       */
+      await aberto.sql.rows(
+        'update maintenance_note set status = $1, closed_at = $2 where number = $3',
+        ['encerrada', NOW.toISOString(), nota.number],
+      );
+
+      const voltou = await deriveSuggestions(db, { now: NOW });
+      const doMancal = voltou.filter((item) => item.assetTag === DEGRADING_TAG);
+
+      expect(doMancal).toHaveLength(1);
+      expect(doMancal[0]?.priority).toBe(1);
+      expect(doMancal[0]?.requiresShutdown).toBe(true);
+      expect(doMancal[0]?.symptom).toContain('zona D');
+
+      await db.close();
     },
     LENTO,
   );

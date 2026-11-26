@@ -16,6 +16,15 @@ const baseURL = `http://localhost:${String(PORT)}`;
  */
 export default defineConfig({
   testDir: './e2e',
+  /**
+   * As capturas não são teste.
+   *
+   * `capturas.spec.ts` grava as nove telas em duas larguras para alguém olhar;
+   * ela não afirma nada e não pode falhar. Rodá-la no CI seria gravar 18
+   * imagens por execução sem ninguém para ver. Quem a roda é
+   * `playwright.capturas.config.ts`, de propósito e à mão.
+   */
+  testIgnore: /capturas\.spec\.ts/,
   forbidOnly: Boolean(process.env['CI']),
   retries: process.env['CI'] ? 2 : 0,
   reporter: process.env['CI'] ? [['github'], ['list']] : [['list']],

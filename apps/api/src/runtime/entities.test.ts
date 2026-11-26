@@ -124,11 +124,65 @@ describe('notas a partir dos alarmes', () => {
     expect(notesFromAlarms([alarme({ priority: 'média' })], null)).toEqual([]);
   });
 
-  it('exige parada só na prioridade crítica', () => {
-    expect(notesFromAlarms([alarme()], null)[0]?.requiresShutdown).toBe(false);
-    expect(notesFromAlarms([alarme({ priority: 'crítica' })], null)[0]?.requiresShutdown).toBe(
-      true,
-    );
+  /**
+   * A parada sai da zona ISO, e a prioridade do alarme só pode agravar.
+   *
+   * A régua é a mesma de `suggestFromTrend`: em zona C ou D a intervenção é
+   * troca de mancal, e trocar o mancal de um cilindro secador pede máquina
+   * parada. Sem isto, as duas notas do mesmo mancal discordavam — a sugerida
+   * pela tendência saía P1 com parada, e a aberta pelo alarme saía P2 sem
+   * parada, porque a prioridade do alarme era `alta`.
+   */
+  it('exige parada pela zona ISO do pior valor, não pela prioridade do alarme', () => {
+    // 5,2 mm/s passa da fronteira C→D (4,5): zona D, P1 e parada
+    const zonaD = notesFromAlarms([alarme()], null)[0];
+    expect(zonaD?.requiresShutdown).toBe(true);
+    expect(zonaD?.priority).toBe(1);
+    expect(zonaD?.symptom).toContain('zona D');
+
+    // 3,0 mm/s fica entre 2,8 e 4,5: zona C, parada e P2
+    const zonaC = notesFromAlarms([alarme({ peakValue: 3.0 })], null)[0];
+    expect(zonaC?.requiresShutdown).toBe(true);
+    expect(zonaC?.priority).toBe(2);
+    expect(zonaC?.symptom).toContain('zona C');
+
+    // 2,0 mm/s é zona B: o alarme `alta` abre nota, e ela não pede parada
+    const zonaB = notesFromAlarms([alarme({ peakValue: 2.0 })], null)[0];
+    expect(zonaB?.requiresShutdown).toBe(false);
+    expect(zonaB?.priority).toBe(2);
+  });
+
+  it('o alarme crítico agrava mesmo quando a zona não pediria', () => {
+    const nota = notesFromAlarms([alarme({ peakValue: 2.0, priority: 'crítica' })], null)[0];
+    expect(nota?.priority).toBe(1);
+    expect(nota?.requiresShutdown).toBe(true);
+  });
+
+  /**
+   * A temperatura não tem zona ISO, e por isso continua na régua do alarme.
+   *
+   * A norma classifica severidade por velocidade de vibração; aplicar as
+   * fronteiras dela a graus Celsius seria inventar uma classificação.
+   */
+  it('a nota de temperatura segue a prioridade do alarme', () => {
+    const alta = notesFromAlarms([alarme({ tag: 'TI-5323A', threshold: 95, peakValue: 98 })], null);
+    expect(alta[0]?.priority).toBe(2);
+    expect(alta[0]?.requiresShutdown).toBe(false);
+    expect(alta[0]?.symptom).not.toContain('zona');
+  });
+
+  /**
+   * O número da frase é em português.
+   *
+   * O sintoma é texto que o servidor escreve e grava, e a tela só lê. Com
+   * `toFixed` ele saía em formato inglês — "limite HH (4.5), pior valor 5.85" —
+   * no meio de uma tela em que todo o resto usa vírgula.
+   */
+  it('escreve os números do sintoma com vírgula decimal e unidade', () => {
+    const nota = notesFromAlarms([alarme()], null)[0];
+    expect(nota?.symptom).toContain('4,50 mm/s');
+    expect(nota?.symptom).toContain('5,20 mm/s');
+    expect(nota?.symptom).not.toMatch(/\d\.\d/);
   });
 
   it('nomeia a medição certa no sintoma', () => {

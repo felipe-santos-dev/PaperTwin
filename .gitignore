@@ -38,3 +38,6 @@ tools/scene-bake/.venv/
 # Saídas intermediárias do bake; o que entra no repo é apps/web/public/scene/.
 tools/scene-bake/out/
 
+# Capturas das telas geradas por apps/web/e2e/capturas.spec.ts: artefato de
+# revisão, refeito quando se quer olhar.
+docs/capturas/

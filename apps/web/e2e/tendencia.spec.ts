@@ -35,6 +35,14 @@ async function soComAsTres(page: Page): Promise<void> {
    * Um por vez, relendo a lista a cada volta: o clique redesenha o cabeçalho, e
    * um instantâneo dos botões feito antes do primeiro clique já está velho no
    * segundo.
+   *
+   * O clique é **despachado**, e não encenado. Tirar uma TAG faz a régua medir
+   * de novo e o cabeçalho inteiro se redesenhar, então o botão que o Playwright
+   * acabou de resolver some do DOM no meio da checagem de estabilidade — o
+   * teste ficava preso em "element was detached, retrying" até o tempo acabar.
+   * Aqui isto é **preparo**, não a asserção: o que se quer é chegar ao estado,
+   * e quem prova que o chip é clicável de verdade é o teste do "+N". Depois de
+   * cada clique, a volta só segue quando o chip sumiu.
    */
   for (let volta = 0; volta < 6; volta += 1) {
     const rótulos = await tendencia(page)
@@ -42,7 +50,10 @@ async function soComAsTres(page: Page): Promise<void> {
       .evaluateAll((nós) => nós.map((nó) => nó.getAttribute('aria-label') ?? ''));
     const sobra = rótulos.find((rótulo) => !CASOS.some((caso) => rótulo.includes(caso.tag)));
     if (sobra === undefined) break;
-    await tendencia(page).getByRole('button', { name: sobra, exact: true }).click();
+
+    const alvo = tendencia(page).getByRole('button', { name: sobra, exact: true });
+    await alvo.first().dispatchEvent('click');
+    await expect(alvo).toHaveCount(0);
   }
 
   for (const caso of CASOS) {

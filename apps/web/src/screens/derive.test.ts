@@ -7,7 +7,15 @@ import { cellOf, controlChart, stateOf } from './laboratorio/derive';
 import { rank, visible, zoneOf } from './mancais/derive';
 import { variablesFor } from './ProcessoScreen';
 import { stateOfPoint } from './rondas/derive';
-import { accumulate, lanes, production, scrap, type Point } from './turno/derive';
+import {
+  accumulate,
+  coveredFrom,
+  lanes,
+  production,
+  scrap,
+  timeEfficiencyPct,
+  type Point,
+} from './turno/derive';
 
 const T0 = Date.parse('2026-06-15T17:00:00Z');
 const H = 3_600_000;
@@ -80,6 +88,31 @@ describe('rótulos da linha do tempo', () => {
         { x: 50, width: 100 },
         { x: 300, width: 50 },
       ]),
+    ).toEqual([0, 1, 0]);
+  });
+
+  /**
+   * Sem linha livre, o rótulo não é mostrado.
+   *
+   * Empurrá-lo para a linha menos ocupada é o que punha um rótulo em cima do
+   * outro: quatro alarmes no mesmo minuto davam quatro rótulos ilegíveis no
+   * lugar de um. `null` quer dizer "só o símbolo".
+   */
+  it('devolve null quando nenhuma linha tem espaço', () => {
+    const juntos = Array.from({ length: 6 }, (_, i) => ({ x: i * 4, width: 100 }));
+    expect(lanes(juntos)).toEqual([0, 1, 2, 3, null, null]);
+  });
+
+  it('a linha volta a servir depois que o rótulo anterior termina', () => {
+    expect(
+      lanes(
+        [
+          { x: 0, width: 50 },
+          { x: 10, width: 50 },
+          { x: 200, width: 50 },
+        ],
+        2,
+      ),
     ).toEqual([0, 1, 0]);
   });
 });
@@ -232,5 +265,97 @@ describe('ronda', () => {
     expect(stateOfPoint(point(66, 66))).toBe('achado');
     expect(stateOfPoint(point(58, 66))).toBe('achado');
     expect(stateOfPoint(point(63, 66, 'anormal'))).toBe('achado');
+  });
+});
+
+/**
+ * O buraco de arquivo no começo do turno.
+ *
+ * A simulação retoma no máximo quatro horas. Num turno de 14:00 às 22:00 visto
+ * às 20:00, o arquivo começa às 16:00 — e integrar de lá até agora chamando
+ * isso de "produção do turno" cobrava do turno duas horas que ninguém gravou.
+ */
+describe('janela realmente coberta pelo arquivo', () => {
+  const turno = { from: T0, to: T0 + 8 * H };
+
+  it('é o início do turno quando a série cobre tudo', () => {
+    const series: Point[] = [
+      { t: T0, v: 45 },
+      { t: T0 + 4 * H, v: 45 },
+    ];
+    expect(coveredFrom(series, turno)).toBe(T0);
+  });
+
+  it('é o primeiro instante arquivado quando falta o começo', () => {
+    const series: Point[] = [
+      { t: T0 + 2 * H, v: 45 },
+      { t: T0 + 4 * H, v: 45 },
+    ];
+    expect(coveredFrom(series, turno)).toBe(T0 + 2 * H);
+  });
+
+  it('série vazia não cobre nada', () => {
+    expect(coveredFrom([], turno)).toBe(turno.to);
+  });
+
+  /**
+   * O ritmo cobra o tempo medido, não o tempo que passou.
+   *
+   * Com arquivo de duas horas num turno de seis horas decorridas, o acumulado
+   * são duas horas de papel — e o ritmo da meta tem de ser o de duas horas. Era
+   * aqui que o placar dizia "−85 t vs. ritmo" sobre um turno que não estava
+   * atrasado.
+   */
+  it('o ritmo da meta cobra só a janela coberta', () => {
+    const series: Point[] = [
+      { t: T0 + 4 * H, v: 45 },
+      { t: T0 + 6 * H, v: 45 },
+    ];
+    const prod = production(series, turno, T0 + 6 * H);
+
+    expect(prod.coveredFrom).toBe(T0 + 4 * H);
+    expect(prod.gapMs).toBe(4 * H);
+    // duas horas medidas: o acumulado e o ritmo falam do mesmo tempo
+    expect(prod.nowT).toBeCloseTo(90, 6);
+    expect(prod.paceT / prod.nowT).toBeGreaterThan(0.9);
+    expect(prod.paceT / prod.nowT).toBeLessThan(1.1);
+    // a meta do turno continua sendo a das 8 h
+    expect(prod.goalT).toBeGreaterThan(prod.paceT);
+  });
+
+  it('sem buraco, o ritmo cobra o turno decorrido', () => {
+    const series: Point[] = [
+      { t: T0, v: 45 },
+      { t: T0 + 6 * H, v: 45 },
+    ];
+    const prod = production(series, turno, T0 + 6 * H);
+
+    expect(prod.gapMs).toBe(0);
+    expect(prod.coveredFrom).toBe(T0);
+  });
+});
+
+/**
+ * Eficiência **de tempo**, que é o que o painel sempre disse no título.
+ *
+ * O número que ele mostrava era `efficiencyPct` da API — produção sobre nominal,
+ * presa em 100 por um `Math.min`. Com a máquina em regime isso dá 100,0 % e uma
+ * quebra de 22 min não aparecia em lugar nenhum do placar.
+ */
+describe('eficiência de tempo', () => {
+  it('desconta o tempo de folha quebrada', () => {
+    // 22 min de quebra num turno de 8 h
+    expect(timeEfficiencyPct(480, 22)).toBeCloseTo(95.42, 2);
+    expect(timeEfficiencyPct(480, 0)).toBe(100);
+    expect(timeEfficiencyPct(240, 24)).toBeCloseTo(90, 6);
+  });
+
+  it('não passa de 100 nem desce abaixo de zero', () => {
+    expect(timeEfficiencyPct(480, -5)).toBe(100);
+    expect(timeEfficiencyPct(480, 600)).toBe(0);
+  });
+
+  it('turno que não começou não tem eficiência', () => {
+    expect(timeEfficiencyPct(0, 0)).toBe(0);
   });
 });

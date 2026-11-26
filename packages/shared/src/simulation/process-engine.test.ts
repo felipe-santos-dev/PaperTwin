@@ -497,3 +497,68 @@ describe('determinismo', () => {
     }
   });
 });
+
+/**
+ * A calculada não tem instrumento, e por isso não tem ruído próprio.
+ *
+ * `XI-161` é `100 − XI-162` por definição. Cada uma levava o seu ruído
+ * independente, e a tela de Processo mostrava a receita somando 100,16 % — com
+ * a marca de `XI-161` colada no fim da barra, porque o valor passava do máximo
+ * do catálogo. Uma receita que não fecha em 100 % é erro de software, não
+ * imprecisão de medição.
+ *
+ * O ruído continua lá: ele é herdado das entradas, que são medidas de verdade.
+ * O que saiu foi o sensor inventado em cima da conta.
+ */
+describe('a receita fecha em 100 %', () => {
+  it('XI-161 + XI-162 = 100 em todo passo, com ruído ligado', () => {
+    const engine = processEngine(START);
+
+    for (let i = 1; i <= 60; i += 1) {
+      engine.runTo(START + i * 60);
+
+      // a medida, que é o que `/process/values` serve e a tela mostra
+      const nova = engine.measured('XI-161') ?? 0;
+      const recuperada = engine.measured('XI-162') ?? 0;
+      expect(nova + recuperada).toBeCloseTo(100, 9);
+
+      // e a verdade, que é de onde a medida sai
+      expect((engine.truth('XI-161') ?? 0) + (engine.truth('XI-162') ?? 0)).toBeCloseTo(100, 9);
+    }
+  });
+
+  /**
+   * A medida da calculada herda o ruído das entradas dela.
+   *
+   * Sem isto a correção seria "tirar o ruído da calculada", e a receita
+   * fecharia em 100 % por estar imóvel. `XI-162` sai de `XI-0003`, que é medido:
+   * ela tem de andar junto com ele.
+   */
+  it('a calculada anda com a medida de quem a alimenta', () => {
+    const engine = processEngine(START);
+    engine.runTo(START + 600);
+
+    const medida = engine.measured('XI-162') ?? 0;
+    const verdade = engine.truth('XI-162') ?? 0;
+    expect(medida).not.toBe(verdade);
+  });
+
+  /**
+   * E a medida fica dentro da faixa do catálogo.
+   *
+   * `XI-161` vai de 60 a 100: era o estouro desse máximo que colava a marca no
+   * fim da barra. Um valor fora da faixa não é impossível no geral — é onde o
+   * alarme vive —, mas numa calculada cujo máximo é a soma de duas parcelas é
+   * sinal de que a conta está errada.
+   */
+  it('a receita não estoura a faixa do catálogo', () => {
+    const engine = processEngine(START);
+
+    for (let i = 1; i <= 60; i += 1) {
+      engine.runTo(START + i * 60);
+      const nova = engine.measured('XI-161') ?? 0;
+      expect(nova).toBeLessThanOrEqual(100);
+      expect(nova).toBeGreaterThanOrEqual(60);
+    }
+  });
+});

@@ -96,8 +96,20 @@ describe('bloco de seção', () => {
     );
     const block = screen.getByRole('button', { name: /Pré-secagem/ });
     expect(block).toHaveTextContent('2');
+
+    /**
+     * A primeira TAG aparece; as outras são contadas.
+     *
+     * São dez blocos dividindo a largura da faixa: em 1280 px cada um fica com
+     * ~110 px, e duas TAGs de catálogo não cabem na linha de baixo. Mostrar uma
+     * e contar o resto é o que cabe nas quatro larguras garantidas — e a lista
+     * inteira continua no `title`, que é o que o olho procura depois de ver que
+     * há algo fora.
+     */
     expect(block).toHaveTextContent('PDIC-523');
-    expect(block).toHaveTextContent('VI-5123B');
+    expect(block).toHaveTextContent('+1');
+    expect(block).not.toHaveTextContent('VI-5123B');
+    expect(block).toHaveAttribute('title', 'Pré-secagem: PDIC-523, VI-5123B');
 
     await userEvent.click(block);
     expect(onClick).toHaveBeenCalledOnce();

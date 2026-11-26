@@ -97,6 +97,34 @@ prazo nenhum — alguém o trata como medição e programa parada em cima dele.
 Um modelo melhor — exponencial, ou sobre o envelope em vez da velocidade — é
 trabalho de outra fase. O que não pode é um número sem método declarado.
 
+## Larguras garantidas
+
+A interface é desenhada para **1280 px de largura ou mais**, e isso é verificado
+nas quatro resoluções que o projeto promete:
+
+| Resolução | Por que está na lista                                                 |
+| --------- | --------------------------------------------------------------------- |
+| 1280×720  | a mais estreita garantida; o arranjo compacto da barra e das tabelas  |
+| 1366×768  | o notebook que ainda se encontra numa sala de controle                |
+| 1440×900  | a partir daqui cabem os extras (operador na barra, dia no relógio)    |
+| 1920×1080 | a de projeto; pega painel vazio e gráfico que não acompanha a largura |
+
+Abaixo de 1280 px uma faixa no topo avisa que parte dos painéis fica cortada.
+
+`apps/web/e2e/largura.spec.ts` roda as nove telas nas quatro larguras e cobra
+três coisas: nenhum gráfico passa da borda do painel, nada rola na horizontal, e
+nenhum texto de cabeçalho se sobrepõe a outro, vaza do painel ou é cortado sem
+reticências. São 108 casos.
+
+Para olhar com os próprios olhos:
+
+```bash
+npm run capturas --workspace @mp1/web   # docs/capturas/<largura>-<tela>.png
+```
+
+O que a revisão de 1142 px encontrou, o que cada defeito era de verdade e as
+decisões que ficaram estão em [`docs/revisao-1280.md`](docs/revisao-1280.md).
+
 ## Links diretos
 
 `?asset=<tag>` abre a cena já enquadrada no ativo e com o painel aberto, e clicar

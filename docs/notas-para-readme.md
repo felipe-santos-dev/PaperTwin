@@ -389,12 +389,15 @@ teste comparando as duas.
 
 ### Migrations
 
-| Arquivo               | O que faz                                               |
-| --------------------- | ------------------------------------------------------- |
-| `001_initial.sql`     | `asset`, `vibration_reading` (+ BRIN por tempo)         |
-| `002_steam_group.sql` | `asset.drive_group` → `asset.steam_group`               |
-| `003_operations.sql`  | 12 tabelas das 8 entidades de operação                  |
-| `004_historian.sql`   | `historian_point`, `historian_raw`, `historian_archive` |
+| Arquivo                   | O que faz                                                      |
+| ------------------------- | -------------------------------------------------------------- |
+| `001_initial.sql`         | `asset`, `vibration_reading` (+ BRIN por tempo)                |
+| `002_steam_group.sql`     | `asset.drive_group` → `asset.steam_group`                      |
+| `003_operations.sql`      | 12 tabelas das 8 entidades de operação                         |
+| `004_historian.sql`       | `historian_point`, `historian_raw`, `historian_archive`        |
+| `005_sim_state.sql`       | `sim_state`: onde a simulação parou, com o estado da rede      |
+| `006_note_suggestion.sql` | `note_suggestion` e a origem `tendência` na nota de manutenção |
+| `007_lab_result.sql`      | `lab_result`: o ensaio de laboratório como evento              |
 
 Postgres puro: nada depende do TimescaleDB, para o mesmo SQL rodar no PGlite
 embutido e num Postgres gerenciado.
@@ -416,8 +419,10 @@ não rodaria de novo, e a coluna sumiria para esse banco.
 - **O que o tipo garante, a restrição repete.** As regras de consistência existem
   em TypeScript para a interface avisar antes de enviar, e no banco para ele não
   aceitar o que passar por fora delas. Os valores das enumerações ficam
-  duplicados nos `check`, e um teste lê a migration e cobra que as duas listas
-  sejam a mesma.
+  duplicados nos `check`, e um teste lê o **esquema** — depois das migrations,
+  por `pg_get_constraintdef` — e cobra que as duas listas sejam a mesma. Ler o
+  texto da migration deixou de responder a pergunta no dia em que a `006` fez
+  `alter table` numa restrição que a `003` tinha escrito.
 - **Nenhuma lista é aberta**: teto padrão de 100 linhas, teto absoluto de 1.000.
   O absoluto existe porque o limite vem da rota, e uma rota com `?limit=100000` é
   a mesma rota sem teto.
@@ -432,14 +437,16 @@ não rodaria de novo, e a coluna sumiria para esse banco.
 
 | Workspace         | Arquivos | Passando | Pulados |
 | ----------------- | -------: | -------: | ------: |
-| `packages/shared` |       10 |      203 |       0 |
-| `apps/api`        |        7 |      168 |      97 |
-| `apps/web`        |        6 |       46 |       0 |
-| **Total**         |   **23** |  **417** |  **97** |
+| `packages/shared` |       19 |      393 |       0 |
+| `apps/api`        |       16 |      363 |     111 |
+| `apps/web`        |       18 |      210 |       0 |
+| **Total**         |   **53** |  **966** | **111** |
 
-Mais `apps/web/e2e/scene.spec.ts`, de ponta a ponta no Playwright.
+Mais **52** testes de ponta a ponta no Playwright, em oito arquivos: cena,
+mancais, busca, tendência, largura, "e se", replay de quebra, nota sugerida e
+sensor virtual.
 
-Os 97 pulados são a mesma suíte de banco rodando contra um **Postgres de
+Os 111 pulados são a mesma suíte de banco rodando contra um **Postgres de
 verdade**: ela só executa com `DATABASE_URL` definido, e fica pulada em vez de
 falhar — o teste não pode exigir um banco que a máquina não tem. Rodar com
 Postgres apaga as tabelas do banco apontado; é para banco de teste.
@@ -452,8 +459,9 @@ Postgres apaga as tabelas do banco apontado; é para banco de teste.
   gerado bata, linha por linha. Um número editado no TypeScript quebra o teste.
 - **A lista de laboratório contra a pesquisa.** O teste lê a coluna de TAG da
   §12.2 da pesquisa B e exige que as duas listas coincidam.
-- **As enumerações do SQL contra as do TypeScript.** O teste lê a migration e
-  compara com as constantes.
+- **As enumerações do SQL contra as do TypeScript.** O teste lê o esquema
+  depois das migrations e compara com as constantes — e cobra que **nenhuma**
+  restrição de lista exista no banco sem lista no código.
 - **A ordem das colunas do historiador.** O teste lê a migration e cobra
   `ts, value, point_id`, porque a razão da ordem é alinhamento e não estética.
 - **Cobertura da proveniência.** O teste compara os exports de `geometry.ts` com
@@ -484,6 +492,8 @@ npm run build                   # build de todos
 npm run db:up                   # Postgres do docker-compose
 npm run db:down
 npm run generate -w @mp1/shared # regenera catálogo e relações a partir dos CSVs
+npm run demo:data -w @mp1/api   # regenera o instantâneo de demonstração
+npm run test:e2e -w @mp1/web    # Playwright (constrói e serve sozinho)
 ```
 
 Rodar a suíte de banco contra um Postgres de verdade:
@@ -496,7 +506,7 @@ DATABASE_URL=postgres://... npm test --workspace @mp1/api
 
 ## 11. Deploy — o que o desenho assume
 
-Nada aqui foi executado; o passo a passo fica em `docs/deploy-checklist.md`.
+Nada aqui foi executado; o passo a passo fica no fim de `docs/progress.md`.
 
 | Serviço      | Plano | O que a restrição obrigou                          |
 | ------------ | ----- | -------------------------------------------------- |
@@ -513,8 +523,10 @@ Nada aqui foi executado; o passo a passo fica em `docs/deploy-checklist.md`.
 - **A simulação não depende de processo rodando 24 h.** Ela é determinística a
   partir de (semente, tempo), e recalcula o intervalo que faltou quando a API
   acorda. Um laço de fundo num host que dorme não simula nada.
-- **Migrations não rodam sozinhas no boot em produção**: ficam atrás de
-  `RUN_MIGRATIONS`, falso por padrão.
+- **As migrations rodam no boot**, sempre: `server.ts` chama `db.migrate()`
+  antes de `listen`, então um deploy no Render aplica o que estiver pendente e
+  só atende requisição depois. (A nota anterior aqui dizia que elas ficavam
+  atrás de um `RUN_MIGRATIONS` — essa variável não existe no código.)
 - **O instantâneo de demonstração é a API de verdade.** No build, a própria API
   sobe contra o PGlite e as respostas dela viram arquivos em `public/demo`,
   espelhando as rotas. Uma reimplementação da agregação em TypeScript divergiria
@@ -770,7 +782,7 @@ Procura em cinco lugares, e cada resultado abre onde o item mora:
 
 | O que acha                | Quantos                         | O que abre                        |
 | ------------------------- | ------------------------------- | --------------------------------- |
-| Telas                     | 8                               | a tela                            |
+| Telas                     | 10                              | a tela                            |
 | TAGs (por tag e por nome) | 327 (320 do catálogo + 7 fixas) | a tendência da TAG, na seção dela |
 | Mancais                   | 98                              | o mancal em Mancais               |
 | Bobinas                   | as últimas 40                   | a bobina em Bobinas               |
@@ -790,3 +802,129 @@ continua valendo para o resto.
 resultado chama os mesmos abridores que as telas já usam entre si — o alarme que
 abre a tendência, a ronda que abre o mancal. Transformar cada resultado num link
 que se cola numa conversa é outro trabalho, e ficou fora.
+
+---
+
+## 16. O que mudou para quem usa, da Fase 2 à Fase 7
+
+As seções de 1 a 15 descrevem o gêmeo como ele estava no fim da Fase 1. O que
+segue é o que mudou **na tela**, fase a fase, no nível em que o README precisa
+contar.
+
+### 16.1 Mancais abre leve, e o 3D fica a um clique (Fase 2)
+
+A tela de Mancais abria baixando a cena inteira — 2,3 MB de `three`, modelo e
+lightmaps, e uns seis segundos de engasgo compilando o pipeline — para mostrar
+um painel de 840 × 463.
+
+Agora o painel padrão é um **mapa 2D** da máquina de lado: um ponto por mancal,
+na posição real, com a cor da zona ISO. O 3D continua lá, atrás de "ver em 3D",
+e é só no clique que o pedaço do `three` é baixado. Medido depois: a tela caiu
+de 2.354 kB para **681 kB** e deixou de usar GPU.
+
+O vapor da cena ficou, desligado por padrão, atrás de uma opção na própria tela
+Máquina — a medição mostrou que ele é ~3 % do custo do quadro, e a regra era
+remover só se fosse a maior parte.
+
+### 16.2 Cinquenta variáveis novas, e duas que não gravam (Fase 3)
+
+O catálogo foi de 270 para **320 variáveis**, com teto de 50 novas no
+historiador. As novas entram com um **nível** declarado, e o nível diz o que o
+gêmeo faz com elas:
+
+| Nível                  | O que é                                             |
+| ---------------------- | --------------------------------------------------- |
+| `ligada`               | o motor calcula, o historiador grava                |
+| `calculada`            | fórmula sobre quem já grava, gravada também         |
+| `calculada na leitura` | fórmula sobre quem grava, **não** gravada           |
+| `autônoma`             | alvo + ruído + deriva, função do passo, não gravada |
+
+As duas últimas não ocupam linha de arquivo e mesmo assim têm tendência de sete
+dias: a rota reconstrói a série na hora, da mesma função que o motor usa. É o
+que permitiu caber 50 tags novas num banco de 0,5 GB.
+
+### 16.3 A Simulação ganhou tela (Fases 4 e 4b)
+
+O "e se" responde o que acontece com o processo **antes** de alguém escrever um
+setpoint: até quatro mudanças, horizonte de 5, 10 ou 30 minutos, modo
+automático ou manual, e a resposta por variável alcançada — variação final,
+pico, tempo morto, 63 % e se a válvula satura.
+
+Ele é tecla **9**, tela própria, e nunca abre vazio: ao entrar já roda um
+atalho e mostra o resultado; qualquer mudança simula de novo sozinha. O
+resultado anterior fica na tela até o novo chegar.
+
+Onde a conta roda muda com a fonte, e o número é o mesmo: com API, no servidor;
+sem API, **no navegador**, num Web Worker com o mesmo núcleo e o estado do motor
+que viaja no instantâneo. É por isso que o modo de demonstração prevê de
+verdade em vez de mostrar uma previsão guardada.
+
+### 16.4 Replay de quebra de folha (Fase 5)
+
+Para cada quebra, uma linha do tempo dos 10 minutos anteriores, com cursor e
+reprodução em 1×, 4× e 16×, e a lista das variáveis **na ordem em que saíram do
+normal**.
+
+A tela diz "primeiro desvio", nunca "causa": a causa pode estar fora do
+catálogo — um rolo sujo, uma emenda mal feita —, e a diferença não é sutil. Uma
+variável que desvia depois de outra da qual ela depende no grafo aparece como
+**consequência**, recuada e com o nome de quem a puxou.
+
+Ela não está na barra lateral, porque não se abre "o replay": abre-se o replay
+**de uma** quebra. Os caminhos são o cartão do evento no Turno e a lista de
+quebras em Bobinas; tem URL própria (`#quebra`) e está na busca.
+
+### 16.5 A nota de manutenção que nasce sozinha (Fase 6)
+
+Do sinal até a nota, sem ninguém digitar: para cada mancal, se a tendência de
+vibração (ou de temperatura) é significativa e a projeção cruza o limite dentro
+de trinta dias, nasce uma **nota sugerida** — já com sintoma, prioridade, se
+exige parada e as evidências.
+
+Ela **não tem número**: só ganha um `NM-…` se alguém confirmar. As saídas são
+confirmar, editar e confirmar, ou dispensar com motivo obrigatório; a linha
+dispensada fica, com quem dispensou e por quê, e a sugestão só volta se a
+tendência piorar além de um degrau.
+
+Onde ela aparece: no cartão do mancal em Mancais, numa coluna própria no quadro
+de Notas, como contador na moldura (visível de qualquer tela) e como pendência
+na passagem de turno.
+
+O que mantém 71 mancais fora da fila não é a régua de significância — é o
+horizonte de trinta dias. Com o ruído do sinal, a inclinação que levaria um
+mancal saudável ao limite nesse prazo é dezenas de vezes maior do que o ruído
+produz.
+
+### 16.6 Dois mancais degradando, e eles contam histórias diferentes
+
+O cenário tem dois: o **CS23 lado comando** chega ao fim da curva — zona D,
+alarme tocando, nota aberta pelo alarme — e o **CS36 lado comando** está no meio
+dela, em zona B, sem alarme de vibração nenhum, com a nota sugerida dizendo
+"cruza a fronteira C→D em 13 dias".
+
+O segundo é o caso que a manutenção preditiva existe para pegar. O que já passou
+do limite nele é o **envelope de aceleração**, não a velocidade — e isso não foi
+arranjado para a tela: é o modelo de mancal funcionando como foi escrito, porque
+o envelope pega impacto de rolamento semanas antes do RMS.
+
+### 16.7 Sensor virtual de qualidade (Fase 7)
+
+O laboratório mede a tração MD numa amostra por bobina, e o laudo demora 25
+minutos. Entre um resultado e o próximo, o gêmeo **estima**: o modelo é o ganho
+medido no teste de degrau da pesquisa (refino → tração), e o laboratório corrige
+o que o modelo não sabe — o viés é a média dos resíduos dos últimos laudos, e a
+faixa é duas vezes o desvio deles.
+
+Com menos de três laudos **não há faixa**, e a tela diz isso em vez de inventar
+uma incerteza. A linha tem um **degrau** quando um laudo entra: é o sensor sendo
+corrigido, e cada ponto da série usa a calibração que existia naquele instante.
+
+Com isso, um dos dezenove ensaios deixou de ser ilustrativo. A matriz de
+Bobinas × ensaios mostra `LAB-1206 medido` ao lado do selo de ilustrativo dos
+outros dezoito, e a tela abre nesse ensaio.
+
+### 16.8 Ajuda e busca cobrem o que entrou
+
+Todo bloco novo tem o "?" com as mesmas três linhas (o que mostra, como ler, o
+que dá para clicar), e a busca acha as dez telas — inclusive as que não estão na
+barra lateral.

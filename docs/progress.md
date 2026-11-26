@@ -3561,3 +3561,311 @@ As sete fases estão feitas. O fechamento que o pedido original prevê —
 regenerar o instantâneo, rodar a suíte inteira e comparar com a base da Fase 0,
 atualizar `docs/notas-para-readme.md` e deixar o checklist de deploy — começa
 quando o Felipe disser.
+
+## Fechamento das sete fases
+
+### Conserto que veio antes: o teste da busca no CI
+
+O `busca.spec.ts` quebrava no CI em `getByText('PIC-514').first()`. A causa não
+era a janela do CI — o teste troca a janela para 1920 por conta própria, e a
+falha acontece nas duas larguras. Eram **duas** coisas:
+
+1. **A correção nunca tinha sido commitada.** Ela saiu junto com o ajuste do
+   cabeçalho da Tendência, ficou na árvore de trabalho e não entrou em nenhuma
+   lista por commit sugerido — o CI rodava a versão antiga.
+2. **O cabeçalho tem uma régua invisível** com uma cópia de cada chip, para
+   medir o que cabe na linha. Ela vem antes no DOM, então `.first()` pega a
+   cópia escondida e `toBeVisible()` falha. A régua já era `aria-hidden` e
+   `inert` desde o ajuste do cabeçalho — e isso **não** resolve sozinho:
+   `getByText` não olha a árvore de acessibilidade. O que resolve é procurar o
+   chip **por papel** (`getByRole('button', { name: 'Tirar PIC-514 …' })`), que
+   respeita o `aria-hidden`.
+
+O teste agora prova as duas coisas: o **gráfico** da TAG (que é o que a busca
+promete) e o **chip** dela, na linha ou atrás do "+N". Roda em duas larguras —
+1920 e 1280 × 720, que é o padrão do `Desktop Chrome` do Playwright, onde cabe
+um chip só. Medido: a TAG escolhida entra no começo da lista, então ela fica
+sempre na linha; o caminho do "+N" está lá por garantia, e o comentário diz
+isso em vez de fingir que ele é exercitado.
+
+De quebra, o `tendencia.spec.ts` deixou de ser instável. O preparo dele tira
+TAGs uma a uma, e cada remoção faz a régua medir de novo e o cabeçalho inteiro
+se redesenhar — o botão que o Playwright tinha resolvido sumia no meio da
+checagem de estabilidade, e o teste ficava preso em "element was detached,
+retrying" até os 90 s acabarem. O clique de **preparo** passou a ser despachado,
+com a volta esperando o chip sumir: o arquivo caiu de um timeout de 90 s para
+15 s no total.
+
+### O instantâneo
+
+Regerado com tudo que entrou: **994 arquivos, 2.889 kB**. Ele leva agora o
+estado do motor (para o "e se" rodar no navegador), o replay de cada quebra, as
+duas notas sugeridas, os cinco laudos de laboratório e a série do sensor
+virtual.
+
+### Medição, contra a base da Fase 0
+
+**Como foi medido.** O mesmo método da base: build de produção servido por
+`vite preview`, aberto no navegador embutido, janela de 1920 × 1080 com
+`devicePixelRatio` 1,25, cache quente, **API local no ar** (fonte ao vivo, não o
+instantâneo), `?perf=1` publicando `window.__twinPerf`, e uma navegação
+completa antes de cada medida.
+
+**Uma diferença de condição, e ela importa:** desta vez o navegador embutido
+entregou **WebGL2**, não WebGPU como na base. Geometria, chamadas de desenho e
+fps são comparáveis; o custo de quadro não é, e por isso os tempos de cena
+abaixo são leitura de regressão, não de ganho.
+
+| medida                    | base (Fase 0) |       agora | o que mudou                             |
+| ------------------------- | ------------: | ----------: | --------------------------------------- |
+| **Máquina** · pintura     |         68 ms |      104 ms | backend diferente                       |
+| `three` baixado           |        161 ms |       98 ms | —                                       |
+| `mp1.glb`                 |        536 ms |      636 ms | —                                       |
+| último lightmap           |        547 ms |      647 ms | —                                       |
+| canvas                    |   1989 × 1093 |       igual | —                                       |
+| fps estável               |            60 |          60 | travado na sincronia nos dois           |
+| chamadas de desenho       |           300 |         294 | vapor desligado por padrão              |
+| triângulos                |       277.511 |     277.367 | idem                                    |
+| requisições               |            26 |          28 | —                                       |
+| **Mancais** · baixa three |   sim, 2,3 MB |     **não** | mapa 2D por padrão (Fase 2)             |
+| bytes                     |      2.354 kB |  **681 kB** | −71 %                                   |
+| memória de GPU            |      201,1 MB |       **0** | não há canvas até pedir o 3D            |
+| requisições               |  107 (85 API) | 95 (87 API) | a cena saiu; `/note-suggestions` entrou |
+| **Processo** · pintura    |         80 ms |       80 ms | —                                       |
+| requisições               |   44 (37 API) | 48 (40 API) | —                                       |
+
+**Pedaços do build** (bruto):
+
+| arquivo              | base (Fase 0) |      agora |
+| -------------------- | ------------: | ---------: |
+| `three-*.js`         |      1.673 kB |   1.673 kB |
+| `index-*.js`         |        220 kB | **317 kB** |
+| `index-*.css`        |         39 kB |      42 kB |
+| `whatif-worker-*.js` |             — |      75 kB |
+
+Os 97 kB a mais do pedaço da aplicação são seis telas novas ou refeitas
+(Simulação, replay de quebra, mapa 2D, cartão da nota sugerida, coluna das
+sugeridas, sensor virtual) e o cliente das rotas que elas usam. O `three` não
+se mexeu, e o Worker do "e se" é pedaço separado — ele só é baixado quando
+alguém simula sem API.
+
+**Testes:** de 417 passando em 23 arquivos para **966 em 53**, mais **52** de
+ponta a ponta (eram só os da cena).
+
+**O que a medição não cobre:** não repeti a comparação com e sem vapor (a
+decisão da Fase 2 não mudou), nem medi memória de GPU na tela Máquina — o
+navegador embutido não expôs WebGPU nesta sessão, e o número da base veio de
+lá.
+
+### Checklist de deploy
+
+Nada abaixo foi executado. A ordem importa: **Neon antes do Render**, porque o
+Render aplica as migrations ao subir.
+
+#### Antes
+
+- [ ] Rodar a suíte inteira e o e2e na ponta que vai subir (966 + 52).
+- [ ] `npm run build` limpo, e conferir que `apps/api/dist/migrations/` saiu com
+      **sete** arquivos `.sql`. O `copy-migrations.mjs` falha se a pasta vier
+      vazia, mas não confere a contagem — e um `dist` velho em cache faria a API
+      subir com esquema antigo.
+- [ ] Ler o resumo das migrations novas abaixo e decidir sobre o item do
+      `vibration_reading` (é o único que apaga dado).
+
+#### Neon — por causa da 006 e da 007
+
+As duas são **aditivas**: criam tabela nova e não apagam nada. Mesmo assim:
+
+- [ ] **Backup antes.** No Neon, o jeito barato é criar uma _branch_ do banco de
+      produção (cópia instantânea, só paga o que divergir). Se algo der errado,
+      a branch tem o esquema anterior com os dados.
+- [ ] **Conferir em que branch a `DATABASE_URL` do Render aponta.** Se houver
+      mais de uma branch (produção e desenvolvimento), a migration roda **só**
+      na que a API usa; a outra fica para trás e quebra quando alguém apontar
+      para ela.
+- [ ] **A 006 toca uma tabela que já tem dados.** Ela faz
+      `alter table maintenance_note drop constraint note_origin_valid` e recria
+      com quatro valores em vez de três. A lista nova é um superconjunto da
+      antiga, então a validação passa; o `alter` pega um lock exclusivo por
+      alguns milissegundos numa tabela com dezenas de linhas. Não há o que
+      preparar — isto é para saber o que esperar se o log mostrar o lock.
+- [ ] **A 007 cria `lab_result` com chave estrangeira para `jumbo_reel`.** Ela
+      nasce vazia; os laudos aparecem conforme a retomada fecha bobinas novas.
+      Não há histórico para trás, e não deve haver: o laudo é um evento, e os
+      eventos de antes do deploy não aconteceram no gêmeo.
+- [ ] **Espaço:** as duas tabelas novas somam poucas dezenas de kB. Quem come os
+      0,5 GB continua sendo o `historian_archive`, e a poda dele não mudou.
+- [ ] **Se o banco estiver suspenso** (autosuspend do Neon), o primeiro acesso
+      acorda o compute e a migration espera por isso. O boot do Render pode
+      levar alguns segundos a mais nessa primeira vez.
+
+#### Render
+
+- [ ] **Não há passo de migration separado.** `server.ts` chama `db.migrate()`
+      antes de `listen`: o deploy aplica a 006 e a 007 e só então começa a
+      atender. Se a migration falhar, o processo morre no boot e o Render marca
+      o deploy como falho — que é o comportamento certo.
+- [ ] **Conferir no log do deploy** as duas linhas de migration aplicada
+      (`006_note_suggestion`, `007_lab_result`). Elas ficam registradas em
+      `schema_migration`; um segundo deploy não as aplica de novo.
+- [ ] **Uma instância por vez.** Se o Render subir a nova antes de derrubar a
+      antiga, duas migrações concorrentes podem colidir no `add constraint` da
+      006 e derrubar o boot novo. Não confirmei qual é o comportamento do plano
+      em uso — se ele for de sobreposição, suspender o serviço durante o deploy
+      resolve, e a correção definitiva é um lock de aviso em volta do laço de
+      migrations.
+- [ ] **O segundo mancal não aparece sozinho.** A semeadura roda a cada boot,
+      mas ela **pula** a série de vibração se `vibration_reading` já tiver
+      linhas — e tem, desde o primeiro deploy. Sem fazer nada, produção continua
+      com um mancal degradando (o CS23) e sem o CS36. Para ter os dois:
+      `truncate table vibration_reading;` no Neon **antes** do deploy, e a
+      semeadura do próximo boot gera a série dos dois, ancorada no instante do
+      boot. É o único passo que apaga dado — e o que ele apaga é série simulada,
+      que se regenera.
+- [ ] **Depois de subir**, conferir nesta ordem:
+      `GET /health` (driver `postgres`), `GET /note-suggestions` (deve listar as
+      sugestões em pé), `GET /lab-results` (vazio logo após o deploy, com laudos
+      depois da primeira bobina fechada) e
+      `GET /process/quality/LAB-1206` (200 com `points`; a faixa só aparece com
+      três laudos).
+- [ ] **Rollback:** não há migration de volta. Voltar o código para uma versão
+      anterior é seguro — ela ignora as tabelas novas —, mas voltar o **banco**
+      exige a branch do Neon criada no primeiro item.
+
+#### Pages
+
+- [ ] O build do Pages gera o instantâneo (`npm run build -w @mp1/web` é
+      `demo:data && vite build`): nada a fazer, mas é o que não pode ser
+      "otimizado" para um `vite build` direto.
+- [ ] Conferir `VITE_API_URL` nas variáveis do repositório. Sem ela, a web cai
+      no padrão e o modo de demonstração continua funcionando — o que esconde o
+      erro.
+
+### Arquivos, por commit sugerido
+
+**53. O teste da busca, por papel e nas duas larguras**
+
+```
+apps/web/e2e/busca.spec.ts
+apps/web/e2e/tendencia.spec.ts
+```
+
+O `busca.spec.ts` leva a correção que tinha ficado para trás na árvore de
+trabalho, mais a conferência do chip por papel e a segunda largura. O
+`tendencia.spec.ts` entra junto porque a instabilidade dele tem a mesma causa:
+o cabeçalho se redesenha a cada TAG tirada.
+
+**54. Fechamento das sete fases**
+
+```
+docs/progress.md
+docs/notas-para-readme.md
+```
+
+As notas para o README ganharam a seção 16 — o que mudou na tela da Fase 2 à
+Fase 7 — e tiveram quatro números corrigidos: a tabela de migrations (que
+parava na 004), a contagem de testes, o nome do arquivo do checklist e, o mais
+importante, a afirmação de que as migrations ficavam atrás de um
+`RUN_MIGRATIONS`. Essa variável não existe no código: elas rodam no boot,
+sempre.
+
+---
+
+As sete fases estão fechadas.
+
+---
+
+## Revisão de 1142 px (fechamento)
+
+Uma revisão da interface rodando a 1142 px apontou dez erros de lógica e uma
+lista de atropelos de layout. O relato completo — o que cada defeito era de
+verdade e as decisões que ficaram — está em `docs/revisao-1280.md`.
+
+**53. A lógica**
+
+```
+apps/api/src/routes/stream.ts                       (CORS no SSE + sseHeaders)
+apps/api/src/routes/stream.test.ts                  (novo)
+apps/api/src/runtime/entities.ts                    (sintoma em pt-BR, zona ISO)
+apps/api/src/db/operations-queries.ts               (nota aberta de qualquer origem)
+apps/api/src/db/operations-store.ts
+apps/api/src/db/operations-repository.ts
+apps/api/src/db/sql-database.ts
+apps/api/src/runtime/suggestions.ts
+packages/shared/src/number.ts                       (novo)
+packages/shared/src/index.ts
+packages/shared/src/operations/note-suggestion.ts
+packages/shared/src/operations/grade-change.ts      (gsmTolerance, gradeInForceAt)
+packages/shared/src/simulation/process-engine.ts    (calculada sem ruído próprio)
+apps/web/src/api/inflight.ts                        (novo)
+apps/web/src/api/client.ts
+apps/web/src/api/process.ts
+apps/web/src/ui/useStream.ts                        (novo)
+apps/web/src/ui/useFrame.ts
+apps/web/src/ui/DataSourcePill.tsx
+apps/web/src/ui/format.ts                           (signOf e os signed*)
+apps/web/src/App.tsx
+apps/web/src/screens/turno/derive.ts                (coveredFrom, timeEfficiencyPct)
+apps/web/src/screens/turno/Support.tsx
+apps/web/src/screens/TurnoScreen.tsx
+apps/web/src/screens/BobinasScreen.tsx              (tolerância pela gramatura)
+apps/web/src/screens/rondas/derive.ts
+apps/web/src/screens/simulacao/Curvas.tsx
+apps/web/src/screens/simulacao/Efeitos.tsx
+```
+
+**54. A moldura e os componentes de `ui/`**
+
+```
+apps/web/src/index.css                              (--breakpoint-piso, --breakpoint-largo)
+apps/web/src/ui/Shell.tsx                           (barra superior + faixa abaixo de 1280)
+apps/web/src/ui/Panel.tsx                           (o aside encolhe; o título não)
+apps/web/src/ui/SectionBlock.tsx                    (uma TAG e "+N")
+apps/web/src/ui/InstrumentRow.tsx                   (grade estreita até `largo`)
+```
+
+**55. As telas**
+
+```
+apps/web/src/screens/ProcessoScreen.tsx
+apps/web/src/screens/processo/TrendStack.tsx        (passo do eixo pela largura)
+apps/web/src/screens/LaboratorioScreen.tsx
+apps/web/src/screens/BobinasScreen.tsx
+apps/web/src/screens/MancaisScreen.tsx
+apps/web/src/screens/mancais/Sugestao.tsx
+apps/web/src/screens/NotasScreen.tsx                (kanban empilha abaixo de `largo`)
+apps/web/src/screens/RondasScreen.tsx
+apps/web/src/screens/turno/Timeline.tsx             (lanes devolve null)
+```
+
+**56. Os testes**
+
+```
+apps/web/e2e/largura.spec.ts                        (4 larguras × 9 telas × 3 perguntas)
+apps/web/e2e/capturas.spec.ts                       (novo)
+apps/web/playwright.config.ts
+apps/web/playwright.capturas.config.ts              (novo)
+apps/web/package.json
+apps/api/src/runtime/suggestions.test.ts
+apps/api/src/runtime/entities.test.ts
+apps/web/src/ui/format.test.ts
+apps/web/src/ui/components.test.tsx
+apps/web/src/api/client.test.ts
+apps/web/src/screens/derive.test.ts
+packages/shared/src/simulation/process-engine.test.ts
+packages/shared/src/operations/grade-change.test.ts (novo)
+.gitignore
+```
+
+**57. Documentação**
+
+```
+docs/revisao-1280.md                                (novo)
+docs/progress.md
+README.md
+```
+
+Fica em aberto, para ser decidido à parte: o aviso de `THREE.Clock` depreciado
+vem do `@react-three/fiber` 9.8.2 (`dist/events-*.js`, `clock: new THREE.Clock()`),
+não do nosso código. Trocar por `THREE.Timer` é subir a dependência que desenha
+a cena inteira.

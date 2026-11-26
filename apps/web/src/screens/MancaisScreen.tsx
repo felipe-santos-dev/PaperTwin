@@ -186,7 +186,7 @@ export function MancaisScreen({
 }
 
 const GRID =
-  'grid grid-cols-[minmax(150px,200px)_minmax(180px,1fr)_88px_minmax(90px,150px)_48px_minmax(100px,180px)] items-center gap-x-4';
+  'grid grid-cols-[minmax(108px,180px)_minmax(130px,1fr)_72px_minmax(72px,130px)_40px_minmax(76px,160px)] items-center gap-x-2 largo:grid-cols-[minmax(150px,200px)_minmax(180px,1fr)_88px_minmax(90px,150px)_48px_minmax(100px,180px)] largo:gap-x-4';
 
 function Ranking({
   gateway,

@@ -100,7 +100,20 @@ export function NotasScreen({
           null;
         const active = list.filter((note) => note.status !== 'encerrada');
         return (
-          <div className="grid h-[calc(100vh-152px)] min-h-[720px] grid-cols-[minmax(0,1fr)_556px] gap-4">
+          /*
+            Em 1280 px o quadro e o detalhe não cabem lado a lado.
+
+            São cinco colunas de kanban mais um painel de detalhe de 556 px:
+            1160 px de espaço para ~1300 px de conteúdo. O resultado era o que a
+            revisão viu — cabeçalhos de coluna colados, cartões com uma palavra
+            por linha e o "NM-205916" cortado.
+
+            Abaixo de `largo` os dois empilham: o quadro fica com a largura
+            inteira (232 px por coluna, folgado) e o detalhe vem embaixo, ao
+            alcance da rolagem vertical que o `main` já tem. De `largo` para
+            cima nada muda — continua lado a lado, com a altura da janela.
+          */
+          <div className="grid min-w-0 gap-4 largo:h-[calc(100vh-152px)] largo:min-h-[720px] largo:grid-cols-[minmax(0,1fr)_556px]">
             <Panel
               help="notas.quadro"
               title="Notas de manutenção · MP1"
@@ -120,8 +133,8 @@ export function NotasScreen({
                 </span>
               }
               aside={
-                <span className="flex items-center gap-2.5 text-fg-2">
-                  prioridade
+                <span className="flex min-w-0 items-center gap-2.5 overflow-hidden text-fg-2">
+                  <span className="max-largo:hidden">prioridade</span>
                   {([1, 2, 3, 4] as const).map((p) => (
                     <span
                       key={p}
@@ -134,6 +147,7 @@ export function NotasScreen({
                   ))}
                 </span>
               }
+              className="h-[560px] largo:h-auto"
               bodyClassName="grid min-h-0 grid-cols-5 gap-2"
             >
               {/*
@@ -146,9 +160,9 @@ export function NotasScreen({
                 aria-label="Sugeridas"
                 className="flex min-h-0 flex-col bg-base/60 outline outline-dashed outline-line-strong"
               >
-                <header className="flex h-9 items-center justify-between border-b border-line px-2.5 text-[12px] font-semibold tracking-[0.05em] text-fg-2 uppercase">
-                  Sugeridas
-                  <span className="font-mono">{suggestions.length}</span>
+                <header className="flex h-9 min-w-0 items-center justify-between gap-1 border-b border-line px-2.5 text-[12px] font-semibold tracking-[0.05em] text-fg-2 uppercase">
+                  <span className="min-w-0 truncate">Sugeridas</span>
+                  <span className="shrink-0 font-mono">{suggestions.length}</span>
                 </header>
                 <ul className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2">
                   {suggestions.map((suggestion) => (
@@ -172,9 +186,12 @@ export function NotasScreen({
                     aria-label={COLUMN_LABEL[status]}
                     className="flex min-h-0 flex-col bg-base/60"
                   >
-                    <header className="flex h-9 items-center justify-between border-b border-line px-2.5 text-[12px] font-semibold tracking-[0.05em] text-fg-2 uppercase">
-                      {COLUMN_LABEL[status]}
-                      <span className="font-mono">{cards.length}</span>
+                    <header
+                      title={COLUMN_LABEL[status]}
+                      className="flex h-9 min-w-0 items-center justify-between gap-1 border-b border-line px-2.5 text-[12px] font-semibold tracking-[0.05em] text-fg-2 uppercase"
+                    >
+                      <span className="min-w-0 truncate">{COLUMN_LABEL[status]}</span>
+                      <span className="shrink-0 font-mono">{cards.length}</span>
                     </header>
                     <ul className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2">
                       {cards.map((note) => (

@@ -134,7 +134,16 @@ export function Sugestao({
       });
   };
 
-  const botão = 'h-8 border px-3 text-[12px] disabled:border-line-strong disabled:text-fg-3';
+  /**
+   * `shrink-0` e `whitespace-nowrap` no botão de ação.
+   *
+   * Três botões e uma nota de rodapé numa linha de 411 px: sem isso os botões
+   * encolhiam e o rótulo quebrava dentro deles — "Editar e confirmar" em três
+   * linhas numa caixa de 32 px de altura. O que cede é a nota, que desce para a
+   * linha de baixo abaixo de `largo`.
+   */
+  const botão =
+    'h-8 shrink-0 border px-3 text-[12px] whitespace-nowrap disabled:border-line-strong disabled:text-fg-3';
   const campo =
     'h-8 border border-line-strong bg-cell px-2 text-[12px] text-fg focus-visible:border-action';
 
@@ -143,25 +152,37 @@ export function Sugestao({
       help="mancais.sugestao"
       title="Nota sugerida"
       label="Nota sugerida pela tendência"
+      /*
+        O selo PARADA é o último a ceder, e nunca cede.
+
+        Os quatro pedaços do contexto eram filhos de flex sem `min-w-0`: a linha
+        estourava a caixa e o PARADA acabava debaixo da legenda da direita —
+        ilegível justamente o pedaço que diz que a máquina precisa parar. Agora
+        quem cede é o rótulo da prioridade ("ação imediata", "próxima parada"),
+        que o `P1` ao lado já resume, e abaixo de `largo` ele sai de vez.
+      */
       context={
-        <span className="flex items-center gap-2">
+        <span className="flex min-w-0 items-center gap-2">
           <span
             aria-hidden="true"
-            className="h-0.5 w-4"
+            className="h-0.5 w-4 shrink-0"
             style={{ background: PRIORITY_BAR[suggestion.priority] }}
           />
-          <span className="font-mono text-fg">P{suggestion.priority}</span>
-          <span className="text-fg-2">{NOTE_PRIORITY_LABELS[suggestion.priority]}</span>
+          <span className="shrink-0 font-mono text-fg">P{suggestion.priority}</span>
+          <span className="min-w-0 truncate text-fg-2 max-largo:hidden">
+            {NOTE_PRIORITY_LABELS[suggestion.priority]}
+          </span>
           {suggestion.requiresShutdown ? (
-            <span className="border border-fg-2 px-1.5 text-[10px] font-semibold tracking-[0.04em] text-fg">
+            <span className="shrink-0 border border-fg-2 px-1.5 text-[10px] font-semibold tracking-[0.04em] whitespace-nowrap text-fg">
               PARADA
             </span>
           ) : null}
         </span>
       }
       aside={
-        <span>
-          origem <span className="text-fg">tendência</span> · sem número até confirmar
+        <span className="min-w-0 truncate">
+          origem <span className="text-fg">tendência</span>
+          <span className="max-largo:hidden"> · sem número até confirmar</span>
         </span>
       }
       className={className}
@@ -305,7 +326,7 @@ export function Sugestao({
 
       {bloqueado ? <p className="text-[12px] text-fg-3">{bloqueado}</p> : null}
 
-      <div className="mt-auto flex items-center gap-2">
+      <div className="mt-auto flex flex-wrap items-center gap-2 largo:flex-nowrap">
         <button
           type="button"
           disabled={bloqueado !== null || enviando}
@@ -336,7 +357,7 @@ export function Sugestao({
         >
           Dispensar
         </button>
-        <span className="ml-auto text-[11px] text-fg-3">
+        <span className="w-full text-[11px] text-fg-3 largo:ml-auto largo:w-auto largo:text-right">
           reta sobre <span className="font-mono text-fg-2">{suggestion.samples}</span> janelas desde{' '}
           <span className="font-mono text-fg-2">{quando(suggestion.trendStart)}</span> · defeito que
           acelera chega antes

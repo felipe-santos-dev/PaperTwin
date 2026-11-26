@@ -564,10 +564,17 @@ function Reels({
             onClick={() => {
               onOpen(reel.number);
             }}
+            /*
+              A largura da pastilha é a duração da bobina no eixo, e o rótulo
+              não cabe sempre: "8871 · rebaixada" pede ~110 px e uma bobina de
+              40 min em 1280 px dá ~80. Cortado no meio, saía "8871 · rebaixad".
+              Com reticências, quem lê sabe que falta pedaço — e o `title` já
+              trazia o texto inteiro.
+            */
             className={`absolute overflow-hidden rounded-[2px] border px-1.5 text-left text-[11px] whitespace-nowrap hover:border-action ${style}`}
             style={{ left, width: w, top: REELS_TOP, height: REELS_H }}
           >
-            <span className="font-mono">{label}</span>
+            <span className="block truncate font-mono">{label}</span>
           </button>
         );
       })}
@@ -648,34 +655,50 @@ function Markers({
           style={{ left, top: 34, height: PLOT_H - 34, background: HAIR[event.kind] }}
         />
       ))}
-      {placed.map(({ event, x: left }, index) => (
-        <button
-          key={event.id}
-          type="button"
-          aria-label={`${EVENT_LABEL[event.kind]} ${hhmm(new Date(event.t).toISOString())}: ${event.title}${
-            event.illustrative ? ' (ilustrativo)' : ''
-          }`}
-          aria-expanded={selected === event.id}
-          onClick={() => {
-            onSelect(event.id);
-          }}
-          className={`absolute flex h-6 items-center gap-1.5 rounded-[3px] border pr-1.5 pl-1 whitespace-nowrap ${
-            selected === event.id
-              ? 'border-[#3a4350] bg-[#1a2029]'
-              : event.illustrative
-                ? 'border-dashed border-line-strong hover:border-[#3a4350] hover:bg-[#1a2029]'
-                : 'border-transparent hover:border-[#3a4350] hover:bg-[#1a2029]'
-          }`}
-          style={{ left: left - 9, top: 6 + (lane[index] ?? 0) * 26 }}
-        >
-          <EventGlyph kind={event.kind} />
-          <span
-            className={`font-mono text-[11px] ${event.kind === 'quebra' ? 'text-fg' : 'text-fg-2'}`}
+      {placed.map(({ event, x: left }, index) => {
+        /**
+         * Sem linha livre, vai só o símbolo.
+         *
+         * O evento continua clicável, o traço continua marcando a hora e o
+         * `title` continua dizendo o que é. O que sai é o rótulo que iria por
+         * cima do rótulo do vizinho — ver `lanes`.
+         */
+        const faixa = lane[index];
+        const rotulo = faixa !== null && faixa !== undefined;
+        const titulo = `${EVENT_LABEL[event.kind]} ${hhmm(new Date(event.t).toISOString())}: ${event.title}${
+          event.illustrative ? ' (ilustrativo)' : ''
+        }`;
+
+        return (
+          <button
+            key={event.id}
+            type="button"
+            aria-label={titulo}
+            title={titulo}
+            aria-expanded={selected === event.id}
+            onClick={() => {
+              onSelect(event.id);
+            }}
+            className={`absolute flex h-6 items-center gap-1.5 rounded-[3px] border pr-1.5 pl-1 whitespace-nowrap ${
+              selected === event.id
+                ? 'border-[#3a4350] bg-[#1a2029]'
+                : event.illustrative
+                  ? 'border-dashed border-line-strong hover:border-[#3a4350] hover:bg-[#1a2029]'
+                  : 'border-transparent hover:border-[#3a4350] hover:bg-[#1a2029]'
+            }`}
+            style={{ left: left - 9, top: 6 + (rotulo ? faixa : 0) * 26 }}
           >
-            {event.short}
-          </span>
-        </button>
-      ))}
+            <EventGlyph kind={event.kind} />
+            {rotulo ? (
+              <span
+                className={`font-mono text-[11px] ${event.kind === 'quebra' ? 'text-fg' : 'text-fg-2'}`}
+              >
+                {event.short}
+              </span>
+            ) : null}
+          </button>
+        );
+      })}
     </>
   );
 }

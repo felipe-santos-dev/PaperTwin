@@ -261,21 +261,29 @@ function AreaView({
                   role="row"
                   className={`${INSTRUMENT_GRID} border-b border-line pb-1.5 text-[11px] text-fg-3`}
                 >
-                  <span role="columnheader">Variável</span>
-                  <span role="columnheader">Faixa · PV ▾ SP</span>
-                  <span role="columnheader" className="text-right">
+                  <span role="columnheader" className="min-w-0 truncate">
+                    Variável
+                  </span>
+                  {/* "Faixa · PV ▾ SP" não cabe em 1280; "Faixa" diz o que é */}
+                  <span role="columnheader" title="Faixa · PV ▾ SP" className="min-w-0 truncate">
+                    Faixa<span className="max-largo:hidden"> · PV ▾ SP</span>
+                  </span>
+                  <span role="columnheader" className="min-w-0 truncate text-right">
                     PV
                   </span>
-                  <span role="columnheader" className="text-right">
+                  <span role="columnheader" className="min-w-0 truncate text-right">
                     SP
                   </span>
                   <span
                     role="columnheader"
                     title="A API não informa o modo do controlador; a coluna diz se a TAG é malha."
+                    className="min-w-0 truncate"
                   >
                     Malha
                   </span>
-                  <span role="columnheader">Última 1 h</span>
+                  <span role="columnheader" className="min-w-0 truncate" title="Última 1 h">
+                    Última 1 h
+                  </span>
                 </div>
                 <div className="min-h-0 flex-1 overflow-y-auto">
                   {shown.length === 0 ? (

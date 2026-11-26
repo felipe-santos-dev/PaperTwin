@@ -345,7 +345,15 @@ function Mais({
       aria-label={`Mais ${String(quantas)} TAG(s) na tendência`}
       title="As TAGs que não couberam na linha"
       onClick={onToggle}
-      className={`h-6 shrink-0 border px-1.5 font-mono text-[11px] ${
+      /*
+        `ml-auto` encosta o "+N" à direita do que sobrou da linha.
+
+        Sem ele, o botão ficava no fim da fila de chips e a fila inteira era
+        empurrada para a esquerda pela caixa do aside — o "+N" acabava metade
+        fora da borda esquerda. Encostado à direita e com `shrink-0`, ele tem o
+        lugar dele garantido e são os chips que cedem.
+      */
+      className={`ml-auto h-6 shrink-0 border px-1.5 font-mono text-[11px] whitespace-nowrap ${
         aberta ? 'border-action text-action' : 'border-line-strong text-fg-2 hover:text-fg'
       }`}
     >
@@ -365,6 +373,46 @@ function AddTag({ cheio, onClick }: { readonly cheio: boolean; readonly onClick:
       + TAG
     </button>
   );
+}
+
+/**
+ * Os passos possíveis do eixo de tempo, do mais fino ao mais grosso.
+ *
+ * São os múltiplos que alguém lê sem contar: quinze minutos, meia hora, hora,
+ * duas, três, quatro, seis, doze, um dia. Um passo de 37 min daria rótulos
+ * tecnicamente espaçados e praticamente ilegíveis.
+ */
+const PASSOS_MS = [
+  15 * 60_000,
+  30 * 60_000,
+  3_600_000,
+  2 * 3_600_000,
+  3 * 3_600_000,
+  4 * 3_600_000,
+  6 * 3_600_000,
+  12 * 3_600_000,
+  24 * 3_600_000,
+] as const;
+
+/** Espaço mínimo entre dois rótulos de hora, em px: `00:00` mais respiro. */
+const ESPACO_MINIMO_PX = 64;
+
+/**
+ * O passo do eixo, escolhido pela largura que o eixo tem.
+ *
+ * O passo era função só da duração da janela: numa janela de três horas ele
+ * dava quinze minutos, ou doze rótulos — que cabem nos 900 px de 1920 e viram
+ * uma mancha nos 420 px que o eixo tem em 1280. Era o "eixo de tempo da
+ * Tendência ilegível" da revisão.
+ *
+ * Agora a largura entra na conta: pede-se o menor passo da lista que deixe cada
+ * rótulo com `ESPACO_MINIMO_PX` de espaço. Em 1920 nada muda, porque lá o passo
+ * fino já cabia; em 1280 o eixo passa a mostrar menos marcas, legíveis.
+ */
+export function passoDoEixo(duracaoMs: number, larguraPx: number): number {
+  const cabem = Math.max(2, Math.floor(larguraPx / ESPACO_MINIMO_PX));
+  const minimo = duracaoMs / cabem;
+  return PASSOS_MS.find((passo) => passo >= minimo) ?? PASSOS_MS[PASSOS_MS.length - 1]!;
 }
 
 function Rows({
@@ -394,14 +442,7 @@ function Rows({
     );
   }
   const x = linear([from, to], [0, width]);
-  const step =
-    to - from > 2 * 24 * 3_600_000
-      ? 24 * 3_600_000
-      : to - from > 10 * 3_600_000
-        ? 4 * 3_600_000
-        : to - from > 3 * 3_600_000
-          ? 3_600_000
-          : 15 * 60_000;
+  const step = passoDoEixo(to - from, width);
   const ticks: number[] = [];
   for (let t = Math.ceil(from / step) * step; t <= to; t += step) ticks.push(t);
 
@@ -429,7 +470,7 @@ function Rows({
           {ticks.map((t) => (
             <span
               key={t}
-              className="absolute -translate-x-1/2 font-mono text-[10px] text-fg-3"
+              className="absolute -translate-x-1/2 font-mono text-[10px] whitespace-nowrap text-fg-3"
               style={{ left: x(t) }}
             >
               {step >= 24 * 3_600_000

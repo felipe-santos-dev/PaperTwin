@@ -227,8 +227,18 @@ function Matrix({
       }
       aside={
         measured ? (
-          <span className="flex items-center gap-2">
-            <span className="border border-band px-1.5 py-0.5 text-[11px] text-fg-2">
+          <span className="flex min-w-0 items-center gap-2">
+            {/*
+              O chip do ensaio medido cede; o selo de procedência, não.
+
+              Os dois eram `inline-flex` sem encolher, e em 1280 px o par
+              passava 34 px da borda do painel e subia por cima do "?". O chip
+              tem `title`, então cortar com reticências não esconde informação.
+            */}
+            <span
+              title={`${measured} medido`}
+              className="min-w-0 truncate border border-band px-1.5 py-0.5 text-[11px] text-fg-2"
+            >
               {measured} medido
             </span>
             <Illustrative
@@ -253,18 +263,37 @@ function Matrix({
               onClick={() => {
                 onSelect(spec.tag);
               }}
-              className={`flex min-w-0 flex-col items-start border-b-2 px-1 pt-2 pb-1 text-left ${
+              title={`${spec.label} · ${spec.tag} · ${num(spec.lo, digits(spec.lo))}–${num(spec.hi, digits(spec.hi))}`}
+              /*
+                O nome do ensaio fica **de pé**.
+
+                São dezenove ensaios dividindo a largura do painel: em 1280 px
+                cada coluna tem ~31 px, e "Gramatura" deitado nisso vira "G…".
+                Dezenove colunas com uma letra cada não são um cabeçalho — são
+                dezenove perguntas. De pé, o nome inteiro cabe em 31 px de
+                largura usando a altura, que é o que sobra.
+
+                `vertical-rl` com `rotate-180` lê de baixo para cima, que é o
+                sentido em que a cabeça vira para ler uma coluna.
+              */
+              className={`flex min-w-0 flex-col items-center gap-1 border-b-2 px-1 pt-2 pb-1 ${
                 spec.tag === selected
                   ? 'border-action bg-hover'
                   : 'border-transparent hover:bg-hover'
               }`}
             >
-              <span className="w-full truncate text-[12px] text-fg" title={spec.label}>
+              <span className="h-20 rotate-180 truncate text-[12px] text-fg [writing-mode:vertical-rl]">
                 {spec.label}
               </span>
-              <span className="w-full truncate font-mono text-[10px] text-fg-3">{spec.tag}</span>
-              <span className="w-full truncate font-mono text-[10px] text-fg-3">
-                {num(spec.lo, digits(spec.lo))}–{num(spec.hi, digits(spec.hi))}
+              {/*
+                Só o número da TAG, e sem respiro lateral.
+
+                "LAB-" é igual nas dezenove colunas e não distingue nada; o
+                número distingue, e em 9 px ele cabe inteiro numa coluna de
+                ~28 px. O `title` do botão traz a TAG completa.
+              */}
+              <span className="w-full text-center font-mono text-[9px] whitespace-nowrap text-fg-3">
+                {spec.tag.replace('LAB-', '')}
               </span>
             </button>
           ))}
@@ -322,8 +351,13 @@ function Matrix({
                           />
                         </>
                       ) : cell.state === 'atrasado' ? (
-                        <span className="absolute inset-0 flex items-center justify-center font-mono text-[10px] text-fg-3">
-                          atraso
+                        <span
+                          title="O ensaio passou do prazo"
+                          className="absolute inset-0 flex items-center justify-center overflow-hidden px-0.5 font-mono text-[10px] text-fg-3"
+                        >
+                          {/* a palavra inteira não cabe numa célula de 31 px */}
+                          <span className="max-largo:hidden">atraso</span>
+                          <span className="largo:hidden">!</span>
                         </span>
                       ) : null}
                     </div>
@@ -333,6 +367,15 @@ function Matrix({
             );
           })}
         </div>
+        {/*
+          A faixa de especificação saiu do cabeçalho e veio para cá.
+
+          Ela não cabia numa coluna de 31 px, e é a informação menos procurada
+          das três: quem olha a matriz procura a cor da célula, e a faixa só
+          interessa quando uma delas chama atenção. O cabeçalho de cada coluna
+          guarda as três no `title`, e a carta de controle que o clique abre
+          mostra a faixa desenhada.
+        */}
         <div className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-1 border-t border-line pt-2.5 text-[11px] text-fg-2">
           {(['dentro', 'limite', 'fora', 'atrasado', 'não programado'] as const).map((state) => (
             <span key={state} className="flex items-center gap-1.5">
@@ -696,11 +739,11 @@ function LabVsQcs({
       help="laboratorio.lab-qcs"
       title="Laboratório × QCS online"
       aside={
-        <span className="flex items-center gap-2">
+        <span className="flex min-w-0 items-center gap-2">
           {latest !== null ? (
-            <>
+            <span className="min-w-0 truncate">
               bobina <span className="font-mono">{latest}</span> · Δ das últimas {rows.length}
-            </>
+            </span>
           ) : null}
           <Illustrative title="QCS: média real da bobina. Laboratório: dado fixo. Fontes diferentes, marcadas." />
         </span>

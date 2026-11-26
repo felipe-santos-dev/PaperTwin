@@ -98,7 +98,7 @@ export async function deriveSuggestions(
 
   const [séries, bloqueados, dispensadas, alarmes, rondas] = await Promise.all([
     db.readingsByBucketForAll({ from, to, bucket: SUGGESTION_BUCKET }),
-    db.assetsWithOpenTrendNote(),
+    db.assetsWithOpenNote(),
     db.lastDismissedSuggestions(),
     db.listAlarms({ limit: 1000 }),
     db.listRounds({ limit: 1 }),

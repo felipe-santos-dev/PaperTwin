@@ -1,7 +1,7 @@
 import type { LoopMode, WhatIfVariable } from '@mp1/shared/simulation';
 
 import { linear } from '../../ui/chart/scale';
-import { num, tagValue } from '../../ui/format';
+import { signedNum, signedTagValue } from '../../ui/format';
 import { Panel } from '../../ui/Panel';
 import { useWidth } from '../../ui/useWidth';
 import { minutos } from './frase';
@@ -139,15 +139,27 @@ export function Curvas(props: CurvasProps) {
       <div className="grid shrink-0 grid-cols-[112px_minmax(0,1fr)] gap-x-3 border-t border-line pt-1">
         <span className="font-mono text-[10px] text-fg-3">tempo</span>
         <div className="relative h-4">
-          {marcas.map((t) => (
-            <span
-              key={t}
-              className="absolute -translate-x-1/2 font-mono text-[10px] text-fg-3"
-              style={{ left: x(t) }}
-            >
-              {t === 0 ? 'agora' : minutos(t)}
-            </span>
-          ))}
+          {/*
+            Cada marca é deslocada pela própria posição no eixo.
+
+            Com `-translate-x-1/2` em todas, a primeira ("agora") saía metade
+            para fora da coluna à esquerda e a última entrava na borda do painel
+            à direita — e, nas larguras estreitas, as duas pontas encostavam nas
+            vizinhas. Deslocando por `-posição`, as pontas ficam alinhadas às
+            bordas e o meio continua centrado.
+          */}
+          {marcas.map((t) => {
+            const f = marcas.length > 1 ? t / (marcas.at(-1) ?? 1) : 0;
+            return (
+              <span
+                key={t}
+                className="absolute font-mono text-[10px] whitespace-nowrap text-fg-3"
+                style={{ left: x(t), transform: `translateX(${String(-f * 100)}%)` }}
+              >
+                {t === 0 ? 'agora' : minutos(t)}
+              </span>
+            );
+          })}
         </div>
       </div>
     </Panel>
@@ -257,14 +269,10 @@ function Faixa({
           {item.manipulated ? ' · mexida' : ''}
         </div>
         <div className="font-mono text-[11px] text-fg-2">
-          {sinal(item.finalDelta)}
-          {tagValue(Math.abs(item.finalDelta), item.unit)} {item.unit}
+          {signedTagValue(item.finalDelta, item.unit)} {item.unit}
         </div>
         {pico === null ? null : (
-          <div className="font-mono text-[10px] text-fg-3">
-            pico {sinal(pico)}
-            {num(Math.abs(pico), 2)}
-          </div>
+          <div className="font-mono text-[10px] text-fg-3">pico {signedNum(pico, 2)}</div>
         )}
       </div>
 
@@ -328,15 +336,14 @@ function Faixa({
           )}
         </svg>
         {item.saturated ? (
-          <span className="absolute top-0.5 right-1 font-mono text-[10px] text-alarm-2">
+          <span
+            title="A válvula chegou ao fim do curso: a malha não consegue mais corrigir."
+            className="absolute top-0.5 right-1 max-w-full truncate font-mono text-[10px] whitespace-nowrap text-alarm-2"
+          >
             válvula satura
           </span>
         ) : null}
       </div>
     </button>
   );
-}
-
-function sinal(value: number): string {
-  return value >= 0 ? '+' : '−';
 }

@@ -1,5 +1,6 @@
 import type { AssetTag } from '../asset';
 import { classifyIsoZone, type IsoLimits, type IsoZone } from '../iso20816';
+import { ptNumber } from '../number';
 import { estimateRemainingLife } from '../rul';
 import type { RemainingLife, VibrationBucket } from '../vibration';
 import type { MaintenanceNote, NoteEvidence, NotePriority } from './maintenance';
@@ -158,9 +159,7 @@ export function temperatureLife(
 }
 
 /** Número com vírgula decimal, como o resto da interface mostra. */
-function pt(value: number, digits: number): string {
-  return value.toFixed(digits).replace('.', ',');
-}
+const pt = ptNumber;
 
 /** A frase do sintoma, gerada dos números — é ela que vai para a nota. */
 export function suggestionSymptom(input: {

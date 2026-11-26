@@ -290,8 +290,8 @@ export class SqlDatabase implements Database {
     return operations.dismissNoteSuggestion(this.sql, args);
   }
 
-  assetsWithOpenTrendNote(): Promise<string[]> {
-    return operations.assetsWithOpenTrendNote(this.sql);
+  assetsWithOpenNote(): Promise<string[]> {
+    return operations.assetsWithOpenNote(this.sql);
   }
 
   lastDismissedSuggestions(): Promise<Map<string, { measure: SuggestionMeasure; level: number }>> {

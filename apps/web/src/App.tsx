@@ -24,6 +24,7 @@ import { areaOfTag } from './ui/sections';
 import { useAssetSelection } from './ui/useAssetUrl';
 import { useDataSource, type DataSourceProbes } from './ui/useDataSource';
 import { useFrame } from './ui/useFrame';
+import { useStream } from './ui/useStream';
 
 /** Estáveis entre renders, para os hooks não refazerem a busca à toa. */
 const PROBES: DataSourceProbes = { probeApi: fetchHealth, probeDemo: fetchDemoHealth };
@@ -48,6 +49,14 @@ const PROBES: DataSourceProbes = { probeApi: fetchHealth, probeDemo: fetchDemoHe
 export function App() {
   const { source, apiRecovered, useLive } = useDataSource(PROBES);
   const { screen, go } = useScreen();
+
+  /**
+   * O stream só é assinado quando a fonte é a API.
+   *
+   * No instantâneo não há o que assinar — o arquivo é de um instante só, e o
+   * selo diz DEMONSTRAÇÃO justamente por isso.
+   */
+  const live = useStream(source === 'live');
 
   const gateway: DataGateway | null = useMemo(() => {
     if (source === 'checking') return null;
@@ -172,7 +181,7 @@ export function App() {
     [go],
   );
 
-  const frame = useFrame(gateway);
+  const frame = useFrame(gateway, live);
 
   return (
     <Shell
@@ -183,7 +192,7 @@ export function App() {
       sections={frame.sections}
       area={area}
       onArea={openArea}
-      source={<DataSourcePill source={source} />}
+      source={<DataSourcePill source={source} stream={live.state} />}
       search={
         <SearchBox
           gateway={gateway}

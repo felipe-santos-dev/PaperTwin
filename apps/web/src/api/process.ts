@@ -22,6 +22,7 @@ import type {
 } from '@mp1/shared';
 
 import { API_URL, ApiError } from './client';
+import { coalesce } from './inflight';
 
 /**
  * O cliente das rotas da Fase 5.
@@ -38,6 +39,23 @@ import { API_URL, ApiError } from './client';
  */
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  /**
+   * Leitura é represada por URL; escrita, nunca.
+   *
+   * Dois `PUT` do mesmo setpoint são duas decisões de duas pessoas, e a
+   * auditoria tem de registrar as duas. Só o `GET` — e o `GET` é o que não tem
+   * `method` — é pergunta com uma resposta por instante. Ver `inflight.ts`.
+   */
+  const method = init?.method ?? 'GET';
+  if (method !== 'GET') return fetchOnce<T>(path, init);
+  return coalesce(
+    path,
+    (requestSignal) => fetchOnce<T>(path, { ...init, signal: requestSignal }),
+    init?.signal ?? undefined,
+  );
+}
+
+async function fetchOnce<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_URL}${path}`, init);
 
   if (!response.ok) {

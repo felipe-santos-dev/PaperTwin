@@ -490,13 +490,34 @@ export function processEngine(
     measured.set(tag, band ? clamp(read, band.low, band.high) : read);
   }
 
-  /** As calculadas do instante, na ordem em que uma depende da outra. */
+  /**
+   * As calculadas do instante, na ordem em que uma depende da outra.
+   *
+   * ## Por que a calculada não ganha ruído próprio
+   *
+   * `publish` soma o ruído do instrumento ao valor verdadeiro, e isso é certo
+   * para quem **tem** instrumento. A calculada não tem: ela é uma conta que o
+   * sistema de informação faz com as leituras que já chegaram. Dar a ela um
+   * ruído próprio inventa um sensor que não existe — e, pior, quebra a conta.
+   *
+   * `XI-161` é `100 − XI-162`, e era exatamente isso na verdade. Nas medidas,
+   * cada uma levava o seu ruído independente, e a tela de Processo mostrava a
+   * receita somando 100,16 % — uma receita que não fecha, com a marca de
+   * `XI-161` colada no fim da barra porque o valor passava do máximo do
+   * catálogo. A soma das duas é a identidade que a conta promete, e uma receita
+   * que não fecha em 100 % é erro de software, não imprecisão de medição.
+   *
+   * Então a calculada é publicada duas vezes, sem ruído nenhum: a verdade dela
+   * sai das verdades das entradas, e a **medida** dela sai das **medidas** das
+   * entradas. O ruído continua lá — herdado de quem foi medido de fato, que é
+   * de onde ele vem na planta real.
+   */
   function publishDerived(): void {
     for (const item of DERIVED_IN_ORDER) {
-      publish(
-        item.tag,
-        item.compute((tag) => truth.get(tag) ?? requireOperatingPoint(tag)),
-      );
+      const fromTruth = item.compute((tag) => truth.get(tag) ?? requireOperatingPoint(tag));
+      const fromMeasured = item.compute((tag) => measured.get(tag) ?? requireOperatingPoint(tag));
+      truth.set(item.tag, fromTruth);
+      measured.set(item.tag, fromMeasured);
     }
   }
 

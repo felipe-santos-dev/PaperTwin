@@ -276,7 +276,6 @@ function ShiftBody({
             <div className="grid h-88 grid-cols-3 gap-4">
               <Scoreboard
                 prod={prodShift}
-                efficiencyPct={shift.efficiencyPct}
                 breaks={shiftBreaks.length}
                 breakMinutes={breakMinutes}
                 scrap={scrap(shiftReels, shiftBreaks, prodSeries, prodShift.nowT, now)}

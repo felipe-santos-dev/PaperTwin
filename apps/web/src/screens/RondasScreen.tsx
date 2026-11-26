@@ -3,7 +3,7 @@ import { assetByTag, MP1, type MaintenanceNote, type Round, type RoundPoint } fr
 
 import type { DataGateway } from '../api/gateway';
 import { fraction } from '../ui/chart/scale';
-import { hhmm, num } from '../ui/format';
+import { hhmm, num, signedNum } from '../ui/format';
 import { Panel } from '../ui/Panel';
 import { ResourceState } from '../ui/ResourceState';
 import { areaOfAsset, PROCESS_AREAS } from '../ui/sections';
@@ -313,11 +313,28 @@ function PointCard({
         <span className="font-mono text-[10px] text-fg-3">{point.onlineTag ?? point.assetTag}</span>
       </span>
       <Bar label="campo" value={point.fieldTempC} out={divergent(delta)} />
-      <Bar label="online" value={point.onlineValue} out={false} />
+      {/*
+        Sem TAG online, a linha diz isso em vez de desenhar uma barra vazia.
+
+        Os mancais dos rolos de prensa, do Speed Sizer, da calandra e da Pope não
+        têm instrumento declarado no catálogo — o gêmeo os acompanha pela ronda e
+        nada mais. Uma barra "online" zerada ao lado de uma barra "campo" cheia
+        parecia defeito de leitura; era ausência de sensor, e agora está escrito.
+      */}
+      {point.onlineTag === null ? (
+        <span
+          className="text-[11px] text-fg-3"
+          title="Este mancal não tem TAG de temperatura no catálogo: a ronda é a única leitura dele."
+        >
+          sem sensor online
+        </span>
+      ) : (
+        <Bar label="online" value={point.onlineValue} out={false} />
+      )}
       <span className="text-[11px] text-fg-3">
         Δ{' '}
         <span className={`font-mono ${divergent(delta) ? 'text-spec-out' : 'text-fg'}`}>
-          {delta === null ? '—' : `${delta >= 0 ? '+' : '−'}${num(Math.abs(delta), 1)}`}
+          {signedNum(delta, 1)}
         </span>{' '}
         °C · esperado {EXPECTED_OFFSET_C} ±{TEMP_TOLERANCE_C}
         {point.noise !== 'normal' ? ` · ruído ${point.noise}` : ''}

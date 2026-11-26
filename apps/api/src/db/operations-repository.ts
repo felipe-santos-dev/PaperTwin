@@ -166,8 +166,8 @@ export interface OperationsRepository {
     readonly at: Date;
     readonly reason: string;
   }): Promise<NoteSuggestion | null>;
-  /** Os mancais que já têm nota de origem `tendência` aberta. */
-  assetsWithOpenTrendNote(): Promise<string[]>;
+  /** Os mancais que já têm nota aberta, de qualquer origem. */
+  assetsWithOpenNote(): Promise<string[]>;
   /** A última dispensa de cada mancal, para a regra do degrau. */
   lastDismissedSuggestions(): Promise<Map<string, { measure: SuggestionMeasure; level: number }>>;
 

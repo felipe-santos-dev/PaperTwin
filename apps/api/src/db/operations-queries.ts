@@ -1078,18 +1078,27 @@ export const DISMISS_SUGGESTION = `
 `;
 
 /**
- * Os mancais que já têm nota de tendência aberta.
+ * Os mancais que já têm **qualquer** nota aberta.
  *
- * Enquanto a nota que saiu de uma sugestão não é encerrada, o trabalho já está
- * na fila da manutenção e sugerir de novo seria duplicar a mesma ordem de
- * serviço. Um alarme aberto **não** bloqueia: a sugestão diz o que a tendência
- * projeta, o alarme diz o que o limite já cruzou, e as duas coisas aparecem
- * juntas no mancal que degrada.
+ * Enquanto a nota não é encerrada, o trabalho já está na fila da manutenção e
+ * sugerir de novo é duplicar a mesma ordem de serviço. A origem da nota não
+ * muda isso: quem vai ao CS23 com a chave na mão não vai duas vezes porque uma
+ * nota saiu do alarme e a outra da tendência.
+ *
+ * Filtrar por `origin = 'tendência'` era o que deixava o CS23 com a nota
+ * NM-205916 aberta (origem `alarme`) **e** uma nota sugerida ao lado dela,
+ * pedindo a mesma intervenção no mesmo mancal. A regra da Fase 6 é nota aberta
+ * do mesmo mancal, e é isso que esta consulta responde agora.
+ *
+ * Um **alarme** aberto continua não bloqueando, e essa parte não mudou: a
+ * sugestão diz o que a tendência projeta, o alarme diz o que o limite já
+ * cruzou, e as duas coisas aparecem juntas no mancal que degrada. O que
+ * bloqueia é a nota — o trabalho já aberto.
  */
-export const ASSETS_WITH_OPEN_TREND_NOTE = `
+export const ASSETS_WITH_OPEN_NOTE = `
   select distinct asset_tag
   from maintenance_note
-  where origin = 'tendência' and status <> 'encerrada'
+  where status <> 'encerrada'
 `;
 
 /** A última dispensa de cada mancal, de onde sai o degrau que a faz voltar. */

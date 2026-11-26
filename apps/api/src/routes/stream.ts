@@ -1,5 +1,7 @@
 import { PROCESS_CATALOG, processVariable } from '@mp1/shared';
 import { tickTime } from '@mp1/shared/simulation';
+import type { OutgoingHttpHeaders } from 'node:http';
+
 import type { FastifyInstance, FastifyReply } from 'fastify';
 
 /**
@@ -63,6 +65,23 @@ function thresholds(): Map<string, number> {
   return map;
 }
 
+/**
+ * Os cabeçalhos do SSE, sobre os que o Fastify já montou.
+ *
+ * Separado da rota para poder ser testado: a rota não termina — é um stream —
+ * e `app.inject` ficaria pendurado nela.
+ */
+export function sseHeaders(doFastify: OutgoingHttpHeaders): OutgoingHttpHeaders {
+  return {
+    ...doFastify,
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache, no-transform',
+    Connection: 'keep-alive',
+    // sem isto, um proxy que tampona guarda os eventos e entrega em lote
+    'X-Accel-Buffering': 'no',
+  };
+}
+
 export async function streamRoutes(app: FastifyInstance): Promise<void> {
   const changeThreshold = thresholds();
 
@@ -87,13 +106,22 @@ export async function streamRoutes(app: FastifyInstance): Promise<void> {
       },
     },
     async (request, reply: FastifyReply) => {
-      reply.raw.writeHead(200, {
-        'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache, no-transform',
-        Connection: 'keep-alive',
-        // sem isto, um proxy que tampona guarda os eventos e entrega em lote
-        'X-Accel-Buffering': 'no',
-      });
+      /**
+       * Os cabeçalhos que o Fastify já montou vão junto — e isso inclui o CORS.
+       *
+       * `reply.raw.writeHead` escreve direto no socket e **ignora** tudo o que
+       * os plugins puseram em `reply`. O `@fastify/cors` põe o
+       * `access-control-allow-origin` lá, então a resposta do stream saía sem
+       * ele: o navegador abria a conexão, recebia o primeiro evento e o
+       * descartava por política de origem — `onerror`, reconecta, `onerror`, em
+       * ciclo. Com a API em `127.0.0.1:3333` e a web em `localhost:4173` ou no
+       * domínio do deploy, isso é sempre.
+       *
+       * Nada na API acusava: o `curl` funciona, o log não registra erro, e o
+       * teste de rota injeta a requisição sem passar por origem nenhuma. Só o
+       * navegador via, e nenhuma tela assinava o stream para ver.
+       */
+      reply.raw.writeHead(200, sseHeaders(reply.getHeaders() as OutgoingHttpHeaders));
 
       const previous = new Map<string, number>();
       let lastSentAt = 0;

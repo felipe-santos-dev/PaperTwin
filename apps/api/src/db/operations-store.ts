@@ -15,7 +15,7 @@ import type {
 import type { SqlExecutor } from './executor';
 import {
   ACKNOWLEDGE_ALARM,
-  ASSETS_WITH_OPEN_TREND_NOTE,
+  ASSETS_WITH_OPEN_NOTE,
   CONFIRM_SUGGESTION,
   COUNT_ALARMS_IN_WINDOW,
   DELETE_STANDING_SUGGESTIONS,
@@ -673,9 +673,9 @@ export async function dismissNoteSuggestion(
   return row ? toSuggestion(row) : null;
 }
 
-/** Os mancais com nota de tendência ainda aberta. */
-export async function assetsWithOpenTrendNote(sql: SqlExecutor): Promise<string[]> {
-  const rows = await sql.rows<{ asset_tag: string }>(ASSETS_WITH_OPEN_TREND_NOTE);
+/** Os mancais com nota ainda aberta, de qualquer origem. */
+export async function assetsWithOpenNote(sql: SqlExecutor): Promise<string[]> {
+  const rows = await sql.rows<{ asset_tag: string }>(ASSETS_WITH_OPEN_NOTE);
   return rows.map((row) => row.asset_tag);
 }
 

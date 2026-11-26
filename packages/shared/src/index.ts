@@ -3,6 +3,7 @@ export * from './health';
 export * from './historian';
 export * from './iso20816';
 export * from './machine';
+export * from './number';
 export * from './operations';
 export * from './process';
 export * from './quality/soft-sensor';

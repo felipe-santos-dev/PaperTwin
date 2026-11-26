@@ -1,3 +1,4 @@
+import { coalesce } from './inflight';
 import type {
   AssetStatus,
   HealthResponse,
@@ -40,7 +41,13 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, signal?: AbortSignal): Promise<T> {
-  const response = await fetch(`${API_URL}${path}`, signal ? { signal } : {});
+  // uma busca de cada URL por vez; o sinal que chega ao `fetch` é o do pedido,
+  // e não o de quem chamou — o porquê está em `inflight.ts`
+  return coalesce(path, (requestSignal) => fetchOnce<T>(path, requestSignal), signal);
+}
+
+async function fetchOnce<T>(path: string, signal: AbortSignal): Promise<T> {
+  const response = await fetch(`${API_URL}${path}`, { signal });
 
   if (!response.ok) {
     // a API manda `message` nos erros; se não vier, o status já diz o bastante

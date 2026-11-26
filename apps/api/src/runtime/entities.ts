@@ -8,6 +8,7 @@ import {
   isoLimitsOf,
   maintenanceNoteNumber,
   processVariable,
+  ptNumber,
   shiftWindowAt,
   WEB_WIDTH_M,
   type Alarm,
@@ -17,6 +18,7 @@ import {
   type LeakState,
   type MaintenanceNote,
   type NoiseLevel,
+  type NotePriority,
   type Round,
   type RoundPoint,
   type SetpointChange,
@@ -375,24 +377,50 @@ export function notesFromAlarms(
     const number = noteNumberFor(bearing.assetTag, alarm.raisedAt);
     if (notes.has(number)) continue;
 
-    const measurement =
-      alarm.tag === bearing.vibration
-        ? 'vibração'
-        : alarm.tag === bearing.envelope
-          ? 'envelope de aceleração'
-          : 'temperatura do mancal';
+    const isVibration = alarm.tag === bearing.vibration;
+    const measurement = isVibration
+      ? 'vibração'
+      : alarm.tag === bearing.envelope
+        ? 'envelope de aceleração'
+        : 'temperatura do mancal';
+
+    const unit = processVariable(alarm.tag)?.unit ?? '';
+    const digits = unit === '°C' ? 1 : 2;
+    const sufixo = unit === '' ? '' : ` ${unit}`;
+
+    /**
+     * A zona ISO do pior valor, quando o alarme é de vibração.
+     *
+     * É ela que diz se a intervenção pede máquina parada, e é a **mesma** régua
+     * que a nota sugerida usa (`suggestFromTrend`). Sem isto, as duas notas do
+     * mesmo mancal discordavam: a sugerida pela tendência saía P1 com parada
+     * porque o mancal estava em zona D, e a aberta pelo alarme saía P2 sem
+     * parada porque a prioridade do alarme era `alta` e não `crítica` — duas
+     * leituras do mesmo mancal, com recomendações opostas.
+     *
+     * A prioridade do alarme continua valendo quando ela é mais severa: um
+     * alarme `crítica` abre P1 mesmo que a zona não diga nada.
+     */
+    const zone = isVibration
+      ? classifyIsoZone(alarm.peakValue, isoLimitsOf(DRYER_BEARING_ISO))
+      : null;
+    const needsShutdown = alarm.priority === 'crítica' || zone === 'C' || zone === 'D';
+    const byZone: NotePriority | null = zone === 'D' ? 1 : zone === 'C' ? 2 : null;
+    const byAlarm: NotePriority = alarm.priority === 'crítica' ? 1 : 2;
 
     notes.set(number, {
       number,
       assetTag: bearing.assetTag,
       symptom:
-        `${measurement} acima do limite ${alarm.limit} (${String(alarm.threshold)}), ` +
-        `pior valor ${alarm.peakValue.toFixed(2)}`,
-      priority: alarm.priority === 'crítica' ? 1 : 2,
+        `${measurement} acima do limite ${alarm.limit} ` +
+        `(${ptNumber(alarm.threshold, digits)}${sufixo}), ` +
+        `pior valor ${ptNumber(alarm.peakValue, digits)}${sufixo}` +
+        (zone === null ? '' : ` (zona ${zone})`),
+      priority: (byZone === null ? byAlarm : Math.min(byZone, byAlarm)) as NotePriority,
       origin: 'alarme',
       originRef: alarm.id,
       status: 'aberta',
-      requiresShutdown: alarm.priority === 'crítica',
+      requiresShutdown: needsShutdown,
       evidence: [
         { kind: 'alarme', ref: alarm.id, label: `alarme ${alarm.limit} de ${alarm.tag}` },
         { kind: 'tendência', ref: alarm.tag, label: 'tendência das últimas 72 h' },

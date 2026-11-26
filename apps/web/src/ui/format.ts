@@ -29,16 +29,69 @@ function formatter(digits: number): Intl.NumberFormat {
   return made;
 }
 
+/**
+ * Zero é zero, nunca "−0".
+ *
+ * `Intl` preserva o sinal do zero: um delta de −0,004 arredondado a duas casas
+ * sai como "−0,00", que na tela diz "caiu um pouquinho" quando a conta deu
+ * exatamente nada. Arredonda-se **antes** de formatar, na mesma casa em que o
+ * número vai aparecer, e o zero resultante perde o sinal.
+ */
+function rounded(value: number, digits: number): number {
+  const factor = 10 ** digits;
+  const near = Math.round(value * factor) / factor;
+  // `near === 0` é verdade para -0 também, e é isso que apaga o sinal
+  return near === 0 ? 0 : near;
+}
+
 /** Um número com casas fixas. `null` vira travessão, nunca zero. */
 export function num(value: number | null | undefined, digits = 1): string {
   if (value === null || value === undefined || !Number.isFinite(value)) return '—';
-  return formatter(digits).format(value);
+  return formatter(digits).format(rounded(value, digits));
+}
+
+/**
+ * O sinal de um número, decidido **depois** do arredondamento.
+ *
+ * Quem mostra sinal e valor em pedaços separados — porque o sinal tem outra cor
+ * ou outro tamanho — não pode tirar o sinal do número cru: um delta de −0,004
+ * daria o sinal de "−" e o valor "0,00", e a tela diria "−0,00 %". Nada caiu;
+ * a conta deu zero. Arredondando na casa em que o número vai aparecer, o zero
+ * fica sem sinal, e o que sobra é "0,00".
+ *
+ * Devolve `''` para o que arredonda em zero, de propósito: quem concatena ganha
+ * o número sem sinal, sem precisar testar nada.
+ */
+export function signOf(value: number | null | undefined, digits = 1): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) return '';
+  const near = rounded(value, digits);
+  if (near === 0) return '';
+  return near > 0 ? '+' : '−';
+}
+
+/** `+1,20`, `−0,30`, `0,00`: o número com sinal, num pedaço só. */
+export function signedNum(value: number | null | undefined, digits = 1): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) return '—';
+  return `${signOf(value, digits)}${num(Math.abs(value), digits)}`;
+}
+
+/** O mesmo, em inteiro: `+12 t`, `−3 t`, `0 t`. */
+export function signedInt(value: number | null | undefined): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) return '—';
+  return `${signOf(value, 0)}${int(Math.abs(value))}`;
+}
+
+/** O mesmo, com as casas que a unidade da TAG pede. */
+export function signedTagValue(value: number | null | undefined, unit: string): string {
+  if (value === null || value === undefined || !Number.isFinite(value)) return '—';
+  const digits = digitsFor(value, unit);
+  return `${signOf(value, digits)}${tagValue(Math.abs(value), unit)}`;
 }
 
 /** Um inteiro com ponto de milhar. */
 export function int(value: number | null | undefined): string {
   if (value === null || value === undefined || !Number.isFinite(value)) return '—';
-  return formatter(0).format(Math.round(value));
+  return formatter(0).format(rounded(value, 0));
 }
 
 /**
@@ -51,11 +104,20 @@ export function int(value: number | null | undefined): string {
  */
 export function tagValue(value: number | null | undefined, unit: string): string {
   if (value === null || value === undefined || !Number.isFinite(value)) return '—';
+  const digits = digitsFor(value, unit);
+  return formatter(digits).format(rounded(value, digits));
+}
 
+/**
+ * Quantas casas a grandeza pede, para quem precisa saber antes de formatar.
+ *
+ * Quem mostra sinal separado do valor precisa arredondar na **mesma** casa em
+ * que o número vai sair, senão o sinal volta a discordar do número.
+ */
+export function digitsFor(value: number, unit: string): number {
   const byUnit = DIGITS_BY_UNIT[unit] ?? (Math.abs(value) >= 100 ? 0 : 2);
   // uma dosagem de 1,4 kg/t sem casa viraria "1": abaixo de 10, inteiro não basta
-  const digits = byUnit === 0 && Math.abs(value) < 10 && value !== 0 ? 1 : byUnit;
-  return formatter(digits).format(value);
+  return byUnit === 0 && Math.abs(value) < 10 && value !== 0 ? 1 : byUnit;
 }
 
 const DIGITS_BY_UNIT: Readonly<Record<string, number>> = {

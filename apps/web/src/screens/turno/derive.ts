@@ -2,6 +2,7 @@ import type { Alarm, GradeChange, SetpointChange, WebBreak } from '@mp1/shared';
 import { processVariable } from '@mp1/shared';
 
 import type { ReelHold } from '../../api/fixtures';
+import { num } from '../../ui/format';
 import { tagScale } from '../../ui/tagScale';
 import type { ReelView, ShiftView } from '../../api/process';
 import { valueAt, type Point } from '../../ui/chart/series';
@@ -64,7 +65,7 @@ export function accumulate(series: readonly Point[], from: number, to: number): 
 }
 
 export interface Production {
-  /** Acumulado do início do turno até a leitura, em t. */
+  /** Acumulado do início da janela coberta até a leitura, em t. */
   readonly accumulated: Point[];
   readonly nowT: number;
   /** Meta do turno: o alvo de XI-0001 vezes as 8 h. */
@@ -73,15 +74,44 @@ export interface Production {
   readonly paceT: number;
   /** O fim do turno no ritmo da última hora. */
   readonly projectedT: number;
+  /**
+   * De quando o acumulado vale, de verdade.
+   *
+   * É `window.from` quando o arquivo cobre o turno inteiro, e o primeiro
+   * instante arquivado quando não cobre. Ver `coveredFrom` abaixo.
+   */
+  readonly coveredFrom: number;
+  /** Quanto do turno ficou sem arquivo, em ms. `0` quando não falta nada. */
+  readonly gapMs: number;
+}
+
+/**
+ * De onde a série realmente começa dentro da janela pedida.
+ *
+ * O teto de retomada da simulação é de quatro horas (`MAX_CATCHUP_TICKS`): se
+ * ninguém abriu a tela desde o início do turno, o arquivo não tem as primeiras
+ * horas dele, e a série chega começando no meio. O turno continua sendo de
+ * 14:00 às 22:00 — o que falta é arquivo, não produção.
+ *
+ * Integrar daí até agora e chamar isso de "produção do turno" é a parte que
+ * mentia: às 20:00, com arquivo desde as 16:00, o acumulado mostrava quatro
+ * horas de papel e o ritmo da meta cobrava seis. A diferença não era atraso da
+ * máquina, era buraco no arquivo — e o placar culpava o turno por ela.
+ */
+export function coveredFrom(series: readonly Point[], window: Window): number {
+  const first = series[0];
+  if (!first) return window.to;
+  return Math.max(window.from, Math.min(first.t, window.to));
 }
 
 export function production(series: readonly Point[], window: Window, now: number): Production {
   const target = processVariable(PRODUCTION_TAG)?.target ?? 0;
   const until = Math.min(now, window.to);
-  const accumulated = accumulate(series, window.from, until);
+  const from = Math.min(coveredFrom(series, window), until);
+  const accumulated = accumulate(series, from, until);
   const nowT = accumulated.at(-1)?.v ?? 0;
 
-  const hourAgo = Math.max(window.from, until - 3_600_000);
+  const hourAgo = Math.max(from, until - 3_600_000);
   const lastHour = accumulate(series, hourAgo, until).at(-1)?.v ?? 0;
   const rate = until > hourAgo ? lastHour / ((until - hourAgo) / 3_600_000) : target;
 
@@ -89,9 +119,33 @@ export function production(series: readonly Point[], window: Window, now: number
     accumulated,
     nowT,
     goalT: target * ((window.to - window.from) / 3_600_000),
-    paceT: target * ((until - window.from) / 3_600_000),
+    // o ritmo cobra o tempo que o acumulado mediu, e não o tempo que passou
+    paceT: target * ((until - from) / 3_600_000),
     projectedT: nowT + rate * Math.max(0, (window.to - until) / 3_600_000),
+    coveredFrom: from,
+    gapMs: Math.max(0, from - window.from),
   };
+}
+
+/**
+ * Eficiência de tempo: tempo produzindo sobre tempo decorrido, em %.
+ *
+ * O painel sempre disse "tempo produzindo / tempo calendário" no título, mas
+ * mostrava o número que a API chama de `efficiencyPct` — produção realizada
+ * sobre a nominal, presa em 100 por um `Math.min`. Com a máquina em regime, a
+ * razão de produção empata com a nominal e o teto a devolve exatamente 100,0 %;
+ * uma quebra de 22 min no turno não aparecia em lugar nenhum do placar, que é
+ * justamente o que a eficiência de **tempo** existe para mostrar.
+ *
+ * A conta é a do painel: o tempo decorrido do turno menos o tempo de folha
+ * quebrada, sobre o tempo decorrido. As quebras são as do turno, e a duração de
+ * cada uma é a que a linha do tempo desenha — a mesma fonte, para o número e o
+ * desenho não discordarem.
+ */
+export function timeEfficiencyPct(elapsedMin: number, breakMinutes: number): number {
+  if (elapsedMin <= 0) return 0;
+  const producing = Math.max(0, elapsedMin - breakMinutes);
+  return Math.min(100, (producing / elapsedMin) * 100);
 }
 
 /** Duração de uma quebra em ms; quebra em andamento conta até `now`. */
@@ -318,22 +372,40 @@ export function eventCounts(events: readonly TimelineEvent[]): Record<EventKind,
  *
  * Cada evento vai para a primeira linha em que o rótulo cabe depois do anterior
  * daquela linha. `width` é a largura estimada do rótulo em px.
+ *
+ * ## Quando não cabe em linha nenhuma
+ *
+ * Antes, o evento era empurrado para a linha que terminava mais cedo — que é a
+ * que **menos** se sobrepõe, não uma que não se sobreponha. Com quatro alarmes
+ * no mesmo minuto, era isso que punha "VI-5123B" por cima de "VE-5123B" na
+ * linha do tempo, ilegíveis os dois.
+ *
+ * Agora a resposta é `null`, e quem desenha mostra só o símbolo do evento: o
+ * traço vertical continua marcando a hora, o clique continua abrindo o
+ * detalhe, e o rótulo que não cabia some em vez de cobrir o do vizinho. Um
+ * rótulo a menos é uma informação a menos; dois rótulos sobrepostos são duas.
  */
 export function lanes(
   items: readonly { readonly x: number; readonly width: number }[],
-  count = 3,
-): number[] {
+  count = 4,
+): (number | null)[] {
   const ends: number[] = Array.from({ length: count }, () => -Infinity);
   return items.map(({ x, width }) => {
-    let lane = ends.findIndex((end) => x >= end + 8);
-    if (lane === -1) lane = ends.indexOf(Math.min(...ends));
+    const lane = ends.findIndex((end) => x >= end + 8);
+    if (lane === -1) return null;
     ends[lane] = x + width;
     return lane;
   });
 }
 
-/** Número com vírgula decimal, sem casas sobrando. */
+/**
+ * Número de evento, pelas casas que a grandeza pede.
+ *
+ * Passa pelo `num` do `format.ts` em vez de chamar `toLocaleString` aqui:
+ * `maximumFractionDigits` deixa "4,5" e "4,50" conviverem na mesma coluna
+ * conforme o valor, e é o `format.ts` que decide isso num lugar só.
+ */
 function fmt(value: number): string {
   const digits = Math.abs(value) >= 100 ? 0 : Math.abs(value) >= 10 ? 1 : 2;
-  return value.toLocaleString('pt-BR', { maximumFractionDigits: digits });
+  return num(value, digits);
 }

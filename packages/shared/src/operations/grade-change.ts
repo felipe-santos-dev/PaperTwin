@@ -45,4 +45,57 @@ export function stabilizationS(change: GradeChange): number | null {
   return (Date.parse(change.stabilizedAt) - Date.parse(change.startedAt)) / 1000;
 }
 
+/**
+ * A tolerância da gramatura é uma **fração do alvo**, não um par de números.
+ *
+ * O catálogo traz `AIC-902` com L/H em 73,5–76,5 e a nota "tolerância de
+ * laboratório 73.5–76.5". Isso está certo para a gramatura de 75 g/m², que é o
+ * alvo que o catálogo declara — e passa a estar errado no minuto seguinte a uma
+ * troca para 80. A tela de Bobinas mostrava exatamente isso: depois da troca de
+ * 75 para 80, a folha de 80 g/m² aparecia inteira fora de uma tolerância de
+ * 73,5–76,5 que já não era a dela.
+ *
+ * 73,5 e 76,5 são 75 menos e mais 2 %. É essa fração que é a regra; os dois
+ * números do catálogo são ela avaliada no alvo de lá. Com o alvo em vigor, a
+ * tolerância segue a gramatura: 80 g/m² dá 78,4–81,6.
+ */
+export const GSM_TOLERANCE_FRACTION = 0.02;
+
+/** A tolerância de uma gramatura, em g/m²: o alvo ± 2 %. */
+export function gsmTolerance(gsm: number): readonly [number, number] {
+  const slack = gsm * GSM_TOLERANCE_FRACTION;
+  return [gsm - slack, gsm + slack];
+}
+
+/**
+ * A gramatura em vigor num instante, pelas trocas registradas.
+ *
+ * Depois de uma troca vale a gramatura de entrada; antes da troca mais antiga
+ * que se conhece, vale a de saída dela — que é o que a máquina estava fazendo.
+ * Sem troca nenhuma na lista, vale o alvo que quem chama já tem (o do catálogo,
+ * na prática).
+ *
+ * O instante de corte é o **início** da troca, e não a estabilização: a partir
+ * do momento em que o setpoint muda, a folha que sai é da gramatura nova, ainda
+ * que leve alguns minutos para entrar na faixa dela. É por isso que a bobina
+ * que pega a transição é rebaixada em vez de medida contra a tolerância antiga.
+ */
+export function gradeInForceAt(
+  changes: readonly GradeChange[],
+  at: number,
+  fallbackGsm: number,
+): number {
+  const ordered = [...changes].sort((a, b) => Date.parse(a.startedAt) - Date.parse(b.startedAt));
+  const first = ordered[0];
+  if (!first) return fallbackGsm;
+  if (at < Date.parse(first.startedAt)) return first.fromGsm;
+
+  let gsm = first.toGsm;
+  for (const change of ordered) {
+    if (Date.parse(change.startedAt) <= at) gsm = change.toGsm;
+    else break;
+  }
+  return gsm;
+}
+
 export const GRADE_CHANGE_PROVENANCE: ProvenanceNote = FROM_LISTA_BASE;

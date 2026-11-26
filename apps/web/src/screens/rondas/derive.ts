@@ -1,5 +1,7 @@
 import type { MaintenanceNote, Round, RoundPoint } from '@mp1/shared';
 
+import { signedNum } from '../../ui/format';
+
 /**
  * As contas da tela de Rondas.
  *
@@ -35,9 +37,8 @@ export function findings(point: RoundPoint): string[] {
   if (point.leak !== 'nenhum') out.push(`vazamento ${point.leak}`);
   const delta = deltaOf(point);
   if (delta !== null && divergent(delta)) {
-    out.push(
-      `campo × online ${delta > 0 ? '+' : '−'}${Math.abs(delta).toFixed(1).replace('.', ',')} °C`,
-    );
+    // o sinal sai do número arredondado, no `format.ts`: nunca "−0,0"
+    out.push(`campo × online ${signedNum(delta, 1)} °C`);
   }
   return out;
 }

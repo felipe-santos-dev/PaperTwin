@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { processVariable } from '@mp1/shared';
 
 import type { DataGateway } from '../api/gateway';
@@ -7,6 +7,7 @@ import { clockTime, hourWindow, tagValue, weekdayDate } from './format';
 import { alarmCounts, sectionStates, type SectionState } from './sections';
 import type { FrameTop } from './Shell';
 import { useResource } from './useResource';
+import type { Live } from './useStream';
 
 /** A gramatura da barra superior: a do QCS, que é a que o operador acompanha. */
 const GSM_TAG = 'AIC-902';
@@ -22,8 +23,24 @@ const SHIFT_MS = 8 * 60 * 60 * 1000;
  * a moldura aparece em todas as telas. O relógio é o instante da leitura que a
  * API devolveu, e não o relógio da máquina de quem olha: na demonstração ele
  * para no instante do instantâneo, e isso é verdade sobre o dado.
+ *
+ * ## O que o stream acrescenta
+ *
+ * A busca dá o estado inicial das 320 tags; o stream dá o que mudou, de dois em
+ * dois segundos. Gramatura, Velocidade e o relógio vêm do stream quando ele
+ * está de pé, e da busca enquanto nenhum evento chegou — é a mesma informação
+ * por dois caminhos, e o mais recente ganha.
+ *
+ * O contador de alarmes **não** vem do stream: o quadro traz quantos pedem
+ * ação, que é um número só, e a barra mostra três — um por prioridade. Quando o
+ * stream diz que esse total mudou, a moldura rebusca `/alarms`, que é a rota
+ * que sabe separar por prioridade. Assim o contador acompanha sem o stream ter
+ * de carregar a lista inteira a cada evento.
  */
-export function useFrame(gateway: DataGateway | null): {
+export function useFrame(
+  gateway: DataGateway | null,
+  live: Live,
+): {
   top: FrameTop;
   sections: SectionState[];
   /** Quantas notas sugeridas esperam decisão — o contador da moldura. */
@@ -65,6 +82,28 @@ export function useFrame(gateway: DataGateway | null): {
   );
 
   /**
+   * O stream avisa, a rota de alarmes responde.
+   *
+   * `alarmsNeedingAction` é o gatilho, não o dado: ele muda quando sobe ou cai
+   * um alarme que pede ação, e é nesse momento que vale rebuscar a lista por
+   * prioridade. Sem isto, a barra de alarmes ficaria no retrato da carga mesmo
+   * com o resto da moldura correndo.
+   */
+  const needingAction = live.frame?.alarmsNeedingAction ?? null;
+  const reloadAlarms = alarms.reload;
+  const seenRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (needingAction === null) return;
+    if (seenRef.current === null) {
+      seenRef.current = needingAction;
+      return;
+    }
+    if (seenRef.current === needingAction) return;
+    seenRef.current = needingAction;
+    reloadAlarms();
+  }, [needingAction, reloadAlarms]);
+
+  /**
    * As sugestões em pé, na moldura.
    *
    * É a quarta busca da moldura, e ela está aqui pelo mesmo motivo das outras
@@ -84,12 +123,23 @@ export function useFrame(gateway: DataGateway | null): {
 
   return useMemo(() => {
     const byTag = new Map(values.data?.values.map((item) => [item.tag, item]) ?? []);
-    const gsm = byTag.get(GSM_TAG);
-    const speed = byTag.get(SPEED_TAG);
+
+    /** O valor de uma tag agora: o do stream, se já mudou; senão o da busca. */
+    const valueOf = (tag: string): number | null => {
+      const streamed = live.values.get(tag);
+      if (streamed !== undefined) return streamed;
+      return byTag.get(tag)?.value ?? null;
+    };
+
+    const gsmUnit = byTag.get(GSM_TAG)?.unit ?? 'g/m²';
+    const speedUnit = byTag.get(SPEED_TAG)?.unit ?? 'm/min';
+    const gsmValue = valueOf(GSM_TAG);
+    const speedValue = valueOf(SPEED_TAG);
     const speedVar = processVariable(SPEED_TAG);
     const current = currentShift(shifts.data?.shifts ?? []);
     const standing = alarms.data?.alarms ?? [];
-    const ts = values.data?.ts ?? null;
+    // o instante do último evento; sem stream, o da busca
+    const ts = live.frame?.ts ?? values.data?.ts ?? null;
 
     const top: FrameTop = {
       shift: current
@@ -102,13 +152,13 @@ export function useFrame(gateway: DataGateway | null): {
             operator: current.operator,
           }
         : null,
-      gramatura: gsm ? { text: tagValue(gsm.value, 'g/m²'), unit: gsm.unit } : null,
+      gramatura: gsmValue === null ? null : { text: tagValue(gsmValue, 'g/m²'), unit: gsmUnit },
       speed:
-        speed && speedVar
+        speedValue !== null && speedVar
           ? {
-              text: tagValue(speed.value, speed.unit),
-              unit: speed.unit,
-              value: speed.value,
+              text: tagValue(speedValue, speedUnit),
+              unit: speedUnit,
+              value: speedValue,
               bar: {
                 min: speedVar.min,
                 max: speedVar.max,
@@ -127,7 +177,7 @@ export function useFrame(gateway: DataGateway | null): {
       sections: sectionStates(standing),
       suggested: suggestions.data?.count ?? 0,
     };
-  }, [values.data, alarms.data, shifts.data, suggestions.data]);
+  }, [values.data, alarms.data, shifts.data, suggestions.data, live.values, live.frame]);
 }
 
 /** O turno em curso, ou o mais recente se nenhum estiver aberto. */

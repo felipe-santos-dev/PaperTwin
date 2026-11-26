@@ -1,7 +1,7 @@
 import { processVariable } from '@mp1/shared';
 import { isDerivedTag, type WhatIfVariable } from '@mp1/shared/simulation';
 
-import { num } from '../../ui/format';
+import { signedNum } from '../../ui/format';
 import { Panel } from '../../ui/Panel';
 import { minutos } from './frase';
 
@@ -20,6 +20,15 @@ import { minutos } from './frase';
  * dia em que uma relação entrasse no CSV.
  */
 
+/**
+ * As colunas da tabela de efeitos.
+ *
+ * A primeira é a única elástica, e é a que leva o nome da variável — com
+ * `truncate` e `title`, porque num painel de 411 px "Umidade final · scanner
+ * final" não cabe e não há coluna de onde tirar espaço. As de número têm
+ * largura fixa de propósito: é o que mantém a coluna de desvio alinhada de cima
+ * a baixo, que é como alguém a lê.
+ */
 const GRID = 'grid grid-cols-[minmax(0,1fr)_54px_54px_42px_42px_34px_26px] items-center gap-x-1.5';
 
 export interface EfeitosProps {
@@ -125,12 +134,10 @@ function Linha({
         </span>
       </span>
       <span role="cell" className="text-right">
-        {sinal(item.finalDelta)}
-        {num(Math.abs(item.finalDelta), casas)}
+        {signedNum(item.finalDelta, casas)}
       </span>
       <span role="cell" className="text-right">
-        {sinal(item.peakDelta)}
-        {num(Math.abs(item.peakDelta), casas)}
+        {signedNum(item.peakDelta, casas)}
       </span>
       <span role="cell" className="text-right text-[10px]">
         {item.deadTimeS === null ? '–' : minutos(item.deadTimeS)}
@@ -194,8 +201,4 @@ function Caminho({
       )}
     </div>
   );
-}
-
-function sinal(value: number): string {
-  return value >= 0 ? '+' : '−';
 }

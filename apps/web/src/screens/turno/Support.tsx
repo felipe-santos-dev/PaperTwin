@@ -3,7 +3,7 @@ import type { Alarm, MaintenanceNote, NoteSuggestion, Round } from '@mp1/shared'
 
 import type { ReelHold } from '../../api/fixtures';
 import { fraction } from '../../ui/chart/scale';
-import { hhmm, int, num, tagValue } from '../../ui/format';
+import { hhmm, int, num, signedInt, tagValue } from '../../ui/format';
 import { Illustrative, Panel, PriorityBadge } from '../../ui/Panel';
 import { designPriority, PRIORITY_COLOR, type DesignPriority } from '../../ui/priority';
 import { RangeBar } from '../../ui/RangeBar';
@@ -13,6 +13,7 @@ import {
   alarmText,
   EFFICIENCY_BAND,
   SCRAP_TARGET_PCT,
+  timeEfficiencyPct,
   type Production,
   type Scrap,
 } from './derive';
@@ -23,7 +24,6 @@ const pct = (value: number) => `${(value * 100).toFixed(2)}%`;
 
 export function Scoreboard({
   prod,
-  efficiencyPct,
   breaks,
   breakMinutes,
   scrap,
@@ -32,7 +32,6 @@ export function Scoreboard({
   until,
 }: {
   readonly prod: Production;
-  readonly efficiencyPct: number;
   readonly breaks: number;
   readonly breakMinutes: number;
   readonly scrap: Scrap;
@@ -44,32 +43,51 @@ export function Scoreboard({
   const delta = prod.nowT - prod.paceT;
   const effLo = 85;
   const scrapMax = 8;
+  /**
+   * A eficiência de tempo é conta daqui, não número da API.
+   *
+   * O `efficiencyPct` do turno é produção sobre nominal, presa em 100 — outra
+   * grandeza, com outro nome. Ver `timeEfficiencyPct`.
+   */
+  const efficiencyPct = timeEfficiencyPct(elapsedMin, breakMinutes);
+  const gapMin = prod.gapMs / 60_000;
 
   return (
     <Panel
       help="turno.placar"
       title="Placar do turno"
       aside={
-        <span>
+        <span className="truncate">
           até <span className="font-mono">{until}</span> ·{' '}
           <span className="font-mono">{int(elapsedMin)}</span> de{' '}
           <span className="font-mono">{int(totalMin)}</span> min
+          {gapMin >= 1 ? (
+            <>
+              {' · '}
+              <span
+                className="text-fg-3"
+                title={
+                  'A simulação retoma no máximo 4 h, então o início do turno pode não ter ' +
+                  'arquivo. A produção acumulada conta do primeiro instante arquivado, e o ' +
+                  'ritmo da meta cobra o mesmo tempo.'
+                }
+              >
+                sem arquivo nos primeiros <span className="font-mono">{int(gapMin)}</span> min
+              </span>
+            </>
+          ) : null}
         </span>
       }
       bodyClassName="flex flex-col gap-7 pt-2"
     >
       <Score
-        title={`Meta do turno: ${int(prod.goalT)} t (alvo de XI-0001 × 8 h). Ritmo da meta agora: ${int(prod.paceT)} t. Acumulado = integral de XI-0001 desde o início do turno.`}
+        title={`Meta do turno: ${int(prod.goalT)} t (alvo de XI-0001 × 8 h). Ritmo da meta agora: ${int(prod.paceT)} t. Acumulado = integral de XI-0001 desde ${gapMin >= 1 ? 'o primeiro instante arquivado' : 'o início do turno'}.${gapMin >= 1 ? ` Os primeiros ${int(gapMin)} min do turno não têm arquivo, e o ritmo cobra só o tempo medido.` : ''}`}
         label="Produção"
         value={int(prod.nowT)}
         unit="t"
         note={
           <>
-            <span className="font-mono text-[12px] text-fg-2">
-              {delta >= 0 ? '+' : '−'}
-              {int(Math.abs(delta))} t
-            </span>{' '}
-            vs. ritmo
+            <span className="font-mono text-[12px] text-fg-2">{signedInt(delta)} t</span> vs. ritmo
           </>
         }
         bar={
@@ -117,7 +135,7 @@ export function Scoreboard({
       />
 
       <Score
-        title={`Eficiência de tempo = tempo produzindo / tempo calendário, da API. Faixa de referência ${String(EFFICIENCY_BAND[0])}–${String(EFFICIENCY_BAND[1])} % (meta do desenho).`}
+        title={`Eficiência de tempo = (tempo decorrido − tempo de folha quebrada) / tempo decorrido. Decorrido ${int(elapsedMin)} min, quebrado ${int(breakMinutes)} min. Faixa de referência ${String(EFFICIENCY_BAND[0])}–${String(EFFICIENCY_BAND[1])} % (meta do desenho).`}
         label="Eficiência de tempo"
         value={num(efficiencyPct, 1)}
         unit="%"
@@ -210,20 +228,49 @@ function Score({
 }) {
   return (
     <div title={title}>
+      {/*
+        O rótulo tinha largura fixa de 140 px (`w-35`).
+
+        Num painel de um terço de 1280 px sobram ~347 px para rótulo, valor,
+        unidade e nota — e os 140 px fixos não deixavam nada ceder: a nota à
+        direita era empurrada para fora da sua própria caixa e subia por cima do
+        valor. Agora o rótulo é o que cede (`min-w-0` com `truncate`) e a nota
+        tem o espaço dela garantido, porque é a linha mais curta das duas.
+      */}
       <div className="mb-2 flex items-baseline gap-1.5">
-        <span className="w-35 text-[12px] text-fg-2">{label}</span>
-        <span className="font-mono text-[22px] font-medium">{value}</span>
-        <span className="text-[12px] text-fg-2">{unit}</span>
-        <span className="flex-1" />
-        <span className="text-[11px] text-fg-3">{note}</span>
+        <span className="min-w-0 flex-1 truncate text-[12px] text-fg-2 largo:flex-none largo:basis-35">
+          {label}
+        </span>
+        <span className="shrink-0 font-mono text-[22px] font-medium">{value}</span>
+        <span className="shrink-0 text-[12px] text-fg-2">{unit}</span>
+        <span className="hidden flex-1 largo:block" />
+        <span className="shrink-0 text-right text-[11px] whitespace-nowrap text-fg-3">{note}</span>
       </div>
       <div className="relative h-5">{bar}</div>
-      <div className="relative mt-1 h-3.5 text-[10px] text-fg-3">
+      {/*
+        Os rótulos da escala, em dois arranjos.
+
+        De `largo` para cima cada rótulo fica **sob a marca dele**, posicionado
+        em porcentagem — é o arranjo que o desenho pede, e o que faz "ritmo" e
+        "meta" dizerem onde cada um está.
+
+        Abaixo disso o painel tem um terço de 1280 px, e aí o arranjo não cabe:
+        com o ritmo em 90 % da meta, "ritmo 324" centrado em 90 % e "meta 360"
+        encostado à direita ocupam o mesmo lugar, e um cobre o outro. Então os
+        rótulos passam a dividir a linha em partes iguais. A posição exata não
+        se perde: ela continua marcada no traço vertical em cima da barra, que é
+        de onde ela sempre veio — o rótulo só carrega o número.
+      */}
+      <div className="mt-1 flex h-3.5 justify-between gap-2 text-[10px] text-fg-3 largo:relative largo:block">
         {ticks.map((tick, index) => (
           <span
             key={index}
-            className={`absolute whitespace-nowrap ${
-              tick.at <= 0 ? 'left-0' : tick.at >= 1 ? 'right-0' : '-translate-x-1/2'
+            className={`whitespace-nowrap largo:absolute ${
+              tick.at <= 0
+                ? 'largo:left-0'
+                : tick.at >= 1
+                  ? 'largo:right-0'
+                  : 'largo:-translate-x-1/2'
             } ${typeof tick.text === 'string' ? 'font-mono' : ''}`}
             style={tick.at > 0 && tick.at < 1 ? { left: pct(tick.at) } : undefined}
           >
@@ -300,7 +347,7 @@ export function ActiveAlarms({
                   onClick={() => {
                     onOpen(alarm.tag);
                   }}
-                  className="grid w-full grid-cols-[24px_1fr_88px] items-center gap-x-3 gap-y-2 border-t border-line py-3.5 text-left hover:bg-hover"
+                  className="grid w-full min-w-0 grid-cols-[24px_minmax(0,1fr)_72px] items-center gap-x-2 gap-y-2 border-t border-line py-3.5 text-left hover:bg-hover largo:grid-cols-[24px_minmax(0,1fr)_88px] largo:gap-x-3"
                 >
                   <span className="row-span-2 self-start">
                     <PriorityBadge priority={priority} />
@@ -309,7 +356,10 @@ export function ActiveAlarms({
                     <span className="shrink-0 font-mono text-[11px] whitespace-nowrap text-fg-2">
                       {alarm.tag}
                     </span>
-                    <span className="truncate text-[13px]">{alarmText(alarm)}</span>
+                    {/* o nome da variável é o que cede; o `title` guarda inteiro */}
+                    <span className="min-w-0 truncate text-[13px]" title={alarmText(alarm)}>
+                      {alarmText(alarm)}
+                    </span>
                     {fixed ? <Illustrative /> : null}
                   </span>
                   <span className="text-right text-[11px] whitespace-nowrap text-fg-3">
@@ -377,6 +427,27 @@ export interface HandoverItem {
   readonly illustrative: boolean;
 }
 
+/**
+ * O texto de um nó, para o `title` de quem corta a frase.
+ *
+ * Os títulos da passagem de turno são JSX — eles têm `<span className="font-mono">`
+ * em volta do número da bobina, e isso não é decoração: é o que faz um número
+ * de bobina parecer um número de bobina. Mas uma frase cortada precisa de um
+ * `title` em texto puro, e `React.Children` não entrega texto.
+ *
+ * Então o texto é remontado dos nós, recursivamente. Só serve para o `title`.
+ */
+function textoDe(node: ReactNode): string {
+  if (node === null || node === undefined || typeof node === 'boolean') return '';
+  if (typeof node === 'string' || typeof node === 'number') return String(node);
+  if (Array.isArray(node)) return node.map(textoDe).join('');
+  if (typeof node === 'object' && 'props' in node) {
+    const props = (node as { props?: { children?: ReactNode } }).props;
+    return textoDe(props?.children);
+  }
+  return '';
+}
+
 export function Handover({
   items,
   deliverAt,
@@ -426,13 +497,26 @@ export function Handover({
                   }}
                   className="size-4 shrink-0 accent-action"
                 />
+                {/*
+                  O título era texto livre numa caixa sem largura mínima.
+
+                  Com o chip à direita — "NM-205916 · P1" ou o botão "Ver
+                  tendência" — e um painel de um terço de 1280 px, sobravam uns
+                  120 px para a frase, e ela quebrava numa palavra por linha.
+                  Duas linhas no máximo, com reticências na segunda: a frase
+                  inteira fica no `title`, e o que o olho precisa saber é de que
+                  mancal ou de que bobina se trata, que está no começo.
+                */}
                 <label htmlFor={id} className="flex min-w-0 flex-1 cursor-pointer flex-col gap-0.5">
                   <span
-                    className={`text-[13px] ${done.has(item.id) ? 'text-fg-3 line-through' : ''}`}
+                    title={textoDe(item.title)}
+                    className={`line-clamp-2 text-[13px] ${done.has(item.id) ? 'text-fg-3 line-through' : ''}`}
                   >
                     {item.title}
                   </span>
-                  <span className="truncate text-[11px] text-fg-3">{item.detail}</span>
+                  <span title={textoDe(item.detail)} className="truncate text-[11px] text-fg-3">
+                    {item.detail}
+                  </span>
                 </label>
                 {item.illustrative ? <Illustrative /> : null}
                 {item.chip}

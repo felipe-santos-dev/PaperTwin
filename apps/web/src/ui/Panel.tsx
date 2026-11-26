@@ -62,8 +62,14 @@ export function Panel({
       style={style}
       className={`flex min-h-0 min-w-0 flex-col border border-line bg-panel px-5 pt-4 pb-4 ${className}`}
     >
-      <header className="mb-3 flex min-h-6 items-baseline gap-3">
-        <Heading className="shrink-0 text-[14px] font-semibold text-fg">{title}</Heading>
+      <header className="mb-3 flex min-h-6 min-w-0 items-baseline gap-3">
+        {/*
+          O título não encolhe: ele é o nome do painel, e um nome cortado é pior
+          que uma legenda cortada. Quem cede é o contexto ao lado e o aside.
+        */}
+        <Heading className="shrink-0 text-[14px] font-semibold whitespace-nowrap text-fg">
+          {title}
+        </Heading>
         {context ? <div className="min-w-0 truncate text-[12px] text-fg-2">{context}</div> : null}
         {/*
           O aside toma o espaço que sobra, numa linha só.
@@ -72,8 +78,25 @@ export function Panel({
           aqui e precisa saber quanto espaço tem para decidir quantas mostrar —
           uma caixa do tamanho do conteúdo responderia o tamanho do conteúdo, e
           a conta andaria em círculo.
+
+          `[&>*]:min-w-0` é o que faltava, e é a causa de metade da revisão de
+          1142 px. Um filho de flex **não encolhe abaixo do conteúdo** sem
+          `min-width: 0` — e `truncate`, que é o que os asides usam, não mexe em
+          `min-width`. Então a legenda com `truncate` recusava encolher, estourava
+          a caixa dela e passava da borda do painel: o "64" do placar do turno
+          saía 55 px para fora em 1280 px. Posto aqui, vale para todo painel,
+          sem cada aside ter de lembrar.
+
+          `basis-auto` resolve o outro lado da mesma moeda. `flex-1` é
+          `flex-basis: 0%`: quando o contexto ao lado enche a linha, não sobra
+          nada para crescer e o aside recebe **largura zero** — e aí o conteúdo
+          dele sai por cima do "?" da ajuda, que foi o que sobrou no cabeçalho de
+          "Bobinas × ensaios". Partindo do conteúdo, os dois encolhem na
+          proporção do que pediram: o contexto, que pede muito, cede quase tudo;
+          o aside, que pede pouco, cede quase nada. Os dois continuam cedendo,
+          que é o que impede o cabeçalho de estourar o painel.
         */}
-        <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-2 text-[11px] text-fg-3">
+        <div className="ml-auto flex min-w-0 grow basis-auto items-center justify-end gap-2 text-[11px] text-fg-3 [&>*]:min-w-0">
           {aside}
           <HelpButton help={help} name={name} />
         </div>
@@ -179,12 +202,17 @@ function HelpLine({ label, children }: { readonly label: string; readonly childr
  *
  * Discreto de propósito — tracejado e cinza, como o selo de demonstração. Ele
  * não pede atenção; ele impede que alguém tome o número por medição.
+ *
+ * `shrink-0` porque ele é a última coisa que pode sair de uma linha apertada: a
+ * palavra "ilustrativo" cortada em "ilustrat" não avisa nada, e um selo de
+ * procedência que não se lê é pior que selo nenhum. Quem cede ao lado dele é o
+ * texto, que tem reticências e `title`.
  */
 export function Illustrative({ title }: { readonly title?: string }) {
   return (
     <span
       title={title ?? 'Dado fixo de demonstração: a API ainda não tem esta fonte.'}
-      className="inline-flex h-4.5 items-center border border-dashed border-tick px-1.5 font-mono text-[10px] tracking-[0.04em] text-fg-3"
+      className="inline-flex h-4.5 shrink-0 items-center border border-dashed border-tick px-1.5 font-mono text-[10px] tracking-[0.04em] text-fg-3"
     >
       ilustrativo
     </span>

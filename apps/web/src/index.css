@@ -13,6 +13,24 @@
    3. **Azul só para interação.** `action` é o que se clica, o que está
       selecionado e o foco — nunca um estado da máquina. */
 @theme {
+  /* Larguras que o projeto garante.
+
+     `piso` é a mais estreita em que a interface é desenhada para caber: 1280
+     px, que é 1280×720 e 1366×768. Abaixo dela a faixa do topo avisa, porque
+     um painel de operação apertado é pior que um painel que diz que está
+     apertado.
+
+     `largo` é de onde em diante sobra espaço para os extras — o nome do
+     operador na barra, o dia ao lado do relógio, a barra de faixa da
+     velocidade. Entre `piso` e `largo` eles saem: a informação que fica é a
+     que alguém precisa para operar, e a que sai é a que alguém consulta.
+
+     Os nomes são de largura, e não de dispositivo, porque é largura que o
+     projeto promete — `sm`/`md`/`lg` do Tailwind falam de telefone e tablet,
+     que não é o caso de nenhuma destas telas. */
+  --breakpoint-piso: 1280px;
+  --breakpoint-largo: 1440px;
+
   --font-sans: Inter, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 

@@ -44,9 +44,24 @@ export interface InstrumentRowProps {
   readonly onSelect?: () => void;
 }
 
-/** Colunas da linha; o cabeçalho da tabela usa as mesmas. */
+/**
+ * Colunas da linha; o cabeçalho da tabela usa as mesmas.
+ *
+ * ## Por que há duas versões
+ *
+ * As larguras mínimas do arranjo largo somam 654 px, e os cinco espaçamentos de
+ * 16 px levam o total a 734. Na tela de Processo em 1280 px a tabela tem 653 px:
+ * faltavam 81, e a grade não tinha de onde tirá-los — então as duas últimas
+ * colunas, "Malha" e "Última 1 h", saíam cortadas pela borda do painel.
+ *
+ * O arranjo estreito soma 536 px com os espaçamentos, e cabe com folga. Ele
+ * aperta o nome da variável (que tem reticências e `title`) e o minigráfico, que
+ * é uma silhueta: 84 px continuam contando a mesma história que 120.
+ *
+ * De `largo` para cima nada muda — são exatamente as medidas de antes.
+ */
 export const INSTRUMENT_GRID =
-  'grid grid-cols-[minmax(150px,190px)_minmax(160px,1fr)_96px_72px_56px_minmax(120px,0.75fr)] items-center gap-x-4';
+  'grid grid-cols-[minmax(110px,170px)_minmax(120px,1fr)_76px_60px_46px_minmax(84px,0.75fr)] items-center gap-x-2 largo:grid-cols-[minmax(150px,190px)_minmax(160px,1fr)_96px_72px_56px_minmax(120px,0.75fr)] largo:gap-x-4';
 
 export function InstrumentRow({
   name,
@@ -80,7 +95,9 @@ export function InstrumentRow({
       }`}
     >
       <div role="cell" className="min-w-0">
-        <div className="truncate text-[13px] text-fg">{name}</div>
+        <div className="truncate text-[13px] text-fg" title={name}>
+          {name}
+        </div>
         <div className="mt-0.5 flex items-center gap-1.5">
           <Tag>{tag}</Tag>
           {priority ? <PriorityBadge priority={priority} /> : null}
@@ -102,12 +119,12 @@ export function InstrumentRow({
           label={`${name}: faixa`}
         />
       </div>
-      <div role="cell" className="text-right">
+      <div role="cell" className="min-w-0 overflow-hidden text-right whitespace-nowrap">
         <Num unit={unit} className="text-[16px]" unitClassName="">
           <span style={{ color }}>{pvText}</span>
         </Num>
       </div>
-      <div role="cell" className="text-right font-mono text-[12px] text-fg-2">
+      <div role="cell" className="min-w-0 truncate text-right font-mono text-[12px] text-fg-2">
         {spText}
       </div>
       <div role="cell">

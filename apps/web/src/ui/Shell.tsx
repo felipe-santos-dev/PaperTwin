@@ -16,6 +16,26 @@ import type { SectionState } from './sections';
  *
  * Nada aqui é `<aside>`: o painel do ativo na tela de Máquina é o único
  * complementar da página, e o e2e o encontra por esse papel.
+ *
+ * ## A barra superior em 1280 px
+ *
+ * A barra era uma fila de blocos `shrink-0` com espaçamento fixo. A soma deles
+ * passa de 1600 px, e em 1280 o navegador faz a única coisa que pode: deixa os
+ * blocos se atropelarem. Era por isso que "Turno B · 14:00–22:00" desaparecia
+ * atrás de Gramatura e o "m/min" ficava debaixo da busca — não havia largura
+ * para os dois, e nada na folha de estilo dizia quem cedia.
+ *
+ * Agora está dito, em duas camadas:
+ *
+ * 1. **Cada bloco de texto encolhe e corta** (`min-w-0` com `truncate`). Sem
+ *    `min-w-0`, um filho de flex não encolhe abaixo do conteúdo — ele estoura,
+ *    e é esse estouro que vira sobreposição.
+ * 2. **Entre 1280 e 1440, os extras saem** (`max-largo:hidden`): o nome do
+ *    operador, o dia ao lado do relógio e a barra de faixa da velocidade. São
+ *    as três coisas da barra que alguém consulta, e não as que alguém opera.
+ *
+ * O que nunca sai: turno, gramatura, velocidade, os três contadores de alarme,
+ * a fonte de dados e a hora.
  */
 
 export interface FrameTop {
@@ -88,41 +108,67 @@ export function Shell({
   children,
 }: ShellProps) {
   return (
-    <div className="grid h-full grid-cols-[56px_minmax(0,1fr)] grid-rows-[48px_64px_auto_minmax(0,1fr)] bg-base">
-      <NavRail screen={screen} go={go} badges={badges} />
-      <TopBar
-        top={top}
-        source={source}
-        search={search}
-        onAlarms={() => {
-          go('turno');
-        }}
-      />
+    <div className="flex h-full min-w-0 flex-col bg-base">
+      <NarrowNotice />
+      <div className="grid min-h-0 min-w-0 flex-1 grid-cols-[56px_minmax(0,1fr)] grid-rows-[48px_64px_auto_minmax(0,1fr)] bg-base">
+        <NavRail screen={screen} go={go} badges={badges} />
+        <TopBar
+          top={top}
+          source={source}
+          search={search}
+          onAlarms={() => {
+            go('turno');
+          }}
+        />
 
-      <div
-        role="navigation"
-        aria-label="Seções do processo"
-        className="col-start-2 flex min-w-0 gap-1 border-b border-line px-4 py-2"
-      >
-        {sections.map((section) => (
-          <SectionBlock
-            key={section.id}
-            label={section.label}
-            out={section.out}
-            selected={screen === 'processo' && area === section.id}
-            onClick={() => {
-              onArea(section.id);
-            }}
-          />
-        ))}
+        <div
+          role="navigation"
+          aria-label="Seções do processo"
+          className="col-start-2 flex min-w-0 gap-1 overflow-hidden border-b border-line px-4 py-2"
+        >
+          {sections.map((section) => (
+            <SectionBlock
+              key={section.id}
+              label={section.label}
+              out={section.out}
+              selected={screen === 'processo' && area === section.id}
+              onClick={() => {
+                onArea(section.id);
+              }}
+            />
+          ))}
+        </div>
+
+        <div className="col-start-2 min-w-0">{banner}</div>
+
+        <main className="col-start-2 flex min-h-0 min-w-0 flex-col gap-4 overflow-x-hidden overflow-y-auto p-4">
+          {children}
+        </main>
       </div>
-
-      <div className="col-start-2">{banner}</div>
-
-      <main className="col-start-2 flex min-h-0 min-w-0 flex-col gap-4 overflow-x-hidden overflow-y-auto p-4">
-        {children}
-      </main>
     </div>
+  );
+}
+
+/**
+ * A faixa que aparece abaixo de 1280 px.
+ *
+ * Em CSS e não em JavaScript de propósito: medir a janela daria um render a
+ * mais a cada arrasto de borda, e a resposta é a mesma que uma consulta de
+ * mídia dá de graça. `piso:hidden` a esconde de 1280 para cima.
+ *
+ * O texto diz a largura em números porque é o que resolve o problema de quem
+ * está lendo: "maximize a janela" não ajuda quem está num monitor de 1024.
+ */
+function NarrowNotice() {
+  return (
+    <p
+      role="status"
+      className="flex shrink-0 items-center justify-center gap-2 border-b border-line bg-chrome px-4 py-1 text-center text-[11px] text-fg-3 piso:hidden"
+    >
+      <span aria-hidden="true" className="size-[7px] shrink-0 border border-current" />
+      Esta interface é desenhada para telas de 1280 px de largura ou mais. Em telas mais estreitas,
+      parte dos painéis fica cortada.
+    </p>
   );
 }
 
@@ -200,26 +246,30 @@ function TopBar({
   readonly onAlarms: () => void;
 }) {
   return (
-    <header className="col-start-2 flex min-w-0 items-center gap-6 border-b border-line bg-chrome px-4 max-xl:gap-4">
+    <header className="col-start-2 flex min-w-0 items-center gap-3 border-b border-line bg-chrome px-4 largo:gap-5">
       <div className="flex shrink-0 items-baseline gap-2.5">
         <span className="text-[15px] font-semibold">MP1</span>
-        <span className="text-[12px] text-fg-3">PaperTwin</span>
+        <span className="text-[12px] text-fg-3 max-largo:hidden">PaperTwin</span>
       </div>
       <Divider />
       {top.shift ? (
-        <div className="flex min-w-0 shrink items-baseline gap-2 overflow-hidden whitespace-nowrap">
-          <span className="text-[13px] font-semibold">Turno {top.shift.letter}</span>
-          <span className="font-mono text-[12px] text-fg-2">{top.shift.window}</span>
-          <span className="truncate text-[12px] text-fg-2">{top.shift.operator}</span>
+        <div className="flex min-w-0 shrink items-baseline gap-2 whitespace-nowrap">
+          <span className="shrink-0 text-[13px] font-semibold">Turno {top.shift.letter}</span>
+          <span className="shrink-0 font-mono text-[12px] text-fg-2">{top.shift.window}</span>
+          {/* o nome do operador é o primeiro extra a sair: ele é consulta, e a
+              janela do turno é operação */}
+          <span className="min-w-0 truncate text-[12px] text-fg-2 max-largo:hidden">
+            {top.shift.operator}
+          </span>
         </div>
       ) : null}
       <Divider />
-      <div className="flex shrink-0 items-baseline gap-1.5">
+      <div className="flex shrink-0 items-baseline gap-1.5 whitespace-nowrap">
         <span className="text-[11px] text-fg-3">Gramatura</span>
         <span className="font-mono text-[14px] font-medium">{top.gramatura?.text ?? '—'}</span>
         <span className="text-[11px] text-fg-2">{top.gramatura?.unit ?? ''}</span>
       </div>
-      <div className="flex shrink-0 items-center gap-2 max-lg:hidden">
+      <div className="flex shrink-0 items-center gap-2 whitespace-nowrap">
         <span className="text-[11px] text-fg-3">Velocidade</span>
         <span className="font-mono text-[14px] font-medium">{top.speed?.text ?? '—'}</span>
         <span className="text-[11px] text-fg-2">{top.speed?.unit ?? ''}</span>
@@ -232,16 +282,16 @@ function TopBar({
             h={top.speed.bar.h}
             target={top.speed.bar.target}
             pv={top.speed.value}
-            className="w-18"
+            className="w-18 max-largo:hidden"
             label="Velocidade na faixa"
           />
         ) : null}
       </div>
 
-      {search ?? <div className="flex-1" />}
+      {search ?? <div className="min-w-0 flex-1" />}
 
       <div className="flex shrink-0 items-center gap-1.5">
-        <span className="mr-1 text-[11px] text-fg-3 max-xl:hidden">Alarmes</span>
+        <span className="mr-1 text-[11px] text-fg-3 max-largo:hidden">Alarmes</span>
         {([1, 2, 3] as const).map((priority) => {
           const count = top.alarms[priority];
           const tone = PRIORITY_CLASS[priority];
@@ -262,7 +312,9 @@ function TopBar({
               >
                 {count}
               </span>
-              <span className={`text-[11px] ${on ? 'text-fg' : 'text-fg-3'}`}>
+              <span
+                className={`text-[11px] whitespace-nowrap max-largo:hidden ${on ? 'text-fg' : 'text-fg-3'}`}
+              >
                 {PRIORITY_LABEL[priority]}
               </span>
             </button>
@@ -272,9 +324,10 @@ function TopBar({
       <Divider />
       {source}
       {top.clock ? (
-        <div className="flex shrink-0 items-baseline gap-2 max-lg:hidden">
+        <div className="flex shrink-0 items-baseline gap-2 whitespace-nowrap">
           <span className="font-mono text-[15px] font-medium">{top.clock.time}</span>
-          <span className="font-mono text-[11px] text-fg-3">{top.clock.date}</span>
+          {/* o dia sai antes da hora: quem olha o relógio quer a hora */}
+          <span className="font-mono text-[11px] text-fg-3 max-largo:hidden">{top.clock.date}</span>
         </div>
       ) : null}
     </header>

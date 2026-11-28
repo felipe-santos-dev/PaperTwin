@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PaperTwin · MP1 — proposta de layout v2</title>
+<style>
+:root{
+  --bg:#0a0d12; --panel:#10141b; --panel2:#141922; --line:#1c232d; --line2:#283140;
+  --tx:#e7eaef; --tx2:#9aa3b0; --tx3:#636c79;
+  --blue:#4c8dff; --red:#ef4d56; --amber:#f2a93b; --pink:#e5579b; --green:#3fb68b; --violet:#a78bfa;
+  --mono:"JetBrains Mono","SFMono-Regular",ui-monospace,Consolas,monospace;
+  --sans:Inter,"Segoe UI",system-ui,-apple-system,sans-serif;
+  --top:48px; --rail:64px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--tx);font:13px/1.45 var(--sans);overflow:hidden}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,select{font:inherit;color:inherit}
+.mono{font-family:var(--mono)}
+.muted{color:var(--tx2)} .dim{color:var(--tx3)}
+.red{color:var(--red)} .amber{color:var(--amber)} .pink{color:var(--pink)} .green{color:var(--green)} .blue{color:var(--blue)} .violet{color:var(--violet)}
+
+/* shell */
+.app{display:grid;grid-template-columns:var(--rail) 1fr;height:100vh}
+.rail{border-right:1px solid var(--line);display:flex;flex-direction:column}
+.logo{height:var(--top);display:grid;place-items:center;font-weight:700;border-bottom:1px solid var(--line)}
+.rail a{display:flex;flex-direction:column;align-items:center;gap:1px;padding:9px 0;color:var(--tx3);text-decoration:none;position:relative;font-size:10px}
+.rail a b{font:600 15px var(--mono);color:var(--tx2)}
+.rail a:hover{color:var(--tx2)}
+.rail a.on{color:var(--tx);background:var(--panel)}
+.rail a.on::before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:2px;background:var(--blue)}
+.rail a.on b{color:var(--tx)}
+.rail a.star b{color:var(--blue)}
+.rail .dot{position:absolute;top:8px;right:14px;width:6px;height:6px;border-radius:50%;background:var(--amber)}
+.main{display:grid;grid-template-rows:var(--top) 1fr;min-width:0;min-height:0}
+.top{display:flex;align-items:center;gap:22px;padding:0 20px;border-bottom:1px solid var(--line)}
+.top .brand{font-weight:700} .top .brand span{font-weight:400;color:var(--tx3);margin-left:6px}
+.top .kv{display:flex;align-items:baseline;gap:7px;color:var(--tx3);font-size:12px;white-space:nowrap}
+.top .kv b{font:600 14px var(--mono);color:var(--tx)}
+.sep{width:1px;height:20px;background:var(--line2)}
+.search{flex:1;max-width:420px;margin-left:auto;display:flex;align-items:center;gap:8px;height:30px;padding:0 10px;border:1px solid var(--line2);border-radius:6px;color:var(--tx3);white-space:nowrap;overflow:hidden}
+.search kbd{margin-left:auto;font:11px var(--mono);border:1px solid var(--line2);padding:0 5px;border-radius:3px}
+.alarms{display:flex;align-items:center;gap:10px;height:30px;padding:0 10px;border:1px solid var(--line2);border-radius:6px;font:600 12px var(--mono)}
+.alarms i{display:inline-block;width:7px;height:7px;border-radius:2px;margin-right:5px}
+.demo{display:flex;align-items:center;gap:8px;height:30px;padding:0 10px;border:1px dashed var(--line2);border-radius:6px;color:var(--tx2);font-size:11px;letter-spacing:.6px;white-space:nowrap}
+.demo u{text-decoration:none;color:var(--blue);letter-spacing:0}
+.clock{font:600 14px var(--mono);white-space:nowrap} .clock span{font-weight:400;color:var(--tx3);font-size:11px;margin-left:6px}
+
+/* página: rola só a página */
+.page:focus,section:focus{outline:none}
+.page{display:none;overflow-y:auto;padding:18px 22px 60px;scroll-behavior:smooth}
+.page.on{display:block}
+.page::-webkit-scrollbar{width:10px}.page::-webkit-scrollbar-thumb{background:#1f2732;border-radius:5px}
+.ph{display:flex;align-items:flex-end;gap:16px;margin-bottom:14px}
+.ph h1{font-size:20px;font-weight:600;letter-spacing:-.2px}
+.ph p{color:var(--tx2);margin-top:2px}
+.ph p b{color:var(--tx);font-weight:600}
+.ph .act{margin-left:auto;display:flex;gap:8px;align-items:center}
+.toc{display:flex;gap:4px;margin-left:24px;align-self:center}
+.toc a{color:var(--tx3);text-decoration:none;font-size:12px;padding:4px 9px;border-radius:4px}
+.toc a:hover{color:var(--tx);background:var(--panel)}
+.blk{margin-top:36px;scroll-margin-top:12px}
+.st{display:flex;align-items:baseline;gap:12px;margin-bottom:12px}
+.st h3{font-size:15px;font-weight:600}
+.st p{color:var(--tx3);font-size:12px}
+.st .r{margin-left:auto;display:flex;gap:8px;align-items:center}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.sticky{position:sticky;top:0;align-self:start}
+
+.seg{display:flex;border:1px solid var(--line2);border-radius:6px;overflow:hidden}
+.seg button{padding:5px 12px;color:var(--tx2);font-size:12px;white-space:nowrap}
+.seg button+button{border-left:1px solid var(--line2)}
+.seg button.on{background:#1a2333;color:var(--tx)}
+.btn{padding:6px 12px;border:1px solid var(--line2);border-radius:6px;color:var(--tx2);font-size:12px;white-space:nowrap}
+.btn.pri{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn:hover{color:var(--tx);border-color:#3a4558}
+.btn.pri:hover{filter:brightness(1.1)}
+.btn.sm{padding:3px 8px;font-size:11px}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;min-height:0;display:flex;flex-direction:column}
+.panel>h2{display:flex;align-items:center;gap:10px;padding:12px 16px;font-size:13px;font-weight:600;border-bottom:1px solid var(--line);min-height:47px}
+.panel>h2 small{font-weight:400;color:var(--tx3);font-size:12px}
+.panel>h2 .r{margin-left:auto;display:flex;gap:8px;align-items:center;font-weight:400}
+.pbody{padding:14px 16px;min-height:0;flex:1}
+.pbody[style*="height"],div[id][style*="height:"]{flex:none}
+svg{display:block;width:100%}
+svg text{font-family:var(--mono);font-size:10px;fill:var(--tx3)}
+
+.pill{display:inline-flex;align-items:center;height:18px;padding:0 6px;border-radius:3px;font:600 10px var(--mono);border:1px solid currentColor;white-space:nowrap}
+.sev{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:3px;font:700 11px var(--mono);color:#0a0d12}
+.sev.s1{background:var(--red)} .sev.s2{background:var(--amber)} .sev.s3{background:var(--tx3)}
+.tag{font:11px var(--mono);color:var(--tx3)}
+.help{display:inline-grid;place-items:center;width:16px;height:16px;border:1px solid var(--line2);border-radius:3px;font:10px var(--mono);color:var(--tx3);cursor:help}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:8px;background:var(--panel);margin-bottom:14px}
+.kpi{padding:12px 18px}
+.kpi+.kpi{border-left:1px solid var(--line)}
+.kpi label{color:var(--tx3);font-size:12px}
+.kpi .v{display:flex;align-items:baseline;gap:8px;margin-top:2px}
+.kpi .v b{font:600 26px var(--mono);letter-spacing:-.5px}
+.kpi .v span{color:var(--tx2);font-size:12px}
+.bar{height:4px;background:#1c232d;border-radius:2px;margin-top:8px;position:relative}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:var(--tx2)}
+.bar em{position:absolute;top:-3px;width:2px;height:10px;background:var(--tx)}
+
+.list>div{display:grid;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line)}
+.list>div:last-child{border-bottom:0}
+.list>div[data-i]{cursor:pointer}
+.list>div:hover{background:var(--panel2)}
+.list .sel{background:#141c2a!important;box-shadow:inset 2px 0 var(--blue)}
+.grp{padding:14px 16px 6px;font:600 10px var(--mono);letter-spacing:1px;color:var(--tx3);text-transform:uppercase}
+
+.vt{width:100%;border-collapse:collapse}
+.vt th{white-space:nowrap;text-align:left;font-weight:500;color:var(--tx3);font-size:11px;padding:8px 16px;border-bottom:1px solid var(--line)}
+.vt td{padding:9px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
+.vt tr:last-child td{border-bottom:0}
+.vt tbody tr[data-i]{cursor:pointer}
+.vt tbody tr:hover td{background:var(--panel2)}
+.vt tr.g td{padding:14px 16px 6px;font:600 10px var(--mono);letter-spacing:1px;color:var(--tx3);border-bottom:0;background:none!important}
+.vt tr.alarm td{background:rgba(242,169,59,.06)}
+.vt tr.sel td{background:#141c2a}
+.vt tr.sel td:first-child{box-shadow:inset 2px 0 var(--blue)}
+.vt .nm{font-weight:500}
+.vt .pv{font:600 15px var(--mono);text-align:right;white-space:nowrap}
+.vt .pv small{font:11px var(--sans);color:var(--tx3);margin-left:3px}
+.vt .r{text-align:right}
+.range{position:relative;height:16px;width:150px}
+.range::before{content:"";position:absolute;left:0;right:0;top:7px;height:2px;background:#232b37}
+.range .ok{position:absolute;top:6px;height:4px;background:#2e3a4b;border-radius:2px}
+.range .pvm{position:absolute;top:1px;width:3px;height:14px;border-radius:1px;background:var(--tx)}
+.range .spm{position:absolute;top:4px;width:1px;height:8px;background:var(--tx3)}
+
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 10px;border:1px solid var(--line2);border-radius:13px;color:var(--tx2);font-size:12px;cursor:pointer;white-space:nowrap}
+.chip:hover{color:var(--tx)}
+.chip.on{border-color:var(--blue);color:var(--tx);background:#141c2a}
+.chip i{width:6px;height:6px;border-radius:50%}
+.stat{display:flex;flex-direction:column;gap:2px}
+.stat label{color:var(--tx3);font-size:12px}
+.stat b{font:600 28px var(--mono);letter-spacing:-.5px}
+.stat span{color:var(--tx2);font-size:12px}
+
+.kb{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.kcol{display:flex;flex-direction:column;gap:8px;min-height:340px}
+.kcol h3{display:flex;justify-content:space-between;font:600 11px var(--mono);letter-spacing:.8px;color:var(--tx3);padding:2px 2px 6px;border-bottom:1px solid var(--line)}
+.kcard{background:var(--panel2);border:1px solid var(--line2);border-radius:6px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;cursor:pointer}
+.kcard:hover{border-color:#3a4558}
+.kcard.sel{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue)}
+.kcard.sugg{border-style:dashed;border-color:var(--amber)}
+
+.steps{display:flex;align-items:center;margin:4px 0 16px}
+.steps .st2{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:var(--tx3);cursor:pointer}
+.steps .st2 b{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;border:1px solid var(--line2);font:600 11px var(--mono);color:var(--tx2);background:var(--panel2)}
+.steps .st2.hit b{border-color:var(--pink);color:var(--pink)}
+.steps .st2.cur b{box-shadow:0 0 0 3px rgba(76,141,255,.35)}
+.steps .ln{flex:1;height:1px;background:var(--line2);margin:0 6px 18px}
+.rgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.rcard{background:var(--panel2);border:1px solid var(--line2);border-radius:6px;padding:12px;cursor:pointer}
+.rcard.hit{border-color:rgba(229,87,155,.6)}
+.rcard.sel{box-shadow:0 0 0 1px var(--blue);border-color:var(--blue)}
+.cmp{display:grid;grid-template-columns:52px 1fr 48px;gap:8px;align-items:center;font-size:12px;margin-top:6px}
+.cmp .b{height:4px;background:#232b37;border-radius:2px;position:relative}
+.cmp .b i{position:absolute;left:0;top:0;bottom:0;background:var(--tx2);border-radius:2px}
+.cmp b{font:600 12px var(--mono);text-align:right}
+
+.scene{position:relative;border-radius:8px;border:1px solid var(--line);overflow:hidden;background:radial-gradient(ellipse at 50% 60%,#1a2130 0%,#0c1016 70%);height:calc(100vh - 48px - 40px)}
+.scene .ov{position:absolute;display:flex;gap:8px;align-items:center}
+.select{display:flex;align-items:center;gap:10px;height:32px;padding:0 12px;border:1px solid var(--line2);border-radius:6px;background:rgba(16,20,27,.92);font-size:12px}
+.secstrip{display:grid;grid-template-columns:repeat(10,1fr);gap:8px}
+.seccard{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px 12px;cursor:pointer}
+.seccard:hover{border-color:var(--line2)}
+.seccard b{display:block;font-size:12px;margin-bottom:6px}
+
+.legend{display:flex;gap:14px;font-size:11px;color:var(--tx3);flex-wrap:wrap}
+.legend i{display:inline-block;width:12px;height:2px;vertical-align:middle;margin-right:5px}
+.foot{padding:10px 16px;border-top:1px solid var(--line);color:var(--tx3);font-size:12px;display:flex;justify-content:space-between;gap:10px}
+.foot a{color:var(--blue);text-decoration:none;cursor:pointer}
+.empty{color:var(--tx3);font-size:12px;padding:20px 16px;text-align:center}
+
+/* ---------- SIMULADOR ---------- */
+.simhead{display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:8px;margin-bottom:14px}
+.simhead .play{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--blue);color:#fff;font-size:13px}
+.simhead input[type=range]{flex:1}
+.simhead .tnow{font:600 15px var(--mono);min-width:120px}
+.simhead .tnow small{color:var(--tx3);font-weight:400}
+input[type=range]{accent-color:var(--blue);cursor:pointer}
+.simfold{display:grid;grid-template-columns:340px minmax(0,1fr) 380px;gap:14px;height:calc(100vh - 48px - 96px - 70px);min-height:600px}
+.mv{background:var(--panel2);border:1px solid var(--line2);border-radius:6px;padding:10px 12px;margin-bottom:10px}
+.mv.ctl{border-style:dashed;opacity:.85}
+.mv .h{display:flex;align-items:center;gap:6px}
+.mv .h .x{margin-left:auto;color:var(--tx3);font-size:14px;line-height:1;padding:0 2px}
+.mv .h .x:hover{color:var(--red)}
+.mv .nmv{font-weight:500;margin:4px 0 6px}
+.mv .vals{display:flex;align-items:baseline;justify-content:space-between}
+.mv .vals b{font:600 18px var(--mono)}
+.mv .vals b small{font:11px var(--sans);color:var(--tx3);margin-left:3px}
+.mv input[type=range]{width:100%;margin:6px 0 2px}
+.mv .at{display:flex;gap:4px;align-items:center;font-size:11px;color:var(--tx3);margin-top:4px}
+.mv .at button{padding:1px 6px;border:1px solid var(--line2);border-radius:3px;font:10px var(--mono);color:var(--tx3)}
+.mv .at button.on{border-color:var(--blue);color:var(--tx)}
+.kind-sp{color:var(--violet)} .kind-mv{color:var(--blue)} .kind-dist{color:var(--amber)}
+.picker{position:absolute;left:12px;right:12px;top:52px;bottom:12px;background:#0e1218;border:1px solid var(--line2);border-radius:8px;z-index:5;display:none;flex-direction:column;box-shadow:0 20px 40px rgba(0,0,0,.5)}
+.picker.on{display:flex}
+.picker input{margin:10px;height:32px;border:1px solid var(--line2);border-radius:6px;background:var(--panel);padding:0 10px;outline:none}
+.picker input:focus{border-color:var(--blue)}
+.picker .pl{overflow:auto;flex:1;padding-bottom:8px}
+.picker .pi{display:grid;grid-template-columns:1fr auto;gap:2px 8px;padding:7px 12px;cursor:pointer}
+.picker .pi:hover{background:var(--panel2)}
+.picker .pi.dis{opacity:.4;cursor:not-allowed}
+.specrow{display:grid;grid-template-columns:1fr 92px;gap:2px 12px;padding:9px 16px;border-bottom:1px solid var(--line);align-items:center}
+.specrow .sb{grid-column:1/3;position:relative;height:10px}
+.specrow .sb .tr{position:absolute;left:0;right:0;top:4px;height:2px;background:#1f2732}
+.specrow .sb .band{position:absolute;top:2px;height:6px;background:#22303f;border-radius:3px}
+.specrow .sb .base{position:absolute;top:0;width:1px;height:10px;background:var(--tx3)}
+.specrow .sb .now{position:absolute;top:-1px;width:4px;height:12px;border-radius:2px;margin-left:-2px;background:var(--tx);transition:left .08s linear}
+.specrow .v{font:600 14px var(--mono);text-align:right}
+.specrow .d{font:11px var(--mono);text-align:right;color:var(--tx3)}
+.headline{font-size:14px;padding:11px 14px;border-left:3px solid var(--blue);background:#121a27;border-radius:0 6px 6px 0;margin-bottom:12px;line-height:1.5}
+.headline b{font-family:var(--mono);font-weight:600}
+.tipbox{position:fixed;pointer-events:none;background:#0e1218;border:1px solid var(--line2);border-radius:6px;padding:8px 10px;font-size:12px;z-index:50;display:none;max-width:320px;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.sug{display:grid;grid-template-columns:28px 1fr auto;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+.sug:last-child{border-bottom:0}
+.sug .n{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;border:1px solid var(--line2);font:600 11px var(--mono);color:var(--tx2)}
+.sug.best .n{border-color:var(--green);color:var(--green)}
+.sug.bad{opacity:.5}
+.scen{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px 16px;cursor:pointer;display:flex;flex-direction:column;gap:6px}
+.scen:hover{border-color:#3a4558}
+.scen.on{border-color:var(--blue)}
+.scen b{font-size:13px}
+.scen .ms{font:11px var(--mono);color:var(--tx3)}
+@media (max-width:1500px){
+  .simfold{grid-template-columns:280px minmax(0,1fr) 300px}
+  .toc{display:none}
+  .top .kv.hide-s,.search{display:none}
+  .simhead{flex-wrap:wrap}
+  .kb{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+</head>
+<body>
+<div class="tipbox" id="tip"></div>
+<div class="app">
+  <nav class="rail" id="rail"><div class="logo">PT</div></nav>
+  <div class="main">
+    <header class="top">
+      <div class="brand">MP1<span>PaperTwin</span></div>
+      <div class="sep"></div>
+      <div class="kv">Turno <b>B</b> <span class="mono">14:00–22:00</span></div>
+      <div class="kv hide-s">Gramatura <b>75,03</b> g/m²</div>
+      <div class="kv hide-s">Velocidade <b>1.250</b> m/min</div>
+      <div class="search">⌕ Buscar TAG, mancal, bobina, nota <kbd>/</kbd></div>
+      <div class="alarms" title="Alarmes ativos"><span><i style="background:var(--red)"></i>2</span><span><i style="background:var(--amber)"></i>4</span><span class="dim"><i style="background:var(--tx3)"></i>0</span></div>
+      <div class="demo">● DEMONSTRAÇÃO <u>ao vivo ›</u></div>
+      <div class="clock">18:00<span>seg 15/06</span></div>
+    </header>
+
+    <!-- ============ 1 TURNO ============ -->
+    <section class="page" id="turno">
+      <div class="ph">
+        <div><h1>Turno B</h1><p>14:00–22:00 · <b>240</b> de 480 min · entrega às 22:00</p></div>
+        <nav class="toc"><a href="#t-agora">Agora</a><a href="#t-comp">Últimos turnos</a><a href="#t-ev">Eventos</a></nav>
+        <div class="act"><div class="seg"><button class="on">Turno</button><button>24 h</button><button>3 turnos</button></div></div>
+      </div>
+      <div id="t-agora">
+        <div class="kpis">
+          <div class="kpi"><label>Produção</label><div class="v"><b>189 t</b><span class="green">+9 t vs. ritmo</span></div><div class="bar"><i style="width:52%"></i><em style="left:50%"></em></div></div>
+          <div class="kpi"><label>Eficiência de tempo</label><div class="v"><b>100,0 %</b><span>0 quebras</span></div><div class="bar"><i style="width:100%;background:var(--green)"></i></div></div>
+          <div class="kpi"><label>Refugo</label><div class="v"><b>0,0 %</b><span>meta ≤ 5,0 %</span></div><div class="bar"><i style="width:0"></i><em style="left:62%;background:var(--tx3)"></em></div></div>
+          <div class="kpi"><label>Bobinas</label><div class="v"><b>4</b><span><span class="pink">1 retida</span> · 2 rebaixadas</span></div><div class="bar"><i style="width:25%;background:var(--pink)"></i></div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:14px">
+          <div class="panel">
+            <h2>Linha do tempo <small>passe o mouse para ver o instante</small>
+              <div class="r legend"><span><i style="background:var(--red)"></i>quebra</span><span><i style="background:var(--amber)"></i>alarme</span><span><i style="background:var(--tx2)"></i>setpoint</span><span><i style="background:var(--pink)"></i>bobina</span></div></h2>
+            <div class="pbody" id="tl" style="height:560px"></div>
+          </div>
+          <div class="panel">
+            <h2>Precisa de atenção <small>8 itens</small><span class="r help" title="Alarmes por prioridade e tempo ativo, depois pendências da passagem">?</span></h2>
+            <div class="grp">Alarmes ativos</div>
+            <div class="list" id="alist"></div>
+            <div class="grp">Passagem de turno · <span id="pcount">8</span> pendências</div>
+            <div class="list" id="plist"></div>
+            <div class="foot"><span>marque para dar baixa</span><a>ver todas ›</a></div>
+          </div>
+        </div>
+      </div>
+      <div class="blk" id="t-comp">
+        <div class="st"><h3>Últimos turnos</h3><p>mesmo intervalo de 240 min, para comparar justo</p></div>
+        <div class="g3" id="tcomp" style="grid-template-columns:repeat(4,1fr)"></div>
+      </div>
+      <div class="blk" id="t-ev">
+        <div class="st"><h3>Registro de eventos</h3><p id="evcount"></p><div class="r chips" id="evf"></div></div>
+        <div class="panel"><table class="vt" id="evtab"></table></div>
+      </div>
+    </section>
+
+    <!-- ============ 2 PROCESSO ============ -->
+    <section class="page" id="processo">
+      <div class="ph">
+        <div><h1>Processo</h1><p id="psub"></p></div>
+        <nav class="toc"><a href="#p-var">Variáveis</a><a href="#p-malhas">Malhas</a><a href="#p-sp">Setpoints</a></nav>
+        <div class="act"><label class="muted" style="display:flex;gap:6px;align-items:center;cursor:pointer"><input type="checkbox" id="onlyout"> só fora da faixa</label><button class="btn">Alterar setpoint</button></div>
+      </div>
+      <div class="chips" id="secs" style="margin-bottom:14px"></div>
+      <div id="p-var" style="display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:14px;align-items:start">
+        <div class="panel"><table class="vt" id="vtab"></table></div>
+        <div class="panel sticky">
+          <h2><div class="seg" id="ptabs"><button class="on">Tendência</button><button>Efeito na folha</button></div>
+            <div class="r"><div class="seg"><button>1 h</button><button class="on">8 h</button><button>24 h</button><button>7 d</button></div></div></h2>
+          <div class="pbody" style="display:flex;flex-direction:column;gap:8px">
+            <div class="chips" id="tchips"></div>
+            <div class="dim" style="font-size:12px">Clique numa linha da tabela para somar ou tirar do gráfico.</div>
+            <div id="trend"></div>
+          </div>
+        </div>
+      </div>
+      <div class="blk" id="p-malhas">
+        <div class="st"><h3>Malhas de controle</h3><p>modo, PV × SP e saída da válvula</p></div>
+        <div id="loops" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px"></div>
+      </div>
+      <div class="blk" id="p-sp">
+        <div class="st"><h3>Setpoints alterados no turno</h3><p>registro auditado · motivo obrigatório</p></div>
+        <div class="panel"><table class="vt" id="sptab"></table></div>
+      </div>
+    </section>
+
+    <!-- ============ 3 LAB ============ -->
+    <section class="page" id="laboratorio">
+      <div class="ph">
+        <div><h1>Laboratório</h1><p>Últimas <b>8</b> jumbos · <span class="red">6 fora</span> · 1 no limite</p></div>
+        <nav class="toc"><a href="#l-carta">Carta</a><a href="#l-qcs">Lab × QCS</a><a href="#l-hist">Laudos</a></nav>
+        <div class="act"><span class="muted">3 ensaios na fila</span></div>
+      </div>
+      <div id="l-carta" style="display:grid;grid-template-columns:440px minmax(0,1fr) 360px;gap:14px">
+        <div class="panel">
+          <h2>Jumbos <small>clique para ver na carta</small><span class="r dim mono" style="font-size:10px;letter-spacing:.5px">GR UM ES TR CB LI</span></h2>
+          <div class="list" id="labjumbos"></div>
+          <div class="foot"><span>● dentro &nbsp; <span class="pink">■</span> fora &nbsp; ○ em atraso</span></div>
+        </div>
+        <div class="panel">
+          <h2>Carta de controle <small id="ctrlsub">bobina 4488</small><span class="r help" title="Pontos = laudos por bobina. Linhas tracejadas = limites de controle">?</span></h2>
+          <div class="pbody" style="display:flex;flex-direction:column;gap:12px">
+            <div class="chips" id="labprops"></div>
+            <div id="ctrl" style="height:400px"></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="panel">
+            <h2>Sensor virtual · Tração MD <small class="mono">LAB-1206</small></h2>
+            <div class="pbody">
+              <div class="stat"><b>5,23 <small style="font-size:13px;color:var(--tx3)">kN/m</small></b><span>± 0,14 · <span class="green">dentro da faixa</span> · viés +0,03</span></div>
+              <div id="vsens" style="margin-top:12px"></div>
+              <div class="dim" style="font-size:12px;margin-top:8px">Estimado a partir do refino (JIC-101). O laudo chega 11 min depois.</div>
+            </div>
+          </div>
+          <div class="panel">
+            <h2>Ensaios na fila</h2>
+            <div class="list">
+              <div style="grid-template-columns:1fr auto"><div><div>Tração MD · 4488</div><div class="tag">LAB-1206 · a cada 2 bobinas</div><div class="bar"><i style="width:70%"></i></div></div><span class="mono muted">11 min</span></div>
+              <div style="grid-template-columns:1fr auto"><div><div>Curl · 4488</div><div class="tag">LAB-1212 · a cada 2 bobinas</div><div class="bar"><i style="width:70%"></i></div></div><span class="mono muted">11 min</span></div>
+              <div style="grid-template-columns:1fr auto"><div><div>Cor L* · 4488</div><div class="tag">LAB-1213 · a cada 4 bobinas</div><div class="bar"><i style="width:40%"></i></div></div><span class="mono muted">24 min</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="blk" id="l-qcs">
+        <div class="st"><h3>Laboratório × QCS online</h3><p>mesma bobina, diferença entre o laudo e a média do scanner</p></div>
+        <div class="g3" id="labqcs"></div>
+      </div>
+      <div class="blk" id="l-hist">
+        <div class="st"><h3>Histórico de laudos</h3><p>15/06 · todas as propriedades</p></div>
+        <div class="panel"><table class="vt" id="laudos"></table></div>
+      </div>
+    </section>
+
+    <!-- ============ 4 BOBINAS ============ -->
+    <section class="page" id="bobinas">
+      <div class="ph">
+        <div><h1>Bobinas jumbo · 15/06</h1><p><b>8</b> bobinas · 329 t · 2 rebaixadas · <span class="pink">1 retida</span></p></div>
+        <nav class="toc"><a href="#b-prod">Produção</a><a href="#b-mapa">Mapa CD×MD</a><a href="#b-rast">Rastreabilidade</a></nav>
+        <div class="act"><button class="btn">Replay da quebra 08:06</button></div>
+      </div>
+      <div class="panel" id="b-prod">
+        <h2>Produção por bobina <small>clique numa bobina · QCS fora em rosa</small></h2>
+        <div class="list" id="gantt"></div>
+      </div>
+      <div class="blk" id="b-mapa">
+        <div class="st"><h3 id="bsel">Bobina 4488</h3><p id="bselsub">16:43–17:36 · 66,5 km · retida para reteste de Cobb</p></div>
+        <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:14px">
+          <div class="panel">
+            <h2>Umidade CD × MD<span class="r legend"><span><i style="background:var(--pink);height:8px"></i>&gt; 5,5 %</span><span><i style="background:#3a4556;height:8px"></i>alvo 4,8 %</span></span></h2>
+            <div class="pbody" id="heat" style="height:440px"></div>
+          </div>
+          <div class="panel">
+            <h2>Perfil MD <small>média CD · banda = tolerância</small></h2>
+            <div class="pbody" id="perfil" style="height:440px"></div>
+          </div>
+        </div>
+      </div>
+      <div class="blk" id="b-rast">
+        <div class="st"><h3>Rastreabilidade</h3><p>o que aconteceu na máquina enquanto a bobina enrolava</p></div>
+        <div class="g2">
+          <div class="panel"><h2>Eventos durante a formação</h2><div class="list" id="rast"></div></div>
+          <div class="panel"><h2>Destino das bobinas do dia</h2><div class="pbody" id="dest"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 5 MANCAIS ============ -->
+    <section class="page" id="mancais">
+      <div class="ph">
+        <div><h1>Mancais</h1><p><b>98</b> mancais · 50 em B · 0 em C · <span class="red">1 em D</span> · ISO 20816-3</p></div>
+        <nav class="toc"><a href="#m-lista">Lista</a><a href="#m-mapa">Mapa 2D</a><a href="#m-disp">Vibração × temperatura</a></nav>
+      </div>
+      <div id="m-lista" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start">
+        <div class="panel"><h2>Por severidade <small>clique para ver o detalhe</small></h2><table class="vt" id="mtab"></table></div>
+        <div class="panel sticky">
+          <h2><span id="mtitle"></span><small class="mono" id="mtag"></small><span class="r" id="mzone"></span></h2>
+          <div class="pbody" style="display:flex;flex-direction:column;gap:14px">
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px" id="mstats"></div>
+            <div id="mchart" style="height:380px"></div>
+            <div style="display:flex;gap:8px"><button class="btn pri" id="mnote">Abrir nota</button><button class="btn" onclick="location.hash='maquina'">Ver na máquina</button><button class="btn">Histórico de rondas</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="blk" id="m-mapa">
+        <div class="st"><h3>Mapa 2D dos mancais</h3><p>36 cilindros secadores · lado comando em cima, acionamento embaixo · clique num ponto</p><div class="r legend"><span><i style="background:var(--tx3);height:8px;width:8px;border-radius:50%"></i>A/B</span><span><i style="background:var(--amber);height:8px;width:8px;border-radius:50%"></i>C</span><span><i style="background:var(--red);height:8px;width:8px;border-radius:50%"></i>D</span></div></div>
+        <div class="panel"><div class="pbody" id="mmap" style="height:230px"></div></div>
+      </div>
+      <div class="blk" id="m-disp">
+        <div class="st"><h3>Vibração × temperatura</h3><p>quem está quente e vibrando ao mesmo tempo fica no canto de cima à direita</p></div>
+        <div class="panel"><div class="pbody" id="mscat" style="height:360px"></div></div>
+      </div>
+    </section>
+
+    <!-- ============ 6 RONDAS ============ -->
+    <section class="page" id="rondas">
+      <div class="ph">
+        <div><h1>Rondas</h1><p>Ronda 1 · 16:00 · concluída 16:40 · 6 pontos · <span class="pink">1 achado</span></p></div>
+        <nav class="toc"><a href="#r-ronda">Ronda</a><a href="#r-div">Campo × online</a><a href="#r-hist">Rondas do turno</a></nav>
+        <div class="act"><div class="seg"><button class="on">16:00</button><button>12:00</button><button>08:00</button></div></div>
+      </div>
+      <div id="r-ronda" style="display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:14px">
+        <div class="panel"><div class="pbody"><div class="steps" id="steps"></div><div class="rgrid" id="rgrid"></div></div></div>
+        <div class="panel" id="rdet"></div>
+      </div>
+      <div class="blk" id="r-div">
+        <div class="st"><h3>Campo × online por ponto</h3><p>faixa cinza = diferença esperada (−3 ± 2 °C)</p></div>
+        <div class="panel"><div class="pbody" id="rdumb" style="height:300px"></div></div>
+      </div>
+      <div class="blk" id="r-hist">
+        <div class="st"><h3>Rondas do turno</h3></div>
+        <div class="panel"><table class="vt" id="rhist"></table></div>
+      </div>
+    </section>
+
+    <!-- ============ 7 NOTAS ============ -->
+    <section class="page" id="notas">
+      <div class="ph">
+        <div><h1>Notas de manutenção</h1><p><b>3</b> ativas · 1 exige parada · <span class="amber">1 sugerida</span></p></div>
+        <nav class="toc"><a href="#n-quadro">Quadro</a><a href="#n-ind">Indicadores</a></nav>
+        <div class="act"><button class="btn">Nova nota</button></div>
+      </div>
+      <div id="n-quadro" style="display:grid;grid-template-columns:minmax(0,1fr) 500px;gap:14px">
+        <div class="kb" id="kb"></div>
+        <div class="panel" id="ndet"></div>
+      </div>
+      <div class="blk" id="n-ind">
+        <div class="st"><h3>Indicadores do mês</h3><p>junho · MP1</p></div>
+        <div class="g3">
+          <div class="panel"><h2>Notas abertas por semana <small>origem</small></h2><div class="pbody" id="nweek" style="height:220px"></div></div>
+          <div class="panel"><h2>Tempo até encerrar <small>dias, mediana</small></h2><div class="pbody" id="nlead" style="height:220px"></div></div>
+          <div class="panel"><h2>Equipamentos com mais notas</h2><div class="list" id="ntop"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 8 MÁQUINA ============ -->
+    <section class="page" id="maquina">
+      <div class="scene">
+        <div class="ov" style="top:14px;left:14px"><div class="select">Visão geral <span class="dim">▾</span></div><span class="dim" style="font-size:12px">clique num mancal · role a página para o estado das seções</span></div>
+        <div class="ov" style="top:14px;right:14px"><button class="btn" style="background:rgba(16,20,27,.9)">Vapor</button><button class="btn" style="background:rgba(16,20,27,.9)">Pausar</button><button class="btn" style="background:rgba(16,20,27,.9)" onclick="location.hash='simulacao'">Abrir no simulador</button></div>
+        <div style="position:absolute;inset:0;display:grid;place-items:center;color:var(--tx3);font:12px var(--mono)">[ cena 3D Three.js — tela cheia ]</div>
+        <div class="ov" style="bottom:14px;left:50%;transform:translateX(-50%)"><span class="dim" style="font-size:12px">arraste para girar · role sobre a cena para zoom · ↓ role a página</span></div>
+      </div>
+      <div class="blk">
+        <div class="st"><h3>Estado por seção</h3><p>clique para focar a câmera</p></div>
+        <div class="secstrip" id="secstrip"></div>
+      </div>
+    </section>
+
+    <!-- ============ 9 SIMULADOR ============ -->
+    <section class="page" id="simulacao">
+      <div class="ph">
+        <div><h1>Simulador de processo</h1><p>Mude uma ou várias variáveis e veja o efeito andar pela máquina · <span id="simsub"></span></p></div>
+        <nav class="toc"><a href="#s-tempo">Resposta</a><a href="#s-causa">Causa e efeito</a><a href="#s-obj">Objetivo</a><a href="#s-cen">Cenários</a></nav>
+        <div class="act">
+          <button class="btn" id="pinB">Fixar como B</button>
+          <button class="btn pri">Levar ao Processo</button>
+        </div>
+      </div>
+      <div class="simhead">
+        <button class="play" id="play" title="Reproduzir (espaço)">▶</button>
+        <div class="tnow" id="tnow">00:00 <small>/ 30:00</small></div>
+        <input type="range" id="scrub" min="0" max="1800" value="0" step="5">
+        <div class="seg" id="speed"><button data-v="10">10×</button><button class="on" data-v="30">30×</button><button data-v="90">90×</button></div>
+        <div class="sep"></div>
+        <span class="dim" style="font-size:12px">Malhas</span>
+        <div class="seg" id="automode"><button class="on" data-v="1">Automático</button><button data-v="0">Manual</button></div>
+        <span class="dim" style="font-size:12px">Horizonte</span>
+        <div class="seg" id="horiz"><button data-v="600">10 min</button><button class="on" data-v="1800">30 min</button><button data-v="3600">60 min</button></div>
+      </div>
+      <div class="simfold">
+        <div class="panel" style="position:relative">
+          <h2>Mudanças do cenário <small id="nmoves"></small><span class="r"><button class="btn sm" id="addmv">+ Adicionar</button></span></h2>
+          <div class="pbody" id="moves" style="overflow:auto"></div>
+          <div class="picker" id="picker"><input id="pq" placeholder="Buscar variável ou TAG…"><div class="pl" id="plist2"></div></div>
+          <div class="foot"><span>nada é escrito na máquina</span><a id="clearmv">limpar</a></div>
+        </div>
+        <div class="panel">
+          <h2>Mapa de propagação <small>clique numa seção para filtrar as curvas</small><span class="r legend"><span><i style="background:var(--blue)"></i>mexeu</span><span><i style="background:var(--tx)"></i>efeito chegou</span><span><i style="background:var(--red)"></i>fora de especificação</span></span></h2>
+          <div class="pbody" style="display:flex;flex-direction:column">
+            <div class="headline" id="headline"></div>
+            <div id="map" style="flex:1;min-height:0"></div>
+          </div>
+        </div>
+        <div class="panel">
+          <h2>Papel na enroladeira <small id="spect"></small></h2>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--line)" id="simkpi"></div>
+          <div id="spec" style="flex:1"></div>
+        </div>
+      </div>
+
+      <div class="blk" id="s-tempo">
+        <div class="st"><h3>Resposta no tempo</h3><p id="lanesub"></p><div class="r"><span id="secfilter"></span><span class="legend"><span><i style="background:var(--tx3)"></i>sem mexer</span><span><i style="background:var(--blue)"></i>cenário</span><span><i style="background:var(--amber)"></i>B fixado</span><span><i style="background:#22303f;height:8px"></i>especificação</span></span></div></div>
+        <div class="panel"><div class="pbody" id="lanes"></div></div>
+      </div>
+
+      <div class="blk" id="s-causa">
+        <div class="st"><h3>Causa e efeito</h3><p>quais relações do modelo este cenário usou · passe o mouse numa seta</p></div>
+        <div style="display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:14px">
+          <div class="panel"><h2>Caminho</h2><div class="pbody" id="graph"></div></div>
+          <div class="panel"><h2>Relações usadas <small id="nrel"></small></h2><table class="vt" id="reltab"></table></div>
+        </div>
+      </div>
+
+      <div class="blk" id="s-obj">
+        <div class="st"><h3>Modo objetivo</h3><p>diga onde quer chegar e o simulador mostra o que mexer, com os efeitos colaterais</p></div>
+        <div style="display:grid;grid-template-columns:380px minmax(0,1fr);gap:14px">
+          <div class="panel"><div class="pbody">
+            <div class="dim" style="font-size:11px;text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:8px">Quero mudar</div>
+            <div class="chips" id="objout" style="margin-bottom:18px"></div>
+            <div class="dim" style="font-size:11px;text-transform:uppercase;letter-spacing:.8px;font-weight:600;margin-bottom:8px">Para</div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline"><span class="muted" id="objnow"></span><b class="mono" style="font-size:22px" id="objval"></b></div>
+            <input type="range" id="objr" style="width:100%;margin-top:8px">
+            <div class="tag" style="display:flex;justify-content:space-between" id="objlim"></div>
+            <div class="dim" style="font-size:12px;margin-top:16px">Cálculo em regime permanente a partir do ganho de cada relação. O tempo é até 63 % do efeito (θ + τ).</div>
+          </div></div>
+          <div class="panel"><h2>Opções <small id="objsub"></small></h2><div id="objlist"></div></div>
+        </div>
+      </div>
+
+      <div class="blk" id="s-cen">
+        <div class="st"><h3>Cenários prontos</h3><p>um clique carrega as mudanças · bom para demonstrar</p></div>
+        <div id="scens" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px"></div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+let seed=7;const rnd=()=>(seed=(seed*16807)%2147483647)/2147483647;
+const C={tx:'#e7eaef',tx2:'#9aa3b0',tx3:'#636c79',line:'#1c232d',blue:'#4c8dff',red:'#ef4d56',amber:'#f2a93b',pink:'#e5579b',green:'#3fb68b',violet:'#a78bfa'};
+const fmt=(v,d=1)=>{const s=Math.abs(v).toFixed(d).split('.');s[0]=s[0].replace(/\B(?=(\d{3})+(?!\d))/g,'.');return (v<0&&+v.toFixed(d)!==0?'−':'')+s.join(',')};
+const sgn=(v,d=1)=>(v>0&&+v.toFixed(d)!==0?'+':'')+fmt(v,d);
+const mmss=s=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(Math.round(s%60)).padStart(2,'0')}`;
+const tip=$('#tip');
+function showTip(e,html){tip.innerHTML=html;tip.style.display='block';tip.style.left=Math.min(e.clientX+14,innerWidth-340)+'px';tip.style.top=(e.clientY+14)+'px'}
+function hideTip(){tip.style.display='none'}
+document.addEventListener('mouseover',e=>{const t=e.target.closest('[data-tip]');if(t)showTip(e,t.dataset.tip)});
+document.addEventListener('mousemove',e=>{if(tip.style.display==='block'&&e.target.closest('[data-tip]'))showTip(e,e.target.closest('[data-tip]').dataset.tip)});
+document.addEventListener('mouseout',e=>{if(e.target.closest('[data-tip]'))hideTip()});
+
+/* ---------- navegação ---------- */
+const pages=[['turno','Turno'],['processo','Processo'],['laboratorio','Lab.'],['bobinas','Bobinas'],['mancais','Mancais'],['rondas','Rondas'],['notas','Notas'],['maquina','Máquina'],['simulacao','Simul.']];
+$('#rail').insertAdjacentHTML('beforeend',pages.map((p,i)=>`<a href="#${p[0]}" data-p="${p[0]}" class="${p[0]==='simulacao'||p[0]==='maquina'?'star':''}"><b>${i+1}</b>${p[1]}${p[0]==='notas'?'<span class="dot"></span>':''}</a>`).join(''));
+let curPage='turno';
+function go(){let id=(location.hash||'#turno').slice(1);
+  const pg=pages.find(p=>p[0]===id);
+  if(!pg){const el=document.getElementById(id);if(el){const host=el.closest('.page');if(host&&host.id!==curPage){curPage=host.id;show()}el.scrollIntoView();return}id='turno'}
+  curPage=id;show()}
+function show(){$$('.page').forEach(s=>s.classList.toggle('on',s.id===curPage));$$('.rail a').forEach(a=>a.classList.toggle('on',a.dataset.p===curPage));requestAnimationFrame(drawPage)}
+addEventListener('hashchange',go);
+addEventListener('keydown',e=>{if(['INPUT','SELECT'].includes(e.target.tagName))return;const n=+e.key;if(n>=1&&n<=9){location.hash=pages[n-1][0]}
+  if(e.code==='Space'&&curPage==='simulacao'){e.preventDefault();togglePlay()}});
+document.addEventListener('click',e=>{const a=e.target.closest('.toc a');if(a){e.preventDefault();document.getElementById(a.getAttribute('href').slice(1)).scrollIntoView({behavior:'smooth'})}});
+
+/* ---------- helpers de gráfico ---------- */
+const walk=(n,b,a,d=0)=>{let v=b,o=[];for(let i=0;i<n;i++){v+=(rnd()-.5)*a+d;o.push(v);}return o};
+function path(vals,x0,x1,y0,y1,lo,hi){const n=vals.length;return vals.map((v,i)=>`${i?'L':'M'}${(x0+(x1-x0)*i/(n-1)).toFixed(1)},${(y1-(y1-y0)*(Math.min(Math.max(v,lo-(hi-lo)*.1),hi+(hi-lo)*.1)-lo)/(hi-lo)).toFixed(1)}`).join('')}
+function spark(vals,color=C.tx2,w=110,h=26){const lo=Math.min(...vals),hi=Math.max(...vals)+1e-9;return `<svg viewBox="0 0 ${w} ${h}" style="width:${w}px;height:${h}px"><path d="${path(vals,1,w-3,3,h-3,lo,hi)}" fill="none" stroke="${color}" stroke-width="1.3"/><circle cx="${w-3}" cy="${h-3-(h-6)*(vals.at(-1)-lo)/(hi-lo)}" r="2" fill="${color}"/></svg>`}
+/* lanes: faixas empilhadas com rótulo, banda, base, B e cursor */
+function lanes(el,defs,o={}){
+  const w=el.clientWidth||900,labelW=o.labelW||170,lh=o.laneH||(((el.clientHeight||360)-22-12*(defs.length-1))/defs.length),gap=12,axis=22;
+  const H=defs.length*(lh+gap)-gap+axis;let s='';let y=0;const R=w-(o.valW||90);
+  defs.forEach(d=>{const all=[...d.vals,...(d.alt||[]),...(d.b||[]),...(d.band||[])];let lo=d.lo??Math.min(...all),hi=d.hi??Math.max(...all);if(hi-lo<1e-9){lo-=1;hi+=1}const pad=(hi-lo)*.12;lo-=pad;hi+=pad;
+    s+=`<rect x="${labelW}" y="${y}" width="${R-labelW}" height="${lh}" fill="#0d1118"/>`;
+    if(d.band){const yb=v=>y+lh-lh*(v-lo)/(hi-lo);const a=Math.max(yb(d.band[1]),y),b=Math.min(yb(d.band[0]),y+lh);if(b>a)s+=`<rect x="${labelW}" y="${a}" width="${R-labelW}" height="${b-a}" fill="#17202c"/>`}
+    if(d.alt)s+=`<path d="${path(d.alt,labelW,R,y+3,y+lh-3,lo,hi)}" fill="none" stroke="${C.tx3}" stroke-width="1.2" stroke-dasharray="3 3"/>`;
+    if(d.b)s+=`<path d="${path(d.b,labelW,R,y+3,y+lh-3,lo,hi)}" fill="none" stroke="${C.amber}" stroke-width="1.4" stroke-dasharray="5 3"/>`;
+    s+=`<path d="${path(d.vals,labelW,R,y+3,y+lh-3,lo,hi)}" fill="none" stroke="${d.color||C.tx2}" stroke-width="1.8"/>`;
+    s+=`<text x="0" y="${y+15}" style="font-family:var(--sans);font-size:12px;fill:${C.tx}">${d.name}</text><text x="0" y="${y+30}">${d.tag||''}</text>${d.badge?`<text x="0" y="${y+45}" style="fill:${d.badgeC||C.tx3}">${d.badge}</text>`:''}`;
+    s+=`<text x="${w}" y="${y+lh/2+2}" text-anchor="end" style="font-size:13px;font-weight:600;fill:${d.vcolor||d.color||C.tx}">${d.val}</text>${d.sub?`<text x="${w}" y="${y+lh/2+17}" text-anchor="end">${d.sub}</text>`:''}`;
+    y+=lh+gap});
+  (o.xl||[]).forEach((t,i)=>s+=`<text x="${labelW+(R-labelW)*i/(o.xl.length-1)}" y="${H-5}" text-anchor="${i==0?'start':i==o.xl.length-1?'end':'middle'}">${t}</text>`);
+  if(o.now!=null){const x=labelW+(R-labelW)*o.now;s+=`<line x1="${x}" x2="${x}" y1="0" y2="${H-axis+4}" stroke="${o.nowC||C.amber}" ${o.nowDash===false?'':'stroke-dasharray="2 3"'}/>`}
+  el.style.height=H+'px';
+  el.innerHTML=`<svg viewBox="0 0 ${w} ${H}" style="height:${H}px">${s}</svg>`;
+}
+
+/* ================= 1 TURNO ================= */
+function drawTimeline(){
+  const el=$('#tl'),W=el.clientWidth||1000,H=el.clientHeight||540,L=110,R=W-20,X=f=>L+(R-L)*f,now=.5;let s='';
+  const rows={ev:[0,54],vel:[70,140],prod:[160,H-84],bob:[H-70,H-44]};
+  Object.values(rows).forEach(([a,b])=>s+=`<rect x="${L}" y="${a}" width="${R-L}" height="${b-a}" fill="#0d1118"/>`);
+  s+=`<text x="0" y="22" style="font:12px var(--sans);fill:${C.tx2}">Eventos</text>`;
+  [[.0,C.amber,'AI-912 · AIC-902 · XI-0003'],[.31,C.amber,'FIC-107'],[.38,C.tx2,'AIC-902 SP'],[.44,C.pink,'4487 Cobb'],[.48,C.pink,'4488 retida']].forEach(([f,c,t],i)=>{s+=`<line x1="${X(f)}" x2="${X(f)}" y1="8" y2="${H-44}" stroke="${c}" stroke-opacity=".25"/><rect x="${X(f)-4}" y="${10+(i%2)*20}" width="8" height="8" transform="rotate(45 ${X(f)} ${14+(i%2)*20})" fill="${c}"/><text x="${X(f)+9}" y="${18+(i%2)*20}">${t}</text>`});
+  const [va,vb]=rows.vel;s+=`<text x="0" y="${va+18}" style="font:12px var(--sans);fill:${C.tx2}">Velocidade</text><text x="0" y="${va+32}">m/min</text>`;
+  seed=11;const vel=walk(40,1250,3);s+=`<path d="${path(vel,L,X(now),va+8,vb-8,1200,1300)}" fill="none" stroke="${C.tx}" stroke-width="1.6"/><text x="${X(now)+8}" y="${(va+vb)/2+4}" style="font-size:13px;font-weight:600;fill:${C.tx}">1.250</text>`;
+  const [pa,pb]=rows.prod;s+=`<text x="0" y="${pa+18}" style="font:12px var(--sans);fill:${C.tx2}">Produção</text><text x="0" y="${pa+32}">t acumuladas</text>`;
+  [0,120,240,360].forEach(t=>{const y=pb-(pb-pa)*t/400;s+=`<line x1="${L}" x2="${R}" y1="${y}" y2="${y}" stroke="${C.line}"/><text x="${L-8}" y="${y+3}" text-anchor="end">${t}</text>`});
+  const yP=t=>pb-(pb-pa)*t/400;
+  s+=`<path d="M${L},${yP(0)}L${X(now)},${yP(189)}L${X(now)},${pb}L${L},${pb}Z" fill="#16202e"/><path d="M${L},${yP(0)}L${X(now)},${yP(189)}" stroke="${C.tx}" stroke-width="1.8"/>`;
+  s+=`<path d="M${L},${yP(0)}L${R},${yP(360)}" stroke="${C.tx3}" stroke-dasharray="4 4"/><path d="M${X(now)},${yP(189)}L${R},${yP(369)}" stroke="${C.blue}" stroke-dasharray="4 4"/>`;
+  s+=`<circle cx="${X(now)}" cy="${yP(189)}" r="3.5" fill="${C.tx}"/><text x="${X(now)+10}" y="${yP(189)-8}" style="font-size:13px;font-weight:600;fill:${C.tx}">189 t</text><text x="${R}" y="${yP(369)-8}" text-anchor="end" style="fill:${C.blue}">projeção 369 t · meta 360 t</text>`;
+  const [ba,bb]=rows.bob;s+=`<text x="0" y="${ba+17}" style="font:12px var(--sans);fill:${C.tx2}">Bobinas</text>`;
+  [[0,.11,'4485 rebaixada',C.pink,.35],[.11,.22,'4486 rebaixada',C.pink,.35],[.22,.34,'4487 Cobb',C.pink,.2],[.34,.46,'4488 retida',C.pink,.6],[.46,.5,'4489',C.tx3,.15]].forEach(([a,b,t,c,o])=>s+=`<rect x="${X(a)+1}" y="${ba}" width="${X(b)-X(a)-2}" height="${bb-ba}" rx="3" fill="${c}" fill-opacity="${o}" stroke="${c}" stroke-opacity=".6"/><text x="${X(a)+8}" y="${ba+17}" style="fill:${C.tx}">${t}</text>`);
+  ['14:00','15:00','16:00','17:00','18:00','19:00','20:00','21:00','22:00'].forEach((t,i)=>s+=`<text x="${X(i/8)}" y="${H-18}" text-anchor="middle">${t}</text>`);
+  s+=`<line x1="${X(now)}" x2="${X(now)}" y1="0" y2="${H-36}" stroke="${C.tx}" stroke-opacity=".5"/><rect x="${X(now)-22}" y="${H-12}" width="44" height="12" rx="2" fill="${C.tx}"/><text x="${X(now)}" y="${H-3}" text-anchor="middle" style="fill:#0a0d12;font-weight:700">agora</text>`;
+  s+=`<line id="tlh" x1="0" x2="0" y1="0" y2="${H-36}" stroke="${C.blue}" style="display:none"/><g id="tlhl" style="display:none"><rect id="tlhr" width="150" height="52" rx="4" fill="#0e1218" stroke="#283140"/><text id="tlh1" style="font-size:11px;fill:${C.tx}"></text><text id="tlh2" style="font-size:11px;fill:${C.tx2}"></text><text id="tlh3" style="font-size:11px;fill:${C.tx2}"></text></g>`;
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="height:${H}px">${s}</svg>`;
+  const svg=el.querySelector('svg');
+  svg.onmousemove=e=>{const r=svg.getBoundingClientRect(),x=e.clientX-r.left;if(x<L||x>X(now)){svg.onmouseleave();return}const f=(x-L)/(R-L),min=f*480,hh=14+Math.floor(min/60),mm=Math.floor(min%60);
+    $('#tlh').setAttribute('x1',x);$('#tlh').setAttribute('x2',x);$('#tlh').style.display='';const g=$('#tlhl');g.style.display='';const bx=Math.min(x+10,R-150);
+    $('#tlhr').setAttribute('x',bx);$('#tlhr').setAttribute('y',pa+10);[['#tlh1',`${hh}:${String(mm).padStart(2,'0')}`],['#tlh2',`produção ${fmt(189*f/.5,0)} t`],['#tlh3',`velocidade ${fmt(vel[Math.min(39,Math.floor(f/.5*39))],0)} m/min`]].forEach(([id,t],i)=>{const n=$(id);n.setAttribute('x',bx+10);n.setAttribute('y',pa+26+i*14);n.textContent=t})};
+  svg.onmouseleave=()=>{$('#tlh').style.display='none';$('#tlhl').style.display='none'};
+}
+const alarms=[[1,'VI-5123B','Vibração RMS · mancal LC secador 23','5,80 mm/s','10 h'],[1,'VE-5123B','Envelope · mancal LC secador 23','4,64 gE','10 h'],[2,'VE-5136B','Envelope · mancal LC secador 36','2,14 gE','10 h'],[2,'FIC-107','Dosagem de cola AKD abaixo do SP','0,6 kg/t','1 h 30']];
+$('#alist').innerHTML=alarms.map(([p,t,d,v,h])=>`<div style="grid-template-columns:18px 1fr auto"><span class="sev s${p}">${p}</span><div><div>${d}</div><div class="tag">${t} · há ${h}</div></div><b class="mono ${p==1?'red':'amber'}">${v}</b></div>`).join('');
+$('#plist').innerHTML=[['Reteste de Cobb da bobina 4488','LAB-1211 · 29,40 g/m² · espec. 22–28','retida','pink'],['Definir destino da bobina 4487','LAB-1211 · 28,90 g/m²','avaliação','amber'],['Cola AKD abaixo do SP desde 16:30','FIC-107 · 0,6 kg/t','tendência','blue'],['Verificar mancal CS23 LC','ronda 16:00 · ruído anormal','ronda','tx2']].map(([t,s,p,c])=>`<div style="grid-template-columns:16px 1fr auto"><input type="checkbox" class="pchk"><div><div>${t}</div><div class="tag">${s}</div></div><span class="pill" style="color:var(--${c})">${p}</span></div>`).join('');
+document.addEventListener('change',e=>{if(e.target.classList.contains('pchk')){const row=e.target.closest('div');row.style.opacity=e.target.checked?.4:1;row.querySelector('div>div').style.textDecoration=e.target.checked?'line-through':'';$('#pcount').textContent=8-$$('.pchk:checked').length}});
+function drawTurnComp(){
+  const data=[['Produção','t',[171,182,176,189],0],['Eficiência de tempo','%',[96.2,100,92.5,100],1],['Refugo','%',[2.1,0.4,4.8,0],1],['Quebras','',[1,0,2,0],0]];
+  const lab=['14/06 A','14/06 B','15/06 A','15/06 B'];
+  $('#tcomp').innerHTML=data.map(([n,u,v,d])=>{const mx=Math.max(...v)*1.15||1;return `<div class="panel"><h2>${n}</h2><div class="pbody">${v.map((x,i)=>`<div style="display:grid;grid-template-columns:64px 1fr 60px;gap:10px;align-items:center;margin:9px 0"><span class="tag">${lab[i]}</span><div style="height:8px;background:#161c25;border-radius:2px"><i style="display:block;height:100%;width:${x/mx*100}%;background:${i==3?C.blue:'#3a4556'};border-radius:2px"></i></div><b class="mono" style="text-align:right;font-size:12px;${i==3?'color:var(--tx)':'color:var(--tx2)'}">${fmt(x,d)}${u?' '+u:''}</b></div>`).join('')}</div></div>`}).join('');
+}
+const evs=[['14:02','alarme','AI-912 · gramatura 2º CD acima do H','Operação'],['14:02','alarme','AIC-902 · desvio de gramatura','Operação'],['14:05','alarme','XI-0003 · refugo acima do alvo','Operação'],['14:56','bobina','4485 fechada · rebaixada (Cobb)','QCS'],['15:49','bobina','4486 fechada · rebaixada (Cobb)','QCS'],['16:00','ronda','Ronda 1 iniciada · 6 pontos','J. Silva'],['16:30','alarme','FIC-107 · cola AKD abaixo do SP','Operação'],['16:40','ronda','Ronda 1 concluída · 1 achado (CS23 LC)','J. Silva'],['16:43','bobina','4487 fechada · em avaliação','QCS'],['17:02','setpoint','AIC-902 SP 80 → 75 g/m²','F. Santos'],['17:36','bobina','4488 fechada · retida para reteste','QCS']];
+let evFilter=new Set(['alarme','bobina','ronda','setpoint']);
+const evColor={alarme:'amber',bobina:'pink',ronda:'tx2',setpoint:'blue',quebra:'red'};
+function drawEvents(){
+  $('#evf').innerHTML=Object.keys(evColor).map(k=>`<span class="chip ${evFilter.has(k)?'on':''}" data-ev="${k}"><i style="background:var(--${evColor[k]})"></i>${k}</span>`).join('');
+  const rows=evs.filter(e=>evFilter.has(e[1]));$('#evcount').textContent=`${rows.length} de ${evs.length} eventos`;
+  $('#evtab').innerHTML=`<thead><tr><th style="width:90px">Hora</th><th style="width:120px">Tipo</th><th>Evento</th><th>Origem</th></tr></thead><tbody>${rows.map(e=>`<tr><td class="mono muted">${e[0]}</td><td><span class="pill" style="color:var(--${evColor[e[1]]})">${e[1]}</span></td><td>${e[2]}</td><td class="muted">${e[3]}</td></tr>`).join('')||'<tr><td colspan="4" class="empty">nenhum evento com esse filtro</td></tr>'}</tbody>`;
+}
+$('#evf').addEventListener('click',e=>{const c=e.target.closest('[data-ev]');if(!c)return;const k=c.dataset.ev;evFilter.has(k)?evFilter.delete(k):evFilter.add(k);drawEvents()});
+
+/* ================= MODELO (usado no Processo e no Simulador) ================= */
+const SECS=[['preparo','Preparo e refino'],['form','Caixa e formação'],['prensas','Prensas'],['pre','Pré-secagem'],['ss','Speed Sizer'],['pos','Pós-secagem'],['cal','Calandra'],['qcs','QCS · enroladeira'],['lab','Laboratório']];
+const SEC2={preparo:['Preparo','e refino'],form:['Caixa e','formação'],prensas:['Prensas',''],pre:['Pré-','secagem'],ss:['Speed','Sizer'],pos:['Pós-','secagem'],cal:['Calandra',''],qcs:['QCS','enroladeira'],lab:['Labora-','tório']};
+const SECN=Object.fromEntries([...SECS,['acion','Acionamentos']]);
+// entradas: base e faixa da LISTA-BASE / catálogo; o = origem do valor (B = pesquisa B, est = estimado)
+const VARS={
+ 'AIC-902-SP':{n:'Setpoint de gramatura',u:'g/m²',base:75,min:70,max:82,step:.5,d:1,kind:'sp',sec:'qcs',loop:'gram'},
+ 'AIC-903-SP':{n:'Setpoint de umidade final',u:'%',base:4.8,min:4.0,max:6.0,step:.05,d:2,kind:'sp',sec:'qcs',loop:'umid'},
+ 'SIC-1104':{n:'Velocidade da máquina',u:'m/min',base:1250,min:1200,max:1300,step:5,d:0,kind:'mv',sec:'acion'},
+ 'FIC-105':{n:'Vazão de massa grossa',u:'m³/h',base:920,min:650,max:1250,step:5,d:0,kind:'mv',sec:'preparo',ctl:'gram'},
+ 'AIC-104':{n:'Consistência da massa grossa',u:'%',base:3.5,min:3.0,max:4.2,step:.01,d:2,kind:'dist',sec:'preparo'},
+ 'FIC-106':{n:'Dosagem de PCC',u:'kg/t',base:210,min:150,max:260,step:5,d:0,kind:'mv',sec:'preparo'},
+ 'FIC-109':{n:'Polímero de retenção',u:'g/t',base:250,min:150,max:450,step:10,d:0,kind:'mv',sec:'preparo'},
+ 'JIC-101':{n:'Energia específica de refino',u:'kWh/t',base:55,min:35,max:85,step:1,d:0,kind:'mv',sec:'preparo'},
+ 'XHIC-202':{n:'Relação jato/tela',u:'',base:1.015,min:.96,max:1.05,step:.005,d:3,kind:'mv',sec:'form'},
+ 'WIC-401':{n:'Carga da prensa de sapata',u:'kN/m',base:1000,min:700,max:1300,step:10,d:0,kind:'mv',sec:'prensas',est:1},
+ 'PIC-514':{n:'Vapor do grupo principal (G4)',u:'kPa',base:230,min:120,max:350,step:5,d:0,kind:'mv',sec:'pre'},
+ 'AIC-601':{n:'Sólidos do amido',u:'%',base:9.5,min:7,max:12,step:.1,d:1,kind:'mv',sec:'ss'},
+ 'PIC-604A':{n:'Pressão da barra dosadora (topo)',u:'bar',base:2.0,min:1,max:3,step:.05,d:2,kind:'mv',sec:'ss',est:1},
+ 'PIC-711':{n:'Vapor da pós-secagem',u:'kPa',base:130,min:40,max:250,step:5,d:0,kind:'mv',sec:'pos',ctl:'umid'},
+ 'PDIC-702':{n:'Diferencial de vapor entre faces',u:'kPa',base:20,min:0,max:60,step:1,d:0,kind:'mv',sec:'pos',est:1},
+ 'WIC-801':{n:'Carga da calandra',u:'kN/m',base:110,min:40,max:160,step:2,d:0,kind:'mv',sec:'cal'},
+};
+const OUT={
+ 'AIC-902':{n:'Gramatura · scanner final',u:'g/m²',base:75,lo:73.5,hi:76.5,sec:'qcs',d:2,fin:1},
+ 'AIC-903':{n:'Umidade final',u:'%',base:4.8,lo:4.3,hi:5.3,sec:'qcs',d:2,fin:1},
+ 'AIC-905':{n:'Espessura',u:'µm',base:102,lo:98,hi:106,sec:'cal',d:1,fin:1},
+ 'AIC-904':{n:'Cinzas',u:'%',base:21,lo:20,hi:22,sec:'qcs',d:2,fin:1},
+ 'AI-907':{n:'Opacidade',u:'%',base:92,lo:90,hi:95,sec:'qcs',d:2,fin:1},
+ 'XI-606A':{n:'Pickup de amido (topo)',u:'g/m²',base:1.8,lo:1.5,hi:2.1,sec:'ss',d:2,fin:1},
+ 'LAB-1206':{n:'Tração MD',u:'kN/m',base:5.2,lo:4.8,hi:5.8,sec:'lab',d:2,fin:1},
+ 'LAB-1206R':{n:'Razão de tração MD/CD',u:'',base:2.4,lo:2.0,hi:2.8,sec:'lab',d:2,fin:1},
+ 'LAB-1212':{n:'Curl',u:'mm',base:0,lo:-5,hi:5,sec:'lab',d:1,fin:1},
+ 'AIC-901':{n:'Umidade antes da colagem',u:'%',base:5.2,lo:4.6,hi:5.8,sec:'pre',d:2},
+ 'AI-407':{n:'Teor seco após prensas',u:'%',base:50,lo:47,hi:53,sec:'prensas',d:1},
+ 'AIC-306':{n:'Consistência da água branca',u:'%',base:.22,lo:.12,hi:.35,sec:'form',d:3},
+};
+// relações FOPDT: entrada, saída, K, θ (s), τ (s), observação, origem
+const REL=[
+ ['FIC-105','AIC-902',.0825,75,23,'mais fibra por unidade de tempo','B'],
+ ['FIC-105','AIC-903',.0185,75,23,'folha mais pesada leva mais água','B'],
+ ['AIC-104','AIC-902',21.5,80,25,'válvula de gramatura é volumétrica; sem compensação','B'],
+ ['SIC-1104','AIC-902',-.06,10,32,'mesma fibra em área maior','B'],
+ ['SIC-1104','AIC-903',.025,10,32,'menos tempo de secagem','B'],
+ ['PIC-514','AIC-901',-.027,20,57,'mais calor no grupo principal','B'],
+ ['AIC-901','AIC-903',.35,25,30,'umidade que entra na colagem chega à final','est'],
+ ['PIC-711','AIC-903',-.02,14,45,'pós-secagem','B'],
+ ['WIC-401','AI-407',.0085,30,12,'prensagem tira mais água','B'],
+ ['WIC-401','AIC-901',-.015,30,12,'menos água para secar','B'],
+ ['WIC-401','AIC-905',-.026,30,12,'folha mais densa','B'],
+ ['FIC-106','AIC-904',.0725,70,52,'retenção de primeira passagem ~58 %','B'],
+ ['FIC-106','AI-907',.0425,70,52,'mais carga mineral, mais opaco','B'],
+ ['FIC-109','AIC-306',-.00065,27,40,'mais retenção = água branca mais limpa','B'],
+ ['JIC-101','LAB-1206',.0425,270,450,'tração MD; efeito lento (tanques)','B'],
+ ['XHIC-202','LAB-1206R',11.5,62,7,'orientação das fibras','B'],
+ ['AIC-601','AIC-903',-.375,23,27,'mais sólidos = menos água na folha','B'],
+ ['AIC-601','XI-606A',.2,23,27,'mais amido por área','B'],
+ ['PIC-604A','XI-606A',-.4,21,7,'barra mais apertada = filme mais fino','B'],
+ ['PIC-604A','AIC-903',-.55,21,7,'menos filme, menos água','B'],
+ ['WIC-801','AIC-905',-.11,6,4.5,'calandragem','B'],
+ ['WIC-801','AI-907',-.015,6,4.5,'calandragem escurece um pouco','B'],
+ ['PDIC-702','LAB-1212',-.225,16,50,'secagem assimétrica entre faces','B'],
+];
+const LOOPS={gram:{pv:'AIC-902',sp:'AIC-902-SP',mv:'FIC-105',lam:90,n:'Gramatura MD'},umid:{pv:'AIC-903',sp:'AIC-903-SP',mv:'PIC-711',lam:45,n:'Umidade final'}};
+Object.values(LOOPS).forEach(L=>{const r=REL.find(r=>r[0]===L.mv&&r[1]===L.pv);L.Kc=r[4]/(r[2]*(L.lam+r[3]));L.Ti=r[4]});
+const isIn=t=>t in VARS, info=t=>VARS[t]||OUT[t];
+
+/* ================= 2 PROCESSO ================= */
+let pSec='preparo',pSel=['FIC-105','AIC-104'],onlyOut=false;
+const procExtra={preparo:[['FIC-107','Dosagem de cola AKD','kg/t',1.6,.6,1.2,1.8,1],['FIC-108','Dosagem de amido de massa','kg/t',9.3,9.3,8,11],['LIC-103','Nível do tanque de mistura','%',58.7,58.7,40,80],['LIC-131','Nível da tina da máquina','%',63.4,63.4,40,80]],form:[['PIC-201','Pressão total da caixa de entrada','kPa',225,225,195,255]],pre:[['PIC-511','Vapor G1 (aquecimento)','kPa',15,15,-30,60],['PIC-512','Vapor G2','kPa',120,120,60,200],['PIC-513','Vapor G3','kPa',170,170,90,260]],ss:[['WIC-605','Carga do nip do Speed Sizer','kN/m',50,50,30,70]],pos:[['PIC-712','Vapor da pós-secagem (G6)','kPa',130,130,40,250]],cal:[['TIC-802','Temperatura do rolo térmico','°C',120,120,90,150]],qcs:[],prensas:[],lab:[]};
+function procRows(sec){
+  const rows=[];
+  Object.entries(VARS).filter(([t,v])=>v.sec===sec&&v.kind!=='sp').forEach(([t,v])=>rows.push({t,n:v.n,u:v.u,pv:v.base,sp:v.kind==='mv'?v.base:null,lo:v.min+(v.max-v.min)*.2,hi:v.max-(v.max-v.min)*.2,min:v.min,max:v.max,d:v.d}));
+  Object.entries(OUT).filter(([t,v])=>v.sec===sec).forEach(([t,v])=>rows.push({t,n:v.n,u:v.u,pv:v.base,sp:null,lo:v.lo,hi:v.hi,min:v.lo-(v.hi-v.lo)*.6,max:v.hi+(v.hi-v.lo)*.6,d:v.d}));
+  (procExtra[sec]||[]).forEach(([t,n,u,sp,pv,lo,hi,al])=>rows.push({t,n,u,pv,sp,lo,hi,min:lo-(hi-lo)*.3,max:hi+(hi-lo)*.3,d:pv<10?1:0,al}));
+  if(sec==='acion'||sec==='qcs'&&!rows.find(r=>r.t==='SIC-1104')){const v=VARS['SIC-1104'];rows.unshift({t:'SIC-1104',n:v.n,u:v.u,pv:1250,sp:1250,lo:1220,hi:1280,min:1200,max:1300,d:0})}
+  return rows.map(r=>({...r,out:r.al||r.pv<r.lo||r.pv>r.hi}));
+}
+function drawProc(){
+  const nOut=SECS.reduce((a,[k])=>a,0);
+  $('#secs').innerHTML=SECS.filter(s=>s[0]!=='lab').map(([k,n])=>{const a={preparo:1,pre:0,pos:0}[k];const al={preparo:'amber'}[k];return `<span class="chip ${k===pSec?'on':''}" data-sec="${k}">${al?`<i style="background:var(--${al})"></i>`:''}${n}</span>`}).join('');
+  let rows=procRows(pSec);const total=rows.length,out=rows.filter(r=>r.out).length;if(onlyOut)rows=rows.filter(r=>r.out);
+  $('#psub').innerHTML=`${SECN[pSec]} · <b>${total}</b> variáveis · ${out?`<span class="amber">${out} fora da faixa</span>`:'todas na faixa'}`;
+  seed=pSec.length*13;
+  $('#vtab').innerHTML=`<thead><tr><th>Variável</th><th>Faixa · PV · SP</th><th class="r">PV</th><th>Última 1 h</th></tr></thead><tbody>`+(rows.map(r=>{const f=v=>Math.max(0,Math.min(1,(v-r.min)/(r.max-r.min)))*100;const col=r.out?C.amber:C.tx;const sel=pSel.includes(r.t);
+    return `<tr data-i="${r.t}" class="${r.out?'alarm':''} ${sel?'sel':''}"><td><div class="nm">${r.n}</div><div class="tag">${r.t}${r.sp!=null?' · malha':''}</div></td>
+    <td><div class="range"><div class="ok" style="left:${f(r.lo)}%;width:${f(r.hi)-f(r.lo)}%"></div>${r.sp!=null?`<div class="spm" style="left:${f(r.sp)}%"></div>`:''}<div class="pvm" style="left:${f(r.pv)}%;background:${col}"></div></div></td>
+    <td class="pv" style="color:${col}">${fmt(r.pv,r.d)}<small>${r.u}</small></td><td>${spark(walk(30,10,1,r.out?-.12:0),r.out?C.amber:sel?C.blue:C.tx2)}</td></tr>`}).join('')||'<tr><td colspan="4" class="empty">nada fora da faixa nesta seção</td></tr>')+'</tbody>';
+  drawTrend();
+}
+$('#secs').addEventListener('click',e=>{const c=e.target.closest('[data-sec]');if(!c)return;pSec=c.dataset.sec;pSel=procRows(pSec).slice(0,2).map(r=>r.t);drawProc()});
+$('#vtab').addEventListener('click',e=>{const r=e.target.closest('[data-i]');if(!r)return;const t=r.dataset.i;pSel=pSel.includes(t)?pSel.filter(x=>x!==t):[...pSel,t].slice(-4);drawProc()});
+$('#onlyout').addEventListener('change',e=>{onlyOut=e.target.checked;drawProc()});
+function drawTrend(){
+  const all=Object.fromEntries(SECS.flatMap(([k])=>procRows(k)).map(r=>[r.t,r]));all['SIC-1104']=all['SIC-1104']||{t:'SIC-1104',n:'Velocidade',u:'m/min',pv:1250,lo:1220,hi:1280,d:0};
+  $('#tchips').innerHTML=pSel.map(t=>`<span class="chip on" data-rm="${t}">${t} ×</span>`).join('')+'<span class="chip dim">+ TAG</span>';
+  if(!pSel.length){$('#trend').innerHTML='<div class="empty">selecione uma variável na tabela</div>';return}
+  const el=$('#trend');
+  lanes(el,pSel.map((t,i)=>{const r=all[t]||procRows(pSec).find(x=>x.t===t);seed=t.length*31+i;const n=48;let vals=walk(n,r.pv,(r.hi-r.lo)*.04).map(v=>v);vals[n-1]=r.pv;if(r.al)vals=vals.map((v,k)=>k<34?r.sp:r.pv);
+    return {name:r.n,tag:t,vals,band:[r.lo,r.hi],val:`${fmt(r.pv,r.d)} ${r.u}`,color:r.al?C.amber:C.tx}}),{xl:['10:00','12:00','14:00','16:00','18:00'],laneH:pSel.length>2?110:150,labelW:170});
+}
+$('#tchips').addEventListener('click',e=>{const c=e.target.closest('[data-rm]');if(!c)return;pSel=pSel.filter(x=>x!==c.dataset.rm);drawProc()});
+function drawLoops(){
+  const L=[['AIC-902','Gramatura MD','auto',75.03,75,'g/m²','FIC-105',58],['AIC-903','Umidade final','auto',4.79,4.8,'%','PIC-711',44],['FIC-107','Cola AKD','auto',.6,1.6,'kg/t','FV-107',100,1],['AIC-104','Consistência massa grossa','auto',3.51,3.5,'%','AV-104',51],['FIC-105','Vazão massa grossa','cascata',920,920,'m³/h','FV-105',62],['PIC-514','Vapor G4','auto',230,230,'kPa','PV-514',47],['WIC-401','Carga prensa sapata','manual',1000,null,'kN/m','—',null],['WIC-801','Carga calandra','auto',110,110,'kN/m','PV-801',38]];
+  $('#loops').innerHTML=L.map(([t,n,m,pv,sp,u,mv,out,al])=>`<div class="panel" style="${al?'border-color:rgba(242,169,59,.5)':''}"><div class="pbody">
+   <div style="display:flex;justify-content:space-between;align-items:center"><div><div style="font-weight:600">${n}</div><div class="tag">${t} → ${mv}</div></div><span class="pill" style="color:var(--${m==='manual'?'amber':m==='cascata'?'violet':'green'})">${m.toUpperCase()}</span></div>
+   <div style="display:flex;gap:18px;margin-top:12px"><div class="stat"><label>PV</label><b style="font-size:20px;${al?'color:var(--amber)':''}">${fmt(pv,pv<10?2:0)}</b></div><div class="stat"><label>SP</label><b style="font-size:20px;color:var(--tx2)">${sp==null?'—':fmt(sp,sp<10?2:0)}</b></div><div class="stat"><label>unid.</label><span style="margin-top:6px">${u}</span></div></div>
+   <div style="margin-top:10px;display:flex;align-items:center;gap:8px"><span class="tag" style="width:62px">saída</span><div class="bar" style="flex:1;margin:0"><i style="width:${out??0}%;background:${out>=95?C.amber:C.tx2}"></i></div><span class="mono tag" style="width:36px;text-align:right">${out==null?'—':out+'%'}</span></div>
+   ${al?'<div class="amber" style="font-size:12px;margin-top:8px">válvula saturada · PV não alcança o SP</div>':''}</div></div>`).join('');
+  $('#sptab').innerHTML=`<thead><tr><th>Hora</th><th>Malha</th><th class="r">De</th><th class="r">Para</th><th>Quem</th><th>Motivo</th></tr></thead><tbody>${[['17:02','AIC-902 · gramatura','80,0','75,0','F. Santos','troca de grade para 75 g/m²'],['16:12','PIC-514 · vapor G4','225','230','F. Santos','umidade antes da colagem alta'],['15:20','WIC-801 · calandra','105','110','J. Silva','espessura acima do alvo'],['14:31','AIC-104 · consistência','3,45','3,50','F. Santos','gramatura instável']].map(r=>`<tr><td class="mono muted">${r[0]}</td><td>${r[1]}</td><td class="pv" style="font-size:13px;color:var(--tx2)">${r[2]}</td><td class="pv" style="font-size:13px">${r[3]}</td><td class="muted">${r[4]}</td><td class="muted">${r[5]}</td></tr>`).join('')}</tbody>`;
+}
+
+/* ================= 3 LAB ================= */
+const jl=[['4488','17:36','retida','pink',[2,1,1,0,2,1]],['4487','16:43','avaliação','amber',[2,1,1,1,2,1]],['4486','15:49','rebaixada','pink',[2,1,1,1,1,1]],['4485','14:56','rebaixada','pink',[2,1,1,1,1,1]],['4484','14:03','aprovada','green',[1,1,1,1,1,1]],['4477','07:51','aprovada','green',[1,1,1,0,1,1]],['4476','06:57','aprovada','green',[1,1,1,0,1,1]],['4475','05:11','aprovada','green',[1,1,1,1,1,1]]];
+const props=[['Gramatura','g/m²',75,73.5,76.5,.6],['Umidade','%',4.8,4.3,5.3,.2],['Espessura','µm',102,98,106,1.5],['Tração MD','kN/m',5.2,4.8,5.6,.12],['Cobb','g/m²',25,22,28,1.8],['Lisura','s',38,30,46,3]];
+let labJ=0,labP=3;
+function drawLab(){
+  $('#labjumbos').innerHTML=jl.map(([id,h,st,c,d],i)=>`<div data-i="${i}" class="${i===labJ?'sel':''}" style="grid-template-columns:50px 46px 1fr auto"><b class="mono">${id}</b><span class="tag">${h}</span><span><span class="pill" style="color:var(--${c})">${st}</span></span><span style="display:flex;gap:9px">${d.map(x=>x===2?`<i style="width:9px;height:9px;background:var(--pink);border-radius:2px"></i>`:x===1?`<i style="width:9px;height:9px;border-radius:50%;background:var(--tx2)"></i>`:`<i style="width:9px;height:9px;border-radius:50%;border:1px solid var(--tx3)"></i>`).join('')}</span></div>`).join('');
+  $('#labprops').innerHTML=props.map((p,i)=>`<span class="chip ${i===labP?'on':''}" data-p="${i}">${p[0]}</span>`).join('');
+  $('#ctrlsub').textContent=`bobina ${jl[labJ][0]} em destaque`;
+  drawCtrl();
+}
+$('#labjumbos').addEventListener('click',e=>{const r=e.target.closest('[data-i]');if(r){labJ=+r.dataset.i;drawLab()}});
+$('#labprops').addEventListener('click',e=>{const r=e.target.closest('[data-p]');if(r){labP=+r.dataset.p;drawLab()}});
+function drawCtrl(){const el=$('#ctrl'),W=el.clientWidth||900,H=el.clientHeight||380,L=46,R=W-20,T=10,B=H-24;let s='';const[pn,u,tg,lc,uc,sd]=props[labP];
+  seed=labP*17+3;const n=15;const pts=Array.from({length:n},(_,i)=>tg+(rnd()-.5)*sd*2.2+(labP===4&&i>10?3.5:0)+(labP===0&&i>10?1.2:0));
+  const lo=Math.min(lc-(uc-lc)*.3,...pts),hi=Math.max(uc+(uc-lc)*.3,...pts),Y=v=>B-(B-T)*(v-lo)/(hi-lo);
+  s+=`<rect x="${L}" y="${Y(uc)}" width="${R-L}" height="${Y(lc)-Y(uc)}" fill="#151c27"/>`;
+  [[uc,`LSC ${fmt(uc,1)}`],[tg,`alvo ${fmt(tg,1)}`],[lc,`LIC ${fmt(lc,1)}`]].forEach(([v,t],i)=>s+=`<line x1="${L}" x2="${R}" y1="${Y(v)}" y2="${Y(v)}" stroke="${i==1?C.tx3:C.red}" stroke-opacity="${i==1?1:.6}" stroke-dasharray="${i==1?'':'4 4'}"/><text x="${R}" y="${Y(v)-4}" text-anchor="end">${t}</text>`);
+  const xs=i=>L+10+(R-L-20)*i/(n-1);
+  s+=`<path d="${pts.map((v,i)=>`${i?'L':'M'}${xs(i)},${Y(v)}`).join('')}" fill="none" stroke="${C.tx3}"/>`;
+  const selIdx=n-1-labJ;
+  pts.forEach((v,i)=>{const out=v>uc||v<lc;s+=`<circle cx="${xs(i)}" cy="${Y(v)}" r="${i===selIdx?6:3.5}" fill="${i===selIdx?C.blue:out?C.pink:C.tx}" data-tip="bobina ${4474+i}<br><b>${fmt(v,2)} ${u}</b>${out?' · fora':''}" style="cursor:pointer"/>`});
+  for(let k=0;k<=4;k++){const v=lo+(hi-lo)*k/4;s+=`<text x="${L-6}" y="${Y(v)+3}" text-anchor="end">${fmt(v,1)}</text>`}
+  for(let i=0;i<n;i+=2)s+=`<text x="${xs(i)}" y="${H-6}" text-anchor="middle">${4474+i}</text>`;
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="height:${H}px">${s}</svg>`}
+function drawLabMore(){
+  $('#vsens').innerHTML=spark([5.1,5.15,5.2,5.18,5.22,5.25,5.2,5.23],C.blue,320,70);
+  $('#labqcs').innerHTML=[['Gramatura','g/m²',[[4488,76.9,76.8],[4487,76.2,76.0],[4486,75.4,75.6],[4485,75.1,75.0]],2],['Umidade','%',[[4488,5.1,4.8],[4487,4.9,4.8],[4486,4.6,4.7],[4485,4.8,4.8]],1],['Espessura','µm',[[4488,103,102],[4487,102,102],[4486,101,102],[4485,102,101]],0]].map(([n,u,rows,d])=>`<div class="panel"><h2>${n} <small>${u}</small></h2><table class="vt"><thead><tr><th>Bobina</th><th class="r">Lab</th><th class="r">QCS</th><th class="r">Δ</th></tr></thead><tbody>${rows.map(([b,l,q])=>{const df=l-q;return `<tr><td class="mono">${b}</td><td class="pv" style="font-size:13px">${fmt(l,d)}</td><td class="pv" style="font-size:13px;color:var(--tx2)">${fmt(q,d)}</td><td class="pv" style="font-size:13px;color:${Math.abs(df)>(d?0.2:1.5)?C.amber:C.tx3}">${sgn(df,d||1)}</td></tr>`}).join('')}</tbody></table></div>`).join('');
+  seed=5;$('#laudos').innerHTML=`<thead><tr><th>Bobina</th>${props.map(p=>`<th class="r">${p[0]} <span class="dim">${p[1]}</span></th>`).join('')}<th>Destino</th></tr></thead><tbody>${jl.map(([id,,st,c,d])=>`<tr><td class="mono">${id}</td>${props.map((p,i)=>{const v=p[2]+(rnd()-.5)*p[5]*1.6+(d[i]===2?p[5]*2.5:0);return d[i]===0?'<td class="r dim mono">atraso</td>':`<td class="pv" style="font-size:13px;${d[i]===2?'color:var(--pink)':''}">${fmt(v,p[2]<10?2:1)}</td>`}).join('')}<td><span class="pill" style="color:var(--${c})">${st}</span></td></tr>`).join('')}</tbody>`;
+}
+
+/* ================= 4 BOBINAS ================= */
+const gb=[['4489','17:36',.06,0,'em formação','tx2','enrolando agora'],['4488','16:43',.55,[.05,.2],'retida','pink','retida para reteste de Cobb'],['4487','15:49',.55,0,'avaliação','amber','Cobb no limite · em avaliação'],['4486','14:56',.55,0,'rebaixada','pink','rebaixada por Cobb'],['4485','14:03',.55,0,'rebaixada','pink','rebaixada por Cobb'],['4484','13:10',.55,0,'aprovada','green','dentro da especificação'],['4478','07:51',1,[.25,.95],'quebra 08:06','red','quebra de folha às 08:06']];
+let bSel=1;
+function drawBob(){
+  $('#gantt').innerHTML=gb.map(([id,h,w,q,st,c],i)=>`<div data-i="${i}" class="${i==bSel?'sel':''}" style="grid-template-columns:50px 46px 1fr 110px 60px;padding:8px 16px"><b class="mono">${id}</b><span class="tag">${h}</span><div style="position:relative;height:10px;background:#141a23;border-radius:2px"><i style="position:absolute;left:0;top:0;bottom:0;width:${w*100}%;background:#2a3444;border-radius:2px"></i>${q?`<i style="position:absolute;top:0;bottom:0;left:${q[0]*100}%;width:${(q[1]-q[0])*100}%;background:var(--pink);border-radius:2px"></i>`:''}</div><span><span class="pill" style="color:var(--${c})">${st}</span></span><span class="mono muted" style="text-align:right">${w>=.5?'66,5 km':'—'}</span></div>`).join('');
+  const b=gb[bSel];$('#bsel').textContent='Bobina '+b[0];$('#bselsub').textContent=`início ${b[1]} · ${b[6]}`;
+  drawHeat();drawPerfil();
+  const ev={0:[['17:36','bobina','início da 4489']],1:[['16:43','bobina','início da 4488'],['17:02','setpoint','AIC-902 SP 80 → 75 g/m²'],['17:05','alarme','AIC-903 umidade acima do H por 4 min'],['17:36','bobina','fechada · retida']]}[bSel]||[['—','bobina',`início da ${b[0]}`],['—','bobina',`fechada · ${b[4]}`]];
+  $('#rast').innerHTML=ev.map(e=>`<div style="grid-template-columns:60px 90px 1fr"><span class="mono muted">${e[0]}</span><span><span class="pill" style="color:var(--${evColor[e[1]]})">${e[1]}</span></span><span>${e[2]}</span></div>`).join('');
+}
+$('#gantt').addEventListener('click',e=>{const r=e.target.closest('[data-i]');if(r){bSel=+r.dataset.i;drawBob()}});
+function drawHeat(){const el=$('#heat'),W=el.clientWidth||900,H=el.clientHeight||300,cols=60,rowsN=18,cw=(W-40)/cols,ch=(H-24)/rowsN;let s='';seed=bSel*29+1;const k=bSel===1?1:bSel===2?.6:bSel===5?0:.35;
+ for(let r=0;r<rowsN;r++)for(let c=0;c<cols;c++){const edge=(r<2||r>15)?.35:0,band=(c>14&&c<34)?.45*k*Math.sin((c-14)/20*Math.PI):0,v=4.8+(rnd()-.5)*.5+edge*rnd()*k+band;
+  const col=v>5.5?C.pink:v>5.25?'#4a2f45':v<4.4?'#24425f':`rgb(${(v-4)*14+22|0},${(v-4)*14+28|0},${(v-4)*16+36|0})`;s+=`<rect x="${40+c*cw}" y="${r*ch}" width="${cw-1}" height="${ch-1}" fill="${col}" data-tip="CD zona ${r+1} · ${fmt(c*66.5/cols,1)} km<br><b>${fmt(v,2)} %</b>"/>`}
+ s+=`<text x="0" y="10">LC</text><text x="0" y="${H-28}">LA</text><text x="40" y="${H-6}">0 km</text><text x="${W}" y="${H-6}" text-anchor="end">66,5 km</text>`;
+ el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="height:${H}px">${s}</svg>`}
+function drawPerfil(){seed=bSel*7+2;const g=bSel===1?[...walk(20,76.9,.1),...walk(20,76.1,.1)]:walk(40,75.2,.1);lanes($('#perfil'),[
+ {name:'Gramatura',tag:'tol. 73,5–76,5',vals:g,band:[73.5,76.5],lo:73,hi:77.5,val:fmt(g.at(-1),1)+' g/m²',color:g.at(-1)>76.5?C.pink:C.tx},
+ {name:'Umidade',tag:'tol. 4,3–5,3',vals:walk(40,4.8,.06),band:[4.3,5.3],lo:4,hi:5.6,val:'4,79 %'},
+ {name:'Espessura',tag:'tol. 98–106',vals:walk(40,102,.3),band:[98,106],lo:96,hi:108,val:'102 µm'}
+],{xl:['0 km','22 km','44 km','66,5 km'],labelW:120,laneH:120})}
+function drawDest(){const d=[['aprovada',4,'green'],['rebaixada',2,'pink'],['avaliação',1,'amber'],['retida',1,'pink']];const t=8;
+ $('#dest').innerHTML=`<div style="display:flex;height:22px;border-radius:4px;overflow:hidden;margin-bottom:16px">${d.map(([n,v,c],i)=>`<i style="flex:${v};background:var(--${c});opacity:${i==3?.5:.85}"></i>`).join('')}</div>`+d.map(([n,v,c])=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)"><span><i style="display:inline-block;width:8px;height:8px;border-radius:2px;background:var(--${c});margin-right:8px"></i>${n}</span><b class="mono">${v} · ${Math.round(v/t*100)} %</b></div>`).join('')+`<div class="dim" style="font-size:12px;margin-top:12px">Motivo mais comum hoje: Cobb acima de 28 g/m² (3 bobinas).</div>`}
+
+/* ================= 5 MANCAIS ================= */
+const mm=[['Cilindro secador 23','VI-5123B','LC',5.8,82,'D'],['Cilindro secador 36','VI-5136B','LC',2.5,70,'B'],['Cilindro secador 13','VI-5113B','LC',2.0,62,'B'],['Cilindro secador 4','VI-5104B','LC',2.0,59,'B'],['Primeira prensa · rolo inferior','VI-4011A','LA',2.0,63,'B'],['Cilindro secador 7','VI-5107B','LC',2.0,58,'B'],['Cilindro secador 14','VI-5114A','LA',2.0,68,'B'],['Cilindro secador 35','VI-5135B','LC',1.9,62,'B'],['Cilindro secador 30','VI-5130B','LC',1.9,67,'B'],['Cilindro secador 21','VI-5121B','LC',1.9,48,'B'],['Rolo couch','VI-3001A','LA',1.8,51,'B'],['Cilindro secador 26','VI-5126B','LC',2.49,64,'B']];
+let mSel=0;
+function drawMancais(){
+  $('#mtab').innerHTML=`<thead><tr><th>Mancal</th><th>Zona ISO</th><th class="r">Vibração</th><th class="r">Temp.</th><th>3 dias</th></tr></thead><tbody>`+mm.map(([n,t,l,v,tp,z],i)=>{seed=i*11+3;return `<tr data-i="${i}" class="${i===mSel?'sel':''}"><td><div class="nm">${n}</div><div class="tag">${t} · ${l}</div></td>
+<td><div style="display:flex;width:120px;height:6px;border-radius:3px;overflow:hidden;position:relative"><i style="flex:2.8;background:#24303e"></i><i style="flex:1.7;background:#4a3a1e"></i><i style="flex:2;background:#4a1e24"></i><b style="position:absolute;top:-3px;left:${Math.min(v/6.5,1)*100}%;width:2px;height:12px;background:${z=='D'?C.red:C.tx}"></b></div></td>
+<td class="pv ${z=='D'?'red':''}">${fmt(v,1)}<small>mm/s</small></td><td class="pv" style="font-size:13px">${tp}<small>°C</small></td><td>${spark(z=='D'?[1,1.2,1.5,2,2.6,3.4,4.4,5.8]:i===11?[1.9,2,2.1,2.15,2.3,2.35,2.42,2.49]:walk(20,2,.2),z=='D'?C.red:i===11?C.amber:C.tx2,90,22)}</td></tr>`}).join('')+'</tbody>';
+  const [n,t,l,v,tp,z]=mm[mSel];const D=z==='D';const trendUp=mSel===11;
+  $('#mtitle').textContent=`${n} · lado ${l==='LC'?'comando':'acionamento'}`;$('#mtag').textContent=t;
+  $('#mzone').innerHTML=`<span class="pill" style="color:var(--${D?'red':trendUp?'amber':'tx2'})">ZONA ${z}</span>`;
+  const dD=D?'0 d':trendUp?'13 d':'> 90 d',dT=D?'~1,1 d':'> 30 d';
+  $('#mstats').innerHTML=`<div class="stat"><label>Vibração agora</label><b class="${D?'red':''}">${fmt(v,2)}</b><span>mm/s · limite HH 4,50</span></div><div class="stat"><label>Até zona D</label><b class="${trendUp?'amber':''}">${dD}</b><span>${D?'já está em D':trendUp?'subindo 0,15 mm/s por dia':'tendência estável'}</span></div><div class="stat"><label>Até 85 °C</label><b class="${D?'amber':''}">${dT}</b><span>agora ${tp} °C</span></div>`;
+  $('#mnote').textContent=D?'Abrir nota NM-582516':trendUp?'Ver nota sugerida':'Criar nota';
+  drawMancal();
+}
+$('#mtab').addEventListener('click',e=>{const r=e.target.closest('[data-i]');if(r){mSel=+r.dataset.i;drawMancais()}});
+function drawMancal(){const el=$('#mchart'),W=el.clientWidth||900,H=el.clientHeight||360,L=40,R=W-20,T=8,B=H-24,lo=0,hi=7.5,Y=v=>B-(B-T)*v/hi;let s='';const v=mm[mSel][3],D=mm[mSel][5]==='D',up=mSel===11;
+ [[0,2.8,'#18212c'],[2.8,4.5,'#2a2418'],[4.5,7.5,'#2c181c']].forEach(([a,b,c])=>s+=`<rect x="${L}" y="${Y(b)}" width="${R-L}" height="${Y(a)-Y(b)}" fill="${c}"/>`);
+ [['A/B',1.4],['C',3.65],['D',6]].forEach(([t,v])=>s+=`<text x="${L+6}" y="${Y(v)+3}">${t}</text>`);
+ const now=L+(R-L)*.62;seed=mSel*5+1;const hist=[];for(let i=0;i<=40;i++)hist.push(D?1+4.8*Math.pow(i/40,2.2):up?1.6+0.89*i/40+(rnd()-.5)*.08:v+(rnd()-.5)*.25);
+ s+=`<path d="${path(hist,L,now,T,B,lo,hi)}" fill="none" stroke="${C.tx}" stroke-width="2"/>`;
+ const proj=D?7.6:up?v+0.15*2.4:v;s+=`<path d="M${now},${Y(v)}L${R},${Y(Math.min(proj,7.4))}" stroke="${D?C.red:up?C.amber:C.tx3}" stroke-dasharray="4 4"/>`;
+ s+=`<line x1="${now}" x2="${now}" y1="${T}" y2="${B}" stroke="${C.tx3}"/><text x="${now}" y="${H-6}" text-anchor="middle" style="fill:${C.tx}">hoje</text><text x="${L}" y="${H-6}">12/06</text><text x="${R}" y="${H-6}" text-anchor="end">18/06</text>`;
+ s+=`<circle cx="${now}" cy="${Y(v)}" r="4" fill="${D?C.red:C.tx}"/><text x="${now+8}" y="${Y(v)-8}" style="fill:${D?C.red:C.tx};font-size:12px;font-weight:600">${fmt(v,2)}</text>`;
+ if(D)s+=`<rect x="${L+(R-L)*.55-4}" y="${Y(4.6)-4}" width="8" height="8" fill="${C.blue}"/><text x="${L+(R-L)*.55-10}" y="${Y(4.6)-8}" text-anchor="end" style="fill:${C.blue}">nota</text>`;
+ el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="height:${H}px">${s}</svg>`}
+function drawMMap(){const el=$('#mmap'),W=el.clientWidth,H=el.clientHeight;let s='';const L=60,R=W-20,n=36,X=i=>L+(R-L)*i/(n-1);
+ s+=`<text x="0" y="${H*.3+4}" style="font:12px var(--sans);fill:${C.tx2}">LC</text><text x="0" y="${H*.7+4}" style="font:12px var(--sans);fill:${C.tx2}">LA</text>`;
+ s+=`<rect x="${L-10}" y="${H*.42}" width="${X(25)-L+20}" height="${H*.16}" rx="4" fill="#121822"/><rect x="${X(26)-10}" y="${H*.42}" width="${R-X(26)+20}" height="${H*.16}" rx="4" fill="#121822"/><text x="${(L+X(25))/2}" y="${H*.5+4}" text-anchor="middle">pré-secagem · CS1–26</text><text x="${(X(26)+R)/2}" y="${H*.5+4}" text-anchor="middle">pós · CS27–36</text>`;
+ for(let i=0;i<n;i++){[['LC',.3],['LA',.7]].forEach(([side,f])=>{const id=i+1,isD=id===23&&side==='LC',isC=id===26&&side==='LC';const c=isD?C.red:isC?C.amber:'#4a5566';s+=`<circle cx="${X(i)}" cy="${H*f}" r="${isD||isC?7:5}" fill="${c}" style="cursor:pointer" data-tip="CS${id} ${side}<br><b>${isD?'5,80':isC?'2,49':fmt(1.6+((id*7)%9)/20,2)} mm/s</b>"/>`});if(i%5===0||i===35)s+=`<text x="${X(i)}" y="${H-6}" text-anchor="middle">${i+1}</text>`}
+ el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="height:${H}px">${s}</svg>`}
+function drawMScat(){const el=$('#mscat'),W=el.clientWidth,H=el.clientHeight,L=50,R=W-20,T=10,B=H-30;let s='';const X=v=>L+(R-L)*v/7,Y=t=>B-(B-T)*(t-40)/50;
+ s+=`<rect x="${X(4.5)}" y="${T}" width="${R-X(4.5)}" height="${Y(80)-T}" fill="#2c181c"/><text x="${R-6}" y="${T+14}" text-anchor="end" style="fill:${C.red}">quente e vibrando</text>`;
+ [1,2,3,4,5,6,7].forEach(v=>s+=`<line x1="${X(v)}" x2="${X(v)}" y1="${T}" y2="${B}" stroke="${C.line}"/><text x="${X(v)}" y="${B+16}" text-anchor="middle">${v}</text>`);[50,60,70,80,90].forEach(t=>s+=`<line x1="${L}" x2="${R}" y1="${Y(t)}" y2="${Y(t)}" stroke="${C.line}"/><text x="${L-8}" y="${Y(t)+3}" text-anchor="end">${t}</text>`);
+ s+=`<text x="${R}" y="${H-2}" text-anchor="end">vibração mm/s</text><text x="${L}" y="${T-2}">°C</text>`;
+ seed=3;for(let i=0;i<86;i++){const v=1.2+rnd()*1.2,t=45+rnd()*25;s+=`<circle cx="${X(v)}" cy="${Y(t)}" r="3.5" fill="${C.tx3}" fill-opacity=".7"/>`}
+ mm.forEach(([n,t,l,v,tp,z],i)=>s+=`<circle cx="${X(v)}" cy="${Y(tp)}" r="${z==='D'?7:5}" fill="${z==='D'?C.red:i===11?C.amber:C.tx2}" style="cursor:pointer" data-tip="${n} ${l}<br><b>${fmt(v,2)} mm/s · ${tp} °C</b>" onclick="mSel=${i};drawMancais();$('#m-lista').scrollIntoView({behavior:'smooth'})"/>`);
+ el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="height:${H}px">${s}</svg>`}
+
+/* ================= 6 RONDAS ================= */
+const rp=[['01','Mancal LC · Secador 23','TI-5323B',78.9,81.6,1,'Ruído anormal, zunido constante.'],['02','Mancal LA · Secador 23','TI-5323A',62,66],['03','Mancal LA · Secador 19','TI-5319A',62.8,66.6],['04','Mancal LC · Secador 26','TI-5326B',59.2,63.2],['05','Mancal LA · Secador 1','TI-5301A',47.9,49.9],['06','Mancal LC · Secador 36','TI-5336B',66.4,69.8]];
+let rSel=0;
+function drawRondas(){
+  $('#steps').innerHTML=rp.map(([n,,,,,h],i)=>`${i?'<div class="ln"></div>':''}<div class="st2 ${h?'hit':''} ${i===rSel?'cur':''}" data-i="${i}"><b>${n}</b>${i<4?'Pré-sec.':'Pós-sec.'}</div>`).join('');
+  $('#rgrid').innerHTML=rp.map(([n,t,tag,c,o,h,obs],i)=>`<div class="rcard ${h?'hit':''} ${i===rSel?'sel':''}" data-i="${i}"><div style="display:flex;justify-content:space-between"><span class="tag">${n} · ${tag}</span>${h?'<span class="pill pink">achado</span>':'<span class="pill" style="color:var(--tx3)">feito</span>'}</div>
+<div style="font-weight:600;margin:6px 0 4px">${t}</div>
+<div class="cmp"><span class="muted">campo</span><div class="b"><i style="width:${c}%"></i></div><b>${fmt(c,1)}</b></div>
+<div class="cmp"><span class="muted">online</span><div class="b"><i style="width:${o}%"></i></div><b>${fmt(o,1)}</b></div>
+<div class="tag" style="margin-top:8px">Δ ${fmt(c-o,1)} °C · esperado −3 ± 2</div></div>`).join('');
+  const [n,t,tag,c,o,h,obs]=rp[rSel];const d=c-o,ok=Math.abs(d+3)<=2;
+  $('#rdet').innerHTML=`<h2>${n} · ${t}<span class="r">${h?'<span class="pill pink">achado</span>':'<span class="pill" style="color:var(--tx3)">feito</span>'}</span></h2>
+   <div class="pbody" style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px"><div class="stat"><label>Campo</label><b>${fmt(c,1)} °C</b><span>termômetro</span></div><div class="stat"><label>Online</label><b>${fmt(o,1)} °C</b><span class="mono">${tag}</span></div></div>
+    <div><div class="muted" style="font-size:12px">Divergência</div><div style="font:600 22px var(--mono)">${fmt(d,1)} °C <span class="${ok?'muted':'amber'}" style="font:12px var(--sans)">esperado −3 ± 2 · ${ok?'aceita':'fora'}</span></div></div>
+    <div style="border-top:1px solid var(--line);padding-top:14px"><div class="muted" style="font-size:12px;margin-bottom:4px">Observação de campo</div><div>${obs||'<span class="dim">sem observação</span>'}</div></div>
+    <div style="margin-top:auto;display:flex;gap:8px;flex-wrap:wrap">${h?'<button class="btn pri">Registrar nota</button>':''}<button class="btn">Ver tendência</button><button class="btn" onclick="location.hash='mancais'">Abrir em Mancais</button></div>
+   </div>`;
+}
+document.addEventListener('click',e=>{const r=e.target.closest('#rgrid [data-i],#steps [data-i]');if(r){rSel=+r.dataset.i;drawRondas()}});
+function drawRDumb(){const el=$('#rdumb'),W=el.clientWidth,H=el.clientHeight,L=220,R=W-30;let s='';const X=v=>L+(R-L)*(v-40)/50,rh=(H-30)/rp.length;
+ [40,50,60,70,80,90].forEach(v=>s+=`<line x1="${X(v)}" x2="${X(v)}" y1="0" y2="${H-24}" stroke="${C.line}"/><text x="${X(v)}" y="${H-6}" text-anchor="middle">${v} °C</text>`);
+ rp.forEach(([n,t,tag,c,o,h],i)=>{const y=i*rh+rh/2;s+=`<text x="0" y="${y+4}" style="font:12px var(--sans);fill:${C.tx}">${n} · ${t}</text><rect x="${X(o-5)}" y="${y-6}" width="${X(o-1)-X(o-5)}" height="12" rx="3" fill="#1c2633"/><line x1="${X(c)}" x2="${X(o)}" y1="${y}" y2="${y}" stroke="${C.tx3}" stroke-width="2"/><circle cx="${X(c)}" cy="${y}" r="6" fill="${h?C.pink:C.tx}" data-tip="campo ${fmt(c,1)} °C"/><circle cx="${X(o)}" cy="${y}" r="6" fill="none" stroke="${C.tx2}" stroke-width="2" data-tip="online ${fmt(o,1)} °C"/>`});
+ el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="height:${H}px">${s}</svg>`;
+ $('#rhist').innerHTML=`<thead><tr><th>Hora</th><th>Executante</th><th class="r">Pontos</th><th class="r">Achados</th><th>Situação</th></tr></thead><tbody>${[['16:00','J. Silva',6,1,'concluída 16:40'],['12:00','R. Lima',6,0,'concluída 12:35'],['08:00','R. Lima',6,0,'concluída 08:38'],['20:00','—',6,'—','programada']].map(r=>`<tr><td class="mono">${r[0]}</td><td>${r[1]}</td><td class="pv" style="font-size:13px">${r[2]}</td><td class="pv" style="font-size:13px;${r[3]>0?'color:var(--pink)':''}">${r[3]}</td><td class="muted">${r[4]}</td></tr>`).join('')}</tbody>`}
+
+/* ================= 7 NOTAS ================= */
+const notes=[{id:'sug-1',col:0,p:3,cls:'amber',t:'Vibração 2,49 mm/s subindo 0,15 mm/s por dia — cruza C→D em 13 dias',eq:'CS26 LC',o:'tendência',sig:'up'},{id:'NM-582516',col:1,p:1,cls:'red',t:'Vibração acima do HH, pior valor 5,84 mm/s (zona D)',eq:'CS23 LC',o:'alarme',stop:1,sig:'d'},{id:'NM-582490',col:2,p:3,cls:'amber',t:'Vazamento de vapor na junta rotativa',eq:'CS14 LA',o:'ronda',sig:'flat'},{id:'NM-582455',col:3,p:2,cls:'amber',t:'Troca do raspador da calandra',eq:'Calandra',o:'operação',sig:'flat'},{id:'NM-582401',col:4,p:2,cls:'tx2',t:'Ruído no redutor do rolo couch',eq:'Couch',o:'ronda',sig:'flat'}];
+let nSel=1;
+function drawNotas(){
+  const cols=['SUGERIDAS','ABERTA','PROGRAMADA','EM EXECUÇÃO','ENCERRADA'];
+  $('#kb').innerHTML=cols.map((c,i)=>{const it=notes.filter(n=>n.col===i);return `<div class="kcol"><h3>${c} <span>${it.length}</span></h3>${it.map(n=>`<div class="kcard ${n.col===0?'sugg':''} ${notes.indexOf(n)===nSel?'sel':''}" data-i="${notes.indexOf(n)}"><div style="display:flex;gap:6px;align-items:center"><span class="pill" style="color:var(--${n.cls})">P${n.p}</span><span class="tag">${n.id.startsWith('sug')?n.o:n.id}</span></div><div>${n.t}</div><div style="display:flex;justify-content:space-between"><span class="tag">${n.eq}</span>${n.stop?'<span class="pill" style="color:var(--tx2)">PARADA</span>':''}</div></div>`).join('')}</div>`}).join('');
+  const n=notes[nSel];const sug=n.col===0;
+  const sig=[];for(let i=0;i<=40;i++)sig.push(n.sig==='d'?1.4+4.4*Math.pow(i/40,2.3):n.sig==='up'?1.6+.89*i/40:1.5+Math.sin(i/3)*.08);
+  $('#ndet').innerHTML=`<h2>${sug?'Nota sugerida':n.id} <small>${sug?'gerada pela tendência':'aberta 15/06'}</small><span class="r"><span class="pill" style="color:var(--${n.cls})">P${n.p}${n.stop?' · parada imediata':''}</span></span></h2>
+   <div class="pbody" style="display:flex;flex-direction:column;gap:16px">
+    <div style="font-size:16px;font-weight:600">${n.t}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;font-size:12px"><div><div class="dim">Equipamento</div>${n.eq}</div><div><div class="dim">Origem</div>${n.o}</div></div>
+    <div><div class="dim" style="font-size:12px;margin-bottom:6px">Sinal de origem · últimos 3 dias</div><svg viewBox="0 0 460 120" preserveAspectRatio="none" style="height:120px"><rect x="0" y="0" width="460" height="30" fill="#2c181c"/><rect x="0" y="30" width="460" height="30" fill="#2a2418"/><rect x="0" y="60" width="460" height="60" fill="#18212c"/><path d="${path(sig,0,456,4,116,0,6.4)}" fill="none" stroke="${C.tx}" stroke-width="2" vector-effect="non-scaling-stroke"/></svg></div>
+    ${sug?'<div style="display:flex;gap:8px"><button class="btn pri" id="acc">Aceitar e abrir nota</button><button class="btn">Descartar</button></div>':`<div><div class="dim" style="font-size:12px;margin-bottom:6px">Histórico</div><div class="list" style="margin:0 -16px"><div style="grid-template-columns:90px 1fr"><span class="mono dim">15/06 07:51</span><span>Nota aberta (${n.o})</span></div>${n.sig==='d'?'<div style="grid-template-columns:90px 1fr"><span class="mono dim">15/06 16:00</span><span>Ronda confirmou ruído anormal</span></div>':''}</div></div>`}
+   </div>`;
+  const a=$('#acc');if(a)a.onclick=()=>{n.col=1;n.id='NM-582530';n.o='tendência';drawNotas()};
+}
+$('#kb').addEventListener('click',e=>{const c=e.target.closest('[data-i]');if(c){nSel=+c.dataset.i;drawNotas()}});
+function drawNotasInd(){const el=$('#nweek'),W=el.clientWidth,H=el.clientHeight;let s='';const wk=[['S1',[2,1,1]],['S2',[1,2,0]],['S3',[3,1,1]],['S4',[1,1,2]]],cols=[C.red,C.pink,C.tx2],bw=(W-60)/4*.5;
+ wk.forEach(([n,v],i)=>{let y=H-24;const x=40+(W-60)*i/4+bw*.5;v.forEach((k,j)=>{const h=k*28;s+=`<rect x="${x}" y="${y-h}" width="${bw}" height="${Math.max(0,h-2)}" fill="${cols[j]}" rx="2"/>`;y-=h});s+=`<text x="${x+bw/2}" y="${H-6}" text-anchor="middle">${n}</text>`});
+ s+=`<text x="${W-10}" y="14" text-anchor="end" style="fill:${C.red}">alarme</text><text x="${W-10}" y="28" text-anchor="end" style="fill:${C.pink}">ronda</text><text x="${W-10}" y="42" text-anchor="end" style="fill:${C.tx2}">operação</text>`;
+ el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="height:${H}px">${s}</svg>`;
+ const e2=$('#nlead');s='';const P=[['P1',1.2],['P2',4.5],['P3',11],['P4',23]];P.forEach(([p,d],i)=>{const y=20+i*44;s+=`<text x="0" y="${y+14}" style="fill:${C.tx}">${p}</text><rect x="40" y="${y}" width="${(e2.clientWidth-110)*d/25}" height="20" rx="2" fill="#3a4556"/><text x="${44+(e2.clientWidth-110)*d/25}" y="${y+14}" style="fill:${C.tx}">${fmt(d,1)} d</text>`});
+ e2.innerHTML=`<svg viewBox="0 0 ${e2.clientWidth} ${e2.clientHeight}" style="height:${e2.clientHeight}px">${s}</svg>`;
+ $('#ntop').innerHTML=[['Cilindro secador 23',3],['Calandra',2],['Rolo couch',2],['Cilindro secador 14',1],['Speed Sizer · barra topo',1]].map(([n,v])=>`<div style="grid-template-columns:1fr auto"><span>${n}</span><b class="mono">${v}</b></div>`).join('')}
+
+/* ================= 8 MÁQUINA ================= */
+function drawSecStrip(){$('#secstrip').innerHTML=[['Preparo e refino','amber','1 alarme · FIC-107'],['Caixa de entrada','green','ok'],['Formação','green','ok'],['Prensas','green','ok'],['Pré-secagem','red','CS23 LC zona D'],['Speed Sizer','green','ok'],['Pós-secagem','amber','CS36 LC envelope'],['Calandra','green','ok'],['QCS','green','ok'],['Enroladeira','tx2','4489 enrolando']].map(([n,c,t])=>`<div class="seccard"><b>${n}</b><span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx2)"><i style="width:7px;height:7px;border-radius:50%;background:var(--${c})"></i>${t}</span></div>`).join('')}
+
+/* =====================================================================
+   9 SIMULADOR — motor FOPDT de verdade (passo de 1 s, malhas PI com sintonia lambda)
+   ===================================================================== */
+const S={moves:[{tag:'SIC-1104',to:1300,at:0}],auto:true,H:1800,t:0,res:null,B:null,Bname:'',secF:null,playing:false,speed:30,obj:'AIC-903',objV:4.6,scen:1};
+function simulate(moves,auto,H){
+  const N=H,rec=5,inT=Object.keys(VARS),outT=Object.keys(OUT);
+  const hist={};[...inT,...outT].forEach(t=>hist[t]=new Float32Array(N+1));
+  const st=REL.map(()=>0),ctl={gram:{I:0,u:0},umid:{I:0,u:0}};
+  const res={t:[],out:{},mv:{'FIC-105':[],'PIC-711':[]},inp:{}};outT.forEach(o=>res.out[o]=[]);inT.forEach(v=>res.inp[v]=[]);
+  for(let k=0;k<=N;k++){
+    const y={};outT.forEach(o=>y[o]=0);REL.forEach((r,i)=>y[r[1]]+=st[i]);outT.forEach(o=>hist[o][k]=y[o]);
+    const u={};inT.forEach(v=>u[v]=0);
+    moves.forEach(m=>{if(k>=m.at&&!(auto&&VARS[m.tag].ctl))u[m.tag]=m.to-VARS[m.tag].base});
+    if(auto)for(const[key,L] of Object.entries(LOOPS)){const c=ctl[key],e=u[L.sp]-y[L.pv];const v=VARS[L.mv];
+      let out=L.Kc*(e+c.I/L.Ti);const lo=v.min-v.base,hi=v.max-v.base;if(out>hi)out=hi;else if(out<lo)out=lo;else c.I+=e;c.u=out;u[L.mv]+=out}
+    inT.forEach(v=>hist[v][k]=u[v]);
+    if(k%rec===0){res.t.push(k);outT.forEach(o=>res.out[o].push(OUT[o].base+y[o]));res.mv['FIC-105'].push(VARS['FIC-105'].base+u['FIC-105']);res.mv['PIC-711'].push(VARS['PIC-711'].base+u['PIC-711']);inT.forEach(v=>res.inp[v].push(VARS[v].base+u[v]))}
+    REL.forEach((r,i)=>{const kd=k-Math.round(r[3]);const x=kd>=0?hist[r[0]][kd]:0;st[i]+=(r[2]*x-st[i])/r[4]})
+  }
+  // análise
+  res.an={};
+  outT.forEach(o=>{const s=res.out[o],O=OUT[o],b=O.base,thr=Math.max((O.hi-O.lo)*.01,1e-6);let pk=0,pkT=0,arr=null,outS=0;
+    s.forEach((v,i)=>{const d=v-b;if(Math.abs(d)>Math.abs(pk)){pk=d;pkT=res.t[i]}if(arr==null&&Math.abs(d)>thr)arr=res.t[i];if(v<O.lo||v>O.hi)outS+=rec});
+    const fin=s.at(-1)-b;let settle=null;if(Math.abs(pk)>thr){const band=Math.max(Math.abs(pk)*.05,thr);for(let i=s.length-1;i>=0;i--){if(Math.abs(s[i]-s.at(-1))>band){settle=res.t[Math.min(i+1,s.length-1)];break}}if(settle==null)settle=0}
+    res.an[o]={pk,pkT,arr,outS,fin,settle,moved:Math.abs(pk)>thr}});
+  return res;
+}
+const at=(arr,t)=>{const i=Math.min(arr.length-1,Math.max(0,Math.round(t/5)));return arr[i]};
+function runSim(){S.res=simulate(S.moves,S.auto,S.H);S.t=Math.min(S.t,S.H);renderSim()}
+function renderSim(){renderMoves();renderHead();renderMap();renderSpec();renderLanes();renderGraph();renderObj();renderScen();
+  $('#simsub').textContent=`modelo FOPDT · ${REL.length} relações · ${REL.filter(r=>r[6]==='B').length} com fonte · malhas em ${S.auto?'automático':'manual'}`}
+function renderCursor(){$('#scrub').value=S.t;$('#tnow').innerHTML=`${mmss(S.t)} <small>/ ${mmss(S.H)}</small>`;renderMap();renderSpec();renderLanes(true)}
+
+/* --- mudanças --- */
+const kindLbl={sp:['setpoint','kind-sp'],mv:['malha / atuador','kind-mv'],dist:['perturbação','kind-dist']};
+function renderMoves(){
+  $('#nmoves').textContent=S.moves.length?`${S.moves.length}`:'';
+  const ats=[0,60,120,300,600];
+  let h=S.moves.map((m,i)=>{const v=VARS[m.tag];const blocked=S.auto&&v.ctl;const k=kindLbl[v.kind];return `<div class="mv ${blocked?'ctl':''}" data-m="${i}">
+    <div class="h"><span class="tag">${m.tag}</span><span class="${k[1]}" style="font-size:11px">${k[0]}</span><button class="x" data-rmv="${i}" title="remover">×</button></div>
+    <div class="nmv">${v.n}${v.est?' <span class="dim" style="font-size:11px">· faixa estimada</span>':''}</div>
+    <div class="vals"><span class="muted">${fmt(v.base,v.d)} →</span><b>${fmt(m.to,v.d)}<small>${v.u}</small></b></div>
+    <input type="range" min="${v.min}" max="${v.max}" step="${v.step}" value="${m.to}" data-sl="${i}" ${blocked?'disabled':''}>
+    <div class="tag" style="display:flex;justify-content:space-between"><span>${fmt(v.min,v.d)}</span><span class="${m.to-v.base>0?'blue':m.to-v.base<0?'amber':''}">${sgn(m.to-v.base,v.d)}</span><span>${fmt(v.max,v.d)}</span></div>
+    <div class="at">em ${ats.filter(a=>a<S.H).map(a=>`<button class="${m.at===a?'on':''}" data-at="${i}:${a}">${a?mmss(a):'0:00'}</button>`).join('')}</div>
+    ${blocked?`<div class="amber" style="font-size:11px;margin-top:6px">Em automático quem mexe aqui é a malha de ${LOOPS[v.ctl].n.toLowerCase()}. Mude o setpoint ou passe para manual.</div>`:''}
+  </div>`}).join('');
+  if(S.auto){h+=Object.values(LOOPS).filter(L=>Math.abs(S.res.mv[L.mv].reduce((a,v)=>Math.max(a,Math.abs(v-VARS[L.mv].base)),0))>.01).map(L=>{const s=S.res.mv[L.mv],v=VARS[L.mv],now=at(s,S.t);return `<div class="mv ctl"><div class="h"><span class="tag">${L.mv}</span><span class="kind-mv" style="font-size:11px">ação da malha ${L.pv}</span></div><div class="nmv">${v.n}</div><div class="vals"><span class="muted">${fmt(v.base,v.d)} →</span><b>${fmt(now,v.d)}<small>${v.u}</small></b></div><div style="margin-top:4px">${spark(s,C.violet,240,30)}</div></div>`}).join('')}
+  if(!S.moves.length)h=`<div class="empty">Nenhuma mudança. Use <b>+ Adicionar</b> ou um cenário pronto lá embaixo.</div>`+h;
+  $('#moves').innerHTML=h;
+}
+$('#moves').addEventListener('input',e=>{const i=e.target.dataset.sl;if(i==null)return;S.moves[i].to=+e.target.value;S.scen=null;cheapRun()});
+$('#moves').addEventListener('click',e=>{const r=e.target.closest('[data-rmv]');if(r){S.moves.splice(+r.dataset.rmv,1);S.scen=null;runSim();return}
+  const a=e.target.closest('[data-at]');if(a){const[i,v]=a.dataset.at.split(':').map(Number);S.moves[i].at=v;S.scen=null;runSim()}});
+let pend=0;function cheapRun(){if(pend)return;pend=requestAnimationFrame(()=>{pend=0;S.res=simulate(S.moves,S.auto,S.H);
+  // atualiza só o texto do card para não perder o foco do slider
+  $$('#moves [data-m]').forEach(c=>{const i=+c.dataset.m,m=S.moves[i],v=VARS[m.tag];c.querySelector('.vals b').innerHTML=`${fmt(m.to,v.d)}<small>${v.u}</small>`;const t=c.querySelector('.tag[style] span:nth-child(2)');t.textContent=sgn(m.to-v.base,v.d);t.className=m.to-v.base>0?'blue':m.to-v.base<0?'amber':''});
+  renderHead();renderMap();renderSpec();renderLanes();renderGraph();renderScen()})}
+$('#clearmv').onclick=()=>{S.moves=[];S.scen=null;runSim()};
+/* picker */
+$('#addmv').onclick=()=>{$('#picker').classList.toggle('on');$('#pq').value='';renderPicker();$('#pq').focus()};
+$('#pq').oninput=renderPicker;
+function renderPicker(){const q=$('#pq').value.toLowerCase();const used=new Set(S.moves.map(m=>m.tag));
+  const groups=[['sp','Setpoints das malhas','a malha mexe no atuador para chegar lá'],['mv','Malhas e atuadores',''],['dist','Perturbações','entra no processo, ninguém controla']];
+  $('#plist2').innerHTML=groups.map(([k,n,d])=>{const it=Object.entries(VARS).filter(([t,v])=>v.kind===k&&(t.toLowerCase().includes(q)||v.n.toLowerCase().includes(q)));if(!it.length)return'';
+    return `<div class="grp">${n}${d?` <span style="text-transform:none;letter-spacing:0;font-family:var(--sans);font-weight:400">· ${d}</span>`:''}</div>`+it.map(([t,v])=>{const dis=used.has(t)||(S.auto&&v.ctl);return `<div class="pi ${dis?'dis':''}" data-add="${dis?'':t}"><span>${v.n}</span><span class="tag">${SECN[v.sec]}</span><span class="tag">${t}</span><span class="tag">${used.has(t)?'já no cenário':S.auto&&v.ctl?'malha em auto':fmt(v.base,v.d)+' '+v.u}</span></div>`}).join('')}).join('')||'<div class="empty">nada encontrado</div>'}
+$('#plist2').addEventListener('click',e=>{const p=e.target.closest('[data-add]');if(!p||!p.dataset.add)return;const t=p.dataset.add,v=VARS[t];
+  let to=v.base+(v.max-v.base)*.4;to=Math.round(to/v.step)*v.step;S.moves.push({tag:t,to:+to.toFixed(4),at:0});S.scen=null;$('#picker').classList.remove('on');runSim()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')$('#picker').classList.remove('on')});
+
+/* --- frase de resultado --- */
+function renderHead(){const R=S.res;if(!S.moves.length){$('#headline').innerHTML='Sem mudanças: o processo fica no ponto de operação.';return}
+  const ranked=Object.entries(R.an).filter(([o,a])=>a.moved&&OUT[o].fin).sort((a,b)=>Math.abs(b[1].pk)/(OUT[b[0]].hi-OUT[b[0]].lo)-Math.abs(a[1].pk)/(OUT[a[0]].hi-OUT[a[0]].lo));
+  const m=S.moves[0],v=VARS[m.tag];const what=S.moves.length>1?`Com ${S.moves.length} mudanças`:`Com ${v.n.toLowerCase()} em ${fmt(m.to,v.d)} ${v.u}`;
+  if(!ranked.length){$('#headline').innerHTML=`${what}, nada chega à qualidade final dentro de ${mmss(S.H)}.`;return}
+  const parts=ranked.slice(0,2).map(([o,a],i)=>{const O=OUT[o];const back=Math.abs(a.fin)<Math.abs(a.pk)*.2;const outS=a.outS?` e passa <b>${Math.round(a.outS/60)} min</b> fora de especificação`:' e fica dentro da especificação';
+    return `${i?'; ':''}${O.n.toLowerCase()} ${a.pk>0?'sobe':'cai'} <b>${fmt(Math.abs(a.pk),O.d)} ${O.u}</b> ${back?`no pico (em ${mmss(a.pkT)}) e ${S.auto&&(o==='AIC-902'||o==='AIC-903')?'a malha traz de volta':'volta'}`:`e estabiliza em <b>${fmt(O.base+a.fin,O.d)}</b>`}${outS}`});
+  $('#headline').innerHTML=`${what}, ${parts.join('')}.`}
+
+/* --- mapa de propagação --- */
+function secState(sec,t){const R=S.res;let moved=S.moves.some(m=>VARS[m.tag].sec===sec&&t>=m.at&&!(S.auto&&VARS[m.tag].ctl));
+  if(S.auto)Object.values(LOOPS).forEach(L=>{if(VARS[L.mv].sec===sec&&Math.abs(at(R.mv[L.mv],t)-VARS[L.mv].base)>.05)moved=true});
+  const outs=Object.entries(OUT).filter(([o,O])=>O.sec===sec);let reached=false,bad=false,arr=null;const rows=[];
+  outs.forEach(([o,O])=>{const a=R.an[o];if(a.arr!=null){arr=arr==null?a.arr:Math.min(arr,a.arr)}const v=at(R.out[o],t),d=v-O.base;if(a.arr!=null&&t>=a.arr)reached=true;if(v<O.lo||v>O.hi)bad=true;if(a.moved)rows.push([o,O,v,d])});
+  const ins=S.moves.filter(m=>VARS[m.tag].sec===sec).map(m=>m.at);if(ins.length)arr=arr==null?Math.min(...ins):Math.min(arr,...ins);
+  return {moved,reached,bad,arr,rows}}
+function renderMap(){const el=$('#map');const W=el.clientWidth||900,H=el.clientHeight||400;if(!S.res)return;
+  const secs=SECS,n=secs.length,gap=10,top=46,bw=(W-gap*(n-1))/n,bh=Math.max(220,Math.min(H-top-150,330));let s='';
+  // acionamento (velocidade) atravessa a máquina
+  const mv=S.moves.find(m=>m.tag==='SIC-1104');const vNow=at(S.res.inp['SIC-1104'],S.t);
+  s+=`<rect x="0" y="0" width="${W}" height="30" rx="5" fill="${mv&&S.t>=mv.at?'#13213a':'#0d1118'}" stroke="${mv&&S.t>=mv.at?C.blue:C.line}"/><text x="12" y="19" style="font:12px var(--sans);fill:${C.tx2}">Acionamentos · velocidade da máquina</text><text x="${W-12}" y="19" text-anchor="end" style="font-size:12px;font-weight:600;fill:${mv?C.blue:C.tx2}">${fmt(vNow,0)} m/min${mv?` (${sgn(vNow-1250,0)})`:''}</text>`;
+  // linha do papel
+  const ly=top+bh+22;s+=`<line x1="0" x2="${W}" y1="${ly}" y2="${ly}" stroke="#232b37" stroke-width="3"/>`;
+  secs.forEach(([k,nm],i)=>{const x=i*(bw+gap),st=secState(k,S.t);const col=st.bad?C.red:st.moved?C.blue:st.reached?C.tx:C.line;const fill=st.bad?'#241418':st.moved?'#111b2c':st.reached?'#151b24':'#0d1118';
+    s+=`<g data-sec="${k}" style="cursor:pointer"><rect x="${x}" y="${top}" width="${bw}" height="${bh}" rx="6" fill="${fill}" stroke="${col}" stroke-width="${S.secF===k?2.5:1.2}"/>`;
+    s+=`<text x="${x+10}" y="${top+20}" style="font:600 ${bw<110?10.5:12}px var(--sans);fill:${st.reached||st.moved?C.tx:C.tx2}">${SEC2[k][0]}</text><text x="${x+10}" y="${top+35}" style="font:600 ${bw<110?10.5:12}px var(--sans);fill:${st.reached||st.moved?C.tx:C.tx2}">${SEC2[k][1]}</text>`;
+    const arrTxt=st.arr==null?(bw<130?'—':'sem efeito'):(bw<130?'':S.t>=st.arr?'chegou ':'chega ')+mmss(st.arr);
+    s+=`<text x="${x+10}" y="${top+54}" style="fill:${st.arr==null?C.tx3:S.t>=st.arr?(st.bad?C.red:C.tx2):C.tx3}">${arrTxt}</text>`;
+    // variáveis
+    let yy=top+80;
+    const rows=[...st.rows];if(S.auto)Object.values(LOOPS).forEach(L=>{if(VARS[L.mv].sec===k){const v=at(S.res.mv[L.mv],S.t),d=v-VARS[L.mv].base;if(S.res.mv[L.mv].some(x=>Math.abs(x-VARS[L.mv].base)>.05))rows.unshift([L.mv,{n:VARS[L.mv].n,u:VARS[L.mv].u,d:VARS[L.mv].d,lo:-1e9,hi:1e9,base:VARS[L.mv].base,malha:1},v,d])}});
+    S.moves.filter(m=>VARS[m.tag].sec===k&&!(S.auto&&VARS[m.tag].ctl)).forEach(m=>{const V=VARS[m.tag],v=at(S.res.inp[m.tag],S.t);rows.unshift([m.tag,{n:V.n,u:V.u,d:V.d,lo:-1e9,hi:1e9,in:1},v,v-V.base])});
+    rows.slice(0,6).forEach(([o,O,v,d])=>{const bad=v<O.lo||v>O.hi;const c=O.in?C.blue:O.malha?C.violet:bad?C.red:Math.abs(d)>1e-9?C.tx:C.tx3;
+      const wide=bw>=130;s+=`<text x="${x+10}" y="${yy}" style="font-size:10px;fill:${C.tx3}">${o}</text>${wide?`<text x="${x+bw-10}" y="${yy}" text-anchor="end" style="font-size:10px;fill:${C.tx3}">${O.in?'entrada':O.malha?'malha':''}</text>`:''}`;
+      s+=`<text x="${x+10}" y="${yy+16}" style="font-size:13px;font-weight:600;fill:${c}">${sgn(d,O.d)}</text>${wide?`<text x="${x+bw-10}" y="${yy+16}" text-anchor="end" style="font-size:10px;fill:${C.tx3}">${O.u}</text>`:''}`;yy+=36});
+    if(rows.length>6)s+=`<text x="${x+10}" y="${yy}" style="fill:${C.tx3}">+${rows.length-6}</text>`;
+    // marcador na linha do papel
+    const r=st.arr!=null&&S.t>=st.arr;s+=`<circle cx="${x+bw/2}" cy="${ly}" r="${r?6:4}" fill="${st.bad&&r?C.red:r?C.tx:st.moved?C.blue:'#2a3240'}"/>`;
+    if(i<n-1)s+=`<path d="M${x+bw+2},${top+bh/2}l${gap-4},0" stroke="#2a3240" stroke-width="1.5" marker-end="url(#ar)"/>`;
+    s+=`</g>`});
+  // frente de propagação
+  const reached=secs.map(([k])=>secState(k,S.t)).map(s=>s.arr!=null&&S.t>=s.arr);const last=reached.lastIndexOf(true);
+  if(last>=0)s+=`<line x1="${bw/2}" x2="${last*(bw+gap)+bw/2}" y1="${ly}" y2="${ly}" stroke="${C.blue}" stroke-width="3" stroke-opacity=".5"/>`;
+  s+=`<text x="0" y="${ly+24}">celulose</text><text x="${W}" y="${ly+24}" text-anchor="end">bobina</text><text x="${W/2}" y="${ly+24}" text-anchor="middle">sentido da folha →</text>`;
+  // eixo de chegada: quando o efeito chega em cada seção
+  const ay=ly+70;if(ay+30<H){const AX=t=>40+(W-60)*t/S.H;s+=`<text x="0" y="${ay-22}" style="font:12px var(--sans);fill:${C.tx2}">Quando chega em cada seção</text><line x1="40" x2="${W-20}" y1="${ay}" y2="${ay}" stroke="#232b37" stroke-width="2"/><text x="0" y="${ay+4}">0</text><text x="${W}" y="${ay+4}" text-anchor="end">${mmss(S.H)}</text>`;
+    let k2=0;secs.forEach(([k])=>{const st=secState(k,S.H);if(st.arr==null)return;const x=AX(st.arr),past=S.t>=st.arr;s+=`<circle cx="${x}" cy="${ay}" r="5" fill="${past?(secState(k,S.t).bad?C.red:C.tx):'#2a3240'}" stroke="${C.bg||'#0a0d12'}" stroke-width="2"/><text x="${x<90?x-4:x}" y="${ay+(k2%2?24:-10)}" text-anchor="${x<90?'start':x>W-90?'end':'middle'}" style="fill:${past?C.tx2:C.tx3}">${SEC2[k][0].replace('-','')} ${mmss(st.arr)}</text>`;k2++});
+    s+=`<line x1="${AX(S.t)}" x2="${AX(S.t)}" y1="${ay-14}" y2="${ay+14}" stroke="${C.amber}" stroke-width="2"/>`}
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="height:${H}px"><defs><marker id="ar" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L6,3L0,6Z" fill="#3a4558"/></marker></defs>${s}</svg>`;
+}
+$('#map').addEventListener('click',e=>{const g=e.target.closest('[data-sec]');if(!g)return;S.secF=S.secF===g.dataset.sec?null:g.dataset.sec;renderMap();renderLanes();if(S.secF)$('#s-tempo').scrollIntoView({behavior:'smooth'})});
+
+/* --- especificação na enroladeira --- */
+function renderSpec(){const R=S.res,t=S.t;const prod=v=>8*v*R.out['AIC-902'][0]*60/1e6;
+  const vN=at(R.inp['SIC-1104'],t),gN=at(R.out['AIC-902'],t),p0=8*1250*75*60/1e6,p=8*vN*gN*60/1e6;
+  const outMin=Math.round(Object.values(R.an).reduce((a,x)=>Math.max(a,x.outS),0)/60);
+  const settle=Math.max(0,...Object.entries(R.an).filter(([o,a])=>a.moved&&OUT[o].fin).map(([o,a])=>a.settle||0));
+  $('#simkpi').innerHTML=[['Produção',`${fmt(p,1)}`,`t/h · ${sgn(p-p0,1)}`,p-p0>0.05?'green':p-p0<-0.05?'amber':''],['Fora de espec.',`${outMin}`,'min no horizonte',outMin?'red':'green'],['Estabiliza em',settle?mmss(settle):'—','min:s','']].map(([l,v,s,c],i)=>`<div style="padding:12px 16px;${i?'border-left:1px solid var(--line)':''}"><div class="dim" style="font-size:12px">${l}</div><div style="font:600 20px var(--mono)" class="${c}">${v}</div><div class="tag">${s}</div></div>`).join('');
+  $('#spect').textContent=`em ${mmss(t)}`;
+  $('#spec').innerHTML=Object.entries(OUT).filter(([o,O])=>O.fin).map(([o,O])=>{const v=at(R.out[o],t),d=v-O.base,span=(O.hi-O.lo),lo=O.lo-span*.5,hi=O.hi+span*.5,f=x=>Math.max(0,Math.min(100,(x-lo)/(hi-lo)*100));const bad=v<O.lo||v>O.hi;const moved=R.an[o].moved;
+    return `<div class="specrow" style="${bad?'background:rgba(239,77,86,.06)':''}"><div><div style="${moved?'':'color:var(--tx2)'}">${O.n}</div><div class="tag">${o} · ${fmt(O.lo,O.d)}–${fmt(O.hi,O.d)} ${O.u}</div></div><div><div class="v ${bad?'red':''}" style="${moved?'':'color:var(--tx2)'}">${fmt(v,O.d)}</div><div class="d ${moved?(bad?'red':'blue'):''}">${moved?sgn(d,O.d):'—'}</div></div>
+     <div class="sb"><div class="tr"></div><div class="band" style="left:${f(O.lo)}%;width:${f(O.hi)-f(O.lo)}%"></div><div class="base" style="left:${f(O.base)}%"></div><div class="now" style="left:${f(v)}%;background:${bad?C.red:moved?C.blue:C.tx2}"></div></div></div>`}).join('');
+}
+
+/* --- curvas --- */
+function renderLanes(cursorOnly){const R=S.res;if(!R)return;
+  let tags=Object.entries(OUT).filter(([o,O])=>R.an[o].moved||(S.B&&S.B.an[o].moved)).map(([o])=>o);
+  const ctlTags=S.auto?Object.values(LOOPS).filter(L=>R.mv[L.mv].some(x=>Math.abs(x-VARS[L.mv].base)>.05)).map(L=>L.mv):[];
+  let defs=[];
+  S.moves.filter(m=>!(S.auto&&VARS[m.tag].ctl)).forEach(m=>{const v=VARS[m.tag];if(S.secF&&v.sec!==S.secF)return;const s=R.inp[m.tag];defs.push({name:v.n,tag:`${m.tag} · entrada`,vals:s,alt:s.map(()=>v.base),b:S.B?.inp[m.tag],val:fmt(at(s,S.t),v.d)+' '+v.u,sub:sgn(at(s,S.t)-v.base,v.d),color:C.blue})});
+  ctlTags.forEach(t=>{const v=VARS[t];if(S.secF&&v.sec!==S.secF)return;const s=R.mv[t];defs.push({name:v.n,tag:`${t} · ação da malha`,vals:s,alt:s.map(()=>v.base),b:S.B?.mv[t],val:fmt(at(s,S.t),v.d)+' '+v.u,sub:sgn(at(s,S.t)-v.base,v.d),color:C.violet})});
+  tags.forEach(o=>{const O=OUT[o];if(S.secF&&O.sec!==S.secF)return;const s=R.out[o],v=at(s,S.t),bad=v<O.lo||v>O.hi,a=R.an[o];const relsIn=REL.filter(r=>r[1]===o);const est=relsIn.some(r=>r[6]==='est'&&(R.an[r[0]]?.moved||S.moves.some(m=>m.tag===r[0])));
+    defs.push({name:O.n,tag:o,badge:est?'inclui relação estimada':'relações com fonte',badgeC:est?C.amber:C.tx3,vals:s,alt:s.map(()=>O.base),b:S.B?.out[o],band:[O.lo,O.hi],val:fmt(v,O.d)+' '+O.u,sub:`pico ${sgn(a.pk,O.d)} em ${mmss(a.pkT)}`,color:bad?C.red:C.tx,vcolor:bad?C.red:C.tx})});
+  $('#secfilter').innerHTML=S.secF?`<span class="chip on" id="clrsec">${SECN[S.secF]} ×</span>`:'';
+  const cl=$('#clrsec');if(cl)cl.onclick=()=>{S.secF=null;renderMap();renderLanes()};
+  $('#lanesub').textContent=defs.length?`${defs.length} curvas · linha âmbar = instante do mapa`:'';
+  if(!defs.length){$('#lanes').style.height='';$('#lanes').innerHTML=`<div class="empty">${S.secF?'nada mudou nesta seção':'sem efeito para mostrar'}</div>`;return}
+  const xl=[0,.2,.4,.6,.8,1].map(f=>mmss(f*S.H));
+  lanes($('#lanes'),defs,{xl,now:S.t/S.H,laneH:86,labelW:220,valW:130,nowDash:false});
+}
+
+/* --- grafo de causa --- */
+function renderGraph(){const R=S.res;const el=$('#graph');const W=el.clientWidth||700;
+  const act=new Set(S.moves.filter(m=>!(S.auto&&VARS[m.tag].ctl)).map(m=>m.tag));
+  if(S.auto)Object.values(LOOPS).forEach(L=>{if(R.mv[L.mv].some(x=>Math.abs(x-VARS[L.mv].base)>.05))act.add(L.mv)});
+  const used=[];const reach=new Set();let frontier=[...act];
+  while(frontier.length){const nx=[];REL.forEach(r=>{if(frontier.includes(r[0])&&!used.includes(r)){used.push(r);if(!reach.has(r[1])){reach.add(r[1]);nx.push(r[1])}}});frontier=nx}
+  const loopE=S.auto?Object.values(LOOPS).filter(L=>act.has(L.mv)&&(reach.has(L.pv))):[];
+  const c0=[...act].filter(t=>VARS[t]&&!VARS[t].ctl||(VARS[t]&&!S.auto)),c0b=[...act].filter(t=>VARS[t]&&VARS[t].ctl&&S.auto),mid=[...reach].filter(o=>!OUT[o].fin),fin=[...reach].filter(o=>OUT[o].fin);
+  const cols=[[...c0,...c0b],mid,fin].filter(c=>c.length);if(!cols.length){el.innerHTML='<div class="empty">sem relações em uso</div>';$('#reltab').innerHTML='';$('#nrel').textContent='';return}
+  const nh=46,gapY=14,H=Math.max(...cols.map(c=>c.length))*(nh+gapY)+40+(S.auto?22:0),nw=200;const pos={};
+  cols.forEach((c,ci)=>{const x=cols.length===1?0:(W-nw)*ci/(cols.length-1);const tot=c.length*(nh+gapY)-gapY;c.forEach((t,i)=>pos[t]={x,y:(H-52-tot)/2+i*(nh+gapY)})});
+  let s='';
+  used.forEach(r=>{const a=pos[r[0]],b=pos[r[1]];if(!a||!b)return;const x1=a.x+nw,y1=a.y+nh/2,x2=b.x,y2=b.y+nh/2,mx=(x1+x2)/2;const col=r[2]>0?C.blue:C.amber;
+    s+=`<path d="M${x1},${y1}C${mx},${y1} ${mx},${y2} ${x2-6},${y2}" fill="none" stroke="${col}" stroke-opacity=".55" stroke-width="2" ${r[6]==='est'?'stroke-dasharray="5 4"':''} marker-end="url(#ar2)" data-tip="<b>${r[0]} → ${r[1]}</b><br>K = ${fmt(r[2],4)} · θ = ${r[3]} s · τ = ${r[4]} s<br>${r[5]}<br><span class='${r[6]==='B'?'green':'amber'}'>${r[6]==='B'?'fonte: pesquisa B':'estimado'}</span>" style="cursor:help"/><path d="M${x1},${y1}C${mx},${y1} ${mx},${y2} ${x2-6},${y2}" fill="none" stroke="transparent" stroke-width="12" data-tip="<b>${r[0]} → ${r[1]}</b><br>K = ${fmt(r[2],4)} · θ = ${r[3]} s · τ = ${r[4]} s<br>${r[5]}"/>`});
+  loopE.forEach((L,li)=>{const a=pos[L.pv],b=pos[L.mv];if(!a||!b)return;const y=H-14-li*22;s+=`<path d="M${a.x+nw/2},${a.y+nh}L${a.x+nw/2},${y}L${b.x+nw/2},${y}L${b.x+nw/2},${b.y+nh+6}" fill="none" stroke="${C.violet}" stroke-dasharray="4 4" stroke-width="1.5" marker-end="url(#ar3)"/><text x="${(a.x+b.x+nw)/2}" y="${y-4}" text-anchor="middle" style="fill:${C.violet}">malha ${L.pv} corrige com ${L.mv}</text>`});
+  Object.entries(pos).forEach(([t,p])=>{const I=info(t);const isIn2=t in VARS;const bad=!isIn2&&R.an[t]&&(()=>{const v=at(R.out[t],S.H);return v<OUT[t].lo||v>OUT[t].hi})();const col=isIn2?(VARS[t].ctl&&S.auto?C.violet:C.blue):bad?C.red:C.tx2;
+    s+=`<rect x="${p.x}" y="${p.y}" width="${nw}" height="${nh}" rx="6" fill="#121822" stroke="${col}"/><text x="${p.x+10}" y="${p.y+18}" style="font:12px var(--sans);fill:${C.tx}">${I.n.length>26?I.n.slice(0,25)+'…':I.n}</text><text x="${p.x+10}" y="${p.y+34}">${t}${!isIn2?' · '+sgn(R.an[t].fin,OUT[t].d)+' '+OUT[t].u+' no fim':''}</text>`});
+  el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="height:${H}px"><defs><marker id="ar2" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L6,3L0,6Z" fill="#6b7a90"/></marker><marker id="ar3" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L6,3L0,6Z" fill="${C.violet}"/></marker></defs>${s}</svg>`;
+  $('#nrel').textContent=`${used.length} de ${REL.length}`;
+  $('#reltab').innerHTML=`<thead><tr><th>Entrada → saída</th><th class="r">K</th><th class="r">θ</th><th class="r">τ</th><th>Origem</th></tr></thead><tbody>${used.map(r=>`<tr data-tip="${r[5]}"><td><span class="mono">${r[0]}</span> <span class="dim">→</span> <span class="mono">${r[1]}</span><div class="tag" style="font-family:var(--sans)">${r[5]}</div></td><td class="pv" style="font-size:12px;color:${r[2]>0?C.blue:C.amber}">${sgn(r[2],r[2]%1&&Math.abs(r[2])<.01?5:Math.abs(r[2])<1?4:1)}</td><td class="pv" style="font-size:12px">${r[3]} s</td><td class="pv" style="font-size:12px">${r[4]} s</td><td><span class="pill" style="color:var(--${r[6]==='B'?'green':'amber'})">${r[6]==='B'?'pesquisa B':'estimado'}</span></td></tr>`).join('')}</tbody>`;
+}
+
+/* --- modo objetivo --- */
+function renderObj(){const O=OUT[S.obj];
+  $('#objout').innerHTML=Object.entries(OUT).filter(([o,x])=>x.fin).map(([o,x])=>`<span class="chip ${o===S.obj?'on':''}" data-o="${o}">${x.n}</span>`).join('');
+  const span=O.hi-O.lo,r=$('#objr');r.min=O.lo-span*.3;r.max=O.hi+span*.3;r.step=span/100;r.value=S.objV;
+  $('#objnow').textContent=`hoje ${fmt(O.base,O.d)} ${O.u}`;$('#objval').textContent=`${fmt(S.objV,O.d)} ${O.u}`;
+  $('#objlim').innerHTML=`<span>${fmt(+r.min,O.d)}</span><span>espec. ${fmt(O.lo,O.d)}–${fmt(O.hi,O.d)}</span><span>${fmt(+r.max,O.d)}</span>`;
+  const dy=S.objV-O.base;$('#objsub').textContent=`para ${sgn(dy,O.d)} ${O.u} em ${O.n.toLowerCase()}`;
+  const opts=[];
+  const loop=Object.values(LOOPS).find(L=>L.pv===S.obj);
+  if(loop&&S.auto){opts.push({tag:loop.sp,to:S.objV,feas:S.objV>=VARS[loop.sp].min&&S.objV<=VARS[loop.sp].max,t:REL.find(r=>r[0]===loop.mv&&r[1]===loop.pv)[3]+loop.lam,side:[],note:`a malha ${loop.pv} move ${loop.mv} sozinha`})}
+  REL.filter(r=>r[1]===S.obj&&r[0] in VARS).forEach(r=>{const v=VARS[r[0]];const du=dy/r[2],to=v.base+du;const feas=to>=v.min&&to<=v.max;
+    const side=REL.filter(q=>q[0]===r[0]&&q[1]!==S.obj).map(q=>{const d=q[2]*du,Q=OUT[q[1]];const nv=Q.base+d;return {o:q[1],d,bad:nv<Q.lo||nv>Q.hi,Q}});
+    const blocked=S.auto&&v.ctl&&Object.values(LOOPS).some(L=>L.mv===r[0]&&L.pv===S.obj);
+    const fought=S.auto&&loop;
+    if(!blocked)opts.push({tag:r[0],to,feas,t:r[3]+r[4],side,rel:r,fought,note:fought?`em automático a malha ${loop.pv} desfaz esse efeito (só vale em manual)`:S.auto&&v.ctl?`em automático a malha ${LOOPS[v.ctl].pv} briga com essa mudança`:''})});
+  // efeito indireto (via umidade antes da colagem)
+  if(S.obj==='AIC-903'){const r1=REL.find(r=>r[0]==='PIC-514'&&r[1]==='AIC-901'),r2=REL.find(r=>r[0]==='AIC-901'&&r[1]==='AIC-903');const k=r1[2]*r2[2],du=dy/k,v=VARS['PIC-514'],to=v.base+du;const nv=OUT['AIC-901'].base+r1[2]*du;opts.push({tag:'PIC-514',to,feas:to>=v.min&&to<=v.max,t:r1[3]+r1[4]+r2[3]+r2[4],fought:S.auto&&!!loop,side:[{o:'AIC-901',d:r1[2]*du,bad:nv<OUT['AIC-901'].lo||nv>OUT['AIC-901'].hi,Q:OUT['AIC-901']}],note:'caminho indireto pela umidade antes da colagem (relação estimada)'+(S.auto&&loop?` · em automático a malha ${loop.pv} desfaz`:'')})}
+  const score=o=>(o.feas?0:1000)+(o.fought?500:0)+o.side.filter(s=>s.bad).length*100+o.t/60+(o.note&&o.note.includes('briga')?50:0);
+  opts.sort((a,b)=>score(a)-score(b));
+  $('#objlist').innerHTML=Math.abs(dy)<1e-9?'<div class="empty">mova o controle para escolher um alvo</div>':opts.length?opts.map((o,i)=>{const v=VARS[o.tag];return `<div class="sug ${i===0&&o.feas?'best':''} ${o.feas?'':'bad'}"><span class="n">${i+1}</span>
+    <div><div><b>${v.n}</b> <span class="tag">${o.tag}</span></div>
+     <div style="margin-top:3px"><span class="mono">${fmt(v.base,v.d)} → <b>${fmt(o.to,v.d)}</b> ${v.u}</span> <span class="${o.to-v.base>0?'blue':'amber'} mono">(${sgn(o.to-v.base,v.d)})</span> · <span class="muted">efeito em ~${mmss(o.t)}</span>${o.feas?'':` · <span class="red">fora da faixa (${fmt(v.min,v.d)}–${fmt(v.max,v.d)})</span>`}</div>
+     <div class="tag" style="margin-top:4px;font-family:var(--sans)">${o.side.length?'efeitos colaterais: '+o.side.map(s=>`<span class="${s.bad?'red':''}">${s.Q.n.toLowerCase()} ${sgn(s.d,s.Q.d)} ${s.Q.u}${s.bad?' (sai da espec.)':''}</span>`).join(' · '):'sem efeito colateral no modelo'}${o.note?` · ${o.note}`:''}</div></div>
+    <button class="btn sm ${i===0&&o.feas?'pri':''}" data-objadd="${o.tag}:${o.to}" ${o.feas?'':'disabled'}>Simular</button></div>`}).join(''):'<div class="empty">nenhuma variável do modelo mexe nisso</div>';
+}
+$('#objout').addEventListener('click',e=>{const c=e.target.closest('[data-o]');if(!c)return;S.obj=c.dataset.o;const O=OUT[S.obj];S.objV=O.base+(O.hi-O.base)*.5*(S.obj==='AIC-903'?-1:1);renderObj()});
+$('#objr').addEventListener('input',e=>{S.objV=+e.target.value;renderObj()});
+$('#objlist').addEventListener('click',e=>{const b=e.target.closest('[data-objadd]');if(!b)return;const[t,v]=b.dataset.objadd.split(':');const V=VARS[t];const to=+(Math.round(+v/V.step)*V.step).toFixed(4);
+  S.moves=[{tag:t,to,at:0}];S.scen=null;S.t=0;runSim();document.getElementById('simulacao').scrollTo({top:0,behavior:'smooth'})});
+
+/* --- cenários prontos --- */
+const SCEN=[
+ {n:'Troca de grade 75 → 78 g/m²',d:'Muda o setpoint de gramatura. A malha abre a vazão de massa e a umidade acompanha.',m:[{tag:'AIC-902-SP',to:78,at:0}]},
+ {n:'Subir a velocidade para 1.300 m/min',d:'Mais produção. A gramatura cai até a malha compensar e a folha sai mais úmida.',m:[{tag:'SIC-1104',to:1300,at:0}]},
+ {n:'Massa chega mais diluída',d:'Perturbação: consistência cai 0,1 %. Ninguém avisa, a malha de gramatura percebe depois.',m:[{tag:'AIC-104',to:3.4,at:0}]},
+ {n:'Mais refino para ganhar tração',d:'Efeito lento: passa pelos tanques e só aparece no laboratório.',m:[{tag:'JIC-101',to:70,at:0}]},
+ {n:'Economizar vapor no G4',d:'Menos vapor no grupo principal. A umidade antes da colagem sobe e a pós-secagem compensa.',m:[{tag:'PIC-514',to:190,at:0}]},
+ {n:'Mais carga na calandra',d:'Espessura cai rápido (τ de 4,5 s) e a opacidade perde um pouco.',m:[{tag:'WIC-801',to:140,at:0}]},
+ {n:'Velocidade + vapor em sequência',d:'Sobe a velocidade e, 2 min depois, mais vapor no G4 para segurar a umidade.',m:[{tag:'SIC-1104',to:1300,at:0},{tag:'PIC-514',to:280,at:120}]},
+ {n:'Curl fora: corrigir com vapor entre faces',d:'Mexe no diferencial de vapor entre as faces da pós-secagem.',m:[{tag:'PDIC-702',to:40,at:0}]},
+];
+function renderScen(){$('#scens').innerHTML=SCEN.map((c,i)=>`<div class="scen ${S.scen===i?'on':''}" data-sc="${i}"><b>${c.n}</b><span class="muted" style="font-size:12px">${c.d}</span><span class="ms">${c.m.map(m=>`${m.tag} → ${fmt(m.to,VARS[m.tag].d)}${m.at?' em '+mmss(m.at):''}`).join(' · ')}</span></div>`).join('')}
+$('#scens').addEventListener('click',e=>{const c=e.target.closest('[data-sc]');if(!c)return;S.scen=+c.dataset.sc;S.moves=SCEN[S.scen].m.map(m=>({...m}));S.t=0;runSim();document.getElementById('simulacao').scrollTo({top:0,behavior:'smooth'});setTimeout(()=>{if(!S.playing)togglePlay()},500)});
+
+/* --- reprodução e controles --- */
+let raf=0,lastTs=0;
+function togglePlay(){S.playing=!S.playing;$('#play').textContent=S.playing?'❚❚':'▶';if(S.playing){if(S.t>=S.H)S.t=0;lastTs=0;raf=requestAnimationFrame(tick)}else cancelAnimationFrame(raf)}
+function tick(ts){if(!lastTs)lastTs=ts;const dt=(ts-lastTs)/1000;lastTs=ts;S.t=Math.min(S.H,S.t+dt*S.speed);renderCursor();if(S.t>=S.H){togglePlay();return}raf=requestAnimationFrame(tick)}
+$('#play').onclick=togglePlay;
+$('#scrub').addEventListener('input',e=>{S.t=+e.target.value;renderCursor()});
+$('#speed').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;$$('#speed button').forEach(x=>x.classList.toggle('on',x===b));S.speed=+b.dataset.v});
+$('#automode').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;$$('#automode button').forEach(x=>x.classList.toggle('on',x===b));S.auto=b.dataset.v==='1';runSim();if($('#picker').classList.contains('on'))renderPicker()});
+$('#horiz').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;$$('#horiz button').forEach(x=>x.classList.toggle('on',x===b));S.H=+b.dataset.v;$('#scrub').max=S.H;S.B=null;$('#pinB').textContent='Fixar como B';S.moves.forEach(m=>{if(m.at>=S.H)m.at=0});runSim();renderCursor()});
+$('#pinB').onclick=()=>{if(S.B){S.B=null;$('#pinB').textContent='Fixar como B'}else{S.B=S.res;$('#pinB').textContent='Limpar B'}renderLanes()};
+
+/* ---------- desenho por página ---------- */
+const drawn={};
+function drawPage(){const p=curPage;
+  if(p==='turno'){drawTimeline();drawTurnComp();drawEvents()}
+  if(p==='processo'){drawProc();drawLoops()}
+  if(p==='laboratorio'){drawLab();drawLabMore()}
+  if(p==='bobinas'){drawBob();drawDest()}
+  if(p==='mancais'){drawMancais();drawMMap();drawMScat()}
+  if(p==='rondas'){drawRondas();drawRDumb()}
+  if(p==='notas'){drawNotas();drawNotasInd()}
+  if(p==='maquina'){drawSecStrip()}
+  if(p==='simulacao'){if(!S.res)S.res=simulate(S.moves,S.auto,S.H);renderSim();renderCursor()}
+}
+addEventListener('resize',()=>requestAnimationFrame(drawPage));
+go();
+</script>
+</body>
+</html>

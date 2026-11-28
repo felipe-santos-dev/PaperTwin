@@ -3869,3 +3869,90 @@ Fica em aberto, para ser decidido à parte: o aviso de `THREE.Clock` depreciado
 vem do `@react-three/fiber` 9.8.2 (`dist/events-*.js`, `clock: new THREE.Clock()`),
 não do nosso código. Trocar por `THREE.Timer` é subir a dependência que desenha
 a cena inteira.
+
+## Layout novo e simulador repaginado — Fase 0 (levantamento)
+
+O levantamento inteiro está em [docs/fase-0-levantamento.md](fase-0-levantamento.md).
+Aqui ficam as conclusões e as decisões que travam a Fase 1.
+
+### O que o levantamento achou
+
+1. **O protótipo está copiado** em `reference/design/papertwin-layout-v2.html`,
+   sem alteração: 1.175 linhas, arquivo único, com `simulate()` e quatro tabelas
+   (16 entradas, 12 saídas, 23 relações FOPDT, 2 malhas, 8 cenários). Ele é
+   **fiel ao repositório onde o repositório tem número** — as 22 relações
+   compartilhadas batem dígito a dígito com `relacoes-fopdt.csv`, e as 3 bandas
+   de especificação que o catálogo tem (`AIC-902` 73,5/76,5, `AIC-903` 4,3/5,3,
+   `AIC-905` 98/106) batem exatas.
+2. **Não há motor para portar.** O "e se" já é TypeScript puro em
+   `packages/shared/src/simulation/` — FOPDT, PI com SIMC e anti-windup, rede
+   com seis cascatas, dt = 1 s — e já roda no navegador sem API, num Web Worker
+   (`apps/web/src/api/whatif-worker.ts`) sobre o estado gravado em
+   `demo/sim-state.json`. Faltam cinco coisas pequenas: horizonte de 60 min (o
+   teto é 30), gravação a cada 5 s, degrau **agendado** (hoje tudo entra em
+   t = 0), modo objetivo e o fixar-B.
+3. **O modo de demonstração já é completo.** Um arquivo por rota, gerado no
+   build por `apps/api/src/scripts/generate-demo.ts`, incluindo a tendência de
+   toda TAG do catálogo e o estado do motor. Conferi rota por rota: não falta
+   arquivo para nenhuma tela. Os únicos buracos são de escrita (setpoint e
+   reconhecimento de alarme), e são intencionais.
+4. **O "Carregando…" não é falta de dado.** Sai de três pontos de código:
+   `enabled: false` devolvendo `phase: loading` para sempre em
+   `ui/useResource.ts`; o `if (controller.signal.aborted) return` que não
+   escreve nem dado nem erro quando a busca volta depois do desmonte; e a
+   corrida em `api/inflight.ts` (`coalesce`), em que o abortar de um interessado
+   mata o pedido dos outros — de onde sai, literalmente, o
+   "signal is aborted without reason".
+5. **Nenhuma TAG falta; 13 números faltam.** As 28 TAGs do protótipo existem (25
+   no catálogo, 3 em `process/lab.ts`, 2 são setpoints de malha). O que o
+   repositório não tem são 4 bases de entrada, 3 faixas de entrada e 6 bandas de
+   especificação de saída — e três dessas bases o protótipo não marca como
+   estimadas, o que a regra 5 proíbe.
+
+Medido: **27** lugares com rolagem própria dentro de telas (`overflow-y-auto` /
+`overflow-auto`), que é a lista de trabalho da Fase 1 e o alvo do e2e de rolagem
+aninhada. E **9** seções no protótipo contra **10** áreas no catálogo: o
+protótipo funde `caixa`+`formação` e `qcs`+`pope`, e inventa `lab` e `acion`.
+
+### As decisões, tomadas em 27/11/2026
+
+| # | decisão |
+|---|---|
+| 5.1 | 27 relações; a zonada `ZIC-205` fica só no motor, a tela não mostra perfil CD |
+| 5.2 | catálogo nas seis entradas; nenhuma faixa estimada |
+| 5.3 | catálogo, saída por saída: `AIC-904` 19–23, `AI-907` `L` = 89, `AI-407` base 51, `LAB-1206R` base do `lab.ts`; para `AIC-901`, `AI-407`, `LAB-1206` e `LAB-1212` a banda é `fonte` só se a pesquisa B trouxer o número, senão `assumed` |
+| 5.4 | SIMC, a sintonia que já está em `pi.ts` |
+| 5.5 | seis cascatas |
+| 5.6 | coluna `kind` no CSV |
+| 5.7 | quebra contextual dentro da casca nova |
+| 5.9 | só `AIC-104` como perturbação |
+| §2 | fundir `caixa`+`formação` e `qcs`+`pope` só no mapa do Simulador |
+
+A relação `AIC-901 → AIC-903` (K = 0,35, θ = 25 s, τ = 30 s, `estimado`) está
+confirmada como necessária: nenhuma das 26 do CSV liga as duas, e sem ela o vapor
+do G4 não chega à umidade final.
+
+**O que 5.5 arrasta para a Fase 7.** Com seis cascatas, `PIC-514` e `WIC-801`
+viram MV de cascata e ficam travados em automático — e são as entradas dos
+cenários 5 e 6. Então cada cenário passa a carregar o próprio modo de malha; os
+cenários 5 e 6 abrem em manual, com a linha "em automático a cascata seguraria a
+umidade / a espessura"; e entram dois cenários novos em automático, SP de
+`AIC-901` e SP de `AIC-905`. **Total: 10 cenários.**
+
+### Arquivos, por commit sugerido
+
+**1. O protótipo como referência**
+
+```
+reference/design/papertwin-layout-v2.html           (novo, cópia sem alteração)
+```
+
+**2. O levantamento**
+
+```
+docs/fase-0-levantamento.md                         (novo)
+docs/progress.md
+```
+
+Nenhum código de tela foi escrito e nenhum arquivo do app foi tocado: typecheck,
+lint, testes, build, e2e e capturas não têm o que exercer nesta fase.

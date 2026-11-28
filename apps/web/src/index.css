@@ -20,16 +20,33 @@
      um painel de operação apertado é pior que um painel que diz que está
      apertado.
 
-     `largo` é de onde em diante sobra espaço para os extras — o nome do
-     operador na barra, o dia ao lado do relógio, a barra de faixa da
-     velocidade. Entre `piso` e `largo` eles saem: a informação que fica é a
-     que alguém precisa para operar, e a que sai é a que alguém consulta.
+     `largo` é de onde em diante sobra espaço para os extras da barra — o nome
+     do operador e o dia ao lado do relógio. Entre `piso` e `largo` eles saem: a
+     informação que fica é a que alguém precisa para operar, e a que sai é a que
+     alguém consulta. (A barra de faixa da velocidade também era um desses
+     extras; na fase 1 a velocidade inteira passou a sair abaixo de `amplo`, e a
+     faixa saiu com ela.)
+
+     `amplo` é 1500 px, e é o ponto de corte do layout novo
+     (`reference/design/papertwin-layout-v2.html`, a única consulta de mídia do
+     protótipo). Acima dele a linha do topo cabe inteira — gramatura,
+     velocidade e o campo de busca — e o índice da página aparece ao lado do
+     título. Abaixo, essas quatro coisas saem.
+
+     Três pontos de corte e não dois porque eles respondem perguntas
+     diferentes, e nenhum substitui o outro: `piso` é o **mínimo que o projeto
+     garante**, `largo` é de onde sobra espaço para os extras da barra (o nome
+     do operador, o dia ao lado do relógio), e `amplo` é a largura a partir da
+     qual a **linha única do topo do layout novo** cabe sem disputa. 1440 e 1500
+     são vizinhos, e isso é de propósito: entre eles o operador e o dia voltam,
+     mas a linha ainda não tem folga para a busca de 420 px.
 
      Os nomes são de largura, e não de dispositivo, porque é largura que o
      projeto promete — `sm`/`md`/`lg` do Tailwind falam de telefone e tablet,
      que não é o caso de nenhuma destas telas. */
   --breakpoint-piso: 1280px;
   --breakpoint-largo: 1440px;
+  --breakpoint-amplo: 1500px;
 
   --font-sans: Inter, system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;

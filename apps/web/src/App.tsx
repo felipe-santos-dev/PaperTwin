@@ -143,15 +143,6 @@ export function App() {
     [go],
   );
 
-  /** Abre uma seção da faixa na tela de Processo. */
-  const openArea = useCallback(
-    (which: string) => {
-      setArea(which);
-      go('processo');
-    },
-    [go],
-  );
-
   /** Abre o replay de uma quebra, vindo do Turno ou de Bobinas. */
   const openBreak = useCallback(
     (id: string) => {
@@ -189,10 +180,13 @@ export function App() {
       go={go}
       top={frame.top}
       badges={{ notas: frame.suggested }}
-      sections={frame.sections}
-      area={area}
-      onArea={openArea}
-      source={<DataSourcePill source={source} stream={live.state} />}
+      source={
+        <DataSourcePill
+          source={source}
+          stream={live.state}
+          onLive={source === 'demo' && apiRecovered ? useLive : undefined}
+        />
+      }
       search={
         <SearchBox
           gateway={gateway}
@@ -202,28 +196,6 @@ export function App() {
           onReel={openReel}
           onNote={openNote}
         />
-      }
-      banner={
-        /**
-         * Só o aviso que pede ação fica numa faixa: a API voltou e dá para
-         * trocar o instantâneo pelo ao vivo. Que os dados são de demonstração,
-         * o selo da barra superior já diz.
-         */
-        source === 'demo' && apiRecovered ? (
-          <p
-            role="status"
-            className="flex items-center justify-center gap-3 border-b border-line px-4 py-1 text-[12px] text-fg-2"
-          >
-            <span>API disponível · carregar dados ao vivo</span>
-            <button
-              type="button"
-              onClick={useLive}
-              className="h-6 border border-action px-2.5 text-[12px] text-action hover:border-action-hover hover:text-action-hover"
-            >
-              Carregar ao vivo
-            </button>
-          </p>
-        ) : undefined
       }
     >
       {gateway === null ? (

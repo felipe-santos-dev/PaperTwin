@@ -197,28 +197,6 @@ function HelpLine({ label, children }: { readonly label: string; readonly childr
   );
 }
 
-/**
- * O selo "ilustrativo": este bloco mostra dado fixo, não leitura da API.
- *
- * Discreto de propósito — tracejado e cinza, como o selo de demonstração. Ele
- * não pede atenção; ele impede que alguém tome o número por medição.
- *
- * `shrink-0` porque ele é a última coisa que pode sair de uma linha apertada: a
- * palavra "ilustrativo" cortada em "ilustrat" não avisa nada, e um selo de
- * procedência que não se lê é pior que selo nenhum. Quem cede ao lado dele é o
- * texto, que tem reticências e `title`.
- */
-export function Illustrative({ title }: { readonly title?: string }) {
-  return (
-    <span
-      title={title ?? 'Dado fixo de demonstração: a API ainda não tem esta fonte.'}
-      className="inline-flex h-4.5 shrink-0 items-center border border-dashed border-tick px-1.5 font-mono text-[10px] tracking-[0.04em] text-fg-3"
-    >
-      ilustrativo
-    </span>
-  );
-}
-
 /** O quadradinho da prioridade de alarme, com o número dentro. */
 export function PriorityBadge({ priority }: { readonly priority: DesignPriority }) {
   return (

@@ -87,10 +87,21 @@ const STYLES_NO_SIGNAL: Record<Exclude<StreamState, 'open'>, Style> = {
 export function DataSourcePill({
   source,
   stream = 'off',
+  onLive,
 }: {
   readonly source: DataSource;
   /** Em que pé está o stream; só importa quando a fonte é a API. */
   readonly stream?: StreamState;
+  /**
+   * O que fazer quando alguém pede os dados ao vivo.
+   *
+   * Quando existe, o selo ganha o link "ao vivo ›" dentro dele. Era uma faixa
+   * inteira na moldura — "API disponível · Carregar ao vivo" —, e uma faixa é
+   * caro demais para um link: ela empurrava toda tela 26 px para baixo e ficava
+   * lá até alguém clicar. Dentro do selo, a oferta aparece exatamente onde a
+   * pessoa já olha para saber de onde vêm os números.
+   */
+  readonly onLive?: (() => void) | undefined;
 }) {
   const style = source === 'live' && stream !== 'open' ? STYLES_NO_SIGNAL[stream] : STYLES[source];
 
@@ -102,6 +113,16 @@ export function DataSourcePill({
     >
       <span className={`shrink-0 ${style.mark}`} aria-hidden="true" />
       {style.label}
+      {onLive ? (
+        <button
+          type="button"
+          onClick={onLive}
+          title="A API voltou: trocar o instantâneo pelos dados ao vivo"
+          className="ml-0.5 text-[11px] tracking-normal text-action normal-case hover:text-action-hover"
+        >
+          ao vivo ›
+        </button>
+      ) : null}
     </span>
   );
 }

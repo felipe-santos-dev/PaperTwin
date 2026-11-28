@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import { processVariable } from '@mp1/shared';
 
 import type { DataGateway } from '../api/gateway';
 import type { ShiftView } from '../api/process';
@@ -135,7 +134,6 @@ export function useFrame(
     const speedUnit = byTag.get(SPEED_TAG)?.unit ?? 'm/min';
     const gsmValue = valueOf(GSM_TAG);
     const speedValue = valueOf(SPEED_TAG);
-    const speedVar = processVariable(SPEED_TAG);
     const current = currentShift(shifts.data?.shifts ?? []);
     const standing = alarms.data?.alarms ?? [];
     // o instante do último evento; sem stream, o da busca
@@ -149,25 +147,19 @@ export function useFrame(
               current.startedAt,
               current.endedAt ?? new Date(Date.parse(current.startedAt) + SHIFT_MS).toISOString(),
             ),
-            operator: current.operator,
           }
         : null,
       gramatura: gsmValue === null ? null : { text: tagValue(gsmValue, 'g/m²'), unit: gsmUnit },
+      /*
+        A barra de faixa da velocidade saiu da barra superior.
+
+        Ela era o extra que sumia abaixo de 1440 px; agora a velocidade inteira
+        sai abaixo de 1500, e uma faixa L-H de 72 px ao lado de um numero que a
+        propria barra ja mostra nao paga o espaco que custa na linha unica. Quem
+        quer a faixa olha o Processo, onde ela vem com setpoint e tendencia.
+      */
       speed:
-        speedValue !== null && speedVar
-          ? {
-              text: tagValue(speedValue, speedUnit),
-              unit: speedUnit,
-              value: speedValue,
-              bar: {
-                min: speedVar.min,
-                max: speedVar.max,
-                l: speedVar.limits.l,
-                h: speedVar.limits.h,
-                target: speedVar.target,
-              },
-            }
-          : null,
+        speedValue === null ? null : { text: tagValue(speedValue, speedUnit), unit: speedUnit },
       alarms: alarmCounts(standing),
       clock: ts ? { time: clockTime(ts), date: weekdayDate(ts) } : null,
     };

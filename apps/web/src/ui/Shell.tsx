@@ -1,63 +1,60 @@
-import type { ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 
-import { PRIORITY_CLASS, PRIORITY_LABEL, type DesignPriority } from './priority';
-import { RangeBar } from './RangeBar';
+import { PRIORITY_COLOR, PRIORITY_LABEL, type DesignPriority } from './priority';
 import { RAIL_SCREENS, type ScreenId } from './screens';
-import { SectionBlock } from './SectionBlock';
-import type { SectionState } from './sections';
 
 /**
- * A moldura das nove telas: barra superior, navegação 1–9 e faixa do processo.
+ * A moldura das telas: uma linha no topo, a trilha das teclas 1–9, e a página.
  *
- * Medidas do design (fonte/Main.dc.html): navegação de 56 px à esquerda, barra
- * de 48 px no alto e, logo abaixo, a faixa de 64 px com as dez seções. O resto
- * é da tela, com 16 px de respiro. A moldura não rola; quem rola, se precisar,
- * é o conteúdo — e nunca na horizontal.
+ * ## O que saiu, e por quê
  *
- * Nada aqui é `<aside>`: o painel do ativo na tela de Máquina é o único
- * complementar da página, e o e2e o encontra por esse papel.
+ * A casca antiga tinha **quatro** camadas antes do conteúdo: a barra superior,
+ * a faixa com as dez seções, o banner da API e o título do primeiro painel. Era
+ * 112 px de altura e três lugares diferentes dizendo onde a pessoa estava. O
+ * layout novo tem uma: 48 px de barra, e o cabeçalho da própria página.
  *
- * ## A barra superior em 1280 px
+ * - **A faixa das dez seções saiu.** Ela estava no topo de todas as telas para
+ *   servir a uma: Processo. Escolher seção é um filtro do Processo, e na
+ *   Máquina é um seletor no canto da cena — os dois lugares onde a seção quer
+ *   dizer algo. O estado da seção continua na aplicação, que é quem atravessa
+ *   de uma tela para outra.
+ * - **O banner "API disponível · Carregar ao vivo" saiu.** Ele era uma faixa
+ *   inteira para um link. Virou o "ao vivo ›" dentro do selo DEMONSTRAÇÃO, que
+ *   é onde alguém já olha para saber de onde vêm os números.
+ * - **Os três botões de alarme viraram um contador só.** Três caixas com borda,
+ *   ponto, número e rótulo custavam 230 px da linha para dizer "2, 4, 0". Uma
+ *   caixa com os três pares diz o mesmo em 90 px, e continua clicável.
  *
- * A barra era uma fila de blocos `shrink-0` com espaçamento fixo. A soma deles
- * passa de 1600 px, e em 1280 o navegador faz a única coisa que pode: deixa os
- * blocos se atropelarem. Era por isso que "Turno B · 14:00–22:00" desaparecia
- * atrás de Gramatura e o "m/min" ficava debaixo da busca — não havia largura
- * para os dois, e nada na folha de estilo dizia quem cedia.
+ * ## Só a página rola
  *
- * Agora está dito, em duas camadas:
+ * `main.page` é o **único** elemento com rolagem própria da interface. Nenhum
+ * painel rola por dentro: o painel cresce, a página rola, e quem está lendo
+ * tem uma barra de rolagem para pensar, não dezessete. `e2e/rolagem.spec.ts`
+ * é o guarda dessa regra.
  *
- * 1. **Cada bloco de texto encolhe e corta** (`min-w-0` com `truncate`). Sem
- *    `min-w-0`, um filho de flex não encolhe abaixo do conteúdo — ele estoura,
- *    e é esse estouro que vira sobreposição.
- * 2. **Entre 1280 e 1440, os extras saem** (`max-largo:hidden`): o nome do
- *    operador, o dia ao lado do relógio e a barra de faixa da velocidade. São
- *    as três coisas da barra que alguém consulta, e não as que alguém opera.
+ * ## O cabeçalho de tela é da tela, não da casca
  *
- * O que nunca sai: turno, gramatura, velocidade, os três contadores de alarme,
- * a fonte de dados e a hora.
+ * `ui/PageHeader` existe, mas quem o desenha é cada tela. A casca não teria
+ * como preencher a linha de contexto: os números que importam no Turno são a
+ * produção e as pendências, nos Mancais são 98 mancais e quantos em cada zona,
+ * em Bobinas são as toneladas do dia. A casca não conhece nenhum deles — ela
+ * conhece a barra superior, que é a mesma em todas as telas. Na primeira
+ * versão desta fase o cabeçalho ficava aqui, e o resultado foi uma linha de
+ * contexto igual nas dez telas, repetindo o que a barra já dizia.
+ *
+ * ## Abaixo de 1500 px
+ *
+ * Saem gramatura, velocidade e o campo de busca, como no protótipo. A busca não
+ * desaparece: ela vira o botão `⌕` e abre numa faixa logo abaixo da barra,
+ * porque 1280 px é largura que o projeto **garante**, e uma busca que não se
+ * alcança no piso não é uma busca. `/` e `Ctrl+K` continuam abrindo.
  */
 
 export interface FrameTop {
   /** Turno em curso: letra, janela e operador. */
-  readonly shift: {
-    readonly letter: string;
-    readonly window: string;
-    readonly operator: string;
-  } | null;
+  readonly shift: { readonly letter: string; readonly window: string } | null;
   readonly gramatura: { readonly text: string; readonly unit: string } | null;
-  readonly speed: {
-    readonly text: string;
-    readonly unit: string;
-    readonly value: number | null;
-    readonly bar: {
-      readonly min: number;
-      readonly max: number;
-      readonly l: number | null;
-      readonly h: number | null;
-      readonly target: number | null;
-    };
-  } | null;
+  readonly speed: { readonly text: string; readonly unit: string } | null;
   readonly alarms: Readonly<Record<DesignPriority, number>>;
   /** Hora da leitura (`HH:MM:SS`) e o dia (`seg 09/11`). */
   readonly clock: { readonly time: string; readonly date: string } | null;
@@ -67,7 +64,7 @@ export interface ShellProps {
   readonly screen: ScreenId;
   readonly go: (id: ScreenId) => void;
   readonly top: FrameTop;
-  /** O selo da fonte de dados. */
+  /** O selo da fonte de dados, já com o "ao vivo ›" se houver. */
   readonly source: ReactNode;
   /**
    * O campo de busca, no meio da barra.
@@ -77,40 +74,22 @@ export interface ShellProps {
    * que já tem os abridores de tela.
    */
   readonly search?: ReactNode;
-  readonly sections: readonly SectionState[];
-  /** A seção aberta em Processo, para marcar na faixa. */
-  readonly area: string | null;
-  readonly onArea: (area: string) => void;
-  /** Um aviso que pede ação (a API voltou, por exemplo). */
-  readonly banner?: ReactNode;
   /**
    * Contadores na navegação, por tela.
    *
    * Hoje um só: as notas sugeridas esperando decisão. Ele fica na moldura, e não
    * na tela de Notas, porque quem está no Processo também precisa saber que a
-   * manutenção tem uma decisão parada — é o que faz o ciclo da Fase 6 fechar.
+   * manutenção tem uma decisão parada.
    */
   readonly badges?: Partial<Record<ScreenId, number>> | undefined;
   readonly children: ReactNode;
 }
 
-export function Shell({
-  screen,
-  go,
-  top,
-  source,
-  search,
-  sections,
-  area,
-  onArea,
-  banner,
-  badges,
-  children,
-}: ShellProps) {
+export function Shell({ screen, go, top, source, search, badges, children }: ShellProps) {
   return (
     <div className="flex h-full min-w-0 flex-col bg-base">
       <NarrowNotice />
-      <div className="grid min-h-0 min-w-0 flex-1 grid-cols-[56px_minmax(0,1fr)] grid-rows-[48px_64px_auto_minmax(0,1fr)] bg-base">
+      <div className="grid min-h-0 min-w-0 flex-1 grid-cols-[56px_minmax(0,1fr)] grid-rows-[48px_minmax(0,1fr)] bg-base">
         <NavRail screen={screen} go={go} badges={badges} />
         <TopBar
           top={top}
@@ -120,28 +99,14 @@ export function Shell({
             go('turno');
           }}
         />
+        {/*
+          A página: a única rolagem da interface.
 
-        <div
-          role="navigation"
-          aria-label="Seções do processo"
-          className="col-start-2 flex min-w-0 gap-1 overflow-hidden border-b border-line px-4 py-2"
-        >
-          {sections.map((section) => (
-            <SectionBlock
-              key={section.id}
-              label={section.label}
-              out={section.out}
-              selected={screen === 'processo' && area === section.id}
-              onClick={() => {
-                onArea(section.id);
-              }}
-            />
-          ))}
-        </div>
-
-        <div className="col-start-2 min-w-0">{banner}</div>
-
-        <main className="col-start-2 flex min-h-0 min-w-0 flex-col gap-4 overflow-x-hidden overflow-y-auto p-4">
+          O respiro de baixo é generoso (56 px) de propósito — a última seção de
+          uma página longa precisa parar de encostar na borda da janela para
+          alguém saber que acabou.
+        */}
+        <main className="page col-start-2 min-h-0 min-w-0 overflow-x-hidden overflow-y-auto px-5 pt-4 pb-14">
           {children}
         </main>
       </div>
@@ -155,9 +120,6 @@ export function Shell({
  * Em CSS e não em JavaScript de propósito: medir a janela daria um render a
  * mais a cada arrasto de borda, e a resposta é a mesma que uma consulta de
  * mídia dá de graça. `piso:hidden` a esconde de 1280 para cima.
- *
- * O texto diz a largura em números porque é o que resolve o problema de quem
- * está lendo: "maximize a janela" não ajuda quem está num monitor de 1024.
  */
 function NarrowNotice() {
   return (
@@ -184,7 +146,7 @@ function NavRail({
   return (
     <nav
       aria-label="Telas"
-      className="row-span-4 flex flex-col items-center border-r border-line bg-chrome"
+      className="row-span-2 flex flex-col items-center border-r border-line bg-chrome"
     >
       <div className="flex h-12 w-14 shrink-0 items-center justify-center border-b border-line text-[13px] font-semibold tracking-[0.02em] text-fg">
         PT
@@ -192,6 +154,15 @@ function NavRail({
       {RAIL_SCREENS.map((item) => {
         const active = item.id === screen;
         const count = badges?.[item.id] ?? 0;
+        /**
+         * Máquina e Simulação em destaque.
+         *
+         * São as duas telas que o layout novo põe no centro do gêmeo — a
+         * máquina em 3D em tela cheia e o "e se" — e as duas que alguém ainda
+         * não decorou. O número delas sai azul, como no protótipo (`.star`).
+         * Azul aqui é interação, não estado de máquina: ele diz "vá por aqui".
+         */
+        const destaque = item.id === 'maquina' || item.id === 'simulacao';
         return (
           <button
             key={item.id}
@@ -209,7 +180,12 @@ function NavRail({
                 : 'border-transparent text-fg-3 hover:bg-hover hover:text-fg'
             }`}
           >
-            <span aria-hidden="true" className="text-[16px] leading-none font-semibold">
+            <span
+              aria-hidden="true"
+              className={`text-[16px] leading-none font-semibold ${
+                destaque && !active ? 'text-action' : ''
+              }`}
+            >
               {item.key}
             </span>
             <span aria-hidden="true" className="text-[10px]">
@@ -231,7 +207,7 @@ function NavRail({
 }
 
 function Divider() {
-  return <div aria-hidden="true" className="h-6 w-px shrink-0 bg-line-strong" />;
+  return <div aria-hidden="true" className="h-5 w-px shrink-0 bg-line-strong" />;
 }
 
 function TopBar({
@@ -246,90 +222,200 @@ function TopBar({
   readonly onAlarms: () => void;
 }) {
   return (
-    <header className="col-start-2 flex min-w-0 items-center gap-3 border-b border-line bg-chrome px-4 largo:gap-5">
-      <div className="flex shrink-0 items-baseline gap-2.5">
+    <header className="relative col-start-2 flex min-w-0 items-center gap-3.5 border-b border-line bg-chrome px-5 amplo:gap-5">
+      <div className="flex shrink-0 items-baseline gap-2">
         <span className="text-[15px] font-semibold">MP1</span>
         <span className="text-[12px] text-fg-3 max-largo:hidden">PaperTwin</span>
       </div>
       <Divider />
       {top.shift ? (
+        /*
+          Turno e janela, e mais nada.
+
+          O nome do operador também ficava aqui, de `largo` para cima. Só que a
+          API chama o operador do turno A de "turno A", e a barra lia
+          "Turno A 06:00-14:00 turno A" — a mesma informação duas vezes, uma
+          delas em minúscula. Um campo que repete o vizinho não é extra, é
+          ruído, e a linha única do layout novo não tem espaço para ruído.
+        */
         <div className="flex min-w-0 shrink items-baseline gap-2 whitespace-nowrap">
-          <span className="shrink-0 text-[13px] font-semibold">Turno {top.shift.letter}</span>
-          <span className="shrink-0 font-mono text-[12px] text-fg-2">{top.shift.window}</span>
-          {/* o nome do operador é o primeiro extra a sair: ele é consulta, e a
-              janela do turno é operação */}
-          <span className="min-w-0 truncate text-[12px] text-fg-2 max-largo:hidden">
-            {top.shift.operator}
+          <span className="shrink-0 text-[13px]">
+            Turno <b className="font-semibold">{top.shift.letter}</b>
           </span>
+          <span className="shrink-0 font-mono text-[12px] text-fg-2">{top.shift.window}</span>
         </div>
       ) : null}
-      <Divider />
-      <div className="flex shrink-0 items-baseline gap-1.5 whitespace-nowrap">
+      {/*
+        Gramatura e velocidade saem abaixo de 1500 px.
+
+        Não é que elas não importem: é que quem precisa delas a cada minuto está
+        na tela de Processo, onde elas vêm com faixa, setpoint e tendência. Na
+        barra elas são conferência de passagem, e conferência cede a lugar.
+      */}
+      <div className="flex shrink-0 items-baseline gap-1.5 whitespace-nowrap max-amplo:hidden">
         <span className="text-[11px] text-fg-3">Gramatura</span>
         <span className="font-mono text-[14px] font-medium">{top.gramatura?.text ?? '—'}</span>
         <span className="text-[11px] text-fg-2">{top.gramatura?.unit ?? ''}</span>
       </div>
-      <div className="flex shrink-0 items-center gap-2 whitespace-nowrap">
+      <div className="flex shrink-0 items-baseline gap-1.5 whitespace-nowrap max-amplo:hidden">
         <span className="text-[11px] text-fg-3">Velocidade</span>
         <span className="font-mono text-[14px] font-medium">{top.speed?.text ?? '—'}</span>
         <span className="text-[11px] text-fg-2">{top.speed?.unit ?? ''}</span>
-        {top.speed ? (
-          <RangeBar
-            size="sm"
-            min={top.speed.bar.min}
-            max={top.speed.bar.max}
-            l={top.speed.bar.l}
-            h={top.speed.bar.h}
-            target={top.speed.bar.target}
-            pv={top.speed.value}
-            className="w-18 max-largo:hidden"
-            label="Velocidade na faixa"
-          />
-        ) : null}
       </div>
 
-      {search ?? <div className="min-w-0 flex-1" />}
+      <SearchSlot>{search}</SearchSlot>
 
-      <div className="flex shrink-0 items-center gap-1.5">
-        <span className="mr-1 text-[11px] text-fg-3 max-largo:hidden">Alarmes</span>
-        {([1, 2, 3] as const).map((priority) => {
-          const count = top.alarms[priority];
-          const tone = PRIORITY_CLASS[priority];
-          const on = count > 0;
-          return (
-            <button
-              key={priority}
-              type="button"
-              onClick={onAlarms}
-              aria-label={`${String(count)} alarmes de prioridade ${PRIORITY_LABEL[priority].toLowerCase()}`}
-              className={`flex h-7 items-center gap-1.5 border px-2 hover:border-action ${
-                on ? `${tone.border} ${tone.tint}` : 'border-line-strong bg-cell'
-              }`}
-            >
-              <span aria-hidden="true" className={`size-2 ${on ? tone.fill : 'bg-band'}`} />
-              <span
-                className={`font-mono text-[13px] ${on ? `font-semibold ${tone.text}` : 'text-fg-3'}`}
-              >
-                {count}
-              </span>
-              <span
-                className={`text-[11px] whitespace-nowrap max-largo:hidden ${on ? 'text-fg' : 'text-fg-3'}`}
-              >
-                {PRIORITY_LABEL[priority]}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-      <Divider />
+      <AlarmCount alarms={top.alarms} onClick={onAlarms} />
       {source}
       {top.clock ? (
         <div className="flex shrink-0 items-baseline gap-2 whitespace-nowrap">
-          <span className="font-mono text-[15px] font-medium">{top.clock.time}</span>
+          <span className="font-mono text-[14px] font-medium">{top.clock.time}</span>
           {/* o dia sai antes da hora: quem olha o relógio quer a hora */}
           <span className="font-mono text-[11px] text-fg-3 max-largo:hidden">{top.clock.date}</span>
         </div>
       ) : null}
     </header>
+  );
+}
+
+/**
+ * A busca: campo na linha acima de 1500 px, botão `⌕` abaixo.
+ *
+ * O campo é o **mesmo** nó nos dois casos — montado uma vez, com as classes
+ * trocando. Montar duas cópias daria dois `combobox` na página, e aí nem quem
+ * usa leitor de tela nem o teste saberiam qual é a busca.
+ *
+ * Abrir pelo botão ou por `/` é a mesma coisa: o estado abre a faixa e o efeito
+ * leva o foco para dentro dela. O `/` do próprio `SearchBox` não bastaria —
+ * quando o campo está escondido, não há o que focar no instante da tecla.
+ */
+function SearchSlot({ children }: { readonly children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const caixa = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent): void => {
+      const target = event.target;
+      const digitando =
+        target instanceof HTMLElement &&
+        (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
+
+      const barra = event.key === '/' && !event.metaKey && !event.ctrlKey && !event.altKey;
+      const paleta = event.key.toLowerCase() === 'k' && (event.metaKey || event.ctrlKey);
+      if (barra && digitando) return;
+      if (!barra && !paleta) return;
+      setOpen(true);
+    };
+
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    caixa.current?.querySelector('input')?.focus();
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const fora = (event: MouseEvent): void => {
+      const alvo = event.target as Node | null;
+      if (alvo && caixa.current?.contains(alvo)) return;
+      setOpen(false);
+    };
+    document.addEventListener('mousedown', fora);
+    return () => {
+      document.removeEventListener('mousedown', fora);
+    };
+  }, [open]);
+
+  if (!children) return <div className="min-w-0 flex-1" />;
+
+  return (
+    <>
+      <div
+        ref={caixa}
+        className={`relative flex min-w-0 flex-1 justify-center ${
+          open
+            ? 'max-amplo:absolute max-amplo:inset-x-0 max-amplo:top-12 max-amplo:z-40 max-amplo:border-b max-amplo:border-line max-amplo:bg-chrome max-amplo:px-5 max-amplo:py-2'
+            : 'max-amplo:hidden'
+        }`}
+      >
+        {children}
+      </div>
+      {/* abaixo de 1500 px a busca é este botão; acima, ele não existe */}
+      <button
+        type="button"
+        aria-label="Abrir a busca"
+        aria-expanded={open}
+        title="Buscar (tecla /)"
+        onClick={() => {
+          setOpen((valor) => !valor);
+        }}
+        className="ml-auto flex h-7 shrink-0 items-center gap-1.5 border border-line-strong px-2 text-[12px] text-fg-3 amplo:hidden hover:border-action hover:text-fg"
+      >
+        <span aria-hidden="true">⌕</span>
+        <kbd aria-hidden="true" className="font-mono text-[10px]">
+          /
+        </kbd>
+      </button>
+    </>
+  );
+}
+
+/**
+ * O contador único de alarmes: alta, média e baixa numa caixa só.
+ *
+ * Os três números ficam juntos porque a pergunta que alguém faz é uma — "tem
+ * alarme?" — e a resposta tem três partes. Separados em três botões, eles
+ * disputavam espaço com a informação de processo e pareciam três assuntos.
+ *
+ * A contagem em zero fica cinza e sem destaque, mas **continua na tela**: o
+ * "0" na prioridade baixa é informação, e esconder o zero obrigaria quem lê a
+ * contar quantas caixas apareceram para saber qual delas falta.
+ */
+function AlarmCount({
+  alarms,
+  onClick,
+}: {
+  readonly alarms: Readonly<Record<DesignPriority, number>>;
+  readonly onClick: () => void;
+}) {
+  const niveis = [1, 2, 3] as const;
+  const total = niveis.reduce((soma, nivel) => soma + alarms[nivel], 0);
+  const descricao = niveis
+    .map((nivel) => `${String(alarms[nivel])} de prioridade ${PRIORITY_LABEL[nivel].toLowerCase()}`)
+    .join(', ');
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={`${String(total)} alarmes ativos: ${descricao}`}
+      title="Alarmes ativos por prioridade"
+      className="flex h-7 shrink-0 items-center gap-2.5 border border-line-strong px-2.5 hover:border-action"
+    >
+      {niveis.map((nivel) => {
+        const count = alarms[nivel];
+        const on = count > 0;
+        return (
+          <span key={nivel} className="flex items-center gap-1.5">
+            <span
+              aria-hidden="true"
+              className="size-[7px] shrink-0"
+              style={{ background: on ? PRIORITY_COLOR[nivel] : 'var(--color-band)' }}
+            />
+            <span
+              className={`font-mono text-[13px] ${on ? 'font-semibold text-fg' : 'text-fg-3'}`}
+              style={on ? { color: PRIORITY_COLOR[nivel] } : undefined}
+            >
+              {count}
+            </span>
+          </span>
+        );
+      })}
+    </button>
   );
 }

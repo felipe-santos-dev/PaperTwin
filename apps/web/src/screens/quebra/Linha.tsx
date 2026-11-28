@@ -91,7 +91,6 @@ export function Linha(props: LinhaProps) {
   return (
     <Panel
       help="quebra.linha"
-      heading={1}
       title="Os 10 min antes da quebra"
       context={
         <span>
@@ -106,7 +105,7 @@ export function Linha(props: LinhaProps) {
         {resumo(view.replay)}
       </p>
 
-      <div ref={caixa} className="min-h-0 flex-1 overflow-y-auto">
+      <div ref={caixa} className="min-h-0 flex-1">
         {desenhar.length === 0 ? (
           <p className="py-4 text-[12px] text-fg-3">
             Nenhuma das variáveis observadas saiu do normal nesta janela.

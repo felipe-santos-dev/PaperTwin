@@ -109,10 +109,9 @@ export function Entrada(props: EntradaProps) {
   return (
     <Panel
       help="simulacao.entrada"
-      heading={1}
       title="O que mexer"
       className={props.className ?? ''}
-      bodyClassName="flex min-h-0 flex-col gap-4 overflow-y-auto"
+      bodyClassName="flex min-h-0 flex-col gap-4"
     >
       <div className="flex flex-col gap-3">
         {changes.map((change, index) => (

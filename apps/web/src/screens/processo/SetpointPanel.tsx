@@ -78,7 +78,7 @@ export function SetpointPanel(props: SetpointPanelProps) {
       {props.history.length === 0 ? (
         <p className="text-[12px] text-fg-3">Nenhuma alteração registrada.</p>
       ) : (
-        <ul className="min-h-0 flex-1 overflow-y-auto">
+        <ul className="min-h-0 flex-1">
           {props.history.map((change) => (
             <li
               key={change.id}

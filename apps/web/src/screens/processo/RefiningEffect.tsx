@@ -5,7 +5,7 @@ import type { DataGateway } from '../../api/gateway';
 import { linear, type Linear } from '../../ui/chart/scale';
 import { seriesOf } from '../../ui/chart/series';
 import { hhmm, num, tagValue } from '../../ui/format';
-import { Illustrative, Panel } from '../../ui/Panel';
+import { Panel } from '../../ui/Panel';
 import { ResourceState } from '../../ui/ResourceState';
 import { tagScale } from '../../ui/tagScale';
 import { useResource } from '../../ui/useResource';
@@ -56,12 +56,7 @@ export function RefiningEffect({
     <Panel
       help="processo.refino"
       title="Efeito do refino na folha"
-      aside={
-        <span className="flex items-center gap-2">
-          pontos = bobinas{' '}
-          <Illustrative title="Ensaios de laboratório: dado fixo de demonstração. A energia de refino é leitura real." />
-        </span>
-      }
+      aside="pontos = bobinas"
       className={className}
       bodyClassName="flex min-h-0 flex-col"
     >
@@ -134,7 +129,7 @@ export function RefiningEffect({
                     key={test.tag}
                     label={test.label}
                     unit={spec?.unit ?? ''}
-                    source="laboratório · ilustrativo"
+                    source="laboratório"
                   >
                     <LabDots
                       x={x}

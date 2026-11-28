@@ -5,7 +5,7 @@ import { DataSourcePill } from '../ui/DataSourcePill';
 import { EventMarker } from '../ui/EventMarker';
 import { InstrumentRow } from '../ui/InstrumentRow';
 import { Num, Tag } from '../ui/Num';
-import { Illustrative, ModeChip } from '../ui/Panel';
+import { ModeChip } from '../ui/Panel';
 import { RangeBar } from '../ui/RangeBar';
 import { SectionBlock } from '../ui/SectionBlock';
 
@@ -182,9 +182,6 @@ export function SistemaScreen() {
             Vírgula decimal, ponto de milhar, dígitos tabulares. Unidade sempre ao lado, em cinza.
             Cantos de 2–4 px, sem relevo, sem sombra exceto em pop-over.
           </p>
-          <div className="mt-4 flex items-center gap-3 text-[12px] text-fg-2">
-            Dado fixo: <Illustrative />
-          </div>
         </section>
       </div>
 
@@ -253,7 +250,6 @@ export function SistemaScreen() {
               limits={{ min: 0, max: 2.4, ll: 0.6, l: 0.8, h: 2.0, hh: 2.2, target: 1.4 }}
               history={[1.4, 1.41, 1.39, 1.4, 1.4, 1.38, 1.15, 1.1, 1.11, 1.09, 1.1]}
               priority={2}
-              badge={<Illustrative />}
             />
             <div className="mt-3 flex gap-2">
               <ModeChip mode="AUT" />

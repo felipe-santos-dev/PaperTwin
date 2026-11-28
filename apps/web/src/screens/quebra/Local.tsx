@@ -35,7 +35,7 @@ export function Local({ webBreak, pattern, notas, onOpenNote, className = '' }: 
     >
       <MachineMap2D rows={[]} selected={null} breakSection={webBreak.section} />
 
-      <div className="flex min-h-0 flex-col gap-3 overflow-y-auto">
+      <div className="flex min-h-0 flex-col gap-3">
         <div>
           <h3 className="mb-1 text-[11px] tracking-[0.05em] text-fg-3 uppercase">Padrão</h3>
           <p className="text-[12px] leading-[1.45] text-fg-2">{frase(pattern, seção?.label)}</p>

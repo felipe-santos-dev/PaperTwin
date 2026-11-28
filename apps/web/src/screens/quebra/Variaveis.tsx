@@ -42,7 +42,7 @@ export function Variaveis({ view, jáDesviaram, escolhida, onEscolher, onOpenTag
       }
       bodyClassName="flex min-h-0 flex-col"
     >
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1">
         {deviations.length === 0 ? (
           <p className="py-3 text-[12px] text-fg-2">
             Nenhuma saiu do normal. O replay não tem culpado para apontar, e isso é uma resposta: o

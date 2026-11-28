@@ -111,7 +111,7 @@ export function Curvas(props: CurvasProps) {
 
       <Legenda comparar={props.comparar && props.podeComparar} modo={props.modo} />
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1">
         {principal.length === 0 ? (
           <p className="py-4 text-[12px] text-fg-3">
             A mudança não alcança nenhuma variável do catálogo neste horizonte.

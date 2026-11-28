@@ -6,7 +6,7 @@ import type { TagTrend } from '../../api/process';
 import { linear, type Linear } from '../../ui/chart/scale';
 import { seriesOf, type Point } from '../../ui/chart/series';
 import { hhmm, num, tagValue } from '../../ui/format';
-import { Illustrative, Panel } from '../../ui/Panel';
+import { Panel } from '../../ui/Panel';
 import { ResourceState } from '../../ui/ResourceState';
 import { isOut, tagScale } from '../../ui/tagScale';
 import { useResource } from '../../ui/useResource';
@@ -122,7 +122,6 @@ export function TrendStack(props: TrendStackProps) {
               tags={tags}
               trends={list}
               now={now}
-              fixedTags={fixedTags}
               setpoints={props.setpoints}
               alarms={props.alarms}
             />
@@ -419,14 +418,12 @@ function Rows({
   tags,
   trends,
   now,
-  fixedTags,
   setpoints,
   alarms,
 }: {
   readonly tags: readonly string[];
   readonly trends: readonly (TagTrend | null)[];
   readonly now: number;
-  readonly fixedTags: ReadonlySet<string>;
   readonly setpoints: readonly SetpointChange[];
   readonly alarms: readonly Alarm[];
 }) {
@@ -448,7 +445,7 @@ function Rows({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="min-h-0 flex-1">
         {tags.map((tag, index) => (
           <Row
             key={tag}
@@ -457,7 +454,6 @@ function Rows({
             x={x}
             width={width}
             now={now}
-            fixed={fixedTags.has(tag)}
             setpoints={setpoints.filter((change) => change.tag === tag)}
             alarms={alarms.filter((alarm) => alarm.tag === tag)}
             measure={index === 0 ? ref : undefined}
@@ -491,7 +487,6 @@ function Row({
   x,
   width,
   now,
-  fixed,
   setpoints,
   alarms,
   measure,
@@ -501,7 +496,6 @@ function Row({
   readonly x: Linear;
   readonly width: number;
   readonly now: number;
-  readonly fixed: boolean;
   readonly setpoints: readonly SetpointChange[];
   readonly alarms: readonly Alarm[];
   readonly measure: React.Ref<HTMLDivElement> | undefined;
@@ -542,7 +536,6 @@ function Row({
       <div className="min-w-0">
         <div className="font-mono text-[11px] text-fg-2">{tag}</div>
         <div className="truncate text-[10px] text-fg-3">{scale?.name ?? ''}</div>
-        {fixed ? <Illustrative /> : null}
       </div>
       <div ref={measure} className="relative min-w-0" style={{ height: H + 16 }}>
         <svg

@@ -77,7 +77,7 @@ export function Efeitos({ variables, selected, onSelect, className = '' }: Efeit
           </span>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="min-h-0 flex-1">
           {variables.length === 0 ? (
             <p className="py-3 text-[12px] text-fg-3">
               A mudança não alcança nenhuma variável do catálogo neste horizonte.

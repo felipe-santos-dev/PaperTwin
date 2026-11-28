@@ -103,6 +103,15 @@ test('a busca acha a tela de replay', async ({ page }) => {
   await page.goto('/#turno');
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 60_000 });
 
+  /*
+    `/` abre a busca.
+
+    Na largura padrão do `Desktop Chrome` (1280 px) o campo não fica na linha do
+    topo: abaixo de 1500 px ele vira o botão da lupa e abre numa faixa sob a
+    barra. A tecla abre do mesmo jeito, e é o caminho de teclado que este teste
+    descreve.
+  */
+  await page.keyboard.press('/');
   await page.getByRole('combobox', { name: /Buscar/ }).fill('replay');
   await page
     .getByRole('option', { name: /Replay de quebra/ })

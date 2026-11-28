@@ -170,10 +170,11 @@ describe('Turno', () => {
   it('integra a produção instantânea e mostra a passagem do turno', async () => {
     render(<TurnoScreen gateway={turnoGateway()} {...turnoProps()} />);
 
+    // o `h1` agora e o do cabecalho de tela, na casca; o painel e `h2`
     await waitFor(() => {
-      expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
-        'Linha do tempo do turno',
-      );
+      expect(
+        screen.getByRole('heading', { level: 2, name: 'Linha do tempo do turno' }),
+      ).toBeInTheDocument();
     });
 
     // 45 t/h das 17:00 às 19:00: 90 t no placar
@@ -384,7 +385,7 @@ describe('Laboratório', () => {
     });
   });
 
-  it('marca a matriz como ilustrativa e mostra a bobina', async () => {
+  it('mostra a bobina e o ensaio fora na matriz', async () => {
     render(
       <LaboratorioScreen
         gateway={gatewayOf({
@@ -420,8 +421,14 @@ describe('Laboratório', () => {
 
     const matriz = await screen.findByRole('region', { name: 'Bobinas × ensaios' });
     expect(within(matriz).getByText('412')).toBeInTheDocument();
-    expect(within(matriz).getByText('ilustrativo')).toBeInTheDocument();
-    expect(within(matriz).getByText('1', { selector: '.text-spec-out' })).toBeInTheDocument();
+    /*
+      A contagem de ensaios fora subiu para o cabeçalho da tela.
+
+      Ela é o retrato da tela inteira — a carta de controle ao lado fala dos
+      mesmos ensaios —, e repeti-la no título do painel era dizer duas vezes. O
+      teste segue cobrando o número; mudou onde ele mora.
+    */
+    expect(screen.getByText('1', { selector: '.text-spec-out' })).toBeInTheDocument();
   });
 });
 

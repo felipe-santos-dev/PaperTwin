@@ -45,6 +45,20 @@ for (const [largura, altura] of [
     await page.goto('/');
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible({ timeout: 30_000 });
 
+    /*
+      Abaixo de 1500 px a busca nao fica na linha do topo.
+
+      O layout novo tira gramatura, velocidade e o campo de busca da barra
+      abaixo de 1500 px, como no prototipo. O campo nao desaparece: ele vira o
+      botao da lupa e abre numa faixa logo abaixo da barra, porque 1280 px e
+      largura que o projeto garante e uma busca que nao se alcanca no piso nao
+      e busca. A tecla `/` abre do mesmo jeito, e e por ela que o teste entra —
+      e o caminho que alguem usa de verdade nas duas larguras.
+    */
+    if (largura < 1500) {
+      await page.keyboard.press('/');
+    }
+
     await page.getByRole('combobox', { name: campo }).click();
     await page.keyboard.type('PIC-514');
     await expect(page.getByRole('listbox')).toBeVisible();

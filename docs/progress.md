@@ -3916,17 +3916,17 @@ protótipo funde `caixa`+`formação` e `qcs`+`pope`, e inventa `lab` e `acion`.
 
 ### As decisões, tomadas em 27/11/2026
 
-| # | decisão |
-|---|---|
-| 5.1 | 27 relações; a zonada `ZIC-205` fica só no motor, a tela não mostra perfil CD |
-| 5.2 | catálogo nas seis entradas; nenhuma faixa estimada |
+| #   | decisão                                                                                                                                                                                                                                 |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 5.1 | 27 relações; a zonada `ZIC-205` fica só no motor, a tela não mostra perfil CD                                                                                                                                                           |
+| 5.2 | catálogo nas seis entradas; nenhuma faixa estimada                                                                                                                                                                                      |
 | 5.3 | catálogo, saída por saída: `AIC-904` 19–23, `AI-907` `L` = 89, `AI-407` base 51, `LAB-1206R` base do `lab.ts`; para `AIC-901`, `AI-407`, `LAB-1206` e `LAB-1212` a banda é `fonte` só se a pesquisa B trouxer o número, senão `assumed` |
-| 5.4 | SIMC, a sintonia que já está em `pi.ts` |
-| 5.5 | seis cascatas |
-| 5.6 | coluna `kind` no CSV |
-| 5.7 | quebra contextual dentro da casca nova |
-| 5.9 | só `AIC-104` como perturbação |
-| §2 | fundir `caixa`+`formação` e `qcs`+`pope` só no mapa do Simulador |
+| 5.4 | SIMC, a sintonia que já está em `pi.ts`                                                                                                                                                                                                 |
+| 5.5 | seis cascatas                                                                                                                                                                                                                           |
+| 5.6 | coluna `kind` no CSV                                                                                                                                                                                                                    |
+| 5.7 | quebra contextual dentro da casca nova                                                                                                                                                                                                  |
+| 5.9 | só `AIC-104` como perturbação                                                                                                                                                                                                           |
+| §2  | fundir `caixa`+`formação` e `qcs`+`pope` só no mapa do Simulador                                                                                                                                                                        |
 
 A relação `AIC-901 → AIC-903` (K = 0,35, θ = 25 s, τ = 30 s, `estimado`) está
 confirmada como necessária: nenhuma das 26 do CSV liga as duas, e sem ela o vapor
@@ -3956,3 +3956,441 @@ docs/progress.md
 
 Nenhum código de tela foi escrito e nenhum arquivo do app foi tocado: typecheck,
 lint, testes, build, e2e e capturas não têm o que exercer nesta fase.
+
+## Layout novo e simulador repaginado — Fase 1 (a casca e os componentes)
+
+A fase trocou a moldura e criou as peças compartilhadas que as fases seguintes
+vão usar. Nenhuma tela foi redesenhada: as nove continuam as mesmas, agora
+abrindo dentro da casca nova.
+
+### A casca: de quatro camadas para uma
+
+Antes do conteúdo havia **quatro** camadas: a barra superior de 48 px, a faixa
+com as dez seções de 64 px, o banner da API e o título do primeiro painel. São
+112 px de altura e três lugares diferentes respondendo à mesma pergunta — "onde
+eu estou". Agora há uma: 48 px de barra, e o cabeçalho da própria página.
+
+**A faixa das dez seções saiu.** Ela estava no topo de todas as telas para
+servir a uma: Processo. Escolher seção é um filtro do Processo — e, na Máquina,
+um seletor no canto da cena. O estado da seção continua em `App.tsx`, porque
+quem atravessa de uma tela para outra é a aplicação; o que saiu foi a faixa, não
+a informação. `ui/SectionBlock.tsx` fica onde está, sem chamador, até a fase 3
+trocá-lo pelo `Chip`.
+
+**O banner "API disponível · Carregar ao vivo" saiu.** Era uma faixa inteira,
+empurrando toda tela 26 px para baixo, para oferecer um link. Virou o
+"ao vivo ›" dentro do selo DEMONSTRAÇÃO, que é onde alguém já olha para saber de
+onde vêm os números. O `onLive` é opcional em `DataSourcePill`: sem a API de
+volta, não há link.
+
+**Os três botões de alarme viraram um contador só.** Três caixas com borda,
+ponto, número e rótulo custavam uns 230 px da linha para dizer "2, 4, 0". Uma
+caixa com os três pares diz o mesmo em 90 px e continua clicando para o Turno. O
+zero continua na tela, em cinza: esconder o zero obrigaria quem lê a contar
+quantas caixas apareceram para descobrir qual falta.
+
+**O selo "ilustrativo" saiu de dentro dos painéis.** Eram **18** usos em 8
+arquivos — o prompt mencionava um, em `RefiningEffect.tsx`. Cada painel repetia
+"ilustrativo" para dizer o que o selo global da barra já diz: nesta sessão, os
+números são de demonstração. Dezoito avisos do mesmo fato não avisam mais; eles
+viram ruído e gastam a linha do cabeçalho, que é justamente onde faltava espaço.
+O `title` que cada selo carregava — "a API não tem esta fonte", "ancorado nas
+bobinas reais" — era informação de verdade, e ela não se perdeu: continua no
+`aside` dos painéis que já a diziam em palavras. Caíram com o selo um teste de
+unidade dele e uma asserção em `screens.test.tsx`; o resto do teste da matriz de
+laboratório continua valendo e só mudou de nome.
+
+**Um `h1` por página.** Era o painel principal de cada tela que carregava o `h1`
+(`Panel heading={1}`, em cinco arquivos). Com o cabeçalho de tela existindo,
+dois `h1` na mesma página é erro de estrutura: quem usa leitor de tela ouve dois
+"nível 1" e não sabe qual é a página. Os painéis voltaram todos a `h2` e o `h1` é
+o da tela.
+
+### Só a página rola
+
+`main.page` é o único elemento com rolagem própria da interface. Para chegar lá,
+duas mudanças:
+
+1. **As 23 rolagens de painel saíram** — os 23 lugares em `.tsx` de tela que o
+   levantamento mediu (dos 27 do inventário, os outros quatro são a rolagem da
+   própria moldura e três sobreposições; ver abaixo).
+2. **As alturas travadas saíram.** Sete telas montavam a grade com
+   `h-[calc(100vh-152px)]`: a altura da janela menos a barra, a faixa das seções
+   e o respiro. Tirar a rolagem de dentro de um painel de altura travada não
+   resolve nada — o conteúdo passa a ser **cortado** em vez de rolar, o que é
+   pior. Com a altura solta e só o `min-h-[...]` de piso, o painel cresce, a
+   página rola, e o número 152 deixa de estar errado agora que a faixa não
+   existe mais.
+
+**O que está fora da regra.** `ui/AssetPanel.tsx` (o painel do ativo por cima da
+cena 3D) e a lista de resultados de `ui/SearchBox.tsx` são `position: absolute`:
+eles flutuam acima da página, com altura máxima própria, e não disputam rolagem
+com ela. Uma lista de 60 resultados que crescesse até empurrar a página seria
+pior em todos os sentidos. `e2e/rolagem.spec.ts` pula o que tem ancestral
+posicionado dentro de `.page`, e diz isso no comentário.
+
+### Os nove componentes
+
+| componente               | o que é                                                              |
+| ------------------------ | -------------------------------------------------------------------- |
+| `ui/Panel.tsx`           | existia; perdeu o `Illustrative`                                     |
+| `ui/SectionTitle.tsx`    | novo: título + legenda + ações, mais o `PageSection` que leva o `id` |
+| `ui/PageIndex.tsx`       | novo: o índice da página, que some abaixo de 1500 px                 |
+| `ui/Seg.tsx`             | novo: segmentados como `radiogroup`, com as setas do teclado         |
+| `ui/Chip.tsx`            | novo: a generalização do `SectionBlock`                              |
+| `ui/RangeBar.tsx`        | existia; ganhou quatro testes                                        |
+| `ui/chart/Sparkline.tsx` | existia, sem mudança                                                 |
+| `ui/Lanes.tsx`           | novo, com a geometria em `ui/chart/lanes.ts`                         |
+| `ui/Tooltip.tsx`         | novo: o `showTip`/`hideTip` do protótipo                             |
+
+Mais dois que a casca pediu e que o inventário não listava:
+`ui/PageHeader.tsx` (o cabeçalho de tela) e o `PageSection` de
+`ui/SectionTitle.tsx`.
+
+**`Lanes` é o item grande, e a lógica dele mora fora do componente.**
+`ui/chart/lanes.ts` tem seis funções puras — `lanesGeometry`, `laneHeightFor`,
+`laneDomain`, `lanePath`, `laneBand`, `laneCursor` — e o componente não decide
+nada: ele lê o que elas respondem. Lógica em função pura é lógica que se testa
+sem montar nada, e são 14 testes contra 5 do desenho.
+
+A API foi desenhada para os três usos das fases seguintes, que pedem coisas
+diferentes do mesmo desenho: a linha do tempo do Turno (fase 3) quer preencher o
+painel, e chama `laneHeightFor`; o perfil MD de Bobinas (fase 4) tem escala de
+catálogo, e passa `lo`/`hi` e `band`, para a escala **não** se ajustar aos dados
+— duas faixas da mesma grandeza com escalas diferentes fazem curvas idênticas
+parecerem diferentes; a "Resposta no tempo" do Simulador (fase 7) tem três séries
+na mesma faixa (a de agora, a série B fixada, a linha de base sem a mudança) e o
+cursor andando com a reprodução. É por isso que altura da faixa, domínio e séries
+são três decisões separadas, e não um "desenhe isto" só.
+
+Três coisas que o protótipo faz e que aqui estão trancadas por teste: `null` na
+série **corta** a linha em vez de atravessar o buraco (um vão de dez minutos
+ligado por uma reta é um dado que ninguém mediu); a banda que cai fora do
+domínio devolve `null` em vez de um retângulo de altura negativa, que apareceria
+de cabeça para baixo cobrindo a faixa; e `plot.right` nunca fica abaixo de
+`plot.left`, porque em painel estreito a largura menos a coluna do valor passa
+para o lado esquerdo do rótulo e a linha sai desenhada ao contrário.
+
+`Lanes` **declara a própria altura** em vez de preencher o que tem. É o que faz
+o painel crescer e a página rolar, em vez do contrário.
+
+### O ponto de corte de 1500 px
+
+Já havia dois, em `apps/web/src/index.css`: `piso` (1280 px), o mínimo que o
+projeto garante, e `largo` (1440 px), de onde sobra espaço para os extras da
+barra. O novo é `amplo` (1500 px), e é o único ponto de corte que o protótipo
+tem. Os três não se atropelam porque respondem perguntas diferentes: `piso` é o
+mínimo garantido, `largo` é onde os extras voltam, `amplo` é onde a linha única
+do topo cabe sem disputa. 1440 e 1500 são vizinhos de propósito — entre eles o
+nome do operador e o dia voltam, mas a linha ainda não tem folga para um campo
+de busca de 420 px.
+
+Abaixo de `amplo` saem gramatura, velocidade, o campo de busca e o índice da
+página, como no protótipo.
+
+**Duas coisas conflitavam, e as duas estão resolvidas aqui — vale conferir.**
+
+A primeira é prosa: `docs/revisao-1280.md` diz, da revisão anterior, que "o que
+nunca sai" da barra é turno, gramatura, velocidade, os três contadores, a fonte
+de dados e a hora. O layout novo tira gramatura e velocidade abaixo de 1500 e
+funde os três contadores em um. A decisão nova vale — ela é o prompt da fase —, e
+a informação não se perdeu: gramatura e velocidade estão na linha de contexto do
+cabeçalho de tela, que tem largura de sobra porque não divide a linha com nada.
+`docs/revisao-1280.md` ficou intacto: ele é o registro de uma revisão que
+aconteceu, não uma regra em vigor.
+
+A segunda era um teste, e essa precisava de decisão. `e2e/busca.spec.ts` abre a
+busca **a 1280 px** clicando no campo. Com o campo escondido abaixo de 1500, o
+clique não acha nada — e, pior que o teste, a busca ficaria inalcançável
+justamente no piso que o projeto garante. Então abaixo de 1500 a busca não
+desaparece: ela vira o botão da lupa na barra e abre numa faixa logo abaixo
+dela, e `/` e `Ctrl+K` continuam abrindo. O campo é o **mesmo** nó nos dois
+casos, com as classes trocando — montar duas cópias daria dois `combobox` na
+página, e aí nem quem usa leitor de tela nem o teste saberiam qual é a busca. O
+teste passou a entrar por `/` nas duas larguras, que é o caminho que alguém usa
+de verdade.
+
+`e2e/largura.spec.ts` (4 larguras × 9 telas) não precisou de mudança nenhuma.
+
+### Um defeito que a regra nova trouxe, e que a medição achou
+
+Tirar a altura travada das telas custou um defeito real, e vale registrar porque
+ele volta em toda fase que mexer em painel que mede a própria altura.
+
+`screens/mancais/MachinePanel.tsx` desenha a cena 3D num painel que era
+`min-h-0 flex-1`. Numa coluna cuja altura vinha da janela, `flex-1` tinha um
+número para dividir. Numa coluna de altura livre, não tem: o painel pede a
+altura do conteúdo, o conteúdo é uma cena que mede a altura do painel, e os dois
+se empurram. Medido no navegador: o canvas chegou a **5.072 px** de altura, a
+página de Mancais passou a rolar 2.820 px, e nenhum mancal ficava dentro da
+janela — clicar num mancal na cena deixou de funcionar.
+
+Quem achou foi o e2e `mancais.spec.ts`, que falhou sem dizer o motivo ("a lista
+não mudou"); o motivo saiu de uma medição do retângulo do canvas. A correção é
+altura definida em vez de `flex-1` nos dois casos do painel (340 px com o cartão
+de sugestão, 430 px sem), e a mesma troca na linha do replay de quebra, que
+também mede a própria altura (`grid-rows-[520px_340px]` em vez de `1fr`).
+
+**A regra que fica:** painel que mede a própria altura precisa de altura
+**definida** quando a página rola. `flex-1` só funciona dentro de uma caixa que
+já sabe quanto mede.
+
+Duas asserções de e2e mudaram junto, e as duas por causa da casca nova:
+`mancais.spec.ts` passou a exigir que o ponto do mancal esteja **na janela**, e
+não só no recorte da câmera (`onScreen` é sobre a cena, não sobre a janela), e a
+tentar os mancais enquadrados em ordem — o raio pode acertar o mancal que já
+está escolhido, e aí a lista não muda por um acerto correto. `quebra.spec.ts` e
+`qualidade.spec.ts` mudaram pela busca recolhida e pelo selo que saiu.
+
+### A verificação
+
+Verde: `typecheck`, `lint`, `format:check`, `npm test` (253 testes, 18 arquivos),
+`build`, `test:e2e` e as capturas em 1920×1080 e 1280×800.
+
+**Estava vermelho antes de a fase começar:** `npm run format:check` reprovava
+`docs/fase-0-levantamento.md` e `docs/progress.md`, os dois arquivos da Fase 0.
+Era formatação de prosa e de tabela, não conteúdo. Rodei o Prettier nos dois — é
+o que a regra 4 cobra — e o diff é só reflow.
+
+### Arquivos, por commit sugerido
+
+**1. O ponto de corte e os componentes novos**
+
+```
+apps/web/src/index.css
+apps/web/src/ui/chart/lanes.ts
+apps/web/src/ui/Lanes.tsx
+apps/web/src/ui/Tooltip.tsx
+apps/web/src/ui/SectionTitle.tsx
+apps/web/src/ui/PageIndex.tsx
+apps/web/src/ui/PageHeader.tsx
+apps/web/src/ui/Seg.tsx
+apps/web/src/ui/Chip.tsx
+```
+
+**2. A casca**
+
+```
+apps/web/src/ui/Shell.tsx
+apps/web/src/ui/DataSourcePill.tsx
+apps/web/src/ui/useFrame.ts
+apps/web/src/App.tsx
+```
+
+**3. O selo "ilustrativo" fora dos painéis, e um `h1` por página**
+
+```
+apps/web/src/ui/Panel.tsx
+apps/web/src/screens/BobinasScreen.tsx
+apps/web/src/screens/LaboratorioScreen.tsx
+apps/web/src/screens/ProcessoScreen.tsx
+apps/web/src/screens/NotasScreen.tsx
+apps/web/src/screens/SistemaScreen.tsx
+apps/web/src/screens/processo/RefiningEffect.tsx
+apps/web/src/screens/processo/TrendStack.tsx
+apps/web/src/screens/turno/Support.tsx
+apps/web/src/screens/turno/Timeline.tsx
+apps/web/src/screens/quebra/Linha.tsx
+apps/web/src/screens/simulacao/Entrada.tsx
+```
+
+**4. Só a página rola**
+
+```
+apps/web/src/screens/MancaisScreen.tsx
+apps/web/src/screens/MaquinaScreen.tsx
+apps/web/src/screens/RondasScreen.tsx
+apps/web/src/screens/SimulacaoScreen.tsx
+apps/web/src/screens/QuebraScreen.tsx
+apps/web/src/screens/processo/SetpointPanel.tsx
+apps/web/src/screens/quebra/Local.tsx
+apps/web/src/screens/quebra/Variaveis.tsx
+apps/web/src/screens/simulacao/Curvas.tsx
+apps/web/src/screens/simulacao/Efeitos.tsx
+apps/web/e2e/rolagem.spec.ts
+```
+
+**5. Testes, capturas e o registro**
+
+```
+apps/web/src/ui/components.test.tsx
+apps/web/src/screens/screens.test.tsx
+apps/web/e2e/busca.spec.ts
+apps/web/e2e/mancais.spec.ts
+apps/web/e2e/qualidade.spec.ts
+apps/web/e2e/quebra.spec.ts
+apps/web/e2e/capturas.spec.ts
+docs/fase-0-levantamento.md
+docs/progress.md
+```
+
+`docs/capturas/` está no `.gitignore` e não entra em commit: as 18 imagens são
+artefato para olhar, não fonte. A altura do 1280 subiu de 720 para 800 em
+`capturas.spec.ts`, que é o tamanho que a fase pediu — com a página rolando
+inteira, 80 px a mais são uma seção a mais aparecendo na captura.
+
+### Fase 1, segunda passada: o que a conferência contra o protótipo achou
+
+Quatro defeitos, todos da Fase 1, achados comparando as capturas com
+`reference/design/papertwin-layout-v2.html`. O que difere do protótipo e **não**
+está aqui é das fases 3 a 7.
+
+**1. O cabeçalho de tela dizia a mesma coisa nas dez telas.** Era o defeito de
+projeto, não de pixel: a primeira versão pôs o `PageHeader` dentro da casca, e a
+casca não tem como saber que os números do Turno são a produção e as pendências,
+que os dos Mancais são 98 mancais e quantos em cada zona, e que os de Bobinas
+são as toneladas do dia. Sobrou o que a casca conhece — turno, gramatura,
+velocidade —, que é exatamente o que a barra superior já mostrava uma linha
+acima. Duas linhas para dizer a mesma coisa.
+
+Agora **cada tela desenha o próprio cabeçalho**. É o arranjo que as fases 3 a 7
+querem de qualquer forma, e ele resolve de uma vez a outra metade do problema:
+os números estavam no `context` do primeiro painel de cada tela, repetindo-se
+dentro de um painel que fala só de uma parte do que eles contam. Eles subiram
+para o cabeçalho e saíram do painel, que ficou com o que é dele:
+
+| tela        | contexto do cabeçalho                               | o que ficou no painel        |
+| ----------- | --------------------------------------------------- | ---------------------------- |
+| Turno       | janela, minutos corridos, entrega                   | eventos da janela            |
+| Processo    | seção, variáveis, fora da faixa, mancal ligado      | "faixa · PV · SP"            |
+| Laboratório | jumbos, fora, no limite, ensaios                    | "clique numa coluna…"        |
+| Bobinas     | bobinas, toneladas, rebaixadas, segregadas, retidas | "clique numa bobina…"        |
+| Mancais     | mancais, em B, em C, em D                           | "velocidade RMS 10–1.000 Hz" |
+| Rondas      | inspetor, início, pontos, achados                   | concluída / em andamento     |
+| Notas       | ativas, exigem parada, sugeridas                    | "clique para abrir a nota"   |
+| Máquina     | seções e ativos medidos                             | —                            |
+| Simulação   | mudanças, horizonte, modo das malhas                | —                            |
+| Quebra      | hora, seção, causa provável, janela                 | —                            |
+
+**As ações foram para a direita do cabeçalho** onde elas mandam na tela inteira,
+e não só num painel: o segmentado da janela (Turno · 24 h · 3 turnos) saiu do
+`aside` da linha do tempo, e o "Só fora da faixa" saiu do `aside` da lista de
+variáveis. O segmentado do Turno virou o `Seg` novo no caminho — era um grupo de
+botões escrito à mão, com `aria-pressed`; agora é um `radiogroup` com as setas
+do teclado, que é o que um grupo excludente deve ser.
+
+**O `PageIndex` entrou nas duas telas que hoje têm seção embaixo**, Turno
+(`Agora`, `Placar e passagem`) e Bobinas (`Bobinas do dia`, `Perfil da bobina`).
+As outras sete são uma grade só, lado a lado: índice de uma seção só não é
+índice. Elas ganham o deles quando as seções de baixo chegarem, nas fases 3 e 4.
+
+**2. "Turno A 06:00–14:00 turno A".** A barra mostrava o operador do turno, e a
+API chama o operador do turno A de "turno A" — a mesma informação duas vezes, uma
+delas em minúscula. O campo saiu. Um extra que repete o vizinho não é extra.
+
+**3. A legenda das barras ficava debaixo dos alarmes.** No Turno, os três painéis
+de baixo estavam numa grade de `h-88` — 352 px travados. Com a rolagem própria
+removida pela regra "só a página rola", a lista de quatro alarmes não cabia e
+**transbordava**: ia desenhar por cima da legenda "Barras: faixa operacional
+L–H…" no rodapé do mesmo painel. A grade virou `min-h-88`, o painel cresce e a
+página rola.
+
+O teste que cobre isso é novo e é geral, porque o defeito é de uma classe
+inteira: `e2e/rolagem.spec.ts` ganhou **"nada transborda a própria caixa"** — para
+todo elemento dentro de `.page`, se o conteúdo é mais alto que a caixa e o
+`overflow` é `visible`, alguma coisa está sendo desenhada por cima de outra. Com
+`hidden` seria corte deliberado; com `auto` seria rolagem aninhada, que o outro
+teste já pega.
+
+Ele achou mais quatro, nenhum deles o que eu procurava:
+
+- a coluna direita do Processo tinha `min-h-0` e encolhia para a altura da linha
+  da grade, deixando 35 px de conteúdo para fora — `min-h-0` serve para deixar
+  um container **rolar**, e numa coluna sem rolagem ele faz o contrário do que
+  parece;
+- o painel "Alteração de setpoint" (`h-[300px]`) pedia 334;
+- o sensor virtual do Laboratório (`h-[340px]`) pedia 380;
+- a linha de baixo do replay de quebra (`340px`) pedia 346.
+
+Os quatro viraram altura mínima em vez de altura travada. É a mesma regra que a
+cena dos Mancais já tinha ensinado na primeira passada, do outro lado: painel que
+**mede** a própria altura precisa de altura definida; painel que **tem** conteúdo
+precisa de altura mínima. Travar os dois é escolher entre cortar e sobrepor.
+
+Duas exclusões no teste, e as duas são medida, não gosto. Folhas de texto ficam
+de fora: um `<span>` com `leading-none` tem 28 px de caixa e 32 de glifo, sempre,
+em todo número grande da interface — é métrica de fonte, não conteúdo saindo. E a
+folga é de 4 px pelo mesmo motivo, agora nas caixas. Os defeitos que o teste
+existe para pegar são de outra ordem: 35, 36, 40 px.
+
+**4. O último "ilustrativo".** Sobrava um, no rótulo de origem das tiras do
+"Efeito do refino na folha" (`source="laboratório · ilustrativo"`). Virou
+`laboratório`, que é a origem — "ilustrativo" era o selo global, e ele saiu dos
+painéis na primeira passada.
+
+### Arquivos, por commit sugerido
+
+Os cinco commits abaixo cobrem a **fase inteira**, as duas passadas juntas, e
+substituem a lista da primeira passada: nada foi commitado entre uma e outra, e
+um arquivo tocado nas duas entra uma vez só.
+
+**1. O ponto de corte de 1500 px e os componentes compartilhados**
+
+```
+apps/web/src/index.css
+apps/web/src/ui/chart/lanes.ts
+apps/web/src/ui/Lanes.tsx
+apps/web/src/ui/Tooltip.tsx
+apps/web/src/ui/SectionTitle.tsx
+apps/web/src/ui/PageIndex.tsx
+apps/web/src/ui/PageHeader.tsx
+apps/web/src/ui/Seg.tsx
+apps/web/src/ui/Chip.tsx
+apps/web/src/ui/Panel.tsx
+```
+
+**2. A casca: uma linha no topo, sem a faixa das seções e sem o banner**
+
+```
+apps/web/src/ui/Shell.tsx
+apps/web/src/ui/DataSourcePill.tsx
+apps/web/src/ui/useFrame.ts
+apps/web/src/App.tsx
+```
+
+**3. O cabeçalho de cada tela, com os números dela**
+
+```
+apps/web/src/screens/TurnoScreen.tsx
+apps/web/src/screens/ProcessoScreen.tsx
+apps/web/src/screens/LaboratorioScreen.tsx
+apps/web/src/screens/BobinasScreen.tsx
+apps/web/src/screens/MancaisScreen.tsx
+apps/web/src/screens/RondasScreen.tsx
+apps/web/src/screens/NotasScreen.tsx
+apps/web/src/screens/MaquinaScreen.tsx
+apps/web/src/screens/SimulacaoScreen.tsx
+apps/web/src/screens/QuebraScreen.tsx
+apps/web/src/screens/turno/Timeline.tsx
+apps/web/src/screens/turno/Support.tsx
+```
+
+**4. Só a página rola, e o selo "ilustrativo" fora dos painéis**
+
+```
+apps/web/src/screens/SistemaScreen.tsx
+apps/web/src/screens/processo/RefiningEffect.tsx
+apps/web/src/screens/processo/SetpointPanel.tsx
+apps/web/src/screens/processo/TrendStack.tsx
+apps/web/src/screens/quebra/Linha.tsx
+apps/web/src/screens/quebra/Local.tsx
+apps/web/src/screens/quebra/Variaveis.tsx
+apps/web/src/screens/simulacao/Curvas.tsx
+apps/web/src/screens/simulacao/Efeitos.tsx
+apps/web/src/screens/simulacao/Entrada.tsx
+```
+
+**5. Testes, capturas em 1280×800 e o registro**
+
+```
+apps/web/e2e/rolagem.spec.ts
+apps/web/e2e/busca.spec.ts
+apps/web/e2e/mancais.spec.ts
+apps/web/e2e/qualidade.spec.ts
+apps/web/e2e/quebra.spec.ts
+apps/web/e2e/capturas.spec.ts
+apps/web/src/ui/components.test.tsx
+apps/web/src/screens/screens.test.tsx
+docs/fase-0-levantamento.md
+docs/progress.md
+```

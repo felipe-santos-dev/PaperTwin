@@ -25,13 +25,20 @@ test('o Laboratório abre no ensaio que não é ilustrativo', async ({ page }) =
   await expect(sensor(page)).toContainText('laudos');
 });
 
-test('a matriz diz qual coluna é medida e qual é ilustrativa', async ({ page }) => {
+/**
+ * A coluna medida continua marcada; o selo "ilustrativo" saiu.
+ *
+ * Na fase 1 o selo de dentro dos painéis saiu: o selo DEMONSTRAÇÃO da barra
+ * diz, uma vez, o que dezoito selos repetiam. O que a matriz ainda tem de
+ * dizer é o contrário disso — qual coluna é **medida**, com laudo, entre as que
+ * são dado fixo —, e é isso que o teste cobra.
+ */
+test('a matriz diz qual coluna é medida', async ({ page }) => {
   await page.goto('/#laboratorio');
 
   const matriz = page.getByRole('region', { name: 'Bobinas × ensaios' });
   await expect(matriz).toBeVisible({ timeout: 60_000 });
   await expect(matriz.getByText('LAB-1206 medido')).toBeVisible();
-  await expect(matriz.getByText('ilustrativo')).toBeVisible();
 });
 
 test('escolher outro ensaio troca o sensor pela carta de controle', async ({ page }) => {

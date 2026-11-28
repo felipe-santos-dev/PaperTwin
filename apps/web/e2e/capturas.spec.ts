@@ -30,8 +30,17 @@ const TELAS = [
   'quebra',
 ];
 
+/*
+  As duas janelas das capturas do layout novo: 1920x1080 e 1280x800.
+
+  A altura do 1280 subiu de 720 para 800 na fase 1. A pagina agora rola inteira,
+  e a captura de tela cheia mostra o que cabe sem rolar — 80 px de diferenca sao
+  uma secao a mais aparecendo, o que e justamente o que alguem quer conferir
+  numa captura. As larguras garantidas continuam sendo quatro, e quem as cobre e
+  `e2e/largura.spec.ts`; estas duas sao para olhar.
+*/
 const LARGURAS = [
-  { nome: '1280', width: 1280, height: 720 },
+  { nome: '1280', width: 1280, height: 800 },
   { nome: '1920', width: 1920, height: 1080 },
 ] as const;
 

@@ -108,7 +108,18 @@ test('na cena, clicar num mancal escolhe ele na lista', async ({ page }) => {
    * abaixo da dobra — e `screenPointOf` devolve coordenadas de viewport, que só
    * servem para clicar depois que ela está à vista. É o que alguém faria.
    */
-  await canvas.scrollIntoViewIfNeeded();
+  /*
+    A cena vai para o **meio** da janela, e nao so para dentro dela.
+
+    Desde a fase 1 a pagina rola inteira, e o painel da cena e mais alto que a
+    janela em 1280x720: `scrollIntoViewIfNeeded` traz o topo dele a vista e para
+    ai, deixando a faixa onde os mancais aparecem abaixo da dobra. Centralizado,
+    o que a camera enquadra e o que esta na tela — e e o que alguem faria antes
+    de clicar num mancal.
+  */
+  await canvas.evaluate((el) => {
+    el.scrollIntoView({ block: 'center' });
+  });
   await page.waitForFunction(() => Boolean(window.__twin), undefined, { timeout: 60_000 });
   // o voo da câmera leva 1,4 s
   await page.waitForTimeout(2200);
@@ -116,32 +127,50 @@ test('na cena, clicar num mancal escolhe ele na lista', async ({ page }) => {
   const candidatos = monitoredAssets(MP1)
     .filter((asset) => asset.kind === 'bearing' && asset.tag !== DEGRADANDO)
     .map((asset) => asset.tag);
-  const alvo = await page.evaluate((tags) => {
+  /*
+    Dois filtros, e o segundo é novo.
+
+    `onScreen` é sobre a **cena**: ele diz que o mancal cai dentro do recorte da
+    câmera (`TestHook`, em NDC). Isso não garante que o pixel esteja na
+    **janela** — desde a fase 1 a página rola inteira, e parte do painel pode
+    ficar fora da dobra. Clicar fora da janela não acerta nada, e o teste
+    esperava vinte segundos por uma seleção que nunca vinha.
+  */
+  const pontos = await page.evaluate((tags) => {
+    const dentro: { tag: string; x: number; y: number }[] = [];
     for (const tag of tags) {
       const ponto = window.__twin?.screenPointOf(tag);
-      if (ponto?.onScreen) return { tag, x: ponto.x, y: ponto.y };
+      if (!ponto?.onScreen) continue;
+      if (ponto.x <= 0 || ponto.y <= 0) continue;
+      if (ponto.x >= window.innerWidth || ponto.y >= window.innerHeight) continue;
+      dentro.push({ tag, x: ponto.x, y: ponto.y });
     }
-    return null;
+    return dentro;
   }, candidatos);
 
-  expect(alvo, 'nenhum mancal enquadrado no painel').not.toBeNull();
-  if (!alvo) return;
-
-  const antes = (await linhaEscolhida(page).getAttribute('data-asset')) ?? '';
-  await page.mouse.click(alvo.x, alvo.y);
+  expect(pontos.length, 'nenhum mancal enquadrado na janela').toBeGreaterThan(0);
 
   /**
    * O pixel do centro de um mancal pode cair num mancal que está na frente
-   * dele — a cena escolhe o que o raio acerta primeiro, que é o certo. Então o
-   * teste não exige o mancal mirado: exige que a lista tenha passado para outro
-   * mancal, e que esse mancal exista no modelo.
+   * dele — a cena escolhe o que o raio acerta primeiro, que é o certo. E o que
+   * está na frente pode ser justamente o mancal **já escolhido**, e aí a lista
+   * não muda e o teste falha por um acerto correto.
+   *
+   * Então o teste tenta os mancais enquadrados em ordem e para no primeiro que
+   * muda a escolha. O que ele afirma continua sendo o que importa: clicar na
+   * cena escolhe um mancal na lista, e esse mancal existe no modelo.
    */
-  await expect
-    .poll(async () => (await linhaEscolhida(page).getAttribute('data-asset')) ?? '', {
-      timeout: 20_000,
-    })
-    .not.toBe(antes);
+  const antes = (await linhaEscolhida(page).getAttribute('data-asset')) ?? '';
+  let agora = antes;
 
-  const agora = (await linhaEscolhida(page).getAttribute('data-asset')) ?? '';
+  for (const ponto of pontos.slice(0, 8)) {
+    await page.mouse.click(ponto.x, ponto.y);
+    // o voo da câmera até o mancal escolhido leva 1,4 s
+    await page.waitForTimeout(1800);
+    agora = (await linhaEscolhida(page).getAttribute('data-asset')) ?? '';
+    if (agora !== antes) break;
+  }
+
+  expect(agora, 'clicar na cena não mudou o mancal escolhido').not.toBe(antes);
   expect(assetByTag(MP1, agora)?.kind).toBe('bearing');
 });
